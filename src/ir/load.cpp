@@ -268,6 +268,7 @@ static void nondetLocals(Module &m) {
         locals.push_back(a);
     for (AllocaInst *a : locals) {
       IRBuilder<> b(a->getNextNode());
+      b.SetCurrentDebugLocation(DebugLoc()); // no source line: not a store to show
       TinyPtrVector<DbgVariableRecord *> declares = findDVRDeclares(a);
       MDNode *variable = declares.empty() ? nullptr : declares.front()->getVariable();
       // The scalar leaves of the local, with their index paths.
@@ -301,9 +302,12 @@ static void nondetLocals(Module &m) {
   }
 }
 
-// Removes the debug records that assign a local its own uninitialised
-// value: a declaration is no assignment, and ESBMC shows none. A record that
-// copies it into another variable stays.
+// Removes the debug records that assign a local its own uninitialised value
+// when nothing reads that value (its only users are the stores nondetLocals
+// made, into the local itself): the local is written before it is read, and
+// ESBMC shows no declaration for it. When the value is read, copied into
+// another variable included, its record stays, as ESBMC shows that
+// declaration with its value.
 static void dropUninitialisedRecords(Module &m) {
   for (Function &f : m)
     for (Instruction &inst : instructions(f))
@@ -311,7 +315,13 @@ static void dropUninitialisedRecords(Module &m) {
         if (rec.getNumVariableLocationOps() == 1)
           if (auto *c = dyn_cast_or_null<CallInst>(rec.getVariableLocationOp(0)))
             if (MDNode *md = c->getMetadata(UninitialisedMD))
-              if (md->getOperand(0) == rec.getVariable())
+              if (all_of(c->users(),
+                         [&](User *u) {
+                           auto *st = dyn_cast<StoreInst>(u);
+                           return st && !st->getDebugLoc() &&
+                                  isa<AllocaInst>(st->getPointerOperand()->stripInBoundsOffsets());
+                         }) &&
+                  md->getOperand(0) == rec.getVariable())
                 rec.eraseFromParent();
 }
 

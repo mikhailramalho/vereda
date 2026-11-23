@@ -32,5 +32,5 @@ int main(void)
 // EXPECT: ^  o\.g = 9 \(00000000 00000000 00000000 00001001\)$
 // EXPECT: ^  p->g = \{ \.g=9, \.in=\{ \.pad=0, \.g=5 \} \}$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  o\.g = 9 \(00000000 00000000 00000000 00001001\)$
+// Vereda: unmet EXPECT: ^  p->g = \{ \.g=9, \.in=\{ \.pad=0, \.g=5 \} \}$
 // MODE: FUTURE

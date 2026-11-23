@@ -12,6 +12,7 @@
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/InstIterator.h>
 #include <algorithm>
@@ -480,8 +481,15 @@ private:
     }
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
       Value *v = w->getValueOperand();
-      mem.store(st, enc.value(w->getPointerOperand()), enc.toBits(enc.value(v), v->getType()),
-                v->getType());
+      SMTExprRef p = enc.value(w->getPointerOperand());
+      mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
+      // A source store into a named variable kept in memory (a global, an
+      // array, a local whose address is taken) is an assignment to show.
+      Type *ty = v->getType();
+      if (w->getDebugLoc() && ty->isIntegerTy() && !ty->isIntegerTy(1))
+        if (auto var = namedObject(w->getPointerOperand()))
+          trace.push_back({Step::Assignment, guard, ir::location(*w), var->first, enc.value(v),
+                           false, 0, var->second, mem.offset(p)});
       return true;
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {
@@ -503,6 +511,26 @@ private:
       return true;
     }
     return isa<FenceInst>(inst);
+  }
+
+  // The source variable whose memory p points into, when it is a global or
+  // a local kept in memory with a name in the debug info: name and type.
+  static std::optional<std::pair<std::string, const DIType *>> namedObject(Value *p) {
+    while (auto *g = dyn_cast<GEPOperator>(p))
+      p = g->getPointerOperand();
+    p = p->stripPointerCasts();
+    if (auto *gv = dyn_cast<GlobalVariable>(p)) {
+      SmallVector<DIGlobalVariableExpression *, 1> vars;
+      gv->getDebugInfo(vars);
+      if (!vars.empty())
+        return std::make_pair(vars[0]->getVariable()->getName().str(),
+                              vars[0]->getVariable()->getType());
+    }
+    if (auto *a = dyn_cast<AllocaInst>(p))
+      for (DbgVariableRecord *d : findDVRDeclares(a))
+        if (!d->getExpression()->getNumElements())
+          return std::make_pair(d->getVariable()->getName().str(), d->getVariable()->getType());
+    return std::nullopt;
   }
 
   // Loads the old value, stores the operation's result and binds the old

@@ -55,13 +55,23 @@ void printCounterexample(camada::SMTSolver &s, const walker::Trace &trace,
       os << "\nAssumption:\n  " << step.loc.str() << "\n  " << step.text << "\n";
       continue;
     }
-    auto [value, bits] = valueOf(s, step);
-    std::string &prev = last[step.loc.function + "::" + step.text];
+    walker::Step shown = step;
+    if (step.type) { // a store into memory: name the element or member written
+      auto off = s.getBVUnsigned(step.offset);
+      std::optional<std::string> path;
+      if (off)
+        path = ir::memberPath(step.type, off.value(), step.value->getWidth() / 8, shown.isUnsigned);
+      if (!path) // no single scalar to name (a bitfield's unit, a partial write)
+        continue;
+      shown.text += *path;
+    }
+    auto [value, bits] = valueOf(s, shown);
+    std::string &prev = last[step.loc.function + "::" + shown.text];
     if (prev == value)
       continue;
     prev = value;
     os << "\nState " << ++n << " " << step.loc.str() << " thread 0\n" << separator << "\n  "
-       << step.text << " = " << value;
+       << shown.text << " = " << value;
     if (!bits.empty())
       WithColor(os, raw_ostream::BRIGHT_BLACK) << " (" << bits << ")";
     os << "\n";

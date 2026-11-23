@@ -2,7 +2,7 @@
 // assignments but none from inside a model, as ESBMC hides its library.
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^State 1 file \S+ line \d+ function main
+// EXPECT: ^State 1 file \S+ line \d+( column \d+)? function main
 // EXPECT: up = 0
 // EXPECT-NOT: function (strcpy|strlen|realloc|toupper|memcpy|malloc) thread
 #include <stdlib.h>

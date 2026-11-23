@@ -597,9 +597,9 @@ double or bfloat, which locals only move as bits) are stored the result
 of a bodyless `__VERIFIER_nondet_uninitialised.<type>` call, one fresh
 value per call. freeze poison was the first idea, but InstCombine may
 replace it by any constant. The debug record mem2reg makes for that store
-would show the garbage as an assignment; records that assign the call's
-value to its own variable are removed, while a copy into another
-variable stays.
+shows the start value at the declaration, as ESBMC does when the local is
+read while uninitialised; when it is written first, the record is removed
+(corrected the same day: at first every such record was).
 
 With the locals no longer undef, two intrinsics InstCombine used to fold
 stay: llvm.objectsize and llvm.is.constant, now lowered as the back end
@@ -646,3 +646,21 @@ Float27 slows from 0.7 s to 2.4 s, under the 2 s margin. With ee26cffa as
 base and 3b0eab7c as head, it flags 10_fir_new (head timed out),
 math_log02 (x16) and github_1600 (x20, memory x4.8), the work of
 f4e1abde and ee26cffa seen backwards.
+
+## Stores in counterexamples (2026-11-23)
+
+The trace showed only values in registers (debug value records), so a
+store into memory was missing: for `a[0] = f(a[0])` with a global `int
+a[1]`, the only line was `f`'s parameter `a` receiving its argument,
+which read as the array. ESBMC shows `a[0] = 1` and no parameter binding.
+Now a source store into a named variable kept in memory (a global, or a
+local with a declare record) is a trace step carrying the variable's debug
+type and the store's offset term; the witness evaluates the offset in the
+model and spells the element or member written (`m[1][2]`, `s.y`, `g[i]`
+with the index the model chose). A union member is the first one of the
+store's size; a bitfield store, which writes the whole unit, a partial
+write and an array of variable length are not shown, rather than named
+wrongly. A parameter's record of its own argument is dropped; another
+value, another parameter included, stays. Stores through a pointer to a
+heap object, which ESBMC spells `p->x`, are not shown yet.
+
