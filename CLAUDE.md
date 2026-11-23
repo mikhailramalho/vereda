@@ -6,7 +6,7 @@ Vereda is a bounded model checker (k-induction planned) for C, working on LLVM I
 built next to ESBMC (not as a replacement), so its flags, output and property ids follow
 ESBMC's.
 `docs/plan.md` has the goals and milestones, `docs/architecture.md` the stage layout and
-its rules, `docs/spike-survey.md` a dated log of measurements and design decisions.
+its rules, `docs/survey/` a dated log of measurements and design decisions, one file each.
 
 ## Build, run, test
 
@@ -109,5 +109,6 @@ LLVM headers only in `ir`, `analysis`, `walker`, `encode`; camada headers only i
 - Comments are plain prose; don't add `ponytail:` tags (they were removed on purpose).
 - Commit messages: short imperative subject, then a prose body explaining why and what
   changed in behaviour, no bullet lists.
-- Record measurements and design decisions (including ones not adopted) as a dated
-  section in `docs/spike-survey.md`.
+- Record measurements and design decisions (including ones not adopted) as a new file
+  `docs/survey/YYYY-MM-DD-short-title.md`, never by editing a shared file, so pull
+  requests do not conflict.

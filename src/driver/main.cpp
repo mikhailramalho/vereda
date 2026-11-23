@@ -323,7 +323,7 @@ int main(int argc, char **argv) {
     // A new walk and solver per bound, as ESBMC: the walk merges the paths
     // leaving a loop, so a larger bound changes everything after it. (One
     // solver with a scope per bound was measured and not kept; see
-    // docs/spike-survey.md.)
+    // docs/survey/2026-11-22-incremental-bmc.md.)
     progress("Checking bound k = " + std::to_string(k));
     if (int r = bmc(*fn, k); r != BoundTooSmall)
       return r;
