@@ -42,10 +42,15 @@ ninja -C build
 ctest --test-dir build
 ```
 
-`DOWNLOAD_DEPENDENCIES=ON` fetches the pinned LLVM 21 and camada releases into
-`build/deps` (Linux x86_64 only) and builds with that LLVM's clang and lld,
-since its libraries are LTO bitcode. With it off, set `LLVM_DIR` (LLVM 21 to
-23) and `camada_DIR` to installed copies.
+`DOWNLOAD_DEPENDENCIES=ON` uses an installed LLVM 21 (22, 23) under
+`/usr/lib/llvm-*`, as Ubuntu's or apt.llvm.org's `llvm-21-dev` and `clang-21`
+packages install it, and builds with its clang. Without one, it fetches the
+pinned LLVM 21 release and builds with that LLVM's clang and lld, since its
+libraries are LTO bitcode. It fetches the camada release either way (Linux
+x86_64 only). Downloads go to `build/deps`, or to `$VEREDA_DEPS_DIR` when set,
+which lets build directories and worktrees share one copy. A `LLVM_DIR` or
+`camada_DIR` given on the command line is used instead of a download. With it
+off, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR` to installed copies.
 
 CMake keeps a build directory's first compiler. If you switch
 `DOWNLOAD_DEPENDENCIES` on in an existing build directory, reconfigure with
@@ -120,8 +125,8 @@ other flag become FUTURE.
 - `docs/plan.md`: goals, design and milestones.
 - `docs/architecture.md`: the stages under `src/`, their interfaces and
   layering rules.
-- `docs/spike-survey.md`: dated measurements and the design decisions made
-  from them.
+- `docs/survey/`: dated measurements and the design decisions made from
+  them, one file per entry.
 
 ## License
 

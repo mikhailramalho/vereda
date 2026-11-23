@@ -118,28 +118,16 @@ jobs:
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # The pinned LLVM release unpacks to about 11 GB, more than the runner
-      # has free, so drop preinstalled toolchains Vereda does not use.
-      - name: Free disk space
-        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-
+      # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
+      # in /usr/lib/llvm-21 and downloads only camada; its libraries are
+      # plain objects, so links need no ThinLTO step.
       - name: Install packages
         if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib
-
-      # The unpacked dependencies, without the archives they came from. A
-      # cache saved by a pull request serves only that pull request's later
-      # runs; one saved by a run dispatched on main serves them all.
-      - name: Restore dependencies
-        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        id: deps
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            head/build/deps
-            !head/build/deps/*.tar.*
-          key: deps-${{ hashFiles('head/cmake/Dependencies.cmake') }}
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
 
       # LLVM and camada as head's configure found them, for base's build
       # and for the benchmark.
@@ -152,19 +140,8 @@ jobs:
           echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
           sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
 
-      # Here, not at the end: a regression fails the job, and the download
-      # is worth keeping all the same.
-      - name: Save dependencies
-        if: steps.deps.outputs.cache-hit != 'true' && (github.event_name != 'pull_request' || steps.screen.outputs.build == 'true')
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            head/build/deps
-            !head/build/deps/*.tar.*
-          key: ${{ steps.deps.outputs.cache-primary-key }}
-
-      # The downloaded LLVM is an LTO build, so base needs its clang and lld
-      # too, as DOWNLOAD_DEPENDENCIES would set them.
+      # The same LLVM, camada, clang and lld as head, given explicitly, so a
+      # base from before configure found an installed LLVM builds the same.
       - name: Build base
         if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
         run: |

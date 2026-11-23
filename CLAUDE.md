@@ -6,20 +6,23 @@ Vereda is a bounded model checker (k-induction planned) for C, working on LLVM I
 built next to ESBMC (not as a replacement), so its flags, output and property ids follow
 ESBMC's.
 `docs/plan.md` has the goals and milestones, `docs/architecture.md` the stage layout and
-its rules, `docs/spike-survey.md` a dated log of measurements and design decisions.
+its rules, `docs/survey/` a dated log of measurements and design decisions, one file each.
 
 ## Build, run, test
 
 ```sh
-cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON   # pinned LLVM 21 + camada into build/deps
+cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON   # installed LLVM 21, else the pinned one; camada
 cmake --build build                                       # the existing build/ may use Makefiles
 ctest --test-dir build -L vereda -j8                      # Vereda's own suite (fast; the suite dir is the label)
 ctest --test-dir build -j$(nproc)                         # everything, incl. ~6,500 imported esbmc* tests
 ctest --test-dir build -R 'vereda/loop_nested$' --output-on-failure   # one test
 ```
 
-Without `DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR`.
-The downloaded LLVM is an LTO build, so its own clang/lld become the compiler and linker.
+With `DOWNLOAD_DEPENDENCIES`, an LLVM 21-23 under `/usr/lib/llvm-*` is used with its clang;
+otherwise the pinned release is downloaded, an LTO build whose own clang/lld become the
+compiler and linker. camada is downloaded unless `camada_DIR` is given. Set
+`VEREDA_DEPS_DIR` to share downloads between build directories and worktrees. Without
+`DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR`.
 
 Run the verifier through the front end, which compiles C with clang (and llvm-link for
 several files) and forwards every flag it does not know to the binary:
@@ -109,5 +112,6 @@ LLVM headers only in `ir`, `analysis`, `walker`, `encode`; camada headers only i
 - Comments are plain prose; don't add `ponytail:` tags (they were removed on purpose).
 - Commit messages: short imperative subject, then a prose body explaining why and what
   changed in behaviour, no bullet lists.
-- Record measurements and design decisions (including ones not adopted) as a dated
-  section in `docs/spike-survey.md`.
+- Record measurements and design decisions (including ones not adopted) as a new file
+  `docs/survey/YYYY-MM-DD-short-title.md`, never by editing a shared file, so pull
+  requests do not conflict.

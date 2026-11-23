@@ -379,7 +379,7 @@ enters the spike, rerun ESBMC on it in plain BMC (`--incremental-bmc`, same
 flags and limits) and keep it only if ESBMC still blows up there. Features
 outside the memory stage, such as function pointers, stay out: a task that
 needs one is swapped for another, not served. The survey in
-`docs/spike-survey.md` records the candidates and what each needs.
+`docs/survey/2026-11-21-milestone-0-survey.md` records the candidates and what each needs.
 Several of ESBMC's blow-ups live in the formula, not in unrolling (#10541's
 144 MB formula, the list model's memcpy chains); if the solver dominates, the
 walker alone does not fix them, and partitions and the memory encoding come

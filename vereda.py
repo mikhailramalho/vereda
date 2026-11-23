@@ -123,7 +123,7 @@ def main():
         rest += ["--entry", entry, "--property", prop]
         # As ESBMC's SV-COMP runs, no largest bound: the time limit ends the
         # run. A step of 8 answered the most ReachSafety tasks that stopped
-        # at bound 50 (docs/spike-survey.md, 2026-11-23).
+        # at bound 50 (docs/survey/2026-11-23-no-largest-bound-under-incremental-bmc.md).
         if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
             rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "8"])
     if args.sanitize:
