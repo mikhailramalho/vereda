@@ -66,9 +66,9 @@ solve time, peak memory and verdict there; `tests.yml` uploads them. `tests/benc
 --clang <clang> --stats <base-dir> <head-dir> <base-bin> <head-bin>` picks the tests
 whose numbers changed between two such runs and measures them again with both binaries
 side by side (`--list <file>` measures a fixed list instead); it fails on a time, memory
-or verdict regression. `.github/workflows/perf.yml` runs the base's suite on each pull
-request, takes the head's numbers from the pull request's Tests run, and comments only
-the tests that got better or worse.
+or verdict regression. `.github/workflows/perf.yml` takes the base's numbers from the
+Tests run on main (running the base's suite itself when main has none), the head's from
+the pull request's Tests run, and comments only the tests that got better or worse.
 
 ## Architecture
 

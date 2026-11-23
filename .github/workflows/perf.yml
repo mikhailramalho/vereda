@@ -1,7 +1,8 @@
 # Catches performance changes across the whole regression suite. It builds
-# the pull request's base and head, runs the base's suite here, and takes
-# the head's numbers from the pull request's own Tests run (tests.yml
-# records each test's time and memory). The tests whose numbers differ are
+# the pull request's base and head, takes the base's numbers from the Tests
+# run on main (tests.yml records each test's time and memory), or runs the
+# base's suite here when main has none, and takes the head's numbers from
+# the pull request's own Tests run. The tests whose numbers differ are
 # measured again side by side on this runner with both binaries
 # (tests/bench.py), since two suite runs on different machines are too
 # noisy to compare alone. It fails when head is much slower, uses much more
@@ -26,8 +27,8 @@ permissions:
 jobs:
   bench:
     runs-on: ubuntu-24.04
-    # Two builds, the base's suite (about 30 minutes three at a time) and
-    # the side-by-side reruns.
+    # Two builds, waiting for the Tests runs or running the base's suite
+    # (about 30 minutes three at a time), and the side-by-side reruns.
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +39,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha || inputs.base }}
           path: base
+          # History to walk back past docs-only commits to numbers on main.
+          fetch-depth: 50
 
       # The pinned LLVM release unpacks to about 11 GB, more than the runner
       # has free, so drop preinstalled toolchains Vereda does not use.
@@ -90,10 +93,44 @@ jobs:
             -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
           ninja -C base/build
 
-      # With head's run.py, which records the numbers; failing tests do not
-      # matter here, tests.yml judges them.
-      - name: Run the base's tests
+      # From the Tests run of the base commit's push to main, waiting for it
+      # if it is still running. A commit without a run is skipped only if it
+      # touched docs alone (tests.yml skips those, and the binary is the
+      # same); a code commit without numbers, or a run that failed before
+      # uploading them or whose numbers expired, leaves found unset.
+      - name: Get the base's numbers from main
+        id: base-stats
         if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for c in $(git -C base rev-list --first-parent -n 50 HEAD); do
+            id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow tests.yml --commit "$c" \
+                   --event push --json databaseId -q '.[0].databaseId')
+            if [ -z "$id" ]; then
+              if git -C base diff-tree --no-commit-id --name-only -r "$c" |
+                   grep -qvE '^docs/|\.md$'; then
+                echo "code commit $c has no Tests run"
+                break
+              fi
+              continue
+            fi
+            gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
+            if gh run download "$id" -R "$GITHUB_REPOSITORY" -n regress-stats -D base-stats; then
+              echo "base numbers from $c, run $id: $(ls base-stats | wc -l) tests"
+              echo "found=true" >> "$GITHUB_OUTPUT"
+            else
+              rm -rf base-stats
+              echo "run $id of $c has no numbers"
+            fi
+            break
+          done
+
+      # Main had no numbers: run the base's suite here, with head's run.py,
+      # which records them. Failing tests do not matter here, tests.yml
+      # judges them.
+      - name: Run the base's tests
+        if: github.event_name == 'pull_request' && steps.base-stats.outputs.found != 'true'
         env:
           REGRESS_STATS: ${{ github.workspace }}/base-stats
         run: |
