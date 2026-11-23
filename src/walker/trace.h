@@ -9,11 +9,17 @@
 namespace vereda::walker {
 
 struct Step {
-  enum Kind { Assignment, Assumption, Check } kind;
+  // Call: an integer a bodyless __VERIFIER_nondet_ function returned, for
+  // the witness.
+  enum Kind { Assignment, Assumption, Check, Call } kind;
   camada::SMTExprRef guard; // path condition at the step; for Check, the violation
+  // For Check, where the witness puts the violation: the call to
+  // reach_error when the check is inside it.
   ir::SourceLoc loc;
-  std::string text;         // the variable, or the assumed expression
-  camada::SMTExprRef value; // assignments only
+  // The variable, the assumed expression or the callee; for Check,
+  // "reach_error" when the violation is a call to it.
+  std::string text;
+  camada::SMTExprRef value; // assignments and calls only
   bool isUnsigned = false;  // from the debug type; bitvectors carry no sign
   unsigned check = 0;       // for Check, the index of the claim in the checks
   // A store into a named variable kept in memory: the variable's debug type

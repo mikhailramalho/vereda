@@ -320,7 +320,10 @@ private:
     // one is an ordinary call. An unreachability-intrinsic flag that skips
     // the body comes with the SV-COMP wrapper.
     if (name.starts_with("__VERIFIER_nondet_")) {
-      enc.bind(&c, enc.fresh(c.getType(), tag));
+      SMTExprRef v = enc.fresh(c.getType(), tag);
+      enc.bind(&c, v);
+      if (c.getType()->isIntegerTy()) // for the witness
+        trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
       return guard;
     }
     if (name == "__VERIFIER_assume") {
@@ -394,7 +397,11 @@ private:
     for (Argument &arg : callee.args())
       enc.bind(&arg, actuals[arg.getArgNo()]);
 
+    const CallBase *outerReachError = reachError;
+    if (callee.getName() == "reach_error")
+      reachError = &c;
     Frame frame = function(callee, guard, st);
+    reachError = outerReachError;
 
     SMTExprRef after = t.boolean(false), result;
     for (unsigned i = 0; i < frame.returns.size(); ++i) {
@@ -425,7 +432,9 @@ private:
   void claim(checks::Property property, const ir::SourceLoc &loc, std::string comment,
              std::string expr, unsigned index, SMTExprRef violated, const void *key) {
     auto [it, inserted] = claims.try_emplace(key, checks.size());
-    trace.push_back({Step::Check, violated, loc, "", {}, false, it->second});
+    bool viaReachError = reachError || comment == "reach_error";
+    trace.push_back({Step::Check, violated, reachError ? ir::location(*reachError) : loc,
+                     viaReachError ? "reach_error" : "", {}, false, it->second});
     if (!inserted) {
       checks[it->second].violated = t.lor(checks[it->second].violated, violated);
       return;
@@ -630,6 +639,9 @@ private:
   Trace &trace;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   SmallVector<const Function *, 8> stack;
+  // The call to the reach_error being walked, if any: the witness puts a
+  // violation inside it at the call, the violation unreach-call names.
+  const CallBase *reachError = nullptr;
   DenseMap<const void *, unsigned> claims; // source construct -> index in checks
   DenseMap<const Instruction *, unsigned> assertionNumber;
   DenseMap<const Function *, unsigned> assertionsIn;

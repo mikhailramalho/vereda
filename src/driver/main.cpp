@@ -6,6 +6,7 @@
 #include "util/log.h"
 #include "walker/walker.h"
 #include "witness/counterexample.h"
+#include "witness/witness.h"
 
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
@@ -49,6 +50,11 @@ static cl::opt<bool> multiProperty("multi-property",
 static cl::opt<bool> fp2bv("fp2bv",
                            cl::desc("Encode floating point in bit-vectors, as camada does, instead "
                                     "of the solver's floating-point theory"));
+static cl::opt<std::string> witnessFile(
+    "witness", cl::desc("Write the first counterexample that reaches reach_error to this file "
+                        "as an SV-COMP violation witness (YAML, format 2.0); - is standard "
+                        "output"),
+    cl::value_desc("file"));
 static cl::opt<std::string> solverName("solver", cl::desc("SMT solver: bitwuzla, z3, cvc5"),
                                        cl::init("bitwuzla"));
 
@@ -148,7 +154,7 @@ static int bmc(Function &fn, unsigned bound) {
   };
   // The time so far goes before each error trace, which is not solving
   // time, and after solving when there is no trace.
-  bool traced = false;
+  bool traced = false, witnessWritten = false;
   auto solvingTime = [&] {
     std::string msg;
     raw_string_ostream(msg) << "Solving time: " << solveTime.elapsed() << " (peak memory "
@@ -165,6 +171,22 @@ static int bmc(Function &fn, unsigned bound) {
         traced = true;
         progress("Building error trace");
         vereda::witness::printCounterexample(solver, trace, checks, &c - checks.data(), outs());
+        if (!witnessFile.empty() && !witnessWritten) {
+          Expected<std::string> witness = vereda::witness::violationWitness(
+              solver, trace, checks, &c - checks.data(), *fn.getParent(), entry);
+          outs().flush(); // the file may be standard output too
+          if (!witness) {
+            errs() << "vereda: no witness: " << toString(witness.takeError()) << "\n";
+            return;
+          }
+          witnessWritten = true;
+          std::error_code ec;
+          raw_fd_ostream os(witnessFile, ec);
+          if (ec)
+            errs() << "vereda: cannot write " << witnessFile << ": " << ec.message() << "\n";
+          else
+            os << *witness;
+        }
       });
   if (!traced)
     solvingTime();

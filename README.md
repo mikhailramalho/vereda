@@ -67,6 +67,7 @@ main verifier flags:
 | `--no-unwinding-assertions` | Assume the bound instead of checking it |
 | `--incremental-bmc`, `--max-k-step N` | Try bounds 1, 2, ... until the verdict does not depend on the bound |
 | `--multi-property` | Check every property instead of stopping at the first violation |
+| `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
 | `--entry F` | Entry function (default `main`) |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
