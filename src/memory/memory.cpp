@@ -3,6 +3,7 @@
 #include "util/unsupported.h"
 #include <llvm/IR/GlobalVariable.h>
 #include <set>
+#include <vector>
 
 using namespace llvm;
 using camada::SMTExprRef;
@@ -128,8 +129,7 @@ State Memory::initial() {
           t.symbol("provenance#" + n, s.mkArraySort(index, s.mkBVSort(ObjBits)))};
 }
 
-// Past this many known bytes in a state, all go to the arrays,
-// which bounds the copy on write; a persistent map would lift it.
+// Past this many known bytes in a state, all go to the arrays.
 static const size_t MaxKnown = 4096;
 
 std::optional<Memory::Key> Memory::key(SMTExprRef p) const {
@@ -143,89 +143,59 @@ SMTExprRef Memory::ptr(const Key &k) {
   return ptr(t.bv(k.first, ObjBits), t.bv(k.second, ptrBits));
 }
 
-State::Known &Memory::own(State &st) {
-  if (!st.known)
-    st.known = std::make_shared<State::Known>();
-  else if (st.known.use_count() > 1)
-    st.known = std::make_shared<State::Known>(*st.known);
-  return *st.known;
-}
-
 void Memory::flush(State &st, std::optional<uint64_t> object) {
-  if (!st.known)
-    return;
-  // Keys sort by object first, so one object's bytes are one range.
-  auto range = [&] {
-    auto &k = *st.known;
-    return object ? std::make_pair(k.lower_bound({*object, 0}), k.lower_bound({*object + 1, 0}))
-                  : std::make_pair(k.begin(), k.end());
-  };
-  auto [lo, hi] = range();
-  if (lo == hi)
-    return;
-  if (st.known.use_count() > 1) {
-    own(st);
-    std::tie(lo, hi) = range();
+  auto move = [&](Key k, const State::Cell &c) { storeArrays(st, k.first, ptr(k), c); };
+  if (object) {
+    st.known.forObject(*object, move);
+    st.known.eraseObject(*object);
+  } else {
+    st.known.forEach(move);
+    st.known.clear();
   }
-  for (auto it = lo; it != hi; ++it) {
-    SMTExprRef at = ptr(it->first);
-    auto [data, prov] = arraysOf(st, it->first.first);
-    data = t.store(data, at, it->second.data);
-    prov = t.store(prov, at, it->second.prov);
-  }
-  st.known->erase(lo, hi);
 }
 
-State::Separate &Memory::ownSeparate(State &st) {
-  if (!st.separate)
-    st.separate = std::make_shared<State::Separate>();
-  else if (st.separate.use_count() > 1)
-    st.separate = std::make_shared<State::Separate>(*st.separate);
-  return *st.separate;
-}
-
-std::pair<SMTExprRef &, SMTExprRef &> Memory::arraysOf(State &st, uint64_t object) {
-  if (st.separate && st.separate->count(object)) {
-    State::Cell &own = ownSeparate(st)[object];
-    return {own.data, own.prov};
+void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State::Cell &c) {
+  if (const State::Cell *own = st.separate.find({object, 0})) {
+    State::Cell stored{t.store(own->data, at, c.data), t.store(own->prov, at, c.prov)};
+    st.separate.set({object, 0}, stored);
+    return;
   }
-  return {st.data, st.prov};
+  st.data = t.store(st.data, at, c.data);
+  st.prov = t.store(st.prov, at, c.prov);
 }
 
 State::Cell Memory::readArrays(const State &st, SMTExprRef at) {
   const APInt *obj = t.constant(object(at));
-  if (st.separate && obj)
-    if (auto it = st.separate->find(obj->getZExtValue()); it != st.separate->end())
-      return {t.select(it->second.data, at), t.select(it->second.prov, at)};
+  if (obj)
+    if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
+      return {t.select(own->data, at), t.select(own->prov, at)};
   State::Cell r{t.select(st.data, at), t.select(st.prov, at)};
-  if (st.separate && !obj)
-    for (const auto &[o, own] : *st.separate) {
-      SMTExprRef is = t.eq(object(at), t.bv(o, ObjBits));
+  if (!obj)
+    st.separate.forEach([&](Key k, const State::Cell &own) {
+      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits));
       r = {t.ite(is, t.select(own.data, at), r.data), t.ite(is, t.select(own.prov, at), r.prov)};
-    }
+    });
   return r;
 }
 
-std::shared_ptr<State::Separate> Memory::mergeSeparate(SMTExprRef c, const State &a,
-                                                       const State &b) {
-  if (a.separate == b.separate)
+CellMap Memory::mergeSeparate(SMTExprRef c, const State &a, const State &b) {
+  if (a.separate.same(b.separate))
     return a.separate;
   // An object separate on one side only reads the other side's shared
   // arrays, which hold its bytes there under the same index.
   auto arrays = [](const State &st, uint64_t o) {
-    if (st.separate)
-      if (auto it = st.separate->find(o); it != st.separate->end())
-        return it->second;
-    return State::Cell{st.data, st.prov};
+    const State::Cell *own = st.separate.find({o, 0});
+    return own ? *own : State::Cell{st.data, st.prov};
   };
-  auto r = std::make_shared<State::Separate>();
-  for (const State *st : {&a, &b})
-    if (st->separate)
-      for (const auto &e : *st->separate)
-        if (!r->count(e.first)) {
-          State::Cell x = arrays(a, e.first), y = arrays(b, e.first);
-          (*r)[e.first] = {t.ite(c, x.data, y.data), t.ite(c, x.prov, y.prov)};
-        }
+  CellMap r;
+  auto add = [&](Key k, const State::Cell &) {
+    if (r.find(k))
+      return;
+    State::Cell x = arrays(a, k.first), y = arrays(b, k.first);
+    r.set(k, {t.ite(c, x.data, y.data), t.ite(c, x.prov, y.prov)});
+  };
+  a.separate.forEach(add);
+  b.separate.forEach(add);
   return r;
 }
 
@@ -253,9 +223,9 @@ State::Cell Memory::readByte(const State &st, SMTExprRef at) {
     State::Cell a = readByte(st, x), b = readByte(st, y);
     return {t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov)};
   }
-  if (std::optional<Key> k = key(at); k && st.known)
-    if (auto it = st.known->find(*k); it != st.known->end())
-      return it->second;
+  if (std::optional<Key> k = key(at))
+    if (const State::Cell *c = st.known.find(*k))
+      return *c;
   return readArrays(st, at);
 }
 
@@ -277,28 +247,30 @@ void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
     // objects; reads of a separate object never look there.
     const APInt *obj = t.constant(object(at));
     bool shared = true;
-    if (st.separate)
-      for (auto &[o, own] : ownSeparate(st)) {
-        if (obj && obj->getZExtValue() != o)
-          continue;
-        SMTExprRef is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
-        own.data = t.ite(is, t.store(own.data, at, c.data), own.data);
-        own.prov = t.ite(is, t.store(own.prov, at, c.prov), own.prov);
-        shared = !obj;
-      }
+    CellMap separate = st.separate;
+    st.separate.forEach([&](Key k, const State::Cell &own) {
+      uint64_t o = k.first;
+      if (obj && obj->getZExtValue() != o)
+        return;
+      SMTExprRef is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
+      separate.set(k, {t.ite(is, t.store(own.data, at, c.data), own.data),
+                       t.ite(is, t.store(own.prov, at, c.prov), own.prov)});
+      shared = !obj;
+    });
+    st.separate = separate;
     if (shared) {
       st.data = t.store(st.data, at, c.data);
       st.prov = t.store(st.prov, at, c.prov);
     }
     return;
   }
-  own(st)[*k] = c;
-  if (st.known->size() > MaxKnown)
+  st.known.set(*k, c);
+  if (st.known.size() > MaxKnown)
     flush(st);
 }
 
 State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
-  if (a0.known == b0.known)
+  if (a0.known.same(b0.known))
     return {t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
             mergeSeparate(c, a0, b0)};
   // An object whose bytes would become a choice between two values that
@@ -306,33 +278,29 @@ State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
   // solver bit-blasts a stored value only where a read needs it; as a choice,
   // all of them up front (RERS Problem14 ran out of memory).
   State a = a0, b = b0;
-  std::map<Key, std::pair<State::Cell, State::Cell>> sides;
+  // Only the bytes whose cells differ need a choice; the rest stay as a has
+  // them. A byte known on one side only reads the other side's arrays, which
+  // the flushes below change only at other objects.
+  std::vector<std::pair<Key, std::pair<State::Cell, State::Cell>>> sides;
   std::set<uint64_t> moved;
-  for (const State *st : {&a, &b})
-    if (st->known)
-      for (const auto &e : *st->known) {
-        auto [it, added] = sides.try_emplace(e.first);
-        if (!added)
-          continue;
-        // A byte known on one side only reads the other side's arrays,
-        // which the flushes below change only at other objects.
-        it->second = {readByte(a, ptr(e.first)), readByte(b, ptr(e.first))};
-        const SMTExprRef &x = it->second.first.data, &y = it->second.second.data;
-        if (x.get() != y.get() && (t.arithmetic(x) || t.arithmetic(y)))
-          moved.insert(e.first.first);
-      }
+  CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *x, const State::Cell *y) {
+    State::Cell xa = x ? *x : readByte(a, ptr(k)), yb = y ? *y : readByte(b, ptr(k));
+    if (xa.data.get() != yb.data.get() && (t.arithmetic(xa.data) || t.arithmetic(yb.data)))
+      moved.insert(k.first);
+    sides.push_back({k, {xa, yb}});
+  });
   for (uint64_t object : moved) {
     flush(a, object);
     flush(b, object);
   }
-  auto known = std::make_shared<State::Known>();
+  CellMap known = a.known;
   for (const auto &[key, xy] : sides)
     if (!moved.count(key.first))
-      known->emplace(key, State::Cell{t.ite(c, xy.first.data, xy.second.data),
-                                      t.ite(c, xy.first.prov, xy.second.prov)});
+      known.set(key, {t.ite(c, xy.first.data, xy.second.data),
+                      t.ite(c, xy.first.prov, xy.second.prov)});
   State r{t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov), std::move(known),
           mergeSeparate(c, a, b)};
-  if (r.known->size() > MaxKnown)
+  if (r.known.size() > MaxKnown)
     flush(r);
   return r;
 }
@@ -402,12 +370,9 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   if (!size || *size != n)
     return false;
   uint64_t o = k->first;
-  if (st.known) { // every byte is overwritten, so its known bytes are stale
-    State::Known &known = own(st);
-    known.erase(known.lower_bound({o, 0}), known.lower_bound({o + 1, 0}));
-  }
-  ownSeparate(st)[o] = {t.constArray(pointerSort(), byte),
-                        t.constArray(pointerSort(), t.bv(IntProvenance, ObjBits))};
+  st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
+  st.separate.set({o, 0}, {t.constArray(pointerSort(), byte),
+                           t.constArray(pointerSort(), t.bv(IntProvenance, ObjBits))});
   return true;
 }
 

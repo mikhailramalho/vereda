@@ -22,6 +22,7 @@
 // whose object is not constant chooses among them by object id.
 #pragma once
 #include "encode/terms.h"
+#include "memory/cellmap.h"
 #include <camada/camada.h>
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/IR/Constants.h>
@@ -29,8 +30,6 @@
 #include <llvm/IR/Module.h>
 #include <optional>
 #include <functional>
-#include <map>
-#include <memory>
 #include <vector>
 
 namespace vereda::memory {
@@ -38,17 +37,13 @@ namespace vereda::memory {
 struct State {
   camada::SMTExprRef data; // pointer -> byte
   camada::SMTExprRef prov; // pointer -> object id of a stored pointer's byte
-  struct Cell {
-    camada::SMTExprRef data, prov;
-  };
-  // Bytes at constant (object, offset), newer than data and prov. Shared
-  // between copies of the state and copied on the first write.
-  using Known = std::map<std::pair<uint64_t, uint64_t>, Cell>;
-  std::shared_ptr<Known> known;
-  // Objects with arrays of their own: object id -> its data and provenance
-  // arrays. Shared between copies of the state like known.
-  using Separate = std::map<uint64_t, Cell>;
-  std::shared_ptr<Separate> separate;
+  using Cell = memory::Cell;
+  // Bytes at constant (object, offset), newer than data and prov. Copies of
+  // the state share it (cellmap.h).
+  CellMap known;
+  // Objects with arrays of their own, at key (object id, 0): its data and
+  // provenance arrays.
+  CellMap separate;
 };
 
 class Memory {
@@ -111,8 +106,6 @@ private:
   using Key = std::pair<uint64_t, uint64_t>;
   std::optional<Key> key(camada::SMTExprRef p) const;
   camada::SMTExprRef ptr(const Key &k);
-  // st's known bytes, made unshared so they can change.
-  State::Known &own(State &st);
   // Moves the known bytes an access at p may alias into the arrays: those
   // of p's object, or all when the object is not constant.
   void prepare(State &st, camada::SMTExprRef p);
@@ -121,11 +114,10 @@ private:
   State::Cell readByte(const State &st, camada::SMTExprRef at);
   // The arrays' bytes at a pointer that is not a known byte.
   State::Cell readArrays(const State &st, camada::SMTExprRef at);
-  // The arrays that hold object's bytes in st: its own or the shared ones.
-  std::pair<camada::SMTExprRef &, camada::SMTExprRef &> arraysOf(State &st, uint64_t object);
-  State::Separate &ownSeparate(State &st);
-  std::shared_ptr<State::Separate> mergeSeparate(camada::SMTExprRef c, const State &a,
-                                                 const State &b);
+  // Stores c at at in the arrays that hold object's bytes in st: its own or
+  // the shared ones.
+  void storeArrays(State &st, uint64_t object, camada::SMTExprRef at, const State::Cell &c);
+  CellMap mergeSeparate(camada::SMTExprRef c, const State &a, const State &b);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   void setBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
