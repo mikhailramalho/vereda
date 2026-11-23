@@ -198,6 +198,8 @@ def candidates(base_dir, head_dir):
         if b[4] == h[4] and not b[4].startswith(("SUCCESSFUL", "FAILED", "UNKNOWN")) \
                 and b[4] not in STOPPED:
             continue  # no verdict on either side: a test of an error, not of speed
+        if b[4] != h[4] and b[4] not in STOPPED and h[4] not in STOPPED:
+            continue  # a changed verdict is tests.yml's to judge, often on purpose
         if regressions(b, h) or improvements(b, h):
             pairs = ((h[0], b[0]), (b[0], h[0]), (h[3], b[3]), (b[3], h[3]))
             ratio = max(((x or 0) + 0.1) / ((y or 0) + 0.1) for x, y in pairs)
