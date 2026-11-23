@@ -69,5 +69,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_5296
 // RUN: -m64 --incremental-bmc --force-malloc-success
 // EXPECT: \A(?![\s\S]*missing argument for parameter)[\s\S]*VERIFICATION SUCCESSFUL[\s\S]*\Z
-// Vereda: unmet EXPECT: \A(?![\s\S]*missing argument for parameter)[\s\S]*VERIFICATION SUCCESSFUL[\s\S]*\Z
-// MODE: FUTURE
