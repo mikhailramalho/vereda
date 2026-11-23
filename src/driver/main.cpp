@@ -44,6 +44,11 @@ static cl::opt<bool> incrementalBMC(
     cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
 static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for --incremental-bmc"),
                                   cl::init(50));
+static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
+                                     cl::desc("No largest bound for --incremental-bmc: raise it "
+                                              "until a verdict or the time limit"));
+static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremental-bmc by this"),
+                               cl::init(1));
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
                                             "first violation"));
@@ -135,7 +140,8 @@ static int bmc(Function &fn, unsigned bound) {
   vereda::encode::Encoder enc(terms, *memory, fp2bv);
   vereda::checks::Checks checks;
   vereda::walker::Trace trace;
-  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property};
+  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
+                                   !incrementalBMC};
   if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
     return unknown(toString(std::move(e)));
   // Peak memory after the walk covers the walker and the terms it built;
@@ -293,11 +299,17 @@ int main(int argc, char **argv) {
   }
 
   if (!incrementalBMC) {
-    if (maxKStep.getNumOccurrences()) {
-      errs() << argv[0] << ": --max-k-step needs --incremental-bmc\n";
-      return 1;
-    }
+    cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
+    for (cl::Option *o : boundFlags)
+      if (o->getNumOccurrences()) {
+        errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
+        return 1;
+      }
     return bmc(*fn, unwind);
+  }
+  if (!kStep) {
+    errs() << argv[0] << ": --k-step must be at least 1\n";
+    return 1;
   }
   if (dumpSMTOnly) {
     errs() << argv[0] << ": --dump-smt-only stops before the solver picks the bound; use --unwind\n";
@@ -307,7 +319,7 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return 1;
   }
-  for (unsigned k = 1; k <= maxKStep; ++k) {
+  for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k += kStep) {
     // A new walk and solver per bound, as ESBMC: the walk merges the paths
     // leaving a loop, so a larger bound changes everything after it. (One
     // solver with a scope per bound was measured and not kept; see

@@ -26,7 +26,7 @@ int main(void)
   }
 }
 // Imported from ESBMC regression/esbmc/nonterm_eca_discarded_result_fail
-// Needs: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps
+// Needs: --termination --max-inductive-step 3
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

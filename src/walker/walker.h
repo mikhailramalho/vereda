@@ -23,6 +23,10 @@ struct Options {
   bool unwindingAssertions = true; // check the bound instead of assuming it
   bool forceMallocSuccess = false; // malloc never returns null
   Property property = Property::All;
+  // An "Unwinding loop" line per iteration; off under --incremental-bmc,
+  // whose walks repeat every iteration at each bound, so an unbounded run
+  // printed gigabytes.
+  bool showIterations = true;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

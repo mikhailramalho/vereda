@@ -37,7 +37,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4442_no_assertions_passthrough
-// Needs: --no-assertions --k-step 2
+// Needs: --no-assertions
 // RUN: --no-assertions --incremental-bmc --k-step 2 --64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

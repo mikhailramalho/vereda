@@ -67,7 +67,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4634
-// Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --data-races-check --k-step 2 --state-hashing --no-por --unlimited-k-steps
+// Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --data-races-check --state-hashing --no-por
 // RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --data-races-check --incremental-bmc --k-step 2 --state-hashing --no-por --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
