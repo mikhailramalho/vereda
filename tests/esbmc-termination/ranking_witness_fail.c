@@ -9,7 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/termination/ranking_witness_fail
-// Needs: --termination --k-step 2 --max-inductive-step 3 --no-assertions --witness-output-yaml witness.yml
+// Needs: --termination --max-inductive-step 3 --no-assertions --witness-output-yaml witness.yml
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --no-pointer-check --no-bounds-check --witness-output-yaml witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

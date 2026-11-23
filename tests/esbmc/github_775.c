@@ -34,7 +34,7 @@ int main() {
 // - comparing freed pointers
 // - contributed by Ondra Lengal
 // Imported from ESBMC regression/esbmc/github_775
-// Needs: --state-hashing --add-symex-value-sets --k-step 2 --unlimited-k-steps --memory-leak-check REQUIRES arch32
+// Needs: --state-hashing --add-symex-value-sets --memory-leak-check REQUIRES arch32
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --k-step 2 --floatbv --unlimited-k-steps --32 --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

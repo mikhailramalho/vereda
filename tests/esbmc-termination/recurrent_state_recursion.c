@@ -13,7 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/recurrent_state_recursion
-// Needs: --termination --k-step 2 --max-inductive-step 3 --no-assertions
+// Needs: --termination --max-inductive-step 3 --no-assertions
 // RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --no-pointer-check --no-bounds-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

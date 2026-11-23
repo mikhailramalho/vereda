@@ -141,8 +141,9 @@ private:
           it->second.clear();
           return;
         }
-        outs() << "Unwinding loop " << number << " iteration " << i << "   "
-               << loopLocation(l).str() << "\n";
+        if (opts.showIterations)
+          outs() << "Unwinding loop " << number << " iteration " << i << "   "
+                 << loopLocation(l).str() << "\n";
       }
       region(frame, fi, l);
     }

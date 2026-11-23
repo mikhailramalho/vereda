@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/cwe_infinite_loop_sarif
-// Needs: --termination --k-step 2 --max-inductive-step 3 --sarif-output -
+// Needs: --termination --max-inductive-step 3 --sarif-output -
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

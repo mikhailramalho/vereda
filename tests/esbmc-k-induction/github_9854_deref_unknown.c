@@ -18,7 +18,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/k-induction/github_9854_deref_unknown
-// Needs: --k-induction --k-step 4
+// Needs: --k-induction
 // RUN: --k-induction --k-step 4 --max-k-step 9
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$

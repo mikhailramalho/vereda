@@ -43,7 +43,7 @@ int main() {
   __VERIFIER_assert(iA == iB); // iA and iB must be equal
 }
 // Imported from ESBMC regression/esbmc-unix/github_538_weaver_true
-// Needs: --k-step 2 --unlimited-k-steps --context-bound 3
+// Needs: --context-bound 3
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --floatbv --unlimited-k-steps --context-bound 3  --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

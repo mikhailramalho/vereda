@@ -42,7 +42,7 @@ int main() {
   __VERIFIER_assert(iA != iB); // iA and iB must be equal
 }
 // Imported from ESBMC regression/esbmc-unix/github_538_weaver_false
-// Needs: --k-step 2 --unlimited-k-steps --context-bound 3 --interval-analysis
+// Needs: --context-bound 3 --interval-analysis
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --floatbv --unlimited-k-steps --context-bound 3  --incremental-bmc --interval-analysis -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

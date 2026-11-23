@@ -35,7 +35,7 @@ int main()
   __VERIFIER_assert(str->bytes[str->len] == 0); // This should never fail
 }
 // Imported from ESBMC regression/esbmc/github_28_successful
-// Needs: --state-hashing --k-step 2 --unlimited-k-steps --context-bound 2 --k-induction --max-inductive-step 3
+// Needs: --state-hashing --context-bound 2 --k-induction --max-inductive-step 3
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --no-align-check --k-step 2 --floatbv --unlimited-k-steps --context-bound 2 --64 --k-induction --max-inductive-step 3 --no-pointer-check --no-bounds-check -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
