@@ -323,7 +323,13 @@ static unsigned storeBits(const DataLayout &dl, Type *ty) {
 void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
   unsigned bits = storeBits(dl, ty);
   if (ty->isPointerTy()) {
-    storeBytes(st, p, address(v), object(v));
+    // A pointer with no object but an offset was made from an integer, so
+    // it is stored as one and a load converts it again (#75). Null keeps
+    // object 0 and is never converted. The test is on the offset, which,
+    // unlike the address, folds on each side of ite(ok, p, null).
+    SMTExprRef obj = object(v);
+    SMTExprRef made = t.land(t.eq(obj, t.bv(0, ObjBits)), t.lnot(t.eq(offset(v), t.bv(0, ptrBits))));
+    storeBytes(st, p, address(v), t.ite(made, t.bv(IntProvenance, ObjBits), obj));
     return;
   }
   if (!ty->isIntegerTy() && !ty->isFloatingPointTy()) // a float is its bits
@@ -347,10 +353,10 @@ SMTExprRef Memory::load(State &st, SMTExprRef p, Type *ty) {
   if (ty->isPointerTy()) {
     // The provenance of the first byte stands for the pointer.
     SMTExprRef obj = first.prov;
-    // Bytes of an integer, or of a pointer with no object, which an object
-    // allocated since it was stored may now cover: either way the address
-    // is converted now, as a fresh conversion would be (#75).
-    SMTExprRef isInt = t.lor(t.eq(obj, t.bv(IntProvenance, ObjBits)), t.eq(obj, t.bv(0, ObjBits)));
+    // Bytes of an integer, among them a pointer made from one (see store),
+    // which an object allocated since may now cover: the address is
+    // converted now, as a fresh conversion would be (#75).
+    SMTExprRef isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
     return t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
   }
   if (ty->isIntegerTy(1))
