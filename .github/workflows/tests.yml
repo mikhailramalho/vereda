@@ -1,9 +1,12 @@
 name: Tests
 
+# Changes only to docs/ or Markdown files run no tests.
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**.md']
   pull_request:
+    paths-ignore: ['docs/**', '**.md']
 
 jobs:
   regression:
