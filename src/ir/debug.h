@@ -1,11 +1,13 @@
 // Stage ir: debug-info helpers. Source locations come from clang's -g output.
 #pragma once
+#include <llvm/ADT/SmallString.h>
 #include <llvm/BinaryFormat/Dwarf.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instruction.h>
+#include <llvm/Support/Path.h>
 #include <optional>
 #include <string>
 
@@ -26,10 +28,34 @@ struct SourceLoc {
   }
 };
 
+// name in directory dir, as one path.
+inline std::string joinedPath(llvm::StringRef dir, llvm::StringRef name) {
+  llvm::SmallString<256> path;
+  if (!llvm::sys::path::is_absolute(name))
+    path = dir;
+  llvm::sys::path::append(path, name);
+  return std::string(path);
+}
+
+// A file's name in locations: the compile unit's own spelling when it is the
+// unit's main file, as the user named it, else its full path. clang may split
+// a path that shares a prefix with its working directory into that prefix
+// and a relative rest (#85), so the names are compared joined.
+inline std::string fileName(llvm::StringRef dir, llvm::StringRef name,
+                            const llvm::DILocalScope *scope) {
+  std::string path = joinedPath(dir, name);
+  const llvm::DISubprogram *sp = scope->getSubprogram();
+  const llvm::DICompileUnit *cu = sp ? sp->getUnit() : nullptr;
+  if (cu && path == joinedPath(cu->getDirectory(), cu->getFilename()))
+    return cu->getFilename().str();
+  return path;
+}
+
 inline SourceLoc location(const llvm::DebugLoc &loc, llvm::StringRef function) {
   if (!loc)
     return {"<unknown>", 0, 0, function.str()};
-  return {loc->getFilename().str(), loc.getLine(), loc.getCol(), function.str()};
+  return {fileName(loc->getDirectory(), loc->getFilename(), loc->getScope()), loc.getLine(),
+          loc.getCol(), function.str()};
 }
 
 inline SourceLoc location(const llvm::Instruction &inst) {
@@ -68,7 +94,8 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
   llvm::StringRef function = dvr->getFunction()->getName();
   SourceLoc loc = dvr->getDebugLoc() && dvr->getDebugLoc().getLine() != 0
                       ? location(dvr->getDebugLoc(), function)
-                      : SourceLoc{var->getFilename().str(), var->getLine(), 0, function.str()};
+                      : SourceLoc{fileName(var->getDirectory(), var->getFilename(), var->getScope()),
+                                  var->getLine(), 0, function.str()};
   return DbgAssign{var->getName().str(), v, isUnsigned, loc};
 }
 

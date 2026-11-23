@@ -49,6 +49,7 @@ drives `tests/run.py`:
 // EXPECT-NOT: VERIFICATION SUCCESSFUL
 // MODE: KNOWNBUG                  CORE (default), THOROUGH, KNOWNBUG, FUTURE
 // FILES: helper.c                 extra sources next to the test
+// CWD: %S                         directory to run in (%S: the test's), default a fresh one
 ```
 
 KNOWNBUG and FUTURE tests show as skipped while some expectation fails; when one starts

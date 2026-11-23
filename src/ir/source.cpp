@@ -1,10 +1,9 @@
 #include "ir/source.h"
+#include "ir/debug.h"
 
-#include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/Path.h>
 #include <cctype>
 
 using namespace llvm;
@@ -25,11 +24,7 @@ std::string callArgumentText(const Instruction &inst) {
   const DILocation *loc = inst.getDebugLoc();
   if (!loc || loc->getLine() == 0 || loc->getColumn() == 0)
     return "";
-  SmallString<256> path;
-  if (!sys::path::is_absolute(loc->getFilename()))
-    path = loc->getDirectory();
-  sys::path::append(path, loc->getFilename());
-  StringRef text = fileText(path);
+  StringRef text = fileText(joinedPath(loc->getDirectory(), loc->getFilename()));
 
   // Offset of the call's line and column; the column points at the callee.
   size_t pos = 0;

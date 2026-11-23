@@ -8,6 +8,8 @@ describes it:
     // EXPECT-NOT: <regex>                   must not match
     // MODE: CORE|THOROUGH|KNOWNBUG|FUTURE   optional, default CORE
     // FILES: a.c b.c                        extra sources, relative to the test
+    // CWD: %S                               the directory to run in, default a
+                                             fresh temporary one
 
 IR files use ';' instead of '//'. KNOWNBUG and FUTURE tests are expected to
 fail; the run then passes, with exit code 77 so that ctest calls it skipped,
@@ -42,7 +44,7 @@ import sys
 import tempfile
 import time
 
-HEADER = re.compile(r"^\s*(?://|;)\s*(RUN|EXPECT|EXPECT-NOT|MODE|FILES):\s*(.*?)\s*$")
+HEADER = re.compile(r"^\s*(?://|;)\s*(RUN|EXPECT|EXPECT-NOT|MODE|FILES|CWD):\s*(.*?)\s*$")
 # The verdict a marked test gave when --mark last ran it.
 RECORDED = re.compile(r"^\s*(?://|;)\s*Vereda: verdict (\S+)\s*$")
 # An expectation that is just the verdict, as test.desc files write it.
@@ -100,7 +102,7 @@ def record(test, start, out, verdict=None):
 
 def parse(path):
     """The header of the test at path, as a dict keyed by directive."""
-    desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "",
+    desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "", "CWD": "",
             "VERDICT": None}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -156,8 +158,8 @@ def changed(desc, out, cmd):
     return True
 
 
-def execute(cmd, timeout, memory_limit):
-    """Runs cmd in a fresh temporary directory, under timeout seconds and
+def execute(cmd, timeout, memory_limit, cwd=None):
+    """Runs cmd in cwd, else in a fresh temporary directory, under timeout seconds and
     memory_limit MB of address space, and returns its output, or None when
     it timed out."""
     def limit_memory():
@@ -169,7 +171,7 @@ def execute(cmd, timeout, memory_limit):
         # A session of its own, so that a timeout stops the binary too and
         # not only vereda.py; TMPDIR, so that what a killed vereda.py leaves
         # goes with tmp.
-        with subprocess.Popen(cmd, cwd=tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        with subprocess.Popen(cmd, cwd=cwd or tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, start_new_session=True, preexec_fn=limit_memory,
                               env={**os.environ, "TMPDIR": tmp}) as proc:
             try:
@@ -201,7 +203,8 @@ def main():
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
     cmd += desc["RUN"].replace("%S", os.path.dirname(test)).split() + files
     start = time.monotonic()
-    out = execute(cmd, args.timeout, args.memory_limit)
+    out = execute(cmd, args.timeout, args.memory_limit,
+                  desc["CWD"].replace("%S", os.path.dirname(test)) or None)
     if out is None:
         print(f"TIMEOUT after {args.timeout:g} s; skipped")
         record(test, None, "", "TIMEOUT")

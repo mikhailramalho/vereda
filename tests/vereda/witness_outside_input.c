@@ -2,7 +2,7 @@
 // through #line, as a header or a .i file's linemarkers would put it: a
 // validator rejects a waypoint in a file the task does not list.
 // RUN: --witness -
-// EXPECT: no witness: the call to reach_error is in elsewhere.h, not in an input file
+// EXPECT: no witness: the call to reach_error is in /\S*/elsewhere\.h, not in an input file
 // EXPECT-NOT: entry_type
 // EXPECT: VERIFICATION FAILED
 extern void __assert_fail(const char *, const char *, unsigned, const char *);
