@@ -1,8 +1,8 @@
 // A pointer made from an integer, stored in memory and copied, reads back as
-// itself (#75). calloc's object comes after the first conversion of 0x1234;
-// had it been allowed to cover that address, the second conversion would
-// point into it while the stored copy still points nowhere, and they would
-// differ. The struct copy is the shape of esbmc/github_5393.
+// itself (#75). calloc's object comes after the first conversion of 0x1234
+// and may cover that address; the stored copy then holds a pointer with no
+// object, and the load converts its address again, as the second conversion
+// does, so the two agree. The struct copy is the shape of esbmc/github_5393.
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <assert.h>
 #include <stdlib.h>

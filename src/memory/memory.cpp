@@ -82,15 +82,6 @@ SMTExprRef Memory::allocate(SMTExprRef size, uint64_t align, SMTExprRef exists) 
     layout = t.land(layout, t.eq(t.bvand(b, t.bv(align - 1, ptrBits)),
                                        t.bv(0, ptrBits)));
   s.addConstraint(t.implies(exists, layout));
-  // An address converted to a pointer before this object existed became a
-  // pointer into an older object or into null; covering it now would give
-  // the same integer a second pointer value, and a stored copy of the
-  // first would no longer compare equal to a fresh conversion (#75). The
-  // ordered layout already keeps it out when it lies in an older object.
-  // One constraint per earlier conversion: quadratic in a loop that both
-  // converts and allocates, which no task has needed yet.
-  for (const auto &[a, g] : converted)
-    s.addConstraint(t.implies(t.land(exists, g), t.lor(t.ult(a, b), t.ugt(a, e))));
   SMTExprRef obj = t.bv(id, ObjBits);
   s.addConstraint(t.eq(base(obj), b));
   objects.push_back({b, size});
@@ -124,9 +115,6 @@ SMTExprRef Memory::fromAddress(SMTExprRef a) {
   // The object whose range holds a, or null with offset a.
   // One comparison per object created so far; the static
   // points-to analysis will narrow this.
-  SMTExprRef g = context ? context : t.boolean(true);
-  if (convertedSeen.insert({a.get(), g.get()}).second)
-    converted.push_back({a, g});
   SMTExprRef r = ptr(t.bv(0, ObjBits), a);
   for (unsigned id = 1; id < objects.size(); ++id) {
     const Object &o = objects[id];
@@ -359,7 +347,10 @@ SMTExprRef Memory::load(State &st, SMTExprRef p, Type *ty) {
   if (ty->isPointerTy()) {
     // The provenance of the first byte stands for the pointer.
     SMTExprRef obj = first.prov;
-    SMTExprRef isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
+    // Bytes of an integer, or of a pointer with no object, which an object
+    // allocated since it was stored may now cover: either way the address
+    // is converted now, as a fresh conversion would be (#75).
+    SMTExprRef isInt = t.lor(t.eq(obj, t.bv(IntProvenance, ObjBits)), t.eq(obj, t.bv(0, ObjBits)));
     return t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
   }
   if (ty->isIntegerTy(1))

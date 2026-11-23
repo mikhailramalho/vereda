@@ -30,7 +30,6 @@
 #include <llvm/IR/Module.h>
 #include <optional>
 #include <functional>
-#include <set>
 #include <vector>
 
 namespace vereda::memory {
@@ -144,10 +143,6 @@ private:
   std::vector<Object> objects; // index = object id; 0 is null
   camada::SMTExprRef bases;    // object id -> base address, as an uninterpreted array
   camada::SMTExprRef end;      // first address after the last object
-  // Each address fromAddress converted, with the guard it was converted
-  // under: an object allocated later must not cover it (see allocate).
-  std::vector<std::pair<camada::SMTExprRef, camada::SMTExprRef>> converted;
-  std::set<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>> convertedSeen;
   llvm::DenseMap<const llvm::GlobalValue *, camada::SMTExprRef> globals;
   unsigned fresh = 0;
   camada::SMTExprRef context;
