@@ -11,3 +11,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s+ASSERT \(_Bool\)c // v$
 // EXPECT: \A(?![\s\S]*ASSERT 0 // v)[\s\S]*\Z
+// Vereda: verdict none

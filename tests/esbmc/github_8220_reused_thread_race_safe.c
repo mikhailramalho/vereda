@@ -26,3 +26,4 @@ int main(void)
 // RUN: --sv-comp --z3 --data-races-check-only --no-assertions --no-pointer-check --no-bounds-check --context-bound 2 --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

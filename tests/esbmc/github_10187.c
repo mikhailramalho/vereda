@@ -19,3 +19,4 @@ int main()
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

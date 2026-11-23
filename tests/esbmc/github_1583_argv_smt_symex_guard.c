@@ -21,3 +21,4 @@ int main(int argc, char *argv[])
 // RUN: --smt-symex-guard
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

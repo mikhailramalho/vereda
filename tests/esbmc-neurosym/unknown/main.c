@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: solver returned unknown
 // EXPECT: SMT solver failed
+// Vereda: verdict none

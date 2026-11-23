@@ -22,3 +22,4 @@ int main()
 // EXPECT: ^Transition system extracted
 // EXPECT: ^Solution found by PDR
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

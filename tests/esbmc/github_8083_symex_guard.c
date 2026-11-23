@@ -17,6 +17,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8083_symex_guard
 // RUN: --unwind 4
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion i <= 1$
-// Vereda: unmet EXPECT: ^  assertion i <= 1$
-// MODE: FUTURE

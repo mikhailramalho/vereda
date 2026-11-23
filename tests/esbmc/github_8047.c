@@ -13,5 +13,5 @@ int main()
 // Needs: --interval-symex-assert
 // RUN: --interval-symex-assert
 // MODE: FUTURE
-// EXPECT: ^ +FAILED .*line 10 +x above -7$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

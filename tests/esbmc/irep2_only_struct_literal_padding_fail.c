@@ -30,3 +30,4 @@ int main(void) { parse("c1"); parse("c1"); parse("c2"); return 0; }
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*forgotten memory.*$
+// Vereda: verdict none

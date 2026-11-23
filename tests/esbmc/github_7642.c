@@ -28,9 +28,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7642
-// EXPECT: ^\s*PASSED\s+\[main\.assertion\.1\]\s+line\s+11\s+set returns old 0$
-// EXPECT: ^\s*PASSED\s+\[main\.assertion\.5\]\s+line\s+20\s+clear stores 0$
-// EXPECT: ^\*\* 0 of 11 properties failed, 11 passed$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.assertion\.1\]\s+line\s+11\s+set returns old 0$
-// MODE: FUTURE

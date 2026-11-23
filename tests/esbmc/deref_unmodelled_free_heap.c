@@ -24,7 +24,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/deref_unmodelled_free_heap
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*FAILED.*valid free is reachable$
 // EXPECT: ^.*PASSED.*dereference failure: invalid pointer freed$
-// Vereda: unmet EXPECT: ^.*FAILED.*valid free is reachable$
+// Vereda: unmet EXPECT: ^.*PASSED.*dereference failure: invalid pointer freed$
 // MODE: FUTURE
+// Vereda: verdict FAILED

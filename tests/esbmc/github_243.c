@@ -7860,3 +7860,4 @@ void ldv_check_final_state(void)
 // RUN: --incremental-bmc --force-malloc-success --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

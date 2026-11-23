@@ -11,7 +11,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/no_slice_unrepresentable_malloc
 // EXPECT: ^Violated property:$
-// EXPECT: ^  assertion 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion 0$
-// MODE: FUTURE

@@ -9,3 +9,4 @@ int main()
 // RUN: --file-output missing-dir/out.txt
 // MODE: FUTURE
 // EXPECT: ^ERROR: Cannot open missing-dir/out.txt$
+// Vereda: verdict none

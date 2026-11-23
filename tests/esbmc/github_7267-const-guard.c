@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^No provably-dead code found\.$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

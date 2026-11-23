@@ -27,3 +27,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  back = \{ \.x=1, \.pair=\(signed long int \[2\]\)0x70000000000000006 \}$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main()
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*COVERAGE ANALYSIS)[\s\S]*\Z
 // EXPECT: \A(?![\s\S]*Coverage goals:)[\s\S]*\Z
+// Vereda: verdict none

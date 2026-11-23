@@ -36,3 +36,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 4 witnesses\]
 // EXPECT: ^[^\n]*Inputs : \[0\] = \{ \.i=\{ \.a=-?\d+, \.b=-?\d+ \}, \.c=-?\d+ \}$
+// Vereda: verdict none

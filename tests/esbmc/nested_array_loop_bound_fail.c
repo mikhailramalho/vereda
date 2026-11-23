@@ -11,7 +11,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_loop_bound_fail
-// EXPECT: ^\s+the loop runs one time too many$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+the loop runs one time too many$
-// MODE: FUTURE

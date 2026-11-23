@@ -9,3 +9,4 @@ int main(void) { int b[a]; return 0; }
 // EXPECT: VLA array dimension must be greater than zero
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

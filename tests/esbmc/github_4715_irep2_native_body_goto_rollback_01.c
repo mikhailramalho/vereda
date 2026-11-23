@@ -38,3 +38,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: // Labels: ERROR
 // EXPECT: ASSERT
+// Vereda: verdict none

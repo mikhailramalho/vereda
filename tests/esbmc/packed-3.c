@@ -18,3 +18,4 @@ void fun3(struct S *s)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct struct S$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

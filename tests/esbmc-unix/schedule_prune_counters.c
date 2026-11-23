@@ -33,3 +33,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored 40, pruned_by_mpor 38, pruned_by_hash 0, pruned_by_sleep 0, pruned_by_cs_bound \d+$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

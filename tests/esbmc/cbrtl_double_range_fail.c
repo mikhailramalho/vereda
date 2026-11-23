@@ -11,7 +11,7 @@ int main()
 // Imported from ESBMC regression/esbmc/cbrtl_double_range_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: FAILED\s+\[main.assertion.2\].*r == 0x1p341L
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

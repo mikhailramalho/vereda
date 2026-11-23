@@ -15,7 +15,7 @@ int main()
 // Needs: --result-only --k-induction --show-cex
 // RUN: --result-only --k-induction --show-cex
 // MODE: FUTURE
-// EXPECT: ^  FAILED +\[main\.assertion\.2\]  line 11  assertion s != 2$
 // EXPECT: ^\*\* 1 of 2 properties failed, 1 not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*produced no model)[\s\S]*\Z
+// Vereda: verdict none

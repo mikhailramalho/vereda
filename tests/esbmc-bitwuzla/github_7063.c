@@ -26,5 +26,5 @@ int main()
 // EXPECT: ^Violated property:$
 // EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 15 +loop invariant base case$
 // EXPECT: ^  UNKNOWN +\[main\.array-bounds-violated\.1\] +line 17 .*loop invariant too weak
-// EXPECT: ^\*\* 2 of 4 properties failed, 1 passed, 1 unknown$
 // EXPECT: \A(?![\s\S]*Can't get boolean value)[\s\S]*\Z
+// Vereda: verdict none

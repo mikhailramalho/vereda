@@ -18,3 +18,4 @@ int main() {
 // RUN: --k-induction-parallel -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

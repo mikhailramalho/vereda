@@ -14,3 +14,4 @@ int main()
 // RUN: --k-induction --max-k-step 20 --bidirectional
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

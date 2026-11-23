@@ -16,3 +16,4 @@ int main()
 // EXPECT: (?s)\A(?!.*line 4 column 3 function Foo.*\n.*\n.*M_z =)
 // Vereda: unmet EXPECT: State [0-9]+ file \S+function_return_location\.c line 10 column 9 function main thread 0\n-+\n  M_z =
 // MODE: FUTURE
+// Vereda: verdict FAILED

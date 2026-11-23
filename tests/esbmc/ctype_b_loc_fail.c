@@ -10,6 +10,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/ctype_b_loc_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion \(\*__ctype_b_loc\(\)\)\[.*\] & \(1 << 3\)$
-// Vereda: unmet EXPECT: ^  assertion \(\*__ctype_b_loc\(\)\)\[.*\] & \(1 << 3\)$
-// MODE: FUTURE

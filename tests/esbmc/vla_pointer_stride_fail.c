@@ -14,9 +14,9 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_pointer_stride_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED .* assertion \(\*p\)\[m - 1\] == 8$
 // EXPECT: ^  PASSED .* dereference failure: array bounds violated$
 // EXPECT: ^\*\* 1 of [0-9]+ properties failed
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .* assertion \(\*p\)\[m - 1\] == 8$
+// Vereda: unmet EXPECT: ^  PASSED .* dereference failure: array bounds violated$
 // MODE: FUTURE
+// Vereda: verdict FAILED

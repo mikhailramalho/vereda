@@ -11,3 +11,4 @@ int main(int argc, char **argv)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.array-bounds-violated\.1\]
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

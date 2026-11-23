@@ -23,3 +23,4 @@ main()
 // RUN: --bv --no-slice -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

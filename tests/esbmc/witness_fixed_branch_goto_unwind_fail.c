@@ -21,3 +21,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)value: "false"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_goto_unwind_fail\.c"\n\s+line: 13$.*value: "true"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_goto_unwind_fail\.c"\n\s+line: 13$
+// Vereda: verdict none

@@ -37,3 +37,4 @@ int main(void)
 // RUN: --loop-invariant --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

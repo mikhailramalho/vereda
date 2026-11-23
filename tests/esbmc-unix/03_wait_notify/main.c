@@ -98,3 +98,4 @@ int main(){
 // RUN: -I . --context-bound 6
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

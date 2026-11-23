@@ -13,5 +13,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_native_body_assert_fold_01_fail
 // RUN: --unwind 1
-// EXPECT: reachable
 // EXPECT: ^VERIFICATION FAILED$

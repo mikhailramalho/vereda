@@ -22,3 +22,4 @@ int main(void)
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^ERROR: Typecast for unexpected type$
+// Vereda: verdict none

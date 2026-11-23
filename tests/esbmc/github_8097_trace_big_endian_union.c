@@ -28,3 +28,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^  u\.s\.v\[0\] = \{ \.c=1
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

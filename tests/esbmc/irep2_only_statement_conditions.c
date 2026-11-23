@@ -27,3 +27,4 @@ int main(void)
 // EXPECT: IF !\(_Bool\)a THEN GOTO
 // EXPECT: IF !\(_Bool\)b THEN GOTO
 // EXPECT: IF !\(_Bool\)c THEN GOTO
+// Vereda: verdict none

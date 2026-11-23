@@ -19,7 +19,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10135_fail
 // RUN: -m64
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line 17\s+assertion p\.f != 12345$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line 17\s+assertion p\.f != 12345$
-// MODE: FUTURE

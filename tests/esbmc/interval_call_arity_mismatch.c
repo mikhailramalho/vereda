@@ -16,3 +16,4 @@ void f(int a)
 // RUN: --std c17 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

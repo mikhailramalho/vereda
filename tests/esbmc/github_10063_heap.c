@@ -233,3 +233,4 @@ int main(void)
 // RUN: --unwind 2 --unwindset 6:65,3:4 --no-unwinding-assertions --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

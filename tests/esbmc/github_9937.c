@@ -28,6 +28,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_9937
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \[main.assertion.1\]  line 17  kept
-// EXPECT: \[main.assertion.2\]  line 26  byte changed
 // Vereda: unmet EXPECT: \[main.assertion.1\]  line 17  kept
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

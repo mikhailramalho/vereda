@@ -33,3 +33,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Ranking function shows all executions terminate$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ignoring --bitwuzllob-model-prog
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

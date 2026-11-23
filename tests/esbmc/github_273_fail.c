@@ -19,3 +19,4 @@ int main()
 // EXPECT: Relational comparison between pointers is only valid for pointers to the same object
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

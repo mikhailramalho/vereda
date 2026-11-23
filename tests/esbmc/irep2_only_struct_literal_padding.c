@@ -56,3 +56,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

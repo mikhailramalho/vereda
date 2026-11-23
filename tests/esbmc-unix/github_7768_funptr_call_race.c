@@ -31,3 +31,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*W/W data race on c:@shared$
+// Vereda: verdict none

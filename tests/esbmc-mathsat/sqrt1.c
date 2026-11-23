@@ -28,3 +28,4 @@ int main()
 // RUN: --floatbv --mathsat
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

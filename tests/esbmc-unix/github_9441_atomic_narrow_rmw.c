@@ -32,3 +32,4 @@ int main(void)
 // RUN: --64 --no-standard-checks --unwind 20
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

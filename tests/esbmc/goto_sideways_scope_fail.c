@@ -19,3 +19,4 @@ int main()
 // EXPECT: expired variable
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

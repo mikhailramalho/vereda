@@ -20,3 +20,4 @@ int main(void)
 // RUN: --total-stack-limit 256
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

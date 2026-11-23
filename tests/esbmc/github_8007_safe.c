@@ -26,3 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^WARNING: --gcse is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

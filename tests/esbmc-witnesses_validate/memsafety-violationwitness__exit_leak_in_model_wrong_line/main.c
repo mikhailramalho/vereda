@@ -26,3 +26,4 @@ int main()
 // RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --incremental-bmc --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

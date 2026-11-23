@@ -14,3 +14,4 @@ int main(int argc, char **argv) {
 // RUN: --force-realloc-success --force-malloc-success --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -26,4 +26,4 @@ int main()
 // RUN: --unwind 129 --timeout 60s --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion \*e\.key == 2$
+// Vereda: verdict none

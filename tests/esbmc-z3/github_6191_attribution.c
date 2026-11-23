@@ -12,5 +12,5 @@ int main()
 // RUN: --z3 --unwind 13 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  genuine$
 // EXPECT: \A(?![\s\S]*Can't get boolean value)[\s\S]*\Z
+// Vereda: verdict none

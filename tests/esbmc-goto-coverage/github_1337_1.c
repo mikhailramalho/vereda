@@ -24,3 +24,4 @@ int main()
 // EXPECT: ^Total Assertion Instances: 3
 // EXPECT: ^Assertion Instances Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

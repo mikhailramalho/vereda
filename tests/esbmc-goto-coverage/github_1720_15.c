@@ -18,3 +18,4 @@ int main()
 // EXPECT: ^Short Circuited Conditions:  0
 // EXPECT: ^Condition Coverage: 50%
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
+// Vereda: verdict none

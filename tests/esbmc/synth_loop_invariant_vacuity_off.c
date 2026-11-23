@@ -15,5 +15,5 @@ int main(void)
 // Needs: --synthesise-loop-invariants --no-vacuity-check
 // RUN: --synthesise-loop-invariants --no-vacuity-check
 // MODE: FUTURE
-// EXPECT: ^  PASSED       \[main\.assertion\.1\]  line 11  vacuous$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

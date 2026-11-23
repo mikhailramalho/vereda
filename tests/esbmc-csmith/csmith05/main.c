@@ -152,3 +152,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --no-unwinding-assertions --unwind 15 --ssa-guards --enable-core-dump --result-only --interval-analysis --show-cex --print-stack-traces --i386-linux --parse-tree-too --termination --no-library --max-inductive-step 2
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

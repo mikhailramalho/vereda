@@ -8,3 +8,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported call result stored in dereference at .*unsupported_call_result_dereference\.c:3$
+// Vereda: verdict none

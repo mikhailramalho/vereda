@@ -27,3 +27,4 @@ int main()
 // EXPECT: ^The program can start a thread: verifying its schedules$
 // EXPECT: ^Checking forward condition, k =
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

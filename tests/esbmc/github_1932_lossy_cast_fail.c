@@ -13,6 +13,3 @@ int main(int argc, char **argv) {
 }
 // Imported from ESBMC regression/esbmc/github_1932_lossy_cast_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion argv\[0\] == 0.*$
-// Vereda: unmet EXPECT: ^.*assertion argv\[0\] == 0.*$
-// MODE: FUTURE

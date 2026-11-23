@@ -48,3 +48,4 @@ int main()
 // RUN: --force-malloc-success --malloc-zero-is-null --incremental-bmc --unwind 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

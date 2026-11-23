@@ -11,5 +11,5 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^ +PASSED .*line +5 +A1$
 // EXPECT: ^ +FAILED .*line +6 +A2$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

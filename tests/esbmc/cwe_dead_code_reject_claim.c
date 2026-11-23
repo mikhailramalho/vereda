@@ -10,3 +10,4 @@ int main(void)
 // RUN: --dead-code-check --claim 1
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --claim$
+// Vereda: verdict none

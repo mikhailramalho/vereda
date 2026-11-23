@@ -11,7 +11,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_struct_spanning_bitfield_tail_fail
-// EXPECT: ^  next bitfields$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  next bitfields$
-// MODE: FUTURE

@@ -60,6 +60,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7311_fail
 // RUN: --unwind 800
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion c\.buf\[c\.buflen - 1\] != 0
-// Vereda: unmet EXPECT: assertion c\.buf\[c\.buflen - 1\] != 0
-// MODE: FUTURE

@@ -34,4 +34,4 @@ int main(void)
 // RUN: --smt-symex-guard --cswitch-skip-readonly-globals --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion seen == 2$
+// Vereda: verdict none

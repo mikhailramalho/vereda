@@ -19,3 +19,4 @@ int main(void) {
 // EXPECT: ^  main_loop1 n s i \(fun \(n : BitVec 32\) \(s : BitVec 32\) \(i : BitVec 32\) =>$
 // EXPECT: each loop needs an invariant
 // EXPECT: ^  sorry$
+// Vereda: verdict none

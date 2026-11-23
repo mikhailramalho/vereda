@@ -35,3 +35,4 @@ int main()
 // EXPECT: ^Reached : 7
 // EXPECT: ^Branch Coverage: 87.5%
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
+// Vereda: verdict none

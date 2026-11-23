@@ -26,3 +26,4 @@ int main()
 // EXPECT: ^\[Counterexample\]$
 // EXPECT: ^  w\.f = 0 \(00000000 00000000 00000000 00000000\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

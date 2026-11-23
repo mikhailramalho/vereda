@@ -18,3 +18,4 @@ ERR:;
 // MODE: FUTURE
 // EXPECT: ASSERT 0 // error label
 // EXPECT: // Labels: ERR
+// Vereda: verdict none

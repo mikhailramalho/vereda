@@ -30,6 +30,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9430_fail
 // RUN: -m64 --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion calls != 2$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

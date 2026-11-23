@@ -31,3 +31,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^State 1 file .*nondet_union_slot_const_prop_fail\.c line 25 column 3 function main thread 0$
 // MODE: FUTURE
+// Vereda: verdict FAILED

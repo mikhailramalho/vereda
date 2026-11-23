@@ -26,3 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ASSUME x <= 4 // loop invariant assume \(verification branch\)\n\s+// .*\n\s+ASSIGN x=x \+ 1;\n\s+// .*\n\s+ASSUME x < 5 // loop continue condition
 // EXPECT: ASSUME x <= 4 // loop invariant assume \(k-induction hint\)\n\s+// .*\n\s+ASSIGN x=x \+ 1;
+// Vereda: verdict none

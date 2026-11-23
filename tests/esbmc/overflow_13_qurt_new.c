@@ -167,3 +167,4 @@ int  qurt()
 // RUN: --claim 1 --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -21,3 +21,4 @@ int main(void)
 // EXPECT: "level": "note"
 // EXPECT: "id": "561"
 // EXPECT: "name": "CWE"
+// Vereda: verdict none

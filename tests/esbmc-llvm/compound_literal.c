@@ -24,3 +24,4 @@ int main(void)
 // Imported from ESBMC regression/llvm/compound_literal
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict SUCCESSFUL

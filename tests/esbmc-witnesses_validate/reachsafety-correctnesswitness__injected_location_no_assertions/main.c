@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: PASSED.*witness invariant$
+// Vereda: verdict none

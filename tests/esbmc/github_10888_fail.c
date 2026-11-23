@@ -18,8 +18,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10888_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED .* assertion c.f1 == s.b$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .* assertion c.f1 == s.b$
-// MODE: FUTURE

@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: FAILED +\[memset\.assertion\.1\].*trying to deref a ptr code
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

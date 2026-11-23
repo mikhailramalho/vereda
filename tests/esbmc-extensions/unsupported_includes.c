@@ -19,3 +19,4 @@ int main()
 // RUN: --dont-care-about-missing-extensions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

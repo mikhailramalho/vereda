@@ -10,3 +10,4 @@ int main(void) { int n; int i = 0; while (i < n) i++; assert(i == n || n <= 0); 
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

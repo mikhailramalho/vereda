@@ -16,3 +16,4 @@ int main() {
 // RUN: --big-endian --bv -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

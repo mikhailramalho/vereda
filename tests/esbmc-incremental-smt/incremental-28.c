@@ -6744,3 +6744,4 @@ void kfree(void const *p) {
 // RUN: --no-pointer-check --no-bounds-check --no-div-by-zero-check --k-induction --k-step 2 --unlimited-k-step --max-inductive-step 3 --add-symex-value-set
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

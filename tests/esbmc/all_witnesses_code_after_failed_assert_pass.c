@@ -18,3 +18,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.\d+\]\s+line\s+12\s+w$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+8\s+v$
+// Vereda: verdict none

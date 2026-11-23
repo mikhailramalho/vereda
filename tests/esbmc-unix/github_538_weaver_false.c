@@ -46,3 +46,4 @@ int main() {
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --floatbv --unlimited-k-steps --context-bound 3  --incremental-bmc --interval-analysis -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

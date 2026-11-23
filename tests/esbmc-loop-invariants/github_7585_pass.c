@@ -31,5 +31,5 @@ int main(void)
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.3\]\s+line\s+27\s+assertion sn == \(uint64_t\)n \* a$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

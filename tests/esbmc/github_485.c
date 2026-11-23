@@ -11,3 +11,4 @@ int main()
 // RUN: --overflow-check --symbol-table-too -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

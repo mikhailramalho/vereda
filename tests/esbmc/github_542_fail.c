@@ -33,3 +33,4 @@ int main()
 // RUN: --force-malloc-success --memory-leak-check --no-unwinding-assertions --unwind 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

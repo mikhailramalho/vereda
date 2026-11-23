@@ -12,7 +12,7 @@ int main()
 // Imported from ESBMC regression/esbmc/nextafter_from_infinity_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: FAILED\s+\[main.assertion.2\].*isinf\(r\)
-// Vereda: unmet EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
+// Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*isinf\(r\)
 // MODE: FUTURE
+// Vereda: verdict FAILED

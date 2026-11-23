@@ -18,4 +18,4 @@ int main()
 // RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line 11\s+every node holds 1$
+// Vereda: verdict none

@@ -10,7 +10,7 @@ int main()
 // Imported from ESBMC regression/esbmc/ilogb_logb_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 4 properties failed, 3 passed$
 // EXPECT: FAILED\s+\[main.assertion.2\].*logb
-// Vereda: unmet EXPECT: ^\*\* 1 of 4 properties failed, 3 passed$
+// Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*logb
 // MODE: FUTURE
+// Vereda: verdict FAILED

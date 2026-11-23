@@ -16,3 +16,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: FAILED +\[main\.expired-pointer-dereference\.1\]
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

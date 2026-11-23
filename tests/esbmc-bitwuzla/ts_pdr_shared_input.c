@@ -21,3 +21,4 @@ int main() {
 // EXPECT: ^PDR over 9 state bits$
 // EXPECT: ^Solution found by PDR
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -94,3 +94,4 @@ expint(int n, long int x)
 // EXPECT: ^Total Conditions:  12
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
 // EXPECT: reason: the run ended at the maximum k step without proving the program fully unwound
+// Vereda: verdict none

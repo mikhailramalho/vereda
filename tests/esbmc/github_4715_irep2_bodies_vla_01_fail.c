@@ -25,3 +25,4 @@ int main()
 // RUN: --irep2-bodies
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

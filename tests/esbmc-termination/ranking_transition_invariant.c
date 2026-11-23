@@ -25,3 +25,4 @@ int main()
 // EXPECT: line: 10$
 // EXPECT: value: ".*\\\\at\(x, AnyPrev\).* > .*x.*"$
 // EXPECT: \A(?![\s\S]*line: 13$)[\s\S]*\Z
+// Vereda: verdict none

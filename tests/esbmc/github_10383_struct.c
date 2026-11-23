@@ -20,3 +20,4 @@ int main(void)
 // RUN: --std c2x --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

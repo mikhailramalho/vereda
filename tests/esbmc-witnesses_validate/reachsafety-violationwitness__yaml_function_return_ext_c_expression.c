@@ -12,3 +12,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^ +format: "ext_c_expression"$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

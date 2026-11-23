@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: --synthesise-loop-invariants added no invariant: the k-induction transform has already rewritten the loop heads it matches on\. Drop the k-induction phase to use it$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

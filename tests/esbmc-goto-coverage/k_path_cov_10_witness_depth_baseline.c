@@ -29,3 +29,4 @@ int main()
 // EXPECT: ^Reached : 8$
 // EXPECT: ^k-Path Coverage: 100%$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

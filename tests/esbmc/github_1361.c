@@ -16,7 +16,6 @@ int main()
 // RUN: --k-induction --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion 2 == 3$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+11\s+assertion 1 == 2$
 // EXPECT: ^\*\* 2 of 2 properties failed$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
+// Vereda: verdict none

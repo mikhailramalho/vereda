@@ -15,3 +15,4 @@ int main(void)
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

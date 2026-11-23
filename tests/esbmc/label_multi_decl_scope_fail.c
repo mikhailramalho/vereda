@@ -7,5 +7,4 @@ L:
   return a;
 }
 // Imported from ESBMC regression/esbmc/label_multi_decl_scope_fail
-// EXPECT: b holds 2, not 1
 // EXPECT: ^VERIFICATION FAILED$

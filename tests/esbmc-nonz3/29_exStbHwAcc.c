@@ -4657,3 +4657,4 @@ for(counter=0; counter<argc; counter++)
 // RUN: --overflow-check  --unwind 3 --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

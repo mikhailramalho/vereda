@@ -25,3 +25,4 @@ int main(void) {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)type: "loop_invariant"\s+location:\s+file_name: "[^"]*github_10853\.c"\s+line: 8\s+column: 3\s+function: "copy_bytes"\s+value: "i <= n && n <= 4"\s+format: "c_expression"
 // EXPECT: (?s)type: "loop_invariant"\s+location:\s+file_name: "[^"]*github_10853\.c"\s+line: 16\s+column: 3\s+function: "main"\s+value: "0 <= i && i <= 5"
+// Vereda: verdict none

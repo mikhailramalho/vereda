@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  r = -54782528 \(11111100 10111100 00010101 11000000\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

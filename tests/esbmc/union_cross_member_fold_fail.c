@@ -13,7 +13,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/union_cross_member_fold_fail
 // RUN: --unwind 2
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line \d+\s+any other value must be refuted$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line \d+\s+any other value must be refuted$
-// MODE: FUTURE

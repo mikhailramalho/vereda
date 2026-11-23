@@ -16,3 +16,4 @@ int main()
 // RUN: --smt-during-symex --smt-symex-assert --k-induction --add-symex-value-sets -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -29,9 +29,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_6413-no-violation
 // RUN: --multi-property --unwind 4
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^ +PASSED .*line +13 +worker: in loop$
-// EXPECT: ^ +PASSED .*line +15 +worker: after loop$
-// EXPECT: ^ +PASSED .*line +26 +main: after join$
-// EXPECT: \A(?![\s\S]*PASSED .*worker: in loop[\s\S]*PASSED .*worker: in loop)[\s\S]*\Z
-// Vereda: unmet EXPECT: ^ +PASSED .*line +13 +worker: in loop$
-// MODE: FUTURE

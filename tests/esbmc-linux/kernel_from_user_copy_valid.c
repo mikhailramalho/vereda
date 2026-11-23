@@ -35,3 +35,4 @@ int main()
 // RUN: --unwind 200 --std gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

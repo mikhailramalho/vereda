@@ -32,3 +32,4 @@ int main(void)
 // RUN: --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -89,3 +89,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Scalarized [0-9]+ struct variable\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

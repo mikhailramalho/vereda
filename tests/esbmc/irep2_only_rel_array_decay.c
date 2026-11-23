@@ -18,3 +18,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ASSERT &ptr->arr\[0\] != 0
+// Vereda: verdict none

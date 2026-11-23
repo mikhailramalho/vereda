@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: k-induction does not support function pointer calls yet\. Disabling inductive step$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main() {
 // RUN: --incremental-bmc --goto-unwind
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -16,3 +16,4 @@ test:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*non-terminating execution.*$
+// Vereda: verdict none

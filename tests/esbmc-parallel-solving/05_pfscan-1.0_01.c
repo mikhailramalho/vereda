@@ -5909,3 +5909,4 @@ int main(int argc, char *argv[])
 // RUN: --incremental-bmc --parallel-solving
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$ .*
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main()
 // RUN: --summarize-array-loops
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

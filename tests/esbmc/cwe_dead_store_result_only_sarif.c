@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: "level": "note"
 // EXPECT: "id": "563"
+// Vereda: verdict none

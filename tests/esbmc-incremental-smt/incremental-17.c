@@ -17,3 +17,4 @@ int main()
 // RUN: --smt-during-symex --smt-symex-assert --smt-symex-guard --add-symex-value-sets
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

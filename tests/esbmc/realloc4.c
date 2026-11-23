@@ -32,3 +32,4 @@ int main() {
 // RUN: --force-realloc-success --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

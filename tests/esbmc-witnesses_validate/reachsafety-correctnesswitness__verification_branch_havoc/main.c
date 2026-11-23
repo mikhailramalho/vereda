@@ -12,3 +12,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: UNKNOWN +\[main\.arithmetic-overflow\.1\].*loop invariant too weak
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

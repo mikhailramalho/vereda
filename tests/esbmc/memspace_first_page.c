@@ -20,3 +20,4 @@ int main(void)
 // RUN: --reserve-first-page
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

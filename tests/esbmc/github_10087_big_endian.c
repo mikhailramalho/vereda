@@ -22,3 +22,4 @@ int main(void)
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

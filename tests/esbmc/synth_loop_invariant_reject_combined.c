@@ -17,3 +17,4 @@ int main(void)
 // RUN: --synthesise-loop-invariants --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^ERROR: --synthesise-loop-invariants cannot be combined with --loop-invariant; use --loop-invariant-check, which it implies$
+// Vereda: verdict none

@@ -21,3 +21,4 @@ int main()
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
 // Vereda: unmet EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
 // MODE: FUTURE
+// Vereda: verdict FAILED

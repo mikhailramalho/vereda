@@ -126,3 +126,4 @@ int main(){
 // RUN: --no-por --context-bound 6 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

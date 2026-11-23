@@ -16,3 +16,4 @@ int main(void) {
 // RUN: --array-flattener
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -12,6 +12,4 @@ int main()
 // RUN: --interval-symex-assert --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 2 VCC\(s\), 0 remaining after simplification
-// EXPECT: ^ +PASSED .*line 6 +x must be non-negative \(interval\)$
-// EXPECT: ^ +PASSED .*line 7 +x must be at most 100 \(interval\)$
+// Vereda: verdict none

@@ -16,3 +16,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Transition-system counterexample at step 0
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

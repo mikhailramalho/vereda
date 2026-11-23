@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Total Asserts: 0
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

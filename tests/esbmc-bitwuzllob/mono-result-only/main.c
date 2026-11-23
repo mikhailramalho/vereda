@@ -9,3 +9,4 @@ int main()
 // RUN: --bitwuzllob --bitwuzllob-prog fake-mallob.sh --result-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

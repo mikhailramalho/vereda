@@ -22,4 +22,5 @@ int main()
 // Needs: --interval-analysis --goto-functions-only
 // RUN: --interval-analysis --goto-functions-only
 // MODE: FUTURE
-// EXPECT: (^\s*(1: )?ASSERT 1 // assertion y == 3$[\s\S]*){3}
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

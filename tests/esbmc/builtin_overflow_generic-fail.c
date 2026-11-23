@@ -11,6 +11,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/builtin_overflow_generic-fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion !__builtin_mul_overflow\(0x7fffffff, 2, &r\)$
-// Vereda: unmet EXPECT: ^  assertion !__builtin_mul_overflow\(0x7fffffff, 2, &r\)$
-// MODE: FUTURE

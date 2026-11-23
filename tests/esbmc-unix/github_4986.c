@@ -53,3 +53,4 @@ int main(void)
 // RUN: --64 --no-div-by-zero-check --force-malloc-success --force-realloc-success --state-hashing --add-symex-value-sets --no-align-check --floatbv --no-vla-size-check --no-pointer-check --no-bounds-check --overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

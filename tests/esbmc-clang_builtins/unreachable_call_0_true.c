@@ -24,3 +24,4 @@ int main() {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict FAILED

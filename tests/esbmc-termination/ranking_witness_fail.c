@@ -14,3 +14,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Recurrent state shows a non-terminating execution.*$
+// Vereda: verdict none

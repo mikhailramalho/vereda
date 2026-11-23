@@ -16,3 +16,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ^ +ASSIGN p=&g;$
+// Vereda: verdict none

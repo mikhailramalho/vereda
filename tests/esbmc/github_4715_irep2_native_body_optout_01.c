@@ -37,3 +37,4 @@ int main(void)
 // RUN: --unwind 4 --no-irep2-native-body
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

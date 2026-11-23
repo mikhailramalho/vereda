@@ -15,3 +15,4 @@ int main(void)
 // RUN: --show-funccall-trace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

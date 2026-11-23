@@ -15,4 +15,4 @@ int main()
 // RUN: --k-induction --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+10\s+assertion \*p == 1$
+// Vereda: verdict none

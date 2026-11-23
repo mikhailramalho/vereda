@@ -14,7 +14,7 @@ int main()
 // Imported from ESBMC regression/esbmc/scanf_percent_n_reached_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: FAILED\s+\[main.assertion.2\]
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

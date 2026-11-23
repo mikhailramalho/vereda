@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  !overflow\("\+", a, b\)$
 // MODE: FUTURE
+// Vereda: verdict FAILED

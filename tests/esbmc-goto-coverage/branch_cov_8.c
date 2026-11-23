@@ -48,3 +48,4 @@ int main()
 // EXPECT: ^Branches : 12
 // EXPECT: ^Reached : 11
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
+// Vereda: verdict none

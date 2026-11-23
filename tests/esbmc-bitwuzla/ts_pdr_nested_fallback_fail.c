@@ -19,3 +19,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Not a transition system$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

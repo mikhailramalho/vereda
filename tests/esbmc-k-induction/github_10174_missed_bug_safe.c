@@ -25,3 +25,4 @@ int main()
 // RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

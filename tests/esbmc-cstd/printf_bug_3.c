@@ -14,3 +14,4 @@ int main()
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^dereference failure: NULL pointer$
+// Vereda: verdict none

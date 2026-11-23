@@ -20,3 +20,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+12\s+loop invariant inductive step$
+// Vereda: verdict none

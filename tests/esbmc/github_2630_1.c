@@ -24,4 +24,4 @@ int main() {
 // RUN: --multi-property --parallel-solving
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 3 of 16 properties failed, 13 passed$
+// Vereda: verdict none

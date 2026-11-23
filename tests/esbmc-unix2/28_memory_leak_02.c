@@ -22,3 +22,4 @@ int main()
 // RUN: --no-slice --memory-leak-check --show-stacktrace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

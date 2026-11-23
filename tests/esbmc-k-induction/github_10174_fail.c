@@ -40,3 +40,4 @@ top:
 // RUN: --k-induction --max-k-step 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

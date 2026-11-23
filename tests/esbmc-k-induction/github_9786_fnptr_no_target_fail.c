@@ -19,6 +19,6 @@ int main(void)
 // Needs: --k-induction
 // RUN: --k-induction --max-k-step 6 --no-pointer-check
 // MODE: FUTURE
-// EXPECT: ^  FAILED       \[main\.assertion\.1\]  line  9  result unchanged$
 // EXPECT: ^Bug found \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

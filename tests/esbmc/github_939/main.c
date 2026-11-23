@@ -5638,3 +5638,4 @@ QM_det(GEN M)
 // RUN: --function det2 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

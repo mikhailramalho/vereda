@@ -33,3 +33,4 @@ int main() {
 // RUN: --unwindsetname c:@F@compute_sum#:0:11,compute_product:0:6 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

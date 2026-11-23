@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^Branches : 2$
 // EXPECT: ^Reached : 1$
 // EXPECT: ^Branch Coverage: 50%$
+// Vereda: verdict none

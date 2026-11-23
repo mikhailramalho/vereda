@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
 // EXPECT: reason: the run ended at the maximum k step
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

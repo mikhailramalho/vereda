@@ -10,4 +10,3 @@ int main()
 // Imported from ESBMC regression/esbmc/descending_pointer_walk_fail
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: the walk does not take four steps

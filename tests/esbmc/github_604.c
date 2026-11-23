@@ -16,3 +16,4 @@ int main()
 // RUN: --closed-world-fnptr
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -29,4 +29,4 @@ int main()
 // RUN: --show-claims --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^Claim 1:
-// EXPECT: end of loop assertion
+// Vereda: verdict none

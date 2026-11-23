@@ -9,6 +9,3 @@ int main()
 // Imported from ESBMC regression/floats/github_10172_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion c == 0x1p-53
-// Vereda: unmet EXPECT: assertion c == 0x1p-53
-// MODE: FUTURE

@@ -27,3 +27,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Deadlocked state in pthread_barrier_wait
+// Vereda: verdict none

@@ -40,3 +40,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Deadlocked state in pthread_join
+// Vereda: verdict none

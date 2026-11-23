@@ -16,3 +16,4 @@ int main(void)
 // RUN: --symbol-table-only
 // MODE: FUTURE
 // EXPECT: ^\s*case 1 \.\.\. 5:$
+// Vereda: verdict none

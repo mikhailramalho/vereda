@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean --output out.lean
 // MODE: FUTURE
 // EXPECT: ^GOTO program creation time
+// Vereda: verdict none

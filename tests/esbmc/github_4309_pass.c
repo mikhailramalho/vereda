@@ -16,3 +16,4 @@ int main(void)
 // RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

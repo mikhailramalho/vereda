@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: Stack limit property was violated when declaring big
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

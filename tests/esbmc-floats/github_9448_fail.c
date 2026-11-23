@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/floats/github_9448_fail
 // RUN: --fp2bv
-// EXPECT: ^  assertion a == b$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion a == b$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

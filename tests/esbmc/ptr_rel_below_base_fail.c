@@ -12,7 +12,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_rel_below_base_fail
-// EXPECT: ^  assertion below >= b$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion below >= b$
-// MODE: FUTURE

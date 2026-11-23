@@ -15,5 +15,5 @@ int main(void)
 // Needs: --show-funccall-trace
 // RUN: --show-funccall-trace
 // MODE: FUTURE
-// EXPECT: ^Violated property:\n  file \S*github_10504\.c line 7 column 20 function check\n  assertion g != 3\n  .*\nFunction call trace:\n  main at file \S*github_10504\.c line 8 column 1\n  setup at file \S*github_10504\.c line 10 column 3 function main\n  check at file \S*github_10504\.c line 11 column 3 function main$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -53,3 +53,4 @@ int main(void)
 // RUN: --k-induction --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

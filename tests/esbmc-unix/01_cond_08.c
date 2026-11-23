@@ -76,3 +76,4 @@ int main()
 // RUN: --unwind 4 --context-bound 1 --lock-order-check -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

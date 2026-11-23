@@ -24,3 +24,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: missing va_start: va_arg on an uninitialised va_list
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

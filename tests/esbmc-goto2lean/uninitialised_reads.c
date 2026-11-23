@@ -18,3 +18,4 @@ int main(void) {
 // EXPECT: ^  ∀ t : BitVec 32,\n  ∀ «tmp\$4» : BitVec 32,$
 // EXPECT: ^    ∀ u : BitVec 32,\n    ∀ «tmp\$5» : BitVec 32,$
 // EXPECT: ^      let u := «tmp\$5»;$
+// Vereda: verdict none

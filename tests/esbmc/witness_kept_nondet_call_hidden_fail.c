@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == -?\d+"\n\s+format: "ext_c_expression"\n\s+location:\n\s+file_name: "[^"]*witness_kept_nondet_call_hidden_fail\.c"\n\s+line: 10$
 // EXPECT: (?s)\A(?:(?!\n  a\[).)*\Z
+// Vereda: verdict none

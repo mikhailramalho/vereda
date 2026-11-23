@@ -29,3 +29,4 @@ int main() {
 // RUN: --compact-trace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

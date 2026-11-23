@@ -1308,3 +1308,4 @@ static void _ZN6Thread5startEv(struct l_class_OC_Thread *this) {
 // RUN: --unwind 1 --no-pointer-check --no-unwinding-assertions  --context-bound 3 --no-slice --schedule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

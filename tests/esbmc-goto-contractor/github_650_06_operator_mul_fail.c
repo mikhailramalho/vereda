@@ -18,3 +18,4 @@ int main()
 // RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental --unlimited-k-step
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

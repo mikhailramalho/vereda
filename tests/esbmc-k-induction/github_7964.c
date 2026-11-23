@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.1\]\s+line 9\s+dereference failure: array bounds violated$
+// Vereda: verdict none

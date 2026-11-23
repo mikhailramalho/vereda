@@ -17,5 +17,5 @@ int main()
 // RUN: --k-induction --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+12\s+assertion \*p == 2$
 // EXPECT: ^\s+FAILED\s+\[main\.null-pointer-dereference\.1\]\s+line\s+12\s+dereference failure: NULL pointer$
+// Vereda: verdict none

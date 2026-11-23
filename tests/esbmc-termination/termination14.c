@@ -19,3 +19,4 @@ int main()
 // RUN: --termination --unwind 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

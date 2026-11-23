@@ -2072,3 +2072,4 @@ int main (int argc,char *argv[]){
 // RUN: --unwind 1 --partial-loops
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

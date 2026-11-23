@@ -16,3 +16,4 @@ int main(void)
 // RUN: --smtlib --smt-formula-only --output out.smt2 --64
 // MODE: FUTURE
 // EXPECT: ^SMT formula written to output file out\.smt2$
+// Vereda: verdict none

@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: NULL pointer$
+// Vereda: verdict none

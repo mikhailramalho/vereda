@@ -24,5 +24,5 @@ int main(void)
 // Needs: --field-sensitive-ssa
 // RUN: --field-sensitive-ssa --unwind 6
 // MODE: FUTURE
-// EXPECT: ^Generated 3 VCC\(s\), 1 remaining after simplification
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

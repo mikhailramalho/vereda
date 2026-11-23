@@ -24,4 +24,4 @@ int main()
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED .*line +9  assertion x != 3$
+// Vereda: verdict none

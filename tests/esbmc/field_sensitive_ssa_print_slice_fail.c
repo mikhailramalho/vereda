@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^State 1 file [^\n]*field_sensitive_ssa_print_slice_fail\.c line 12 column
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

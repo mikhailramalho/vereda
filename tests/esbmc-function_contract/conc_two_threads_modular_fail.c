@@ -29,3 +29,4 @@ int main()
 // RUN: --data-races-check --no-bounds-check --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

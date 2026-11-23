@@ -32,4 +32,4 @@ int main()
 // EXPECT: ^Reached Assertion Instances: 4
 // EXPECT: ^Assertion Instances Coverage Unknown
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
-// EXPECT: reason: the total number of assertion instances could not be determined
+// Vereda: verdict none

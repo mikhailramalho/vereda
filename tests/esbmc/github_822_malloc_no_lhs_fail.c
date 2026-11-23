@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^  dereference failure: forgotten memory: dynamic_1_array$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*\n  s = )[\s\S]*\Z
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

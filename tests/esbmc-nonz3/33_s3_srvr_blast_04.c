@@ -1734,3 +1734,4 @@ int ssl3_send_server_certificate(SSL *s )
 // RUN: --unwind 1 --no-bounds-check --no-pointer-check --no-div-by-zero-check --error-label ERROR -Wno-error=int-conversion -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

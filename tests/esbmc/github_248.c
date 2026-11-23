@@ -10,3 +10,4 @@ void a() { b(); }
 // MODE: FUTURE
 // EXPECT: ^WARNING: k-induction does not support recursion yet. Disabling inductive step$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

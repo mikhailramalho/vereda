@@ -374,3 +374,4 @@ int main(int argc, char **argv)
 // RUN: --unwind 1 --no-slice --context-bound 2 --array-flattener
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

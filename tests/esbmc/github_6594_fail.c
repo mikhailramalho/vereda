@@ -67,3 +67,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: forgotten memory.*$
+// Vereda: verdict none

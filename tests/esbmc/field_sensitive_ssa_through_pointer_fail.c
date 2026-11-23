@@ -31,5 +31,5 @@ int main(void)
 // RUN: --field-sensitive-ssa
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 3 struct object\(s\)$
-// EXPECT: ^  assertion s\.b == 2 && t\.a == 2
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

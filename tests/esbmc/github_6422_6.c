@@ -12,3 +12,4 @@ int main(void)
 // RUN: --multi-property --schedule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

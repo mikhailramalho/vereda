@@ -86,3 +86,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored 1341, pruned_by_mpor 380, pruned_by_hash 0
+// Vereda: verdict none

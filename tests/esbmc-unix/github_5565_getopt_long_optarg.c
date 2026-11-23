@@ -67,3 +67,4 @@ int main()
 // RUN: --force-malloc-success --memory-leak-check --no-reachable-memory-leak --malloc-zero-is-null --incremental-bmc --unwind 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

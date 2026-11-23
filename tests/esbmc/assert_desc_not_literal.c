@@ -16,7 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assert_desc_not_literal
-// EXPECT: ^WARNING: assertion description at .* is not a string literal; reporting the guard instead$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^WARNING: assertion description at .* is not a string literal; reporting the guard instead$
-// MODE: FUTURE

@@ -29,3 +29,4 @@ int main()
 // RUN: --solver z3 --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

@@ -27,3 +27,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  q->out = 21 \(00000000 00000000 00000000 00010101\)$
 // MODE: FUTURE
+// Vereda: verdict FAILED

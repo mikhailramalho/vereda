@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  v\.un\.i = 9 \(
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

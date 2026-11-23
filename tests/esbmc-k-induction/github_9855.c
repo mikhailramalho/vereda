@@ -20,3 +20,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: function unreachable_update: anything \(does not decide the step\)
+// Vereda: verdict none

@@ -21,3 +21,4 @@ int main()
 // RUN: --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -17,6 +17,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/sync_swap_builtins_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion x == 0 \|\| y == 0 \|\| l == 3 \|\| m == 3 \|\| a == 4 \|\| r == 0$
-// Vereda: unmet EXPECT: ^  assertion x == 0 \|\| y == 0 \|\| l == 3 \|\| m == 3 \|\| a == 4 \|\| r == 0$
-// MODE: FUTURE

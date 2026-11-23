@@ -11,3 +11,4 @@ int main(void) {
 // MODE: FUTURE
 // EXPECT: ^  \(\(c ≠ 0#32\) → ¬\(\(BitVec\.uaddOverflow a b\) = true\)\) ∧ \($
 // EXPECT: ^  let r := \(if \(c != 0#32\) then \(a \+ b\) else \(0#32\)\);$
+// Vereda: verdict none

@@ -16,3 +16,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: Function call trace:
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

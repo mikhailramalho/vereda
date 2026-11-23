@@ -16,3 +16,4 @@ int main()
 // EXPECT: ^  five$
 // EXPECT: ^Bug found \(k = 5\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

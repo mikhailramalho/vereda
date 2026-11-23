@@ -16,3 +16,4 @@ int main()
 // RUN: --32 --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

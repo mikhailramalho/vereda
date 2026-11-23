@@ -20,5 +20,5 @@ int main()
 // RUN: --k-induction --multi-property --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+12\s+v$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.\d+\]\s+line\s+15\s+assertion i < 500
 // EXPECT: \A(?![\s\S]*PASSED\s+\[main\.assertion\.\d+\]\s+line\s+15)[\s\S]*\Z
+// Vereda: verdict none

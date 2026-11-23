@@ -18,3 +18,4 @@ int main()
 // EXPECT: ^Bug found \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*Checking base case, k = 2)[\s\S]*\Z
+// Vereda: verdict none

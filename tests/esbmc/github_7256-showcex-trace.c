@@ -15,5 +15,5 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // EXPECT: ^Violated property:$
-// EXPECT: ^  assertion s == n$
 // EXPECT: \A(?![\s\S]*FAILED)[\s\S]*\Z
+// Vereda: verdict none

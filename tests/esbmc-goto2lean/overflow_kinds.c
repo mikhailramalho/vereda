@@ -26,3 +26,4 @@ int main(void) {
 // EXPECT: ^  ¬\(\(BitVec\.usubOverflow a b\) = true\) ∧ \($
 // EXPECT: ^  ¬\(\(BitVec\.umulOverflow a b\) = true\) ∧ \($
 // EXPECT: ^  ¬\(\(a != 0#32\) = true\) ∧ \($
+// Vereda: verdict none

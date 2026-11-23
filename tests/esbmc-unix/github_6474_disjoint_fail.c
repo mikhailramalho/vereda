@@ -41,3 +41,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*Deadlocked state.*$
+// Vereda: verdict none

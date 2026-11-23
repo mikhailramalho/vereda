@@ -20,3 +20,4 @@ int main(void)
 // RUN: --floatbv --z3 --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -12,3 +12,4 @@ int main(int argc, char **argv)
 // EXPECT: ^Symbol\.+: argc'$
 // EXPECT: ^Symbol\.+: argv'$
 // EXPECT: ^Type\.+: signed char \* \[argc \+ 1\]$
+// Vereda: verdict none

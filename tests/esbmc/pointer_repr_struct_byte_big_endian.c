@@ -25,3 +25,4 @@ int main()
 // RUN: --unwind 2 --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

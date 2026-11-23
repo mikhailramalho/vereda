@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: ^\s+function called through an incompatible type$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

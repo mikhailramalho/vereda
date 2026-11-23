@@ -8,3 +8,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported indirect function call at .*unsupported_indirect_call\.c:3$
+// Vereda: verdict none

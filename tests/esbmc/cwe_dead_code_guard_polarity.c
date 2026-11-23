@@ -21,3 +21,4 @@ int main(void)
 // EXPECT: cwe_dead_code_guard_polarity\.c:10: dead code: unreachable branch \[guard: flag\]$
 // EXPECT: cwe_dead_code_guard_polarity\.c:13: dead code: unreachable branch \[guard: !\(x > 5\)\]$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

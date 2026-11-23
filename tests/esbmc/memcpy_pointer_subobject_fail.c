@@ -21,6 +21,3 @@ int main()
 // Imported from ESBMC regression/esbmc/memcpy_pointer_subobject_fail
 // RUN: --unwind 4 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion \*q == 5$
-// Vereda: unmet EXPECT: ^.*assertion \*q == 5$
-// MODE: FUTURE

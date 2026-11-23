@@ -14,3 +14,4 @@ int main(int argc, char **argv)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*array bounds violated.*$
+// Vereda: verdict none

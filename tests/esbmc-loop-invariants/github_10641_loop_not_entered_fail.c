@@ -23,3 +23,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  FAILED .*line 17  arithmetic overflow on add$
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -17,6 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^No bug has been found in the base case$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion i < 5$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.2\]\s+line\s+11\s+assertion 1 != 2$
-// EXPECT: ^\*\* 0 of 2 properties failed, 2 passed$
+// Vereda: verdict none

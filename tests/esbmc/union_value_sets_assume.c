@@ -27,3 +27,4 @@ int main()
 // RUN: --conv-assert-to-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

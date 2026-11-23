@@ -17,3 +17,4 @@ int main() {
 // RUN: --function func_overflow --old-frontend
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

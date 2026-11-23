@@ -54,3 +54,4 @@ return 0;
 // EXPECT: ^Total Conditions:  96
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \x1b\[0;1;35mAtomicExpr
+// Vereda: verdict none

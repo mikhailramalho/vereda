@@ -12,3 +12,4 @@ int main(void)
 // RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

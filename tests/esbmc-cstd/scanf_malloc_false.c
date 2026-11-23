@@ -40,3 +40,4 @@ int main() {
 // RUN: --overflow-check --k-induction --no-unlimited-scanf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

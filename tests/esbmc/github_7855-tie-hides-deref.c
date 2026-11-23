@@ -41,3 +41,4 @@ int main(void)
 // EXPECT: ^  FAILED +\[follow\.null-pointer-dereference\.\d+\] +line +28 +dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

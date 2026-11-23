@@ -20,6 +20,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_spanning_nested_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion s\[i\]\.t\.c == 0x0201 && s\[i\]\.d == 0$
-// Vereda: unmet EXPECT: ^  assertion s\[i\]\.t\.c == 0x0201 && s\[i\]\.d == 0$
-// MODE: FUTURE

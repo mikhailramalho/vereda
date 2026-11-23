@@ -18,3 +18,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Checking forward condition, k = 1$
 // EXPECT: ^Checking inductive step, k = 2$
+// Vereda: verdict none

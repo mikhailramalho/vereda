@@ -22,3 +22,4 @@ int main()
 // RUN: --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

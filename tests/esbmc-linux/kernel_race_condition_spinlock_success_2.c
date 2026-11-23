@@ -28,3 +28,4 @@ int main() {
 // RUN: --unwind 2000 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -736,3 +736,4 @@ int main(int argc, char* argv[]) {
 // MODE: FUTURE
 // EXPECT: ^Total Conditions:  8
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
+// Vereda: verdict none

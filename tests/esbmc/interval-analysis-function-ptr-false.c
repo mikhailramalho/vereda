@@ -29,3 +29,4 @@ int main()
 // RUN: --interval-analysis --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

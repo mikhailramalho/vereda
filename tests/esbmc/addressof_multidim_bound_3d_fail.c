@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_bound_3d_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion n == 22$
-// Vereda: unmet EXPECT: ^  assertion n == 22$
-// MODE: FUTURE

@@ -62,3 +62,4 @@ int main()
 // RUN: --state-hashing --context-bound 2 --atomicity-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

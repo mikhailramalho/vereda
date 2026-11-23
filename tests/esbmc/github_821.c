@@ -19,3 +19,4 @@ int main()
 // RUN: --no-simplify --incremental-bmc --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

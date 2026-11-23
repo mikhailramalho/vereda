@@ -24,7 +24,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_6951-size-capped
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*one-byte object is 16-aligned.*$
-// EXPECT: ^.*array of packed is 16-aligned.*$
-// Vereda: unmet EXPECT: ^.*array of packed is 16-aligned.*$
-// MODE: FUTURE

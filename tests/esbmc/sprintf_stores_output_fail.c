@@ -11,3 +11,4 @@ int main(void)
 // EXPECT: ^\s*FAILED\s+\[main\.array-bounds-violated\.1\]\s+line 6\s+dereference failure: array bounds violated$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

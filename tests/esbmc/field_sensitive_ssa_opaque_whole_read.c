@@ -32,3 +32,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 2 struct object\(s\)$
 // EXPECT: ^/\* \d+ \*/ r\?1!0&0#\d+ == \{ \.a=1, \.b=r::1\?1!0&0#\d+ \}$
+// Vereda: verdict none

@@ -102,3 +102,4 @@ int minus(int a, int b)
 // RUN: --context-bound 2 --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

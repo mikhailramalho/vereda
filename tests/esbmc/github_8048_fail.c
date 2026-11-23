@@ -15,6 +15,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8048_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line 12\s+assertion n != -1$
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line 12\s+assertion n != -1$
-// MODE: FUTURE

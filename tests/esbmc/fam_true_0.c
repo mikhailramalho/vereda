@@ -13,3 +13,4 @@ int main() {
 // RUN: --compact-trace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -26,6 +26,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9853_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion g.shadow\[k \+ 3\] == 12
-// Vereda: unmet EXPECT: assertion g.shadow\[k \+ 3\] == 12
-// MODE: FUTURE

@@ -42,5 +42,5 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^ +PASSED .*Sem is not initialized$
-// EXPECT: ^ +PASSED .*line +\d+ +assert data equal$
 // EXPECT: \A(?![\s\S]*library assertion)[\s\S]*\Z
+// Vereda: verdict none

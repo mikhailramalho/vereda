@@ -23,3 +23,4 @@ int main(void)
 // RUN: --printf-check --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

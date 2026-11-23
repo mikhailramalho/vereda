@@ -20,3 +20,4 @@ int main()
 // RUN: --fixedbv --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

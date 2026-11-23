@@ -9,3 +9,4 @@ int main(void)
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf has more format specifiers than arguments$
+// Vereda: verdict none

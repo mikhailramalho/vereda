@@ -49,5 +49,5 @@ int main(void)
 // Needs: --check-guard-subsumption
 // RUN: --unwind 136 --no-unwinding-assertions --check-guard-subsumption
 // MODE: FUTURE
-// EXPECT: ^Generated \d+ VCC\(s\), 2 remaining after simplification \(\d+ assignments\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

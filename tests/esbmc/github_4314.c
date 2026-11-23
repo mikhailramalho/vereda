@@ -21,3 +21,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - [0-9]+ witnesses at k = 3\]
 // EXPECT: \[Counterexamples - [0-9]+ witnesses at k = 4\]
+// Vereda: verdict none

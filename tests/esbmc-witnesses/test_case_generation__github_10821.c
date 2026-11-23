@@ -14,3 +14,4 @@ int main(void)
 // RUN: --generate-testcase
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

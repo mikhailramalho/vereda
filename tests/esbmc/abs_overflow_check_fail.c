@@ -15,3 +15,4 @@ int main()
 // EXPECT: arithmetic overflow on abs
 // Vereda: unmet EXPECT: arithmetic overflow on abs
 // MODE: FUTURE
+// Vereda: verdict FAILED

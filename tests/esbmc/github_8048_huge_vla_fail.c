@@ -16,6 +16,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8048_huge_vla_fail
 // RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion n < 3000000000u$
-// Vereda: unmet EXPECT: ^\s+assertion n < 3000000000u$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

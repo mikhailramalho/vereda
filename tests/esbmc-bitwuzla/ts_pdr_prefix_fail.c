@@ -17,3 +17,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^PDR found a violation at step 0; replaying with BMC$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

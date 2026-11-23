@@ -21,3 +21,4 @@ int main()
 // RUN: --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

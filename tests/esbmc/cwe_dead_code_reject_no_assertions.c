@@ -16,3 +16,4 @@ int main(void)
 // RUN: --dead-code-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --no-assertions$
+// Vereda: verdict none

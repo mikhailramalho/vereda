@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^\s*FAILED\s+\[put\.array-bounds-violated\.1\]\s+line 8\s+dereference failure: array bounds violated$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -18,3 +18,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"
 // EXPECT: (?s)\A(?!.*type: "(branching|function_return)")
+// Vereda: verdict none

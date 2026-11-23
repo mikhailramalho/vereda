@@ -35,3 +35,4 @@ int main(void)
 // EXPECT: action: "cycle"
 // EXPECT: line: 21$
 // EXPECT: function: "main"
+// Vereda: verdict none

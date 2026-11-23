@@ -14,3 +14,4 @@ L:
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^  \(\(c ≠ 0#32\) →\n    \(\(d ≠ 0#32\) →\n      join_1 c\) ∧\n    \(¬\(d ≠ 0#32\) →\n    let c := \(1#32\);\n    join_1 c\)\)$
+// Vereda: verdict none

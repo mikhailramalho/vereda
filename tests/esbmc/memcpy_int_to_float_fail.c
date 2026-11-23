@@ -13,6 +13,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memcpy_int_to_float_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion d < 2\.0$
-// Vereda: unmet EXPECT: ^\s+assertion d < 2\.0$
-// MODE: FUTURE

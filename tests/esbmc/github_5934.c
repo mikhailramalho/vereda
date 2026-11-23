@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^Solving claim 'b
 // MODE: FUTURE
+// Vereda: verdict none

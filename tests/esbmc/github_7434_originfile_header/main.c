@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="originfile">[^<]*helper\.h
 // EXPECT: <key id="originfile" attr\.name="originFileName" attr\.type="string" for="edge"/>
+// Vereda: verdict none

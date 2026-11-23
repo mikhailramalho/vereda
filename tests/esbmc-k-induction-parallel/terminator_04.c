@@ -25,3 +25,4 @@ main()
 // RUN: --k-induction-parallel --std=gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

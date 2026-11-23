@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 4 witnesses\]
 // EXPECT: --max-witnesses cap reached
+// Vereda: verdict none

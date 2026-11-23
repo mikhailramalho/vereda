@@ -37,3 +37,4 @@ int main()
 // RUN: --k-induction --base-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

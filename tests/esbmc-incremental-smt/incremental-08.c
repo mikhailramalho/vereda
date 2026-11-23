@@ -14,3 +14,4 @@ int main()
 // RUN: --smt-during-symex --smt-symex-assert -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

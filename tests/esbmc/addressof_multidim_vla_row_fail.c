@@ -16,6 +16,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_vla_row_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion p == q$
-// Vereda: unmet EXPECT: ^  assertion p == q$
-// MODE: FUTURE

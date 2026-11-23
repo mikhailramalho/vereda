@@ -18,3 +18,4 @@ int main() {
 // RUN: --goto-unwind --no-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

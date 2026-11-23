@@ -29,3 +29,4 @@ int main(void)
 // RUN: --data-races-check-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

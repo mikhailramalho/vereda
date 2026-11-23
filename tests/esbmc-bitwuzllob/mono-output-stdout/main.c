@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ignoring --output -
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

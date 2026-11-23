@@ -12,3 +12,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^ERROR: Unknown Atomic expression$
 // EXPECT: ^ERROR: CONVERSION ERROR$
+// Vereda: verdict none

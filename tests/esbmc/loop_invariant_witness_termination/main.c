@@ -24,3 +24,4 @@ int main(void)
 // EXPECT: ^Injecting loop invariant at line 12: s == i$
 // EXPECT: \A(?![\s\S]*cannot be combined with --termination)[\s\S]*\Z
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

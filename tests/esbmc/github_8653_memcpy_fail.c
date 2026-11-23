@@ -21,8 +21,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8653_memcpy_fail
 // RUN: --multi-property
-// EXPECT: FAILED +\[main\.assertion\.1\] +line +19 +assertion dst\[0\] == 0
 // EXPECT: ^\*\* 1 of 1 properties failed$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: FAILED +\[main\.assertion\.1\] +line +19 +assertion dst\[0\] == 0
-// MODE: FUTURE

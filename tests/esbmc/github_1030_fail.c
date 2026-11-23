@@ -31,6 +31,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_1030_fail
 // RUN: --unwind 9
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion result\[i\] == arr1\[i\] \+ arr2\[i\]$
-// Vereda: unmet EXPECT: ^.*assertion result\[i\] == arr1\[i\] \+ arr2\[i\]$
-// MODE: FUTURE

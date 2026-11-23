@@ -576,3 +576,4 @@ void version()
 // RUN: --unwind 4 --no-unwinding-assertions --no-library -Wno-error=implicit-int
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  excessive allocation size: realloc$
 // EXPECT: ^  CWE: CWE-789$
+// Vereda: verdict none

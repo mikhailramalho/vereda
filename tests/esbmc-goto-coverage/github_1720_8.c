@@ -20,3 +20,4 @@ int main()
 // RUN: --condition-coverage-claims --no-cov-asserts
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

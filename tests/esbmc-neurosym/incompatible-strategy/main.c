@@ -9,3 +9,4 @@ int main()
 // RUN: --neurosym --k-induction --neurosym-prog fake-neurosym.sh
 // MODE: FUTURE
 // EXPECT: does not support --k-induction
+// Vereda: verdict none

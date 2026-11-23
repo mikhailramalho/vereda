@@ -35,3 +35,4 @@ int main() /* check_inverse */
 // RUN: -I . --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

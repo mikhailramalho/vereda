@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  h\.p = \{ \.p=&x, \.t=0 \}$
 // MODE: FUTURE
+// Vereda: verdict FAILED

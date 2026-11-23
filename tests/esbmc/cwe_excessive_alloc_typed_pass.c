@@ -22,3 +22,4 @@ int main(void)
 // RUN: --excessive-alloc-check=2000 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

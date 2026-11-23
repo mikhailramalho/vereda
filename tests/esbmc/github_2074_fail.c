@@ -9,3 +9,4 @@ int f(unsigned char x)
 // RUN: --function f --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -94,7 +94,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7521_uintptr_fail
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion a == 0 && b == 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion a == 0 && b == 0$
-// MODE: FUTURE

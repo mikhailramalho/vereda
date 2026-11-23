@@ -16,3 +16,4 @@ ERR:;
 // RUN: --error-label ERR --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

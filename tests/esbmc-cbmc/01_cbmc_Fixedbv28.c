@@ -179,3 +179,4 @@ int main(void)
 // RUN: --fixedbv --no-slice --bv --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

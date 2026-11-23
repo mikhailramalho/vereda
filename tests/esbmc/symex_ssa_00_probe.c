@@ -4,3 +4,4 @@
 // RUN: -DSYMEX_HARNESS_PROBE --overflow-check --unsigned-overflow-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

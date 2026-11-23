@@ -16,3 +16,4 @@ int main()
 // RUN: --smtlib --smt-formula-too --output -
 // MODE: FUTURE
 // EXPECT: ^\(set-option :produce-models true\)$
+// Vereda: verdict none

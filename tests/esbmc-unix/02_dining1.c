@@ -58,3 +58,4 @@ int main ( void )
 // RUN: --unwind 3 --deadlock-check --context-bound 8 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

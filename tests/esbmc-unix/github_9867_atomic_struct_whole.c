@@ -35,3 +35,4 @@ int main(void)
 // RUN: --context-bound 2 --data-races-check-only --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

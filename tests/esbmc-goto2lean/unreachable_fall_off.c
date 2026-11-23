@@ -6,3 +6,4 @@ int main(void) { unsigned r = f(__VERIFIER_nondet_uint()); return 0; }
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^    False →\n    ∀ result : BitVec 32, post result\)\);$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(void)
 // RUN: --k-induction --k-step 4 --max-k-step 9
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

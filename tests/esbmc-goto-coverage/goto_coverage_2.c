@@ -22,3 +22,4 @@ int main()
 // RUN: --multi-property --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

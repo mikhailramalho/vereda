@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^ *FAILED .*memcpy length exceeds object bounds$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Proof cache: 1 claim\(s\) reused, 1 solved$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

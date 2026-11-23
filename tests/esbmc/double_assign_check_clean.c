@@ -27,3 +27,4 @@ int main(void)
 // RUN: --unwind 6 --double-assign-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

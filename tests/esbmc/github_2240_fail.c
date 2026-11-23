@@ -21,3 +21,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: Data object accessed with code type$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

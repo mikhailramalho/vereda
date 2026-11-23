@@ -11,3 +11,4 @@ int main(void)
 // RUN: --32 --std c11 --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

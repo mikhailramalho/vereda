@@ -21,3 +21,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: apply\(&callee, 1\)
+// Vereda: verdict none

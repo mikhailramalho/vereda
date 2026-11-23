@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)\A(?!.*Function call trace:)
+// Vereda: verdict none

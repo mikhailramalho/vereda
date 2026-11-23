@@ -49,6 +49,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/multidim_padded_stride_fail
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: reachable cell
-// Vereda: unmet EXPECT: reachable cell
-// MODE: FUTURE

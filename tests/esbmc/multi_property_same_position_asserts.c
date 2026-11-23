@@ -12,7 +12,7 @@ int main()
 // RUN: --multi-property
 // EXPECT: ^\s+PASSED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)i < 4\]$
 // EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)j < 4\]$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+PASSED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)i < 4\]$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

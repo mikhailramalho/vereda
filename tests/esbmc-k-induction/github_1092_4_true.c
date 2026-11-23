@@ -24,3 +24,4 @@ int main()
 // RUN: --k-induction
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

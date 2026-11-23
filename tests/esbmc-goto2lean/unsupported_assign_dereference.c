@@ -7,3 +7,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported assignment to dereference at .*unsupported_assign_dereference\.c:2$
+// Vereda: verdict none

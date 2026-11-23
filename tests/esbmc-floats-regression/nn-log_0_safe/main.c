@@ -26,3 +26,4 @@ int main() /* check_domain */
 // RUN: -I .
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

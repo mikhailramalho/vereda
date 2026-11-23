@@ -14,3 +14,4 @@ int main()
 // RUN: --multi-property --multi-fail-fast 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

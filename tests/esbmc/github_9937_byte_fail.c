@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[main.assertion.1\]  line 8  show
+// Vereda: verdict none

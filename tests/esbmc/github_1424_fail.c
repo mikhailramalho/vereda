@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: no definition for external symbol undefined_extern declared at file .*github_1424_fail\.c line 3
 // Vereda: unmet EXPECT: no definition for external symbol undefined_extern declared at file .*github_1424_fail\.c line 3
 // MODE: FUTURE
+// Vereda: verdict FAILED

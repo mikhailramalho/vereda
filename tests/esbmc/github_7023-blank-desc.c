@@ -12,5 +12,5 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^  PASSED +\[main\.assertion\.1\]  line 5[^\t\n]*$
 // EXPECT: ^  FAILED +\[main\.assertion\.2\]  line 6  P2$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

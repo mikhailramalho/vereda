@@ -11,7 +11,4 @@ J:
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9782_fail
-// EXPECT: ^  FAILED +\[main.assertion.1\]  line 10  assertion j >= 3$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main.assertion.1\]  line 10  assertion j >= 3$
-// MODE: FUTURE

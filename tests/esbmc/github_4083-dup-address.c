@@ -16,3 +16,4 @@ L:
 // RUN: --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -110,3 +110,4 @@ int *create_fresh_int_array(int size) {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bforgotten memory\b
+// Vereda: verdict none

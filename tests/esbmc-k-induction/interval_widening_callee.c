@@ -18,3 +18,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

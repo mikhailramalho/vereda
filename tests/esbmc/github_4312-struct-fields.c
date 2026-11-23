@@ -34,3 +34,4 @@ int main(void)
 // EXPECT: Witness 3 of 5[^\n]*\n[^\n]*Inputs[^\n]*\.x=[^\n]*\.y=
 // EXPECT: Witness 4 of 5[^\n]*\n[^\n]*Inputs[^\n]*\.x=[^\n]*\.y=
 // EXPECT: Witness 5 of 5[^\n]*\n[^\n]*Inputs[^\n]*\.x=[^\n]*\.y=
+// Vereda: verdict none

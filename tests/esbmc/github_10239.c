@@ -13,3 +13,4 @@ int main(int argc, char **argv)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.1\]
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

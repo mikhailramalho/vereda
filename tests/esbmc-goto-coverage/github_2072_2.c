@@ -25,3 +25,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Short Circuited Conditions:  2
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

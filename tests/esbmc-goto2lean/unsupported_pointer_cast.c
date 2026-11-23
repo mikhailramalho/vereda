@@ -8,3 +8,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported cast from pointer to unsignedbv$
+// Vereda: verdict none

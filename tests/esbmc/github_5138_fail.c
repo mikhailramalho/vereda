@@ -43,3 +43,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*forgotten memory.*$
+// Vereda: verdict none

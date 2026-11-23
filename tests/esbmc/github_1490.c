@@ -13,3 +13,4 @@ int main()
 // EXPECT: State \d+ file .* line 9 column 3 function main thread 0
 // Vereda: unmet EXPECT: State \d+ file .* line 9 column 3 function main thread 0
 // MODE: FUTURE
+// Vereda: verdict FAILED

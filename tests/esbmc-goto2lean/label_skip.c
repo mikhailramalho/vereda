@@ -15,3 +15,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^def v \(c : BitVec 32\) \(post : Unit → Prop\) : Prop :=\n  let join_1 := \(\n    post \(\)\);$
+// Vereda: verdict none

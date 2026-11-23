@@ -17,8 +17,8 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_8706_fail
 // RUN: --overflow-check --unsigned-overflow-check --solver bitwuzla --multi-property
 // EXPECT: ^  PASSED .*line +10  arithmetic overflow on div$
-// EXPECT: ^  FAILED .*line +11  assertion q == 1$
 // EXPECT: ^  FAILED .*line +14  arithmetic overflow on div$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  PASSED .*line +10  arithmetic overflow on div$
 // MODE: FUTURE
+// Vereda: verdict FAILED

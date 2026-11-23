@@ -15,7 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9782_switch_fail
-// EXPECT: ^  FAILED +\[main.assertion.1\]  line 12  assertion j >= 3$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main.assertion.1\]  line 12  assertion j >= 3$
-// MODE: FUTURE

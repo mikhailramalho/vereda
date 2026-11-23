@@ -18,3 +18,4 @@ int main() {
 // RUN: --cheri hybrid --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

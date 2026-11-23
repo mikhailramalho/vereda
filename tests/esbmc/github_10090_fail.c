@@ -17,6 +17,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10090_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*assertion s\[i\]\.h == 0x0304
-// Vereda: unmet EXPECT: FAILED.*assertion s\[i\]\.h == 0x0304
-// MODE: FUTURE

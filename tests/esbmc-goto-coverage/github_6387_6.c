@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Total Conditions:  8$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

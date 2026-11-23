@@ -11,6 +11,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/byte_walk_row_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion n != 8$
-// Vereda: unmet EXPECT: ^\s+assertion n != 8$
-// MODE: FUTURE

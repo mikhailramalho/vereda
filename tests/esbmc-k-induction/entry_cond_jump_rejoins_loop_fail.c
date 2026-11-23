@@ -27,3 +27,4 @@ far:
 // RUN: --k-induction --max-k-step 40
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -13,3 +13,4 @@ int main(int argc, char **argv)
 // EXPECT: \bdereference failure: write access to string constant
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

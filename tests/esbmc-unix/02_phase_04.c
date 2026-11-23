@@ -38,3 +38,4 @@ int main()
 // RUN: --deadlock-check --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

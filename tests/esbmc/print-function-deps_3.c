@@ -98,3 +98,4 @@ int main() {
 // EXPECT: ^c:@F@main -> c:@F@normalize\(total, 0, 300\) \[.*print\-function\-deps_3\.c:\d+\]$
 // EXPECT: ^c:@F@normalize -> c:@F@clamp\(val, lo, hi\) \[.*print\-function\-deps_3\.c:\d+\]$
 // EXPECT: ^__ESBMC_main -> c:@F@main\(\) \[.*print\-function\-deps_3\.c:\d+\]$
+// Vereda: verdict none

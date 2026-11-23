@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the row.s earlier store must not be dropped$
 // MODE: FUTURE
+// Vereda: verdict FAILED

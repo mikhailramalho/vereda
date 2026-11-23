@@ -30,3 +30,4 @@ int main()
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+13\s+loop invariant base case$
 // EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.3\]\s+line\s+17\s+loop invariant base case \(loop invariant too weak
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -35,3 +35,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: loop invariant inductive step
+// Vereda: verdict none

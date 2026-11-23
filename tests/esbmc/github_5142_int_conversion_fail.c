@@ -14,5 +14,5 @@ int main(void)
 // RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^Violated property:$
-// EXPECT: ^\s*v is 0xdead, not 0 -- must fail$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

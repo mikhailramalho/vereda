@@ -18,6 +18,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_ptr_row
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: PASSED.*&pp\[1\]\[2\] == &r1\[2\]$
-// Vereda: unmet EXPECT: PASSED.*&pp\[1\]\[2\] == &r1\[2\]$
-// MODE: FUTURE

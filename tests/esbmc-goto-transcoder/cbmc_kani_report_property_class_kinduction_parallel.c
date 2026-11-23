@@ -4,3 +4,4 @@ int main() { return 0; }
 // RUN: --report-property-class cover --k-induction-parallel
 // MODE: FUTURE
 // EXPECT: ^ERROR: --report-property-class does not support --k-induction-parallel$(?![\s\S]*does not support)(?![\s\S]*^VERIFICATION)
+// Vereda: verdict none

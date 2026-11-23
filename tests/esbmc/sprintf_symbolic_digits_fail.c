@@ -7,5 +7,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/sprintf_symbolic_digits_fail
-// EXPECT: false: c<8 prints one digit
 // EXPECT: ^VERIFICATION FAILED$

@@ -43,3 +43,4 @@ int main() {
 // RUN: --no-bounds-check --no-vla-size-check --error-label ERROR --unwind 3 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

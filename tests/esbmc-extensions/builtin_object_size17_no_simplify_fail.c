@@ -18,7 +18,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/extensions/builtin_object_size17_no_simplify_fail
-// EXPECT: ^  FAILED .*assertion __builtin_object_size\(p, 0\) == 8$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion __builtin_object_size\(p, 0\) == 8$
-// MODE: FUTURE

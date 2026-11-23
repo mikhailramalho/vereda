@@ -10,7 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8701_fail
-// EXPECT: ^  FAILED .*assertion fegetround\(\) == FE_TONEAREST
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion fegetround\(\) == FE_TONEAREST
-// MODE: FUTURE

@@ -34,3 +34,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants: a user-written loop invariant reaches a call through a function pointer, whose callee cannot be named\. Synthesising nothing rather than risk weakening that invariant$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -10,3 +10,4 @@ int main(void)
 // RUN: --dead-code-check --smt-formula-only
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --smt-formula-only$
+// Vereda: verdict none

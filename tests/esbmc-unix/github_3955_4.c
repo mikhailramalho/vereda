@@ -27,3 +27,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: RACE_CHECK
+// Vereda: verdict none

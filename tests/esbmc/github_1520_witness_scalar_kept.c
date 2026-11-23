@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">x == 5;
+// Vereda: verdict none

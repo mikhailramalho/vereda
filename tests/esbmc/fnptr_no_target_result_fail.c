@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/fnptr_no_target_result_fail
 // EXPECT: ^No target candidate for function call \*ext_cb$
-// EXPECT: ^  FAILED       \[main\.assertion\.1\]  line 9  result unchanged$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^No target candidate for function call \*ext_cb$
 // MODE: FUTURE
+// Vereda: verdict FAILED

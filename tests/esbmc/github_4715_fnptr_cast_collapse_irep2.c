@@ -16,3 +16,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ^ +ASSIGN p=&g;$
+// Vereda: verdict none

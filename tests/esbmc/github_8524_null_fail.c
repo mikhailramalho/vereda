@@ -14,7 +14,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_8524_null_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line 11\s+assertion r == 10$
 // EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 10\s+dereference failure: NULL pointer$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line 11\s+assertion r == 10$
+// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 10\s+dereference failure: NULL pointer$
 // MODE: FUTURE
+// Vereda: verdict FAILED

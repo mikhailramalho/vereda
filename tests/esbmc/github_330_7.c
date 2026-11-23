@@ -1581,3 +1581,4 @@ void *ldv_reference_xzalloc(size_t size)
 // RUN: --memory-leak-check --force-malloc-success --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -82,3 +82,4 @@ int main(void)
 // RUN: --boolector --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

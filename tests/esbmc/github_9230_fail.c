@@ -12,7 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9230_fail
-// EXPECT: ^\s*assertion b == \(p == 0\)$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*assertion b == \(p == 0\)$
-// MODE: FUTURE

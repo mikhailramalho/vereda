@@ -37,3 +37,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  file .*jump_unreach_fail\.c line 10 column 50 function __VERIFIER_assert$
+// Vereda: verdict none

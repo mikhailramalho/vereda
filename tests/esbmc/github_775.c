@@ -38,3 +38,4 @@ int main() {
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --k-step 2 --floatbv --unlimited-k-steps --32 --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

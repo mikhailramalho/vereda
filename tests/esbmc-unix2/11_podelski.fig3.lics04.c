@@ -26,3 +26,4 @@ int main() {
 // RUN: --unwind 1 --no-unwinding-assertions --data-races-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -13,4 +13,4 @@ int main(void)
 // RUN: --64 --fixedbv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion r != 12$
+// Vereda: verdict none

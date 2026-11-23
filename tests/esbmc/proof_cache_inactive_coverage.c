@@ -12,3 +12,4 @@ int main(void)
 // RUN: --assertion-coverage --proof-cache proof-store
 // MODE: FUTURE
 // EXPECT: ^WARNING: Proof cache: inactive \(coverage measurement\); every claim will be solved and none stored$
+// Vereda: verdict none

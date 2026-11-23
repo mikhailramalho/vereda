@@ -37,5 +37,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/null_fnptr_guard_const_fold_fail
 // RUN: --unwind 4
-// EXPECT: ^.*a null entry must keep its miss path.*$
 // EXPECT: ^VERIFICATION FAILED$

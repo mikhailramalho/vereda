@@ -22,3 +22,4 @@ while_break:;
 // RUN: --k-induction --max-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

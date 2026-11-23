@@ -20,3 +20,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 1$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

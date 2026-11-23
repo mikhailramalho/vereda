@@ -119,3 +119,4 @@ int main(void)
 // RUN: --context-bound 2
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

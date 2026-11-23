@@ -20,3 +20,4 @@ int main(int argc, char **argv)
 // RUN: --cheri hybrid --big-endian
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

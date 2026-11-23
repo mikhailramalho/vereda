@@ -12,3 +12,4 @@ int main(void)
 // RUN: --sv-comp --overflow-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

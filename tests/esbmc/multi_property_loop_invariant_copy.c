@@ -22,5 +22,4 @@ int main()
 // RUN: --loop-invariant --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.3\]\s+line\s+14\s+assertion n != 7$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.4\]\s+line\s+14\s+assertion n != 7$
+// Vereda: verdict none

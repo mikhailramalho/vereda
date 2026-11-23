@@ -25,3 +25,4 @@ int main()
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

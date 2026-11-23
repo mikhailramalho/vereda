@@ -185,3 +185,4 @@ int main()
 // RUN: --unwind 2 --context-bound 2 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

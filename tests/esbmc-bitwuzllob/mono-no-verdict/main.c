@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: no sat/unsat verdict
 // EXPECT: SMT solver failed
+// Vereda: verdict none

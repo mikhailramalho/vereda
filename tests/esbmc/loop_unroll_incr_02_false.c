@@ -19,3 +19,4 @@ int main() {
 // RUN: --incremental-bmc --no-summarize-array-loops
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

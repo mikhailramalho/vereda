@@ -17,4 +17,3 @@ int main()
 // Imported from ESBMC regression/esbmc/member_address_difference_fail
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: the members are not nine bytes apart

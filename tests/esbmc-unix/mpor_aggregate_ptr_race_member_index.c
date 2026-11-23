@@ -37,6 +37,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_race_member_index
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion seen == 2$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

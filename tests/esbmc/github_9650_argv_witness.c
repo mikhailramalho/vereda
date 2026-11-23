@@ -13,3 +13,4 @@ int main(int argc, char *argv[])
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

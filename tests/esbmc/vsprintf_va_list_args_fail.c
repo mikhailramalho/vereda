@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

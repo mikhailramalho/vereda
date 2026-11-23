@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)type: "branching"(?:(?!type:).)*?^\s+line: 11$
 // EXPECT: (?s)\A(?!.*type: "branching"(?:(?!type:).)*?^\s+line: 9$)
+// Vereda: verdict none

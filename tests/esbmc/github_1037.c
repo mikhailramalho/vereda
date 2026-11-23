@@ -14,3 +14,4 @@ int main()
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*fails to convert)[\s\S]*VERIFICATION SUCCESSFUL[\s\S]*\Z
+// Vereda: verdict none

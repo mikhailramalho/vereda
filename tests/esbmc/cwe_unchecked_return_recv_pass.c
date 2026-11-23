@@ -13,3 +13,4 @@ int main(void)
 // RUN: --unchecked-return-value-check --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

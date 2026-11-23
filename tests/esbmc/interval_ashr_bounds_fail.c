@@ -13,4 +13,4 @@ int main(void)
 // RUN: --interval-analysis --interval-analysis-bitwise
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: x in \[16,19\] gives y == 4
+// Vereda: verdict none

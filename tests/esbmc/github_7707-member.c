@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment for access to packed struct struct S$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

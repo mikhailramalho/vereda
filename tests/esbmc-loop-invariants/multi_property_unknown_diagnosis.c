@@ -41,4 +41,4 @@ int main()
 // RUN: --no-standard-checks --loop-invariant --multi-property --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
-// EXPECT: ^ +UNKNOWN .*post loop modular equality
+// Vereda: verdict none

@@ -28,3 +28,4 @@ main()
 // RUN: --k-induction --std=gnu89 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

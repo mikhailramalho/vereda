@@ -28,3 +28,4 @@ void really ( void )
 // RUN: --no-slice --memory-leak-check --no-unwinding-assertions --unwind 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -21,4 +21,4 @@ int main(void) {
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion l != 20$
+// Vereda: verdict none

@@ -50,3 +50,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Generated 8 CTest test case\(s\) with CMakeLists\.txt
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

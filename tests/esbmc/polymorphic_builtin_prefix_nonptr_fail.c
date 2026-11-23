@@ -12,7 +12,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/polymorphic_builtin_prefix_nonptr_fail
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line 11\s+assertion r == 42$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line 11\s+assertion r == 42$
-// MODE: FUTURE

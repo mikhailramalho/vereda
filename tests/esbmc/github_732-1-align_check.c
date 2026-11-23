@@ -41,3 +41,4 @@ int main() {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct .*s4.*$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

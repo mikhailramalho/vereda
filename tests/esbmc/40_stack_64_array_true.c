@@ -7,3 +7,4 @@ int main() {
 // RUN: --64 --stack-limit 80
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

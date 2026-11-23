@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: value: "true"\n\s+location:\n\s+file_name: ".*github_9884_sliced_guard_fail\.c"\n\s+line: 12$
 // EXPECT: type: "target"
 // EXPECT: (?s)\A(?!.*line: 16$)
+// Vereda: verdict none

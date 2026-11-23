@@ -22,3 +22,4 @@ int main() {
 // RUN: --unwind 10 --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

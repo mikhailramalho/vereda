@@ -15,3 +15,4 @@ int main()
 // RUN: --k-induction-parallel --multi-property --max-k-step 10
 // MODE: FUTURE
 // EXPECT: ^ERROR: --k-induction-parallel cannot be combined with --multi-property$
+// Vereda: verdict none

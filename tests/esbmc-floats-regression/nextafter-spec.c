@@ -65,3 +65,4 @@ int main()
 // RUN: --interval-analysis -Wno-error=implicit-function-declaration --fp2bv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

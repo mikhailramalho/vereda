@@ -23,3 +23,4 @@ int main()
 // EXPECT: ^Total Asserts: 1$
 // EXPECT: ^Reached Assertion Instances: 0$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -9,3 +9,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: Total stack limit property was violated
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

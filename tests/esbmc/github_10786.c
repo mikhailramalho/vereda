@@ -12,3 +12,4 @@ int main()
 // EXPECT: \[main\.division-by-zero\.1\]  line 5  division by zero$
 // EXPECT: \[main\.division-by-zero\.2\]  line 6  division by zero$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

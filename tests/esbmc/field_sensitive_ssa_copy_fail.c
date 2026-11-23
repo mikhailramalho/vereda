@@ -63,3 +63,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits [1-9][0-9]* struct object\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -28,3 +28,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*cannot be combined with --termination)[\s\S]*\Z
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

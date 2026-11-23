@@ -26,7 +26,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_index_through_pointer_fail
 // EXPECT: ^  \S*s->b\[.*\] = .*\.b=2 }$
-// EXPECT: ^  b holds 1 and 2$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  \S*s->b\[.*\] = .*\.b=2 }$
 // MODE: FUTURE
+// Vereda: verdict FAILED

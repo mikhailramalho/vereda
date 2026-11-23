@@ -23,3 +23,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: Disabling inductive step
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

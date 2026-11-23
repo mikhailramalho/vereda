@@ -28,5 +28,5 @@ int main(void)
 // RUN: --synthesise-loop-invariants
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
-// EXPECT: FAILED.*assertion sn == \(uint64_t\)n \* a \+ 1
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

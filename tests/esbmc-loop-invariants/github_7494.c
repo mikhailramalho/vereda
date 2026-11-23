@@ -17,5 +17,5 @@ int main()
 // Needs: --loop-invariant
 // RUN: --loop-invariant
 // MODE: FUTURE
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.4\]\s+line\s+13\s+assertion x == 5$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

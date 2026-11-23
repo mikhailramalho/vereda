@@ -32,3 +32,4 @@ int main(void)
 // EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion
 // Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion
 // MODE: FUTURE
+// Vereda: verdict FAILED

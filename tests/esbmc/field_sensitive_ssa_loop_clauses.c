@@ -31,3 +31,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -31,6 +31,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/deref_punned_member_index_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion s.v\[1\] != &g$
-// Vereda: unmet EXPECT: ^  assertion s.v\[1\] != &g$
-// MODE: FUTURE

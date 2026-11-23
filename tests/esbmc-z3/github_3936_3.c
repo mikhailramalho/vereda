@@ -27,3 +27,4 @@ int main()
 // RUN: --loop-invariant --no-standard-checks --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

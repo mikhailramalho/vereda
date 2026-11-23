@@ -16,3 +16,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: array bounds violated: array `g' upper bound
+// Vereda: verdict none

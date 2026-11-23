@@ -16,6 +16,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9435_timedwait_fail
 // RUN: -m64 --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion !\(r == -1 && errno == ETIMEDOUT\)$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

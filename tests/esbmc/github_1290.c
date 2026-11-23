@@ -48,3 +48,4 @@ int main() {
 // RUN: --skip-bmc
 // MODE: FUTURE
 // EXPECT: ^Generating GOTO Program$
+// Vereda: verdict none

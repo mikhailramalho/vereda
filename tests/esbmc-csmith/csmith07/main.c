@@ -122,3 +122,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --unwind 10 --show-symex-value-sets --symex-trace --ssa-smt-trace --show-goto-value-sets --symex-ssa-trace --ssa-trace
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

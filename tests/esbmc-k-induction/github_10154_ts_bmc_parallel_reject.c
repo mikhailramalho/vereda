@@ -22,3 +22,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^ERROR: --k-induction-parallel cannot be combined with --ts-bmc$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z
+// Vereda: verdict none

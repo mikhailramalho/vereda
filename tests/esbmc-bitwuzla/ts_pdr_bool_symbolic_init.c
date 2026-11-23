@@ -21,3 +21,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Solution found by PDR
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

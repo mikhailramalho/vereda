@@ -21,3 +21,4 @@ int main()
 // RUN: --clang-c-irep2-adjust-only --symbol-table-only
 // MODE: FUTURE
 // EXPECT: ^__builtin_va_copy\(&cp(\[0\])?, &ap(\[0\])?[,)]
+// Vereda: verdict none

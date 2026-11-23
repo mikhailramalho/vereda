@@ -14,5 +14,5 @@ int main()
 // Needs: --error-label ERROR
 // RUN: --error-label ERROR
 // MODE: FUTURE
-// EXPECT: ^Generated 1 VCC\(s\)
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

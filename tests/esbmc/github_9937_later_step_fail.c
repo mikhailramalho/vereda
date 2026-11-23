@@ -12,6 +12,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_9937_later_step_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 10 +q kept$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

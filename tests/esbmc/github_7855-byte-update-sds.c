@@ -14,3 +14,4 @@ int main(void)
 // RUN: --64 --smt-during-symex
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

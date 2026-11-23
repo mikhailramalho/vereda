@@ -26,3 +26,4 @@ int main()
 // RUN: --no-standard-checks --multi-property --unwind 3 --no-unwinding-assertions --timeout 60
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

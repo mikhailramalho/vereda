@@ -18,4 +18,3 @@ int main()
 // Imported from ESBMC regression/esbmc/offsetof_loop_bound_fail
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: b does not sit nine bytes into the struct

@@ -10,3 +10,4 @@ int main()
 // RUN: --parallel-solving --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

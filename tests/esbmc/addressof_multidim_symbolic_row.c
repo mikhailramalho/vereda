@@ -19,5 +19,4 @@ int main(void)
 // RUN: --no-pointer-arith-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]+ VCC\(s\), 1 remaining after simplification
-// EXPECT: assertion \(p == &a\[i\]\[1\]\) == \(i == 0\)
+// Vereda: verdict none

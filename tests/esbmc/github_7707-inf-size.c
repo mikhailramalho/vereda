@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^.*\[main\.assertion\.1\].*dereference failure: Incorrect alignment when accessing data object.*$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

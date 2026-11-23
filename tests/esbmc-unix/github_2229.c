@@ -67,3 +67,4 @@ int main()
 // RUN: --overflow --memory-leak-check --unwind 1 --no-unwinding-assertion --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

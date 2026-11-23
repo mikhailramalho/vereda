@@ -17,3 +17,4 @@ int main()
 // RUN: --k-induction --goto-unwind --unlimited-goto-unwind --max-k-step 20
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

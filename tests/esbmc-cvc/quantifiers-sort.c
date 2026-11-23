@@ -26,3 +26,4 @@ int main()
 // RUN: --solver cvc5 --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

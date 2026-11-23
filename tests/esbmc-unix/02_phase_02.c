@@ -40,3 +40,4 @@ int main()
 // RUN: --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -26,3 +26,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: loop invariant base case
+// Vereda: verdict none

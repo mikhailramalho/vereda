@@ -27,3 +27,4 @@ int main(void)
 // RUN: --32 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

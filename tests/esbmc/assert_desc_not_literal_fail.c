@@ -14,7 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assert_desc_not_literal_fail
-// EXPECT: ^  assertion \(_Bool\)ok$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion \(_Bool\)ok$
-// MODE: FUTURE

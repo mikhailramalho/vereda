@@ -17,3 +17,4 @@ int main(void)
 // RUN: --64 --smt-formula-only --output neg.smt2
 // MODE: FUTURE
 // EXPECT: ^SMT formula dumped to file
+// Vereda: verdict none

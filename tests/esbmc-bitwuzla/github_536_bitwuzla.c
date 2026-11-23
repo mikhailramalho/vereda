@@ -11,3 +11,4 @@ int main()
 // RUN: --smt-model --bitwuzla -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

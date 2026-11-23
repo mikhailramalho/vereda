@@ -22,3 +22,4 @@ int main(void)
 // RUN: --unwind 50
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

@@ -13,3 +13,4 @@ int main(void)
 // RUN: --interval-analysis --interval-analysis-bitwise
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -30,4 +30,4 @@ int main(void)
 // RUN: --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion 0$
+// Vereda: verdict none

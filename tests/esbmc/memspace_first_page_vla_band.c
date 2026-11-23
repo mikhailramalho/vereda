@@ -17,3 +17,4 @@ int main(void)
 // RUN: --no-vla-size-check --no-bounds-check --reserve-first-page
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

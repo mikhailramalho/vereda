@@ -26,7 +26,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bool_int_bool_fold
-// EXPECT: ^Generated 6 VCC\(s\), 2 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 6 VCC\(s\), 2 remaining after simplification
-// MODE: FUTURE

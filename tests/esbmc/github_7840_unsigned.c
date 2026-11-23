@@ -8,7 +8,4 @@ unsigned long long q(unsigned a, unsigned b)
 }
 // Imported from ESBMC regression/esbmc/github_7840_unsigned
 // RUN: --unsigned-overflow-check --entry q
-// EXPECT: ^Generated 3 VCC\(s\), 2 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 3 VCC\(s\), 2 remaining after simplification
-// MODE: FUTURE

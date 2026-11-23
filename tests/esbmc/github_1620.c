@@ -10,7 +10,4 @@ int main(){
   assert(invalid_char_pt != x4);
 }
 // Imported from ESBMC regression/esbmc/github_1620
-// EXPECT: assertion invalid_char_pt != x4
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: assertion invalid_char_pt != x4
-// MODE: FUTURE

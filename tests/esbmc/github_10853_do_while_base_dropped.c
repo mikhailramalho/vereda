@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)line: 5\s+column: \d+\s+function: "main"\s+value: "i <= 5"
 // EXPECT: (?s)\A(?!.*line: 9$)
+// Vereda: verdict none

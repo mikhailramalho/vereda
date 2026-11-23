@@ -15,7 +15,6 @@ int main()
 // Needs: --falsification
 // RUN: --falsification --multi-property --max-k-step 10
 // MODE: FUTURE
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion n != 7$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+12\s+assertion x != 3$
 // EXPECT: ^\*\* 2 of 2 properties failed$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

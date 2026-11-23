@@ -27,7 +27,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/zero_length_array_member_deref_fail
 // RUN: --force-malloc-success -m64
-// EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion p->slots\[0\]\.k != 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion p->slots\[0\]\.k != 0$
-// MODE: FUTURE

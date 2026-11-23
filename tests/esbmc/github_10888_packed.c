@@ -23,3 +23,4 @@ int main(void)
 // RUN: --little-endian --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

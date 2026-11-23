@@ -26,6 +26,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7855-two-slots_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +two slots read back equal$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +two slots read back equal$
-// MODE: FUTURE

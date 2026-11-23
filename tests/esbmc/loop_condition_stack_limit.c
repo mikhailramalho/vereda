@@ -12,3 +12,4 @@ int main()
 // RUN: --unwind 2 --no-unwinding-assertions --stack-limit 96
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

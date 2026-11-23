@@ -33,3 +33,4 @@ int main(void)
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

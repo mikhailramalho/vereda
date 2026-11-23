@@ -529,3 +529,4 @@ static int is_spec_symbol(str)
 // RUN: --partial-loops --unwind 1 --32 -Wno-error=implicit-int
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

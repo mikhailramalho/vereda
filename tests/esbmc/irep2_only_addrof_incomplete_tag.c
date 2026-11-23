@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: take_struct\(\(void \*\)\(&JJ\)\)
 // EXPECT: take_union\(\(void \*\)\(&UU\)\)
+// Vereda: verdict none

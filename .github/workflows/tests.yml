@@ -24,13 +24,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
-        # Only a file list read in full can say false; any failure here
-        # leaves code unset, and regression runs.
+        # Only a file list read in full can say false: the files API lists up
+        # to 3000 (a diff, at most 300), and any failure leaves code true, so
+        # regression runs and this job still passes.
         run: |
           code=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            files=$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)
-            if [ -n "$files" ] && ! grep -qvE '^docs/|\.md$' <<< "$files"; then
+            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" \
+                      --jq '.[].filename') || files=
+            # 3000 files may be a list cut short, so it proves nothing.
+            if [ -n "$files" ] && [ "$(wc -l <<< "$files")" -lt 3000 ] &&
+               ! grep -qvE '^docs/|\.md$' <<< "$files"; then
               code=false
             fi
           fi

@@ -14,3 +14,4 @@ int main()
 // EXPECT: \A(?![\s\S]*invalidated dynamic object$)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

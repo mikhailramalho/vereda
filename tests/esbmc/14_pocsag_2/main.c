@@ -524,3 +524,4 @@ int main()
 // RUN: --claim 1 --unwind 42
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

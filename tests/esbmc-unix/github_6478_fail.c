@@ -20,3 +20,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Deadlocked state in
+// Vereda: verdict none

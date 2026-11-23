@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: Inputs : \[0\] = 1
 // EXPECT: Summary: 2 distinct input tuples violate this property
 // EXPECT: UNSAT after 2 witnesses
+// Vereda: verdict none

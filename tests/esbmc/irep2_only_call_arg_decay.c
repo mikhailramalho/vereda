@@ -14,3 +14,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: FUNCTION_CALL: +take_ptr\(&a\[0\]\)
+// Vereda: verdict none

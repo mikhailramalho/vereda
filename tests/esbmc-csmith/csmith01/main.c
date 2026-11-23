@@ -2718,3 +2718,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --no-standard-checks --partial-loops --no-align-check --tuple-node-flattener --all-claims --bv --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

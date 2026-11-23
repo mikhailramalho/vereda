@@ -62,9 +62,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_6413
 // RUN: --multi-property --unwind 10
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^ +FAILED .*line +21 +prod: false$
-// EXPECT: ^ +PASSED .*line +23 +prod_task: done$
-// EXPECT: ^ +PASSED .*line +39 +cons_task: done$
-// EXPECT: \A(?![\s\S]*PASSED .*prod: false)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

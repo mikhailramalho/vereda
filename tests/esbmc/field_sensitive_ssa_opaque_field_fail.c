@@ -38,3 +38,4 @@ int main(void)
 // RUN: --field-sensitive-ssa --unwind 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

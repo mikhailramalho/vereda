@@ -8,3 +8,4 @@ int combine(int a, int b)
 // EXPECT: line 10 +assertion
 // Vereda: unmet EXPECT: line 10 +assertion
 // MODE: FUTURE
+// Vereda: verdict FAILED

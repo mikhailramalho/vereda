@@ -12,3 +12,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure on memcpy: reading memory segment of size 2 with 4 bytes$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

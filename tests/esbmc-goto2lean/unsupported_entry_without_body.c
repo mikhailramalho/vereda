@@ -5,3 +5,4 @@ int main(void) { unsigned r = ext(1); return 0; }
 // RUN: --goto2lean --function ext
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: entry function ext not found$
+// Vereda: verdict none

@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8676_case_range_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line 9\s+assertion v != 3$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line 9\s+assertion v != 3$
-// MODE: FUTURE

@@ -32,3 +32,4 @@ int main()
 // RUN: --termination --32 --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ASSERT 0 // termination per-loop marker\n.*\n.*RETURN: 0
+// Vereda: verdict none

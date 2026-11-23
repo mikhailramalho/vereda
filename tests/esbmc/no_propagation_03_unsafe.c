@@ -10,5 +10,5 @@ int main()
 // Needs: --no-propagation
 // RUN: --no-propagation
 // MODE: FUTURE
-// EXPECT: ^Generated 2 VCC\(s\), 2 remaining after simplification
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

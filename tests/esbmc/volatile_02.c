@@ -11,3 +11,4 @@ int main()
 // RUN: --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

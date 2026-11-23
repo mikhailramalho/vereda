@@ -25,3 +25,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: cannot havoc what a loop writes through a pointer
+// Vereda: verdict none

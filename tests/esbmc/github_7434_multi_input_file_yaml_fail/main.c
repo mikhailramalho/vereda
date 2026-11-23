@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: file_name: "[^"]*first\.c"
 // EXPECT: line: 12$
 // EXPECT: (?s)- "[^"]*first\.c".*- "[^"]*main\.c"
+// Vereda: verdict none

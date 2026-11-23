@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^\s*dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

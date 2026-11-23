@@ -33,3 +33,4 @@ int main()
 // RUN: --termination
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

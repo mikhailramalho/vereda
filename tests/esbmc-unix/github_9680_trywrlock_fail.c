@@ -22,6 +22,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9680_trywrlock_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion 0$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -41,3 +41,4 @@ int main(void)
 // EXPECT: ^  t = \{ \.a=2, \.b=5 \}$
 // EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 33 .*NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

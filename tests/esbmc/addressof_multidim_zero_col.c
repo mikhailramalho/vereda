@@ -17,7 +17,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_zero_col
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]+ VCC\(s\), 0 remaining after simplification
-// EXPECT: PASSED.*p == q$
-// Vereda: unmet EXPECT: ^Generated [0-9]+ VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

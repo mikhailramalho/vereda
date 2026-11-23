@@ -24,3 +24,4 @@ int main()
 // RUN: --floatbv --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

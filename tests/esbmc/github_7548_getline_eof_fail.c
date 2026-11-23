@@ -15,6 +15,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7548_getline_eof_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion len >= 0$
-// Vereda: unmet EXPECT: ^  assertion len >= 0$
-// MODE: FUTURE

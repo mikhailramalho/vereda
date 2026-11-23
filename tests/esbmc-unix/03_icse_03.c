@@ -48,3 +48,4 @@ int main(void) {
 // RUN: --no-slice --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

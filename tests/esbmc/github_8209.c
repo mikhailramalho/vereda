@@ -24,3 +24,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^2 <= c:github_8209\.c@[0-9]+@F@main@x <= 0$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

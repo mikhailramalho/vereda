@@ -15,3 +15,4 @@ int main()
 // RUN: --force-malloc-success --unknown-method-args-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

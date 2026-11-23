@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported quantifier binder constant_int$
+// Vereda: verdict none

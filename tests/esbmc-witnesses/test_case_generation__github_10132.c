@@ -15,3 +15,4 @@ int main(void)
 // RUN: --generate-testcase --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

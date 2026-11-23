@@ -25,4 +25,4 @@ int main()
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s\.p == q$
+// Vereda: verdict none

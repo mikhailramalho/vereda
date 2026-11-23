@@ -16,3 +16,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Solution found by the inductive step \(k = \d+\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

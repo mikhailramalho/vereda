@@ -98,3 +98,4 @@ int main()
 // RUN: --unwind 1 --no-library
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

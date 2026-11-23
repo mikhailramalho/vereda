@@ -17,3 +17,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^\s*FAILED\s+\[__c11_atomic_load\.null-pointer-dereference\.1\]\s+line 11\s+dereference failure: NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

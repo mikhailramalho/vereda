@@ -10,3 +10,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: IF !\(_Bool\)x THEN GOTO
+// Vereda: verdict none

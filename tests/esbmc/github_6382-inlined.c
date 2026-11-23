@@ -44,3 +44,4 @@ int main()
 // EXPECT: ^Removed [1-9]\d* library assertion\(s\)$
 // EXPECT: \A(?![\s\S]*Sem is not initialized)[\s\S]*\Z
 // EXPECT: \A(?![\s\S]*Value has exceeded the maximum)[\s\S]*\Z
+// Vereda: verdict none

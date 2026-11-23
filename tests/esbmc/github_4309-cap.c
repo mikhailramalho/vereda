@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: Witness 1 of 1
 // EXPECT: --max-witnesses cap reached
 // EXPECT: ^  NOTE: --max-witnesses cap reached; more witnesses may exist\.$
+// Vereda: verdict none

@@ -17,3 +17,4 @@ int main () {
 // RUN: --context-bound 1 --no-slice --data-races-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none
