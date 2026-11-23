@@ -10,8 +10,8 @@ struct pair
 
 int main()
 {
-  long *p = __ESBMC_alloca(sizeof(long));
-  long *q = __ESBMC_alloca(sizeof(long));
+  long *p = __builtin_alloca(sizeof(long));
+  long *q = __builtin_alloca(sizeof(long));
   __VERIFIER_assert(!__ESBMC_same_object(&a, &b)); // two globals
   __VERIFIER_assert(!__ESBMC_same_object(&arr[1], &b)); // element and global
   __VERIFIER_assert(!__ESBMC_same_object(&s.y, &arr[2])); // member and element

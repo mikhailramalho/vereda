@@ -9,7 +9,7 @@ struct node
 
 int main()
 {
-  struct node *p = __ESBMC_alloca(sizeof(struct node));
+  struct node *p = __builtin_alloca(sizeof(struct node));
   __VERIFIER_assert(p != NULL); // an allocation is not NULL
   return 0;
 }

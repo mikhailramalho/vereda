@@ -163,7 +163,7 @@ UINT64 RegRead(REGMAP_TABLE *RegMapTable, UINT32 EntryIndex)
 int main()
 {
   IP_INST *pInst;
-  pInst = __ESBMC_alloca(sizeof(IP_INST));
+  pInst = __builtin_alloca(sizeof(IP_INST));
   pInst->RegCntxtHost = (void *)(&m_RegMapTable);
 
   for(UINT8 PortIdx = 0; PortIdx < 4; PortIdx++)

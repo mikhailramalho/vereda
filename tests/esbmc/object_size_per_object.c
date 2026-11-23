@@ -6,7 +6,7 @@
  * addresses, not of whichever its value set lists first. */
 _Bool __VERIFIER_nondet_bool(void);
 unsigned __VERIFIER_nondet_uint(void);
-size_t __ESBMC_builtin_object_size(const void *, int);
+size_t __builtin_object_size(const void *, int);
 
 int main(void)
 {
@@ -15,13 +15,13 @@ int main(void)
   char *p = __VERIFIER_nondet_bool() ? small : big + 50;
   if (p == big + 50)
   {
-    assert(__ESBMC_builtin_object_size(p, 0) == 50);
-    assert(__ESBMC_builtin_object_size(p, 3) == 50);
+    assert(__builtin_object_size(p, 0) == 50);
+    assert(__builtin_object_size(p, 3) == 50);
   }
   else
   {
-    assert(__ESBMC_builtin_object_size(p, 0) == 1);
-    assert(__ESBMC_builtin_object_size(p, 3) == 1);
+    assert(__builtin_object_size(p, 0) == 1);
+    assert(__builtin_object_size(p, 3) == 1);
   }
 
   unsigned n = __VERIFIER_nondet_uint();
@@ -29,7 +29,7 @@ int main(void)
   char *heap = malloc(n);
   char *q = __VERIFIER_nondet_bool() ? heap : big;
   if (heap && q == heap)
-    assert(__ESBMC_builtin_object_size(q, 0) == n);
+    assert(__builtin_object_size(q, 0) == n);
   free(heap);
   return 0;
 }

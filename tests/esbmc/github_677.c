@@ -7,7 +7,7 @@
 
 int main(void)
 {
-  void *Heap = __ESBMC_alloca(_32KB);
+  void *Heap = __builtin_alloca(_32KB);
   __VERIFIER_assume((uint64_t)Heap < 0xFF);
 
   uint64_t *TabPhy = (uint64_t *)(((uint64_t)Heap + _4KB) & _4KB_MASK);

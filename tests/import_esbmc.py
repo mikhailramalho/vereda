@@ -13,18 +13,20 @@ output still hold. A rerun replaces earlier copies.
 __ESBMC_assert, __ESBMC_assume, __ESBMC_atomic_begin,
 __ESBMC_atomic_end, __ESBMC_memset and __ESBMC_memcpy become
 __VERIFIER_assert, __VERIFIER_assume, __VERIFIER_atomic_begin,
-__VERIFIER_atomic_end, memset and memcpy in the copied sources, and
-__ESBMC_unreachable becomes reach_error in tests run with
---enable-unreachability-intrinsic, a flag then dropped. Setting
-__ESBMC_rounding_mode becomes fesetround() where that covers every use
-of it, and nondet_X becomes __VERIFIER_nondet_X. ESBMC flags with a
-Vereda equivalent are translated. Flags that only turn off a check
-Vereda does not have are dropped. A test that needs any other flag keeps
-its ESBMC flags and becomes FUTURE, with the missing flags named in a
-"// Needs:" line; Vereda then rejects the flags, so the test passes
-until Vereda learns them and the script runs again. ESBMC's REQUIRES,
-CHECK_JSON, CHECK_FILE and SEED_FILE lines make a test FUTURE the same
-way, as run.py has none of them.
+__VERIFIER_atomic_end, memset and memcpy in the copied sources,
+__ESBMC_builtin_object_size and __ESBMC_alloca become clang's
+__builtin_object_size and __builtin_alloca, and __ESBMC_unreachable
+becomes reach_error in tests run with --enable-unreachability-intrinsic,
+a flag then dropped. Setting __ESBMC_rounding_mode becomes fesetround()
+where that covers every use of it, and nondet_X becomes
+__VERIFIER_nondet_X. ESBMC flags with a Vereda equivalent are
+translated. Flags that only turn off a check Vereda does not have are
+dropped. A test that needs any other flag keeps its ESBMC flags and
+becomes FUTURE, with the missing flags named in a "// Needs:" line;
+Vereda then rejects the flags, so the test passes until Vereda learns
+them and the script runs again. ESBMC's REQUIRES, CHECK_JSON, CHECK_FILE
+and SEED_FILE lines make a test FUTURE the same way, as run.py has none
+of them.
 
 Tests that read files outside their own directory are skipped, and so is
 ESBMC's "disabled" suite unless named. So are tests of features only
@@ -162,7 +164,11 @@ def copy_files(src, dest, source, tracked):
 RENAMES = {"__ESBMC_assert": "__VERIFIER_assert", "__ESBMC_assume": "__VERIFIER_assume",
            "__ESBMC_memset": "memset", "__ESBMC_memcpy": "memcpy",
            "__ESBMC_atomic_begin": "__VERIFIER_atomic_begin",
-           "__ESBMC_atomic_end": "__VERIFIER_atomic_end"}
+           "__ESBMC_atomic_end": "__VERIFIER_atomic_end",
+           # ESBMC defines __builtin_object_size as its own and handles
+           # __builtin_alloca like __ESBMC_alloca, so clang's builtins match.
+           "__ESBMC_builtin_object_size": "__builtin_object_size",
+           "__ESBMC_alloca": "__builtin_alloca"}
 # __ESBMC_unreachable() is a no-op unless this flag makes reaching it a
 # violation, as reach_error() always is in Vereda.
 UNREACHABLE_FLAG = "--enable-unreachability-intrinsic"
