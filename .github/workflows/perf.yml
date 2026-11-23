@@ -1,8 +1,11 @@
-# Catches performance regressions: builds the pull request's base and head,
-# runs the benchmark list (tests/bench.txt) with both binaries side by
-# side on this runner, and fails when head is much slower, uses much more
-# memory, times out or changes a verdict (tests/bench.py), and posts the
-# tests that got better or worse on the pull request. Verdicts are tests.yml's job; this one only
+# Catches performance changes across the whole regression suite. It builds
+# the pull request's base and head, runs the base's suite here, and takes
+# the head's numbers from the pull request's own Tests run (tests.yml
+# records each test's time and memory). The tests whose numbers differ are
+# measured again side by side on this runner with both binaries
+# (tests/bench.py), since two suite runs on different machines are too
+# noisy to compare alone. It fails when head is much slower, uses much more
+# memory or times out, and posts the tests that got better or worse. Verdicts are tests.yml's job; this one only
 # compares base with head.
 name: Performance
 
@@ -18,11 +21,14 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  actions: read
 
 jobs:
   bench:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # Two builds, the base's suite (about 30 minutes three at a time) and
+    # the side-by-side reruns.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,13 +90,43 @@ jobs:
             -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
           ninja -C base/build
 
+      # With head's run.py, which records the numbers; failing tests do not
+      # matter here, tests.yml judges them.
+      - name: Run the base's tests
+        if: github.event_name == 'pull_request'
+        env:
+          REGRESS_STATS: ${{ github.workspace }}/base-stats
+        run: |
+          cp head/tests/run.py base/tests/run.py
+          ctest --test-dir base/build -j3 > /dev/null || true
+          ls base-stats | wc -l
+
+      - name: Wait for the pull request's tests
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for _ in $(seq 60); do
+            id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow tests.yml --commit "$HEAD" \
+                   --event pull_request --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 30
+          done
+          [ -n "$id" ] || { echo "no Tests run for $HEAD"; exit 1; }
+          gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
+          gh run download "$id" -R "$GITHUB_REPOSITORY" -n regress-stats -D head-stats
+          ls head-stats | wc -l
+
       # The full table goes to the step summary; changes.md holds only the
       # tests that regressed or improved, and does not exist when none did.
       - name: Benchmark
         id: bench
+        if: github.event_name == 'pull_request'
         run: >
           head/tests/bench.py --clang $LLVM/bin/clang --base-root base
-          --changes changes.md base/build/vereda head/build/vereda
+          --stats base-stats head-stats --changes changes.md
+          base/build/vereda head/build/vereda
 
       # One comment per pull request, edited on each later run and posted
       # even when the benchmark found a regression. When nothing changed,

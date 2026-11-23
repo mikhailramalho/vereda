@@ -61,10 +61,14 @@ space); going past it fails the test, except a KNOWNBUG one, and `--mark` leaves
 alone. CI runs 3 tests at a time so that three such tests fit its 16 GB.
 When adding a flag that has an ESBMC equivalent, add it to the tables in that script.
 
-`tests/bench.py --clang <clang> <base-bin> <head-bin>` runs the tests listed in
-`tests/bench.txt` with two binaries side by side and fails on a time, memory or
-verdict regression; `.github/workflows/perf.yml` runs it on each pull request against its
-base.
+With `REGRESS_STATS=<dir>` set, `tests/run.py` records each test's wall, walk and
+solve time, peak memory and verdict there; `tests.yml` uploads them. `tests/bench.py
+--clang <clang> --stats <base-dir> <head-dir> <base-bin> <head-bin>` picks the tests
+whose numbers changed between two such runs and measures them again with both binaries
+side by side (`--list <file>` measures a fixed list instead); it fails on a time, memory
+or verdict regression. `.github/workflows/perf.yml` runs the base's suite on each pull
+request, takes the head's numbers from the pull request's Tests run, and comments only
+the tests that got better or worse.
 
 ## Architecture
 

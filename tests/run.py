@@ -19,8 +19,14 @@ leaves the mode alone, except in a KNOWNBUG test, where it is the known bug:
 CI runs several tests at once, and one that needs more memory than its share
 would take down the runner.
 The tool runs in a fresh temporary directory, so output files never land in
-the source tree."""
+the source tree.
+
+When the environment sets REGRESS_STATS to a directory, the run also writes
+<suite>__<name>.json there: the test's wall, walk and solve seconds, peak
+memory in MB and verdict, which the performance check compares between a
+pull request and its base."""
 import argparse
+import json
 import os
 import re
 import resource
@@ -28,6 +34,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 HEADER = re.compile(r"^\s*(?://|;)\s*(RUN|EXPECT|EXPECT-NOT|MODE|FILES):\s*(.*?)\s*$")
 FAIL_MODES = ("KNOWNBUG", "FUTURE")
@@ -41,6 +48,42 @@ NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|
 # Some allocations fail without a message: the binary crashes instead. A run
 # that ends with no verdict after reaching this share of the limit ran out.
 NEAR_LIMIT = 0.9
+
+VERDICT = re.compile(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", re.MULTILINE)
+WALK = re.compile(r"^Walk time: ([\d.]+)s .*peak memory (\d+) MB", re.MULTILINE)
+SOLVE = re.compile(r"^(?:\[PROGRESS\] )?Solving time: ([\d.]+)s \(peak memory (\d+) MB",
+                   re.MULTILINE)
+
+
+def numbers(out):
+    """(walk seconds, solve seconds, peak MB) from a run's output, each None
+    when the output does not give it. --incremental-bmc walks and solves
+    once per bound, so the times add up."""
+    walks = [(float(t), int(m)) for t, m in WALK.findall(out)]
+    solves = [(float(t), int(m)) for t, m in SOLVE.findall(out)]
+    return (sum(t for t, _ in walks) if walks else None,
+            sum(t for t, _ in solves) if solves else None,
+            max((m for _, m in walks + solves), default=None))
+
+
+def record(test, start, out, verdict=None):
+    """Writes the numbers of the test's run, started at the monotonic time
+    start (None for a run that timed out), to $REGRESS_STATS when it is set."""
+    stats = os.environ.get("REGRESS_STATS")
+    if not stats:
+        return
+    wall = None if start is None else time.monotonic() - start
+    stem = os.path.dirname(test) if os.path.basename(test) == "main.c" else test
+    name = (os.path.basename(os.path.dirname(stem)) + "/"
+            + os.path.splitext(os.path.basename(stem))[0])
+    if verdict is None:
+        verdicts = VERDICT.findall(out)
+        verdict = verdicts[-1] if verdicts else "ERROR"
+    walk, solve, peak = numbers(out)
+    os.makedirs(stats, exist_ok=True)
+    with open(os.path.join(stats, name.replace("/", "__") + ".json"), "w", encoding="utf-8") as f:
+        json.dump({"test": name, "wall": wall, "walk": walk, "solve": solve, "peak": peak,
+                   "verdict": verdict}, f)
 
 
 def parse(path):
@@ -72,6 +115,33 @@ def clip(out):
     return "\n".join(lines[:CLIP] + [f"[... {len(lines) - 2 * CLIP} lines ...]"] + lines[-CLIP:])
 
 
+def execute(cmd, timeout, memory_limit):
+    """Runs cmd in a fresh temporary directory, under timeout seconds and
+    memory_limit MB of address space, and returns its output, or None when
+    it timed out."""
+    def limit_memory():
+        if memory_limit:
+            size = memory_limit << 20
+            resource.setrlimit(resource.RLIMIT_AS, (size, size))
+
+    with tempfile.TemporaryDirectory(prefix="vereda-regress-") as tmp:
+        # A session of its own, so that a timeout stops the binary too and
+        # not only vereda.py; TMPDIR, so that what a killed vereda.py leaves
+        # goes with tmp.
+        with subprocess.Popen(cmd, cwd=tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              text=True, start_new_session=True, preexec_fn=limit_memory,
+                              env={**os.environ, "TMPDIR": tmp}) as proc:
+            try:
+                return proc.communicate(timeout=timeout)[0]
+            except subprocess.TimeoutExpired:
+                os.killpg(proc.pid, signal.SIGKILL)
+                proc.communicate()
+                return None
+            except BaseException:  # Ctrl-C does not reach the session
+                os.killpg(proc.pid, signal.SIGKILL)
+                raise
+
+
 def main():
     """Runs the test and returns 0 when it behaves as its MODE says."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -89,34 +159,19 @@ def main():
     files = [test] + [os.path.join(os.path.dirname(test), f) for f in desc["FILES"].split()]
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
     cmd += desc["RUN"].replace("%S", os.path.dirname(test)).split() + files
-    def limit_memory():
-        if args.memory_limit:
-            size = args.memory_limit << 20
-            resource.setrlimit(resource.RLIMIT_AS, (size, size))
-
-    with tempfile.TemporaryDirectory(prefix="vereda-regress-") as tmp:
-        # A session of its own, so that a timeout stops the binary too and
-        # not only vereda.py; TMPDIR, so that what a killed vereda.py leaves
-        # goes with tmp.
-        with subprocess.Popen(cmd, cwd=tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, start_new_session=True, preexec_fn=limit_memory,
-                              env={**os.environ, "TMPDIR": tmp}) as proc:
-            try:
-                out = proc.communicate(timeout=args.timeout)[0]
-            except subprocess.TimeoutExpired:
-                os.killpg(proc.pid, signal.SIGKILL)
-                proc.communicate()
-                print(f"TIMEOUT after {args.timeout:g} s; skipped")
-                return SKIPPED
-            except BaseException:  # Ctrl-C does not reach the session
-                os.killpg(proc.pid, signal.SIGKILL)
-                raise
+    start = time.monotonic()
+    out = execute(cmd, args.timeout, args.memory_limit)
+    if out is None:
+        print(f"TIMEOUT after {args.timeout:g} s; skipped")
+        record(test, None, "", "TIMEOUT")
+        return SKIPPED
 
     # Peak resident memory, in KB, of the largest process the run waited for.
     peak = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
     near_limit = args.memory_limit and peak >= NEAR_LIMIT * (args.memory_limit << 10)
     no_verdict = not re.search(r"^VERIFICATION ", out, re.MULTILINE)
     if args.memory_limit and (NO_MEMORY.search(out) or (near_limit and no_verdict)):
+        record(test, start, out, "MEMOUT")
         if desc["MODE"] == "KNOWNBUG":
             print(f"OUT OF MEMORY past {args.memory_limit} MB, a known bug; skipped")
             return SKIPPED
@@ -125,6 +180,7 @@ def main():
         print(f"OUT OF MEMORY: the run needed more than {args.memory_limit} MB")
         return OUT_OF_MEMORY
 
+    record(test, start, out)
     unmet = [f"EXPECT: {r}" for r in desc["EXPECT"] if not re.search(r, out, re.MULTILINE)]
     unmet += [f"EXPECT-NOT: {r}" for r in desc["EXPECT-NOT"] if re.search(r, out, re.MULTILINE)]
     expected_to_fail = desc["MODE"] in FAIL_MODES

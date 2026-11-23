@@ -18,11 +18,19 @@ was killed and head was not; an improvement is also measured twice.
 
 Prints a Markdown table, also appended to $GITHUB_STEP_SUMMARY when set, and
 exits 1 when some test regressed. --changes FILE writes a table of only the
-tests that regressed or improved, and nothing when none did."""
+tests that regressed or improved, and nothing when none did.
+
+--stats BASE HEAD picks the tests instead of --list: each directory holds the
+numbers run.py records under $REGRESS_STATS for a whole suite run, and the
+tests whose numbers regress or improve between the two by the margins above
+are measured again here, side by side, at most MAX_CANDIDATES of them,
+largest change first. Two suite runs on different machines and loads are
+too noisy to report on their own; the side-by-side run decides."""
 import argparse
 import contextlib
+import glob
+import json
 import os
-import re
 import signal
 import subprocess
 import sys
@@ -37,12 +45,9 @@ MIN_SECONDS = 2.0
 MIN_MB = 200
 SLOWDOWN = 10
 MIN_LIMIT = 120
+MAX_CANDIDATES = 40
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERDICT = re.compile(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", re.MULTILINE)
-WALK = re.compile(r"^Walk time: ([\d.]+)s .*peak memory (\d+) MB", re.MULTILINE)
-SOLVE = re.compile(r"^(?:\[PROGRESS\] )?Solving time: ([\d.]+)s \(peak memory (\d+) MB",
-                   re.MULTILINE)
 TIMEOUT = "TIMEOUT"
 # A run killed by a signal it did not send itself; on Linux that is the
 # kernel's OOM killer, so the run is out of memory, as a timeout is out of
@@ -119,17 +124,12 @@ def finish(started_run, deadline):
     out.seek(0)
     text = out.read()
     if verdict is None:
-        verdicts = VERDICT.findall(text)
+        verdicts = run.VERDICT.findall(text)
         if verdicts:
             verdict = verdicts[-1]
         else:
             verdict = KILLED if proc.returncode in KILLED_STATUS else f"ERROR {proc.returncode}"
-    walks = [(float(t), int(m)) for t, m in WALK.findall(text)]
-    solves = [(float(t), int(m)) for t, m in SOLVE.findall(text)]
-    # --incremental-bmc walks and solves once per bound.
-    return (wall, sum(t for t, _ in walks) if walks else None,
-            sum(t for t, _ in solves) if solves else None,
-            max((m for _, m in walks + solves), default=None), verdict)
+    return (wall, *run.numbers(text), verdict)
 
 
 def measure(args, base_test, head_test):
@@ -179,6 +179,32 @@ def improvements(b, h):
     return why
 
 
+def candidates(base_dir, head_dir):
+    """The tests whose recorded numbers changed between two suite runs,
+    largest relative change in wall time or memory first, at most
+    MAX_CANDIDATES of them."""
+    def load(d):
+        runs = {}
+        for path in glob.glob(os.path.join(d, "*.json")):
+            with open(path, encoding="utf-8") as f:
+                r = json.load(f)
+            runs[r["test"]] = (r["wall"], r["walk"], r["solve"], r["peak"],
+                               KILLED if r["verdict"] == "MEMOUT" else r["verdict"])
+        return runs
+    base, head = load(base_dir), load(head_dir)
+    found = []
+    for name in base.keys() & head.keys():
+        b, h = base[name], head[name]
+        if b[4] == h[4] and not b[4].startswith(("SUCCESSFUL", "FAILED", "UNKNOWN")) \
+                and b[4] not in STOPPED:
+            continue  # no verdict on either side: a test of an error, not of speed
+        if regressions(b, h) or improvements(b, h):
+            pairs = ((h[0], b[0]), (b[0], h[0]), (h[3], b[3]), (b[3], h[3]))
+            ratio = max(((x or 0) + 0.1) / ((y or 0) + 0.1) for x, y in pairs)
+            found.append((ratio, name))
+    return [name for _, name in sorted(found, reverse=True)[:MAX_CANDIDATES]]
+
+
 def cell(b, h, fmt):
     """A base -> head table cell; a missing number shows as '-'."""
     def show(x):
@@ -194,8 +220,9 @@ def main():
     parser.add_argument("--base-root", default=ROOT,
                         help="source tree whose vereda.py and tests the base binary runs "
                         "(default: this one); a test missing there is skipped")
-    parser.add_argument("--list", default=os.path.join(ROOT, "tests", "bench.txt"),
-                        help="tests, one suite/name per line; # starts a comment")
+    parser.add_argument("--list", help="tests, one suite/name per line; # starts a comment")
+    parser.add_argument("--stats", nargs=2, metavar=("BASE", "HEAD"),
+                        help="pick the tests from two suite runs' $REGRESS_STATS directories")
     parser.add_argument("--timeout", type=float, default=180,
                         help="seconds before a base run is stopped (default %(default)s)")
     parser.add_argument("--changes", metavar="FILE",
@@ -203,12 +230,17 @@ def main():
     parser.add_argument("base", help="base vereda binary")
     parser.add_argument("head", help="head vereda binary")
     args = parser.parse_args()
+    if not args.list and not args.stats:
+        parser.error("give --list or --stats")
     # vereda.py runs in a temporary directory.
     args.base_root, args.base, args.head, args.clang = map(
         os.path.abspath, (args.base_root, args.base, args.head, args.clang))
-    with open(args.list, encoding="utf-8") as f:
-        names = [line.split("#")[0].strip() for line in f]
-    names = [n for n in names if n]
+    if args.stats:
+        names = candidates(*args.stats)
+        print(f"{len(names)} tests changed between the suite runs", flush=True)
+    else:
+        with open(args.list, encoding="utf-8") as f:
+            names = [n for n in (line.split("#")[0].strip() for line in f) if n]
 
     lines = ["| test | walk s | solve s | wall s | peak MB | verdict | change |",
              "|---|---|---|---|---|---|---|"]

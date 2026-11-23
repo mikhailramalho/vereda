@@ -27,5 +27,17 @@ jobs:
 
       - name: Test
         # Three at a time: each test may use REGRESS_MEMORY_LIMIT (4 GB), and
-        # the runner has 16 GB.
+        # the runner has 16 GB. Each test's time and memory go to
+        # REGRESS_STATS, which perf.yml compares with the base's.
+        env:
+          REGRESS_STATS: ${{ github.workspace }}/regress-stats
         run: ctest --test-dir build -j3 --output-on-failure
+
+      - name: Upload the tests' time and memory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regress-stats
+          path: regress-stats/
+          retention-days: 30
+          if-no-files-found: ignore
