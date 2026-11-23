@@ -1,6 +1,8 @@
 // Models of <string.h> and <strings.h> functions, written from the C
 // standard (C17 7.24) for programs that call them without a body. memcpy,
-// memmove and memset are handled by the walker itself. Each loop runs only
+// memmove and memset are handled by the walker itself, and so are memcmp,
+// bcmp and memchr when their length has a constant bound; their loops here
+// run only for a length the walker cannot bound. Each loop runs only
 // as far as the result needs, as glibc's do: the walker unrolls every
 // iteration, and --unwind bounds each loop.
 #include <stddef.h>
