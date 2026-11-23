@@ -12,7 +12,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-13
-// Needs: --smt-during-symex --smt-symex-assert --unlimited-k-steps
+// Needs: --smt-during-symex --smt-symex-assert
 // RUN: --smt-during-symex --smt-symex-assert --incremental-bmc --unlimited-k-steps --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

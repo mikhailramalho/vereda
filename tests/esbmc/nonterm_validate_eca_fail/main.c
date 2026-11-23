@@ -29,7 +29,7 @@ int main(void)
   }
 }
 // Imported from ESBMC regression/esbmc/nonterm_validate_eca_fail
-// Needs: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --validate-violation-witness --witness witness.yml
+// Needs: --termination --max-inductive-step 3 --validate-violation-witness --witness witness.yml
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

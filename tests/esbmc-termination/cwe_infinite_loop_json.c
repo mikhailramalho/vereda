@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/cwe_infinite_loop_json
-// Needs: --termination --k-step 2 --max-inductive-step 3 --generate-json-report CHECK_JSON report.json $[0].status == "violation" CHECK_JSON report.json $[0].steps[0].assertion.cwe[0] == 835 CHECK_JSON report.json $[0].steps[0].function == "main"
+// Needs: --termination --max-inductive-step 3 --generate-json-report CHECK_JSON report.json $[0].status == "violation" CHECK_JSON report.json $[0].steps[0].assertion.cwe[0] == 835 CHECK_JSON report.json $[0].steps[0].function == "main"
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --generate-json-report
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

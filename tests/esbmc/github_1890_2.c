@@ -14,7 +14,7 @@ int main()
     func2();
 }
 // Imported from ESBMC regression/esbmc/github_1890_2
-// Needs: --k-induction --k-step 3
+// Needs: --k-induction
 // RUN: --multi-property --k-induction --k-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,7 +15,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/cwe_infinite_loop
-// Needs: --termination --k-step 2 --max-inductive-step 3
+// Needs: --termination --max-inductive-step 3
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
