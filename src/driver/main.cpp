@@ -55,6 +55,15 @@ static cl::opt<std::string> witnessFile(
                         "as an SV-COMP violation witness (YAML, format 2.0); - is standard "
                         "output"),
     cl::value_desc("file"));
+
+using vereda::walker::Property;
+static cl::opt<Property> property(
+    "property", cl::desc("Count only the failures of one SV-COMP property, and print its verdict"),
+    cl::values(clEnumValN(Property::All, "all", "every check (default)"),
+               clEnumValN(Property::UnreachCall, "unreach-call",
+                          "a call to reach_error, whose body is not walked"),
+               clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check")),
+    cl::init(Property::All));
 static cl::opt<std::string> solverName("solver", cl::desc("SMT solver: bitwuzla, z3, cvc5"),
                                        cl::init("bitwuzla"));
 
@@ -86,8 +95,16 @@ static bool dump(StringRef name, function_ref<void(raw_ostream &)> write) {
   return true;
 }
 
+// Under --property, the SV-COMP verdict on a line of its own, as ESBMC's
+// wrapper prints it.
+static void svcomp(StringRef verdict) {
+  if (property != Property::All)
+    outs() << verdict << "\n";
+}
+
 static int unknown(const Twine &reason) {
   outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
+  svcomp("UNKNOWN");
   return 2;
 }
 
@@ -118,7 +135,7 @@ static int bmc(Function &fn, unsigned bound) {
   vereda::encode::Encoder enc(terms, *memory, fp2bv);
   vereda::checks::Checks checks;
   vereda::walker::Trace trace;
-  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess};
+  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property};
   if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
     return unknown(toString(std::move(e)));
   // Peak memory after the walk covers the walker and the terms it built;
@@ -228,10 +245,15 @@ static int bmc(Function &fn, unsigned bound) {
   if (verdict.check) {
     WithColor(outs(), raw_ostream::RED, /*Bold=*/true) << "VERIFICATION FAILED";
     outs() << "\n";
+    // A failed unwinding assertion is no violation of the property.
+    svcomp(!bug                                  ? "UNKNOWN"
+           : property == Property::UnreachCall ? "FALSE_REACH"
+                                               : "FALSE_OVERFLOW");
     return 1;
   }
   WithColor(outs(), raw_ostream::GREEN, /*Bold=*/true) << "VERIFICATION SUCCESSFUL";
   outs() << "\n";
+  svcomp("TRUE");
   return 0;
 }
 

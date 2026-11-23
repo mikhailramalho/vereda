@@ -2,7 +2,8 @@
 """Runs one regression test. The test is a C or IR file whose comment header
 describes it:
 
-    // RUN: <flags for vereda.py>            optional, default none
+    // RUN: <flags for vereda.py>            optional, default none; %S is the
+                                             directory of the test
     // EXPECT: <regex>                       must match the output (re.MULTILINE)
     // EXPECT-NOT: <regex>                   must not match
     // MODE: CORE|THOROUGH|KNOWNBUG|FUTURE   optional, default CORE
@@ -87,7 +88,7 @@ def main():
     desc = parse(test)
     files = [test] + [os.path.join(os.path.dirname(test), f) for f in desc["FILES"].split()]
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
-    cmd += desc["RUN"].split() + files
+    cmd += desc["RUN"].replace("%S", os.path.dirname(test)).split() + files
     def limit_memory():
         if args.memory_limit:
             size = args.memory_limit << 20

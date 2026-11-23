@@ -10,10 +10,19 @@
 
 namespace vereda::walker {
 
+// Which failures count: every check, or only those of one SV-COMP
+// property. A failure that does not count ends its path, as the abort it is.
+enum class Property {
+  All,
+  UnreachCall, // a call to reach_error, whose body is not walked
+  NoOverflow,  // a clang sanitizer check
+};
+
 struct Options {
   unsigned unwind = 0;             // loop iterations and recursion depth; 0 = until unreachable
   bool unwindingAssertions = true; // check the bound instead of assuming it
   bool forceMallocSuccess = false; // malloc never returns null
+  Property property = Property::All;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

@@ -266,7 +266,7 @@ private:
       // the path ends there. Anywhere else it is __builtin_unreachable,
       // which ESBMC checks by default.
       auto *prev = dyn_cast_or_null<CallBase>(term.getPrevNode());
-      if (!prev || !prev->doesNotReturn())
+      if ((!prev || !prev->doesNotReturn()) && counts(false))
         assertion(term, guard, "__builtin_unreachable", "");
     } else {
       throw Unsupported(std::string("terminator ") + term.getOpcodeName());
@@ -302,10 +302,15 @@ private:
         return t.boolean(false);
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
-        assertion(c, guard, ir::sanitizerCheck(code->getZExtValue()), "");
+        if (counts(true))
+          assertion(c, guard, ir::sanitizerCheck(code->getZExtValue()), "");
         return t.boolean(false);
       }
       throw Unsupported("intrinsic " + name.str());
+    }
+    if (opts.property == Property::UnreachCall && name == "reach_error") {
+      assertion(c, guard, name.str(), "");
+      return t.boolean(false);
     }
     if (!callee->isDeclaration())
       return enter(c, *callee, guard, st);
@@ -317,8 +322,7 @@ private:
       return guard;
 
     // Bodyless verifier functions, as ESBMC treats them by default: a defined
-    // one is an ordinary call. An unreachability-intrinsic flag that skips
-    // the body comes with the SV-COMP wrapper.
+    // one is an ordinary call, except reach_error under unreach-call, above.
     if (name.starts_with("__VERIFIER_nondet_")) {
       SMTExprRef v = enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
@@ -331,14 +335,17 @@ private:
       return t.land(guard, enc.isTrue(c.getArgOperand(0)));
     }
     if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
-      assertion(c, guard, name.str(), "");
+      if (counts(false))
+        assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
     if (name == "__VERIFIER_assert" || (name == "assert" && c.arg_size() == 1)) {
       // assert without <assert.h> is an implicitly declared function; ESBMC's
       // front end treats it as the assertion it was meant to be.
-      assertion(c, t.land(guard, t.lnot(enc.isTrue(c.getArgOperand(0)))), name.str(),
-                ir::callArgumentText(c));
+      SMTExprRef holds = enc.isTrue(c.getArgOperand(0));
+      if (!counts(false))
+        return t.land(guard, holds);
+      assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
       return guard;
     }
     if (name == "__vereda_object_size") { // for the realloc model
@@ -415,6 +422,12 @@ private:
     if (!c.getType()->isVoidTy())
       enc.bind(&c, result ? result : enc.fresh(c.getType(), "noreturn"));
     return after;
+  }
+
+  // Whether a failed assertion, or sanitizer check, violates the property
+  // asked for. Under unreach-call only reach_error does, handled at the call.
+  bool counts(bool sanitizer) const {
+    return opts.property == Property::All || (opts.property == Property::NoOverflow && sanitizer);
   }
 
   // A check at inst, violated when violated holds; comment names it.

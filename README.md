@@ -16,7 +16,8 @@ Supported today:
 
 - Properties: reachability of `reach_error`/`__VERIFIER_error`/`__assert_fail`,
   `__VERIFIER_assert`, plus unwinding and recursion assertions that check the
-  bound was enough.
+  bound was enough. With `--property-file`, one SV-COMP property: unreach-call,
+  or no-overflow through clang's signed-overflow sanitizer.
 - SV-COMP's `__VERIFIER_nondet_*` and `__VERIFIER_assume`, and `abort`/`exit`.
 - Integers, pointers, structs and arrays in byte-addressed memory; `malloc`,
   `calloc`, `free`, `memcpy`, `memmove`, `memset`.
@@ -57,9 +58,9 @@ CMake keeps a build directory's first compiler. If you switch
 ```
 
 `vereda.py` takes C (`.c`, `.i`) or IR (`.ll`, `.bc`) inputs and its own
-flags (`--clang`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`, `-v`), and
-forwards everything else to the binary. `vereda.py -h` lists both sets. The
-main verifier flags:
+flags (`--clang`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
+`--property-file`, `-v`), and forwards everything else to the binary.
+`vereda.py -h` lists both sets. The main verifier flags:
 
 | Flag | Meaning |
 |------|---------|
@@ -69,6 +70,7 @@ main verifier flags:
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
 | `--entry F` | Entry function (default `main`) |
+| `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
