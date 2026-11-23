@@ -4,10 +4,11 @@
 # on main, and screens them for tests whose numbers differ. Those are measured
 # again side by side on this runner with both binaries (tests/bench.py),
 # since two suite runs on different machines are too noisy to compare
-# alone. Only then does it build: with no candidate, it builds nothing. When
-# main has no numbers, it builds the base and runs its suite here. It fails
-# when head is much slower, uses much more memory or times out, and posts
-# the tests that got better or worse. Verdicts are tests.yml's job.
+# alone. It builds both binaries first, while those Tests runs are still
+# going, so the wait costs no extra time. When main has no numbers, it runs
+# the base's suite here. It fails when head is much slower, uses much more
+# memory or times out, and posts the tests that got better or worse.
+# Verdicts are tests.yml's job.
 name: Performance
 
 on:
@@ -28,7 +29,7 @@ permissions:
 jobs:
   bench:
     runs-on: ubuntu-24.04
-    # Waiting for the Tests runs, and when needed two builds, the base's
+    # Two builds, waiting for the Tests runs, and when needed the base's
     # suite (about 30 minutes three at a time) and the side-by-side reruns.
     timeout-minutes: 150
     steps:
@@ -42,6 +43,36 @@ jobs:
           path: base
           # History to walk back past docs-only commits to numbers on main.
           fetch-depth: 50
+
+      # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
+      # in /usr/lib/llvm-21 and downloads only camada; its libraries are
+      # plain objects, so links need no ThinLTO step.
+      - name: Install packages
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
+
+      # LLVM and camada as head's configure found them, for base's build
+      # and for the benchmark.
+      - name: Build head
+        run: |
+          cmake -S head -B head/build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
+          ninja -C head/build
+          llvm_dir=$(sed -n 's/^LLVM_DIR:PATH=//p' head/build/CMakeCache.txt)
+          echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
+          sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
+
+      # The same LLVM, camada, clang and lld as head, given explicitly, so a
+      # base from before configure found an installed LLVM builds the same.
+      - name: Build base
+        run: |
+          cmake -S base -B base/build -G Ninja \
+            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR \
+            -DCMAKE_C_COMPILER=$LLVM/bin/clang -DCMAKE_CXX_COMPILER=$LLVM/bin/clang++ \
+            -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
+          ninja -C base/build
 
       # The pull request's own Tests run first: it is the one this job
       # depends on most, and main's run for the base is usually done by the
@@ -97,8 +128,8 @@ jobs:
             break
           done
 
-      # Python only: no build unless the screen finds a test whose numbers
-      # differ, or main had no numbers for the base.
+      # No benchmark unless the screen finds a test whose numbers differ, or
+      # main had no numbers for the base.
       - name: Screen the numbers
         id: screen
         if: github.event_name == 'pull_request'
@@ -113,43 +144,10 @@ jobs:
             cat candidates.txt
           fi
           if [ "$FOUND" != true ] || [ -s candidates.txt ]; then
-            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "bench=true" >> "$GITHUB_OUTPUT"
           else
-            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "bench=false" >> "$GITHUB_OUTPUT"
           fi
-
-      # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
-      # in /usr/lib/llvm-21 and downloads only camada; its libraries are
-      # plain objects, so links need no ThinLTO step.
-      - name: Install packages
-        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
-          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
-          sudo apt-get update
-          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
-
-      # LLVM and camada as head's configure found them, for base's build
-      # and for the benchmark.
-      - name: Build head
-        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        run: |
-          cmake -S head -B head/build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
-          ninja -C head/build
-          llvm_dir=$(sed -n 's/^LLVM_DIR:PATH=//p' head/build/CMakeCache.txt)
-          echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
-          sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
-
-      # The same LLVM, camada, clang and lld as head, given explicitly, so a
-      # base from before configure found an installed LLVM builds the same.
-      - name: Build base
-        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
-        run: |
-          cmake -S base -B base/build -G Ninja \
-            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR \
-            -DCMAKE_C_COMPILER=$LLVM/bin/clang -DCMAKE_CXX_COMPILER=$LLVM/bin/clang++ \
-            -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
-          ninja -C base/build
 
       # Main had no numbers: run the base's suite here, with head's run.py,
       # which records them. Failing tests do not matter here, tests.yml
@@ -167,7 +165,7 @@ jobs:
       # tests that regressed or improved, and does not exist when none did.
       - name: Benchmark
         id: bench
-        if: github.event_name == 'pull_request' && steps.screen.outputs.build == 'true'
+        if: github.event_name == 'pull_request' && steps.screen.outputs.bench == 'true'
         run: >
           head/tests/bench.py --clang $LLVM/bin/clang --base-root base
           --stats base-stats head-stats --changes changes.md
@@ -183,7 +181,7 @@ jobs:
           always() && github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository &&
           (steps.bench.outcome == 'success' || steps.bench.outcome == 'failure' ||
-           steps.screen.outputs.build == 'false')
+           steps.screen.outputs.bench == 'false')
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
