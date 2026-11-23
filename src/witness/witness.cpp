@@ -105,8 +105,11 @@ static std::string constant(camada::SMTSolver &s, const walker::Step &step) {
   if (!signedTypes.contains(type))
     return "";
   auto v = s.getBV(step.value);
-  // The lowest value has no decimal constant: its magnitude does not fit.
-  return v && v.value() != INT64_MIN ? std::to_string(v.value()) : "";
+  if (!v)
+    return "";
+  // The lowest value has no decimal constant, its magnitude does not fit;
+  // a missing waypoint would shift the later ones at its call site (#76).
+  return v.value() == INT64_MIN ? "-9223372036854775807 - 1" : std::to_string(v.value());
 }
 
 static void waypoint(raw_ostream &os, StringRef type, const ir::SourceLoc &loc, unsigned col,

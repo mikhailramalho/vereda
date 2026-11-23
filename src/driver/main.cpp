@@ -146,9 +146,9 @@ static int bmc(Function &fn, unsigned bound) {
     return unknown(toString(std::move(e)));
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
-  outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size() << " checks, "
-         << enc.symbolCount() << " symbols, peak memory " << vereda::util::peakMemory()
-         << ")\n";
+  outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
+         << (checks.size() == 1 ? " check, " : " checks, ") << enc.symbolCount()
+         << " symbols, peak memory " << vereda::util::peakMemory() << ")\n";
   outs().flush(); // solving may run until a timeout kills the process
 
   if (dumpSMTOnly || dumpSMTToo) {

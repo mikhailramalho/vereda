@@ -1107,6 +1107,64 @@ plus provenance per width. For a gain confined to a test family that #36
 removes outright, it is not built; revisit if a real task shows a long
 chain of word stores that a summary cannot replace.
 
+## ReachSafety baseline rerun after the wrong-verdict fixes (2026-11-23)
+
+The same 1407 tasks as the first baseline, on main at f53bf26d: with #60
+(setjmp and longjmp give UNKNOWN), #61 (the null object's base), #62
+(stack objects past the address space), #64 (uninitialised local arrays)
+and #70 (the persistent map), and the same setup, 12 tasks at a time, 60 s
+and 6 GB each. ESBMC's numbers are those of the first baseline, since its
+binary did not change. Results are in
+`~/tools/baselines/2026-11-23-reachsafety/vereda-rerun-f53bf26d.tsv`.
+
+| Set | Tasks | First run correct | Rerun correct | ESBMC correct | Wrong, first → rerun |
+|---|---|---|---|---|---|
+| Arrays | 440 | 94 | 99 | 128 | 1 → 0 |
+| ControlFlow | 73 | 28 | 8 | 40 | 14 → 0 |
+| Heap | 136 | 118 | 119 | 118 | 9 → 0 |
+| Loops | 758 | 344 | 343 | 418 | 0 → 0 |
+| All | 1407 | 584 | 569 | 704 | 24 → 0 |
+
+No wrong verdicts, which is the first condition of milestone 1's gate. The
+correct count falls by 15, all explained: 20 longjmp tasks that walking
+setjmp as a plain call answered right by luck (the same treatment gave 14
+others wrong answers) are now UNKNOWN; `array_min_and_copy_shift_sum_add`
+lost a TRUE that rested on an assumption LLVM had folded to false; and two
+nla-digbench tasks at about 52 s went past 60 s while a third came in at
+55 s, which is the load of five agents building on the machine during the
+run. The six array-multidimensional tasks (#62) and `rule60_list2` (#61)
+are new answers.
+
+Of the 159 tasks ESBMC answers and Vereda does not, 107 stop at
+`--max-k-step` 50 after a median of 0.5 s, and ESBMC answers 88 of those
+within 10 s (#84); 32 are setjmp/longjmp programs (#11); 16 time out, and
+the rest are unsupported constructs (a void type, calloc with a symbolic
+size, a variadic function). Vereda alone answers 24 tasks.
+
+## memcmp, bcmp and memchr in the walker (2026-11-23)
+
+The models of memcmp, bcmp and memchr in `models/string.c` are byte loops,
+so a call cost one unrolled iteration per byte, and `--unwind` stopped a long
+one with an unwinding assertion. ESBMC removed the same cost with intrinsics
+(esbmc/esbmc#5342, #5345). The walker now reads the range whole and builds
+the result as one term, back to front so that the first byte that decides
+is outermost: memcmp's is the difference of the first differing bytes as
+unsigned chars, memchr's a pointer to the first byte equal to
+`(unsigned char)c`, else null. A symbolic length is handled when both
+objects have a constant number of bytes left and the solver shows the length
+stays within them; otherwise, and past `Memory::MaxBytes`, the model's loop
+runs as before. Only the models are replaced: they carry no debug info, so a
+program's own memcmp, compiled with `-g`, is still walked as written.
+
+A program comparing and searching two 4096-byte buffers, with constant and
+symbolic lengths, took 574 s (572 s of it walking the loops) and now takes
+0.3 s, with the same verdict. Of the 38 imported tests that call these
+functions, none changes time or memory beyond `tests/bench.py`'s margins;
+one, `esbmc-cstd/github_9439_fail`, went from FAILED to SUCCESSFUL, because
+its FAILED was only the unwinding assertion of a 64-byte memchr under
+`--unwind 20`. It stays FUTURE: what it expects is a memory-safety failure,
+which Vereda does not check yet.
+
 ## No largest bound under --incremental-bmc (2026-11-23)
 
 `--incremental-bmc` stopped at `--max-k-step` (50) with `no verdict up to

@@ -1,13 +1,13 @@
-# Catches performance changes across the whole regression suite. It builds
-# the pull request's base and head, takes the base's numbers from the Tests
-# run on main (tests.yml records each test's time and memory), or runs the
-# base's suite here when main has none, and takes the head's numbers from
-# the pull request's own Tests run. The tests whose numbers differ are
-# measured again side by side on this runner with both binaries
-# (tests/bench.py), since two suite runs on different machines are too
-# noisy to compare alone. It fails when head is much slower, uses much more
-# memory or times out, and posts the tests that got better or worse. Verdicts are tests.yml's job; this one only
-# compares base with head.
+# Catches performance changes across the whole regression suite. It takes
+# the head's numbers from the pull request's own Tests run (tests.yml
+# records each test's time and memory), then the base's from the Tests run
+# on main, and screens them for tests whose numbers differ. Those are measured
+# again side by side on this runner with both binaries (tests/bench.py),
+# since two suite runs on different machines are too noisy to compare
+# alone. Only then does it build: with no candidate, it builds nothing. When
+# main has no numbers, it builds the base and runs its suite here. It fails
+# when head is much slower, uses much more memory or times out, and posts
+# the tests that got better or worse. Verdicts are tests.yml's job.
 name: Performance
 
 on:
@@ -28,8 +28,8 @@ permissions:
 jobs:
   bench:
     runs-on: ubuntu-24.04
-    # Two builds, waiting for the Tests runs or running the base's suite
-    # (about 30 minutes three at a time), and the side-by-side reruns.
+    # Waiting for the Tests runs, and when needed two builds, the base's
+    # suite (about 30 minutes three at a time) and the side-by-side reruns.
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
@@ -43,59 +43,29 @@ jobs:
           # History to walk back past docs-only commits to numbers on main.
           fetch-depth: 50
 
-      # The pinned LLVM release unpacks to about 11 GB, more than the runner
-      # has free, so drop preinstalled toolchains Vereda does not use.
-      - name: Free disk space
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib
-
-      # The unpacked dependencies, without the archives they came from. A
-      # cache saved by a pull request serves only that pull request's later
-      # runs; one saved by a run dispatched on main serves them all.
-      - name: Restore dependencies
-        id: deps
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            head/build/deps
-            !head/build/deps/*.tar.*
-          key: deps-${{ hashFiles('head/cmake/Dependencies.cmake') }}
-
-      # LLVM and camada as head's configure found them, for base's build
-      # and for the benchmark.
-      - name: Build head
+      # The pull request's own Tests run first: it is the one this job
+      # depends on most, and main's run for the base is usually done by the
+      # time it is.
+      - name: Wait for the pull request's tests
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          cmake -S head -B head/build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
-          ninja -C head/build
-          llvm_dir=$(sed -n 's/^LLVM_DIR:PATH=//p' head/build/CMakeCache.txt)
-          echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
-          sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
+          for _ in $(seq 60); do
+            id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow tests.yml --commit "$HEAD" \
+                   --event pull_request --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 30
+          done
+          [ -n "$id" ] || { echo "no Tests run for $HEAD"; exit 1; }
+          gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
+          gh run download "$id" -R "$GITHUB_REPOSITORY" -n regress-stats -D head-stats
+          ls head-stats | wc -l
 
-      # Here, not at the end: a regression fails the job, and the download
-      # is worth keeping all the same.
-      - name: Save dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            head/build/deps
-            !head/build/deps/*.tar.*
-          key: ${{ steps.deps.outputs.cache-primary-key }}
-
-      # The downloaded LLVM is an LTO build, so base needs its clang and lld
-      # too, as DOWNLOAD_DEPENDENCIES would set them.
-      - name: Build base
-        run: |
-          cmake -S base -B base/build -G Ninja \
-            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR \
-            -DCMAKE_C_COMPILER=$LLVM/bin/clang -DCMAKE_CXX_COMPILER=$LLVM/bin/clang++ \
-            -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
-          ninja -C base/build
-
-      # From the Tests run of the base commit's push to main, waiting for it
-      # if it is still running. A commit without a run is skipped only if it
+      # After the pull request's own tests, so main's run for the base has
+      # most likely finished too; from the Tests run of the base commit's
+      # push to main, waiting for it if it is still running. A commit without a run is skipped only if it
       # touched docs alone (tests.yml skips those, and the binary is the
       # same); a code commit without numbers, or a run that failed before
       # uploading them or whose numbers expired, leaves found unset.
@@ -127,6 +97,83 @@ jobs:
             break
           done
 
+      # Python only: no build unless the screen finds a test whose numbers
+      # differ, or main had no numbers for the base.
+      - name: Screen the numbers
+        id: screen
+        if: github.event_name == 'pull_request'
+        env:
+          FOUND: ${{ steps.base-stats.outputs.found }}
+        run: |
+          if [ "$FOUND" = true ]; then
+            python3 -c "import sys; sys.path.insert(0, 'head/tests'); import bench
+          names = bench.candidates('base-stats', 'head-stats')
+          names and print('\n'.join(names))" > candidates.txt
+            echo "$(grep -c . candidates.txt) tests changed between the suite runs"
+            cat candidates.txt
+          fi
+          if [ "$FOUND" != true ] || [ -s candidates.txt ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The pinned LLVM release unpacks to about 11 GB, more than the runner
+      # has free, so drop preinstalled toolchains Vereda does not use.
+      - name: Free disk space
+        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Install packages
+        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib
+
+      # The unpacked dependencies, without the archives they came from. A
+      # cache saved by a pull request serves only that pull request's later
+      # runs; one saved by a run dispatched on main serves them all.
+      - name: Restore dependencies
+        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
+        id: deps
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            head/build/deps
+            !head/build/deps/*.tar.*
+          key: deps-${{ hashFiles('head/cmake/Dependencies.cmake') }}
+
+      # LLVM and camada as head's configure found them, for base's build
+      # and for the benchmark.
+      - name: Build head
+        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
+        run: |
+          cmake -S head -B head/build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
+          ninja -C head/build
+          llvm_dir=$(sed -n 's/^LLVM_DIR:PATH=//p' head/build/CMakeCache.txt)
+          echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
+          sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
+
+      # Here, not at the end: a regression fails the job, and the download
+      # is worth keeping all the same.
+      - name: Save dependencies
+        if: steps.deps.outputs.cache-hit != 'true' && (github.event_name != 'pull_request' || steps.screen.outputs.build == 'true')
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            head/build/deps
+            !head/build/deps/*.tar.*
+          key: ${{ steps.deps.outputs.cache-primary-key }}
+
+      # The downloaded LLVM is an LTO build, so base needs its clang and lld
+      # too, as DOWNLOAD_DEPENDENCIES would set them.
+      - name: Build base
+        if: github.event_name != 'pull_request' || steps.screen.outputs.build == 'true'
+        run: |
+          cmake -S base -B base/build -G Ninja \
+            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR \
+            -DCMAKE_C_COMPILER=$LLVM/bin/clang -DCMAKE_CXX_COMPILER=$LLVM/bin/clang++ \
+            -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
+          ninja -C base/build
+
       # Main had no numbers: run the base's suite here, with head's run.py,
       # which records them. Failing tests do not matter here, tests.yml
       # judges them.
@@ -139,28 +186,11 @@ jobs:
           ctest --test-dir base/build -j3 > /dev/null || true
           ls base-stats | wc -l
 
-      - name: Wait for the pull request's tests
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          for _ in $(seq 60); do
-            id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow tests.yml --commit "$HEAD" \
-                   --event pull_request --json databaseId -q '.[0].databaseId')
-            [ -n "$id" ] && break
-            sleep 30
-          done
-          [ -n "$id" ] || { echo "no Tests run for $HEAD"; exit 1; }
-          gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
-          gh run download "$id" -R "$GITHUB_REPOSITORY" -n regress-stats -D head-stats
-          ls head-stats | wc -l
-
       # The full table goes to the step summary; changes.md holds only the
       # tests that regressed or improved, and does not exist when none did.
       - name: Benchmark
         id: bench
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.screen.outputs.build == 'true'
         run: >
           head/tests/bench.py --clang $LLVM/bin/clang --base-root base
           --stats base-stats head-stats --changes changes.md
@@ -172,7 +202,8 @@ jobs:
       - name: Comment on the pull request
         if: >
           always() && github.event_name == 'pull_request' &&
-          (steps.bench.outcome == 'success' || steps.bench.outcome == 'failure')
+          (steps.bench.outcome == 'success' || steps.bench.outcome == 'failure' ||
+           steps.screen.outputs.build == 'false')
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
