@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
 option(DOWNLOAD_DEPENDENCIES
-       "Download the pinned LLVM and camada releases instead of using installed copies"
+       "Use an installed LLVM 21-23 under /usr/lib/llvm-*, else download the pinned LLVM; download camada"
        OFF)
-# Before project(): the downloaded LLVM is an LTO build, so its toolchain has
-# to be the compiler and linker.
+# Before project(): it chooses the compiler and linker (LLVM's own clang, and
+# lld for the downloaded LLVM, an LTO build).
 include(cmake/Dependencies.cmake)
 
 project(vereda VERSION 0.1.0 LANGUAGES C CXX)
