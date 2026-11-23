@@ -143,7 +143,8 @@ std::optional<Memory::Key> Memory::key(SMTExprRef p) const {
 }
 
 SMTExprRef Memory::ptr(const Key &k) {
-  return ptr(t.bv(k.first, ObjBits), t.bv(k.second, ptrBits));
+  // One constant, not two and a concat: a flush builds one per byte.
+  return t.bv((APInt(ObjBits + ptrBits, k.first) << ptrBits) | APInt(ObjBits + ptrBits, k.second));
 }
 
 void Memory::flush(State &st, std::optional<uint64_t> object) {
@@ -335,8 +336,18 @@ State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
 
 // Bits in memory order: byte i of the store is bits [8i+7, 8i].
 void Memory::storeBytes(State &st, SMTExprRef p, SMTExprRef bits, SMTExprRef prov) {
-  prepare(st, p);
   unsigned n = bits->getWidth() / 8;
+  if (std::optional<Key> k = key(p)) {
+    // A constant address: the bytes' keys are integers, so no address term
+    // is built until a flush needs one. Offsets wrap at the pointer width.
+    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+    for (unsigned i = 0; i < n; ++i)
+      st.known.set({k->first, (k->second + i) & mask}, {t.extract(bits, 8 * i + 7, 8 * i), prov});
+    if (st.known.size() > MaxKnown)
+      flush(st);
+    return;
+  }
+  prepare(st, p);
   for (unsigned i = 0; i < n; ++i)
     writeByte(st, bytePtr(p, i), {t.extract(bits, 8 * i + 7, 8 * i), prov});
 }
