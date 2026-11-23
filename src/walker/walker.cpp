@@ -312,6 +312,13 @@ private:
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
+    // memcmp, bcmp and memchr from the models (which have no debug info) or
+    // bodyless: the walker reads the range whole, which costs no unwinding
+    // (#67), and the model's loop runs only when it cannot. A program's own
+    // memcmp, with debug info, is walked as written.
+    if ((name == "memcmp" || name == "bcmp" || name == "memchr") && !callee->getSubprogram() &&
+        stringFunction(c, name == "memchr", guard, st))
+      return guard;
     if (!callee->isDeclaration())
       return enter(c, *callee, guard, st);
     // A bodyless setjmp would return a nondet value and longjmp would return
@@ -632,6 +639,66 @@ private:
     if (!c.getType()->isVoidTy())
       enc.bind(&c, enc.value(c.getArgOperand(0)));
     return true;
+  }
+
+  // memcmp and bcmp (find false) or memchr (find true) over their n bytes as
+  // one term: the difference of the first differing bytes as unsigned
+  // chars, or a pointer to the first byte equal to (unsigned char)c, else
+  // null. False when the call has another shape or n has no usable bound.
+  bool stringFunction(CallBase &c, bool find, SMTExprRef guard, memory::State &st) {
+    if (c.arg_size() != 3 || !c.getArgOperand(0)->getType()->isPointerTy() ||
+        !c.getArgOperand(2)->getType()->isIntegerTy() ||
+        !(find ? c.getArgOperand(1)->getType()->isIntegerTy() && c.getType()->isPointerTy()
+               : c.getArgOperand(1)->getType()->isPointerTy() && c.getType()->isIntegerTy(32)))
+      return false;
+    SMTExprRef a = enc.value(c.getArgOperand(0)), other = enc.value(c.getArgOperand(1));
+    SMTExprRef n = enc.value(c.getArgOperand(2));
+    std::optional<uint64_t> bytes =
+        find ? rangeBound(n, guard, {a}) : rangeBound(n, guard, {a, other});
+    if (!bytes)
+      return false;
+    Type *i8 = Type::getInt8Ty(c.getContext());
+    SMTExprRef ch;
+    if (find)
+      ch = enc.resize(other, 8, false);
+    SMTExprRef r = find ? mem.null() : t.bv(0, 32);
+    // From the last byte back, so that the first one that decides is outermost.
+    for (uint64_t i = *bytes; i-- > 0;) {
+      SMTExprRef in = t.ult(t.bv(i, n->getWidth()), n);
+      SMTExprRef at = mem.advance(a, t.bv(i, mem.pointerBits()));
+      SMTExprRef x = mem.load(st, at, i8);
+      if (find) {
+        r = t.ite(t.land(in, t.eq(x, ch)), at, r);
+        continue;
+      }
+      SMTExprRef y = mem.load(st, mem.advance(other, t.bv(i, mem.pointerBits())), i8);
+      r = t.ite(t.land(in, t.lnot(t.eq(x, y))),
+                t.sub(enc.resize(x, 32, false), enc.resize(y, 32, false)), r);
+    }
+    enc.bind(&c, r);
+    return true;
+  }
+
+  // How many bytes a range of n bytes at the pointers ptrs can cover: n when
+  // it is a constant, else the fewest bytes left in their objects, when
+  // these are constants and the solver shows n stays within them on this
+  // path (a larger n reads past an object, which the model's loop does byte
+  // by byte). None past Memory::MaxBytes.
+  std::optional<uint64_t> rangeBound(SMTExprRef n, SMTExprRef guard,
+                                     std::initializer_list<SMTExprRef> ptrs) {
+    if (const APInt *k = t.constant(n))
+      return k->ule(memory::Memory::MaxBytes) ? std::optional(k->getZExtValue()) : std::nullopt;
+    uint64_t bound = memory::Memory::MaxBytes;
+    for (const SMTExprRef &p : ptrs) {
+      const APInt *size = t.constant(mem.size(mem.object(p))), *off = t.constant(mem.offset(p));
+      if (!size || !off || off->ugt(*size))
+        return std::nullopt;
+      bound = std::min(bound, (*size - *off).getZExtValue());
+    }
+    if (s.checkSatAssuming({guard, t.ugt(n, t.bv(bound, n->getWidth()))}) !=
+        camada::CheckResult::UNSAT)
+      return std::nullopt;
+    return bound;
   }
 
   // malloc and calloc return null when the object does not fit in the
