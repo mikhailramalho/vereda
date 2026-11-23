@@ -7,7 +7,7 @@ int main()
 {
   float f = 1.0f;
   uint32_t u;
-  __ESBMC_bitcast(&u, &f);
+  __builtin_memcpy(&u, &f, sizeof *(&u));
   assert(u == 0x3f800001);
   return 0;
 }

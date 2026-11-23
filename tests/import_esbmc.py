@@ -15,18 +15,19 @@ __ESBMC_atomic_end, __ESBMC_memset and __ESBMC_memcpy become
 __VERIFIER_assert, __VERIFIER_assume, __VERIFIER_atomic_begin,
 __VERIFIER_atomic_end, memset and memcpy in the copied sources,
 __ESBMC_builtin_object_size and __ESBMC_alloca become clang's
-__builtin_object_size and __builtin_alloca, and __ESBMC_unreachable
-becomes reach_error in tests run with --enable-unreachability-intrinsic,
-a flag then dropped. Setting __ESBMC_rounding_mode becomes fesetround()
-where that covers every use of it, and nondet_X becomes
-__VERIFIER_nondet_X. ESBMC flags with a Vereda equivalent are
-translated. Flags that only turn off a check Vereda does not have are
-dropped. A test that needs any other flag keeps its ESBMC flags and
-becomes FUTURE, with the missing flags named in a "// Needs:" line;
-Vereda then rejects the flags, so the test passes until Vereda learns
-them and the script runs again. ESBMC's REQUIRES, CHECK_JSON, CHECK_FILE
-and SEED_FILE lines make a test FUTURE the same way, as run.py has none
-of them.
+__builtin_object_size and __builtin_alloca, __ESBMC_bitcast(tgt, src)
+becomes __builtin_memcpy(tgt, src, sizeof *(tgt)), and
+__ESBMC_unreachable becomes reach_error in tests run with
+--enable-unreachability-intrinsic, a flag then dropped. Setting
+__ESBMC_rounding_mode becomes fesetround() where that covers every use
+of it, and nondet_X becomes __VERIFIER_nondet_X. ESBMC flags with a
+Vereda equivalent are translated. Flags that only turn off a check
+Vereda does not have are dropped. A test that needs any other flag keeps
+its ESBMC flags and becomes FUTURE, with the missing flags named in a
+"// Needs:" line; Vereda then rejects the flags, so the test passes
+until Vereda learns them and the script runs again. ESBMC's REQUIRES,
+CHECK_JSON, CHECK_FILE and SEED_FILE lines make a test FUTURE the same
+way, as run.py has none of them.
 
 Tests that read files outside their own directory are skipped, and so is
 ESBMC's "disabled" suite unless named. So are tests of features only
@@ -275,6 +276,34 @@ def rewrite_asserts(text, unreachable=False):
     return rename("".join(out), unreachable)
 
 
+BITCAST = re.compile(r"\b__ESBMC_bitcast\s*\(")
+
+
+def rewrite_bitcasts(text):
+    """Turns __ESBMC_bitcast(tgt, src), which copies *src's bits into *tgt,
+    into __builtin_memcpy(tgt, src, sizeof *(tgt)). Calls in comments and
+    strings, and ones that do not take two arguments, are left alone."""
+    out, i = [], 0
+    while i < len(text):
+        past = skip_literal(text, i)
+        if past is not None:
+            out.append(text[i:past])
+            i = past
+            continue
+        m = BITCAST.match(text, i) if text[i] == "_" else None
+        parsed = m and call_arguments(text, m.end() - 1)
+        if not parsed or len(parsed[0]) != 2:
+            out.append(text[i])
+            i += 1
+            continue
+        (tgt_start, tgt_end), (_, close) = parsed[0][0], (None, parsed[1])
+        tgt = text[tgt_start:tgt_end]
+        out.append("__builtin_memcpy(" + text[tgt_start:close]
+                   + f", sizeof *({' '.join(tgt.split())}))")
+        i = close + 1
+    return "".join(out)
+
+
 # ESBMC's rounding mode is a variable its fenv.h model reads; each value it
 # can be set to, and the C rounding mode for it. 1, ties away from zero, has
 # none.
@@ -366,7 +395,7 @@ def rename_builtins(path, unreachable):
             texts[name] = f.read()
     nondets = nondets_to_rename(texts.values())
     for name, text in texts.items():
-        renamed = rewrite_rounding(rewrite_asserts(text, unreachable))
+        renamed = rewrite_bitcasts(rewrite_rounding(rewrite_asserts(text, unreachable)))
         if nondets:
             renamed = code_sub(NONDET, lambda m: "__VERIFIER_" + m.group(0)
                                if m.group(0) in nondets else m.group(0), renamed)
