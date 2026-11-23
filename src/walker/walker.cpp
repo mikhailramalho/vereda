@@ -8,6 +8,7 @@
 #include <llvm/ADT/MapVector.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/Analysis/CaptureTracking.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
@@ -80,11 +81,37 @@ public:
     const Module &m = *f.getParent();
     mem.allocateGlobals(m);
     memory::State st = mem.initial();
+    for (const GlobalVariable &g : m.globals())
+      if (ownsArrays(&g))
+        mem.own(st, mem.global(&g));
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
     function(f, t.boolean(true), st);
   }
 
 private:
+  // Whether the alloca or global v gets arrays of its own (memory.h, #71):
+  // a getelementptr reaches it at a symbolic offset, which is where a short
+  // chain and a pointer-width index pay, and no pointer to it is stored or
+  // passed on (only its provenance counts; comparing its address does not),
+  // so few accesses reach it through an unknown pointer, where each object
+  // with arrays of its own is one more choice.
+  bool ownsArrays(const Value *v) {
+    auto [it, inserted] = owns.try_emplace(v, false);
+    if (!inserted || capturesAnything(PointerMayBeCaptured(v, /*ReturnCaptures=*/true,
+                                                           CaptureComponents::Provenance)))
+      return it->second;
+    SmallVector<const Value *, 8> work{v};
+    SmallPtrSet<const Value *, 8> seen;
+    while (!work.empty())
+      for (const User *u : work.pop_back_val()->users())
+        if (auto *g = dyn_cast<GEPOperator>(u); g && seen.insert(g).second) {
+          if (!g->hasAllConstantIndices())
+            return it->second = true;
+          work.push_back(g);
+        }
+    return false;
+  }
+
   FunctionInfo &info(Function &f) {
     std::unique_ptr<FunctionInfo> &fi = infos[&f];
     if (!fi)
@@ -515,7 +542,10 @@ private:
       SMTExprRef elem = t.bv(elemSize, bits);
       SMTExprRef ok = t.land(t.lnot(t.umulo(count, elem)),
                               mem.fits(t.mul(count, elem)));
-      enc.bind(a, mem.allocate(t.mul(count, elem), a->getAlign().value(), guard));
+      SMTExprRef p = mem.allocate(t.mul(count, elem), a->getAlign().value(), guard);
+      if (ownsArrays(a))
+        mem.own(st, p);
+      enc.bind(a, p);
       s.addConstraint(t.implies(guard, ok));
       return true;
     }
@@ -739,6 +769,7 @@ private:
   checks::Checks &checks;
   Trace &trace;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
+  DenseMap<const Value *, bool> owns; // ownsArrays, per alloca and global
   SmallVector<const Function *, 8> stack;
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.

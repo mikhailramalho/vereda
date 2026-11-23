@@ -20,6 +20,13 @@
 // arrays of the fill byte, indexed like the shared ones (plan, section 4.4:
 // one array per partition, here per object). A read or write at a pointer
 // whose object is not constant chooses among them by object id.
+//
+// An object the walker picks with own() (an array indexed at a symbolic
+// offset whose address does not escape, issue #71) has arrays of its own
+// from the start, indexed by the offset alone: stores to other objects stay
+// out of its chain, and the solver compares pointer-width indices, not the
+// object id too. It starts from fixed nondet arrays of its own, which also
+// stand for its bytes on a path that has not created it yet.
 #pragma once
 #include "encode/terms.h"
 #include "memory/cellmap.h"
@@ -42,7 +49,8 @@ struct State {
   // the state share it (cellmap.h).
   CellMap known;
   // Objects with arrays of their own, at key (object id, 0): its data and
-  // provenance arrays.
+  // provenance arrays, indexed by the whole pointer or, for an object
+  // given them by own(), by the offset.
   CellMap separate;
 };
 
@@ -95,6 +103,9 @@ public:
   // byte, which past MaxBytes is unsupported.
   void set(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   void copy(State &st, camada::SMTExprRef dst, camada::SMTExprRef src, uint64_t n);
+  // Gives the object of p, a pointer to a new object, arrays of its own
+  // indexed by offset, before anything is written to it.
+  void own(State &st, camada::SMTExprRef p);
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 
@@ -118,6 +129,9 @@ private:
   // the shared ones.
   void storeArrays(State &st, uint64_t object, camada::SMTExprRef at, const State::Cell &c);
   CellMap mergeSeparate(camada::SMTExprRef c, const State &a, const State &b);
+  // Where object's own arrays index the pointer at: by offset for an object
+  // given them by own(), by the whole pointer otherwise.
+  camada::SMTExprRef index(uint64_t object, camada::SMTExprRef at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   void setBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
@@ -144,6 +158,7 @@ private:
   camada::SMTExprRef bases;    // object id -> base address, as an uninterpreted array
   camada::SMTExprRef end;      // first address after the last object
   llvm::DenseMap<const llvm::GlobalValue *, camada::SMTExprRef> globals;
+  llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   unsigned fresh = 0;
   camada::SMTExprRef context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.

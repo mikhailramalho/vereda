@@ -157,9 +157,28 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
   }
 }
 
+SMTExprRef Memory::index(uint64_t object, SMTExprRef at) {
+  return owned.count(object) ? offset(at) : at;
+}
+
+void Memory::own(State &st, SMTExprRef p) {
+  std::optional<Key> k = key(p);
+  if (!k || k->first == 0)
+    return;
+  uint64_t o = k->first;
+  SMTSortRef index = s.mkBVSort(ptrBits);
+  std::string n = std::to_string(o) + "#" + std::to_string(fresh);
+  State::Cell initial{t.symbol("object#" + n, s.mkArraySort(index, s.mkBVSort(8))),
+                      t.symbol("object_provenance#" + n,
+                               s.mkArraySort(index, s.mkBVSort(ObjBits)))};
+  owned[o] = initial;
+  st.separate.set({o, 0}, initial);
+}
+
 void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State::Cell &c) {
   if (const State::Cell *own = st.separate.find({object, 0})) {
-    State::Cell stored{t.store(own->data, at, c.data), t.store(own->prov, at, c.prov)};
+    SMTExprRef i = index(object, at);
+    State::Cell stored{t.store(own->data, i, c.data), t.store(own->prov, i, c.prov)};
     st.separate.set({object, 0}, stored);
     return;
   }
@@ -170,13 +189,15 @@ void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State:
 State::Cell Memory::readArrays(const State &st, SMTExprRef at) {
   const APInt *obj = t.constant(object(at));
   if (obj)
-    if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
-      return {t.select(own->data, at), t.select(own->prov, at)};
+    if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0})) {
+      SMTExprRef i = index(obj->getZExtValue(), at);
+      return {t.select(own->data, i), t.select(own->prov, i)};
+    }
   State::Cell r{t.select(st.data, at), t.select(st.prov, at)};
   if (!obj)
     st.separate.forEach([&](Key k, const State::Cell &own) {
-      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits));
-      r = {t.ite(is, t.select(own.data, at), r.data), t.ite(is, t.select(own.prov, at), r.prov)};
+      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits)), i = index(k.first, at);
+      r = {t.ite(is, t.select(own.data, i), r.data), t.ite(is, t.select(own.prov, i), r.prov)};
     });
   return r;
 }
@@ -185,10 +206,13 @@ CellMap Memory::mergeSeparate(SMTExprRef c, const State &a, const State &b) {
   if (a.separate.same(b.separate))
     return a.separate;
   // An object separate on one side only reads the other side's shared
-  // arrays, which hold its bytes there under the same index.
-  auto arrays = [](const State &st, uint64_t o) {
-    const State::Cell *own = st.separate.find({o, 0});
-    return own ? *own : State::Cell{st.data, st.prov};
+  // arrays, which hold its bytes there under the same index; one given
+  // arrays by own() on a path that has not created it yet, its initial ones.
+  auto arrays = [this](const State &st, uint64_t o) {
+    if (const State::Cell *own = st.separate.find({o, 0}))
+      return *own;
+    auto it = owned.find(o);
+    return it != owned.end() ? it->second : State::Cell{st.data, st.prov};
   };
   CellMap r;
   auto add = [&](Key k, const State::Cell &) {
@@ -256,8 +280,9 @@ void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
       if (obj && obj->getZExtValue() != o)
         return;
       SMTExprRef is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
-      separate.set(k, {t.ite(is, t.store(own.data, at, c.data), own.data),
-                       t.ite(is, t.store(own.prov, at, c.prov), own.prov)});
+      SMTExprRef i = index(o, at);
+      separate.set(k, {t.ite(is, t.store(own.data, i, c.data), own.data),
+                       t.ite(is, t.store(own.prov, i, c.prov), own.prov)});
       shared = !obj;
     });
     st.separate = separate;
@@ -383,8 +408,9 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
     return false;
   uint64_t o = k->first;
   st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
-  st.separate.set({o, 0}, {t.constArray(pointerSort(), byte),
-                           t.constArray(pointerSort(), t.bv(IntProvenance, ObjBits))});
+  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits) : pointerSort();
+  st.separate.set({o, 0}, {t.constArray(index, byte),
+                           t.constArray(index, t.bv(IntProvenance, ObjBits))});
   return true;
 }
 
