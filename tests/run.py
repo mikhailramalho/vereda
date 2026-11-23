@@ -12,12 +12,17 @@ IR files use ';' instead of '//'. KNOWNBUG and FUTURE tests are expected to
 fail; the run then passes, with exit code 77 so that ctest calls it skipped,
 exactly when some expectation does not hold. A run past --timeout is skipped
 too, whatever the mode: how long a test takes depends on the machine and its
-load, so a timeout says nothing about the verdict.
+load, so a timeout says nothing about the verdict. A run that goes past
+--memory-limit fails, with exit code 3 so that --mark in import_esbmc.py
+leaves the mode alone, except in a KNOWNBUG test, where it is the known bug:
+CI runs several tests at once, and one that needs more memory than its share
+would take down the runner.
 The tool runs in a fresh temporary directory, so output files never land in
 the source tree."""
 import argparse
 import os
 import re
+import resource
 import signal
 import subprocess
 import sys
@@ -28,6 +33,10 @@ FAIL_MODES = ("KNOWNBUG", "FUTURE")
 # Exit code of a KNOWNBUG or FUTURE test that fails as expected; ctest
 # reports it as skipped (SKIP_RETURN_CODE in CMakeLists.txt).
 SKIPPED = 77
+# Exit code of a run that went past --memory-limit.
+OUT_OF_MEMORY = 3
+# What Vereda, clang and the solvers print when an allocation fails.
+NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|MemoryError")
 
 
 def parse(path):
@@ -66,6 +75,8 @@ def main():
     parser.add_argument("--bin", required=True, help="path to the vereda binary")
     parser.add_argument("--clang", required=True, help="path to clang")
     parser.add_argument("--timeout", type=float, help="seconds before the run is stopped")
+    parser.add_argument("--memory-limit", type=int,
+                        help="MB of address space for the run and what it starts")
     parser.add_argument("test")
     args = parser.parse_args()
 
@@ -74,12 +85,17 @@ def main():
     files = [test] + [os.path.join(os.path.dirname(test), f) for f in desc["FILES"].split()]
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
     cmd += desc["RUN"].split() + files
+    def limit_memory():
+        if args.memory_limit:
+            size = args.memory_limit << 20
+            resource.setrlimit(resource.RLIMIT_AS, (size, size))
+
     with tempfile.TemporaryDirectory(prefix="vereda-regress-") as tmp:
         # A session of its own, so that a timeout stops the binary too and
         # not only vereda.py; TMPDIR, so that what a killed vereda.py leaves
         # goes with tmp.
         with subprocess.Popen(cmd, cwd=tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, start_new_session=True,
+                              text=True, start_new_session=True, preexec_fn=limit_memory,
                               env={**os.environ, "TMPDIR": tmp}) as proc:
             try:
                 out = proc.communicate(timeout=args.timeout)[0]
@@ -91,6 +107,15 @@ def main():
             except BaseException:  # Ctrl-C does not reach the session
                 os.killpg(proc.pid, signal.SIGKILL)
                 raise
+
+    if args.memory_limit and NO_MEMORY.search(out):
+        if desc["MODE"] == "KNOWNBUG":
+            print(f"OUT OF MEMORY past {args.memory_limit} MB, a known bug; skipped")
+            return SKIPPED
+        print("+", " ".join(cmd))
+        print(clip(out))
+        print(f"OUT OF MEMORY: the run needed more than {args.memory_limit} MB")
+        return OUT_OF_MEMORY
 
     unmet = [f"EXPECT: {r}" for r in desc["EXPECT"] if not re.search(r, out, re.MULTILINE)]
     unmet += [f"EXPECT-NOT: {r}" for r in desc["EXPECT-NOT"] if re.search(r, out, re.MULTILINE)]

@@ -26,4 +26,6 @@ jobs:
         run: ninja -C build
 
       - name: Test
-        run: ctest --test-dir build -j$(nproc) --output-on-failure
+        # Three at a time: each test may use REGRESS_MEMORY_LIMIT (4 GB), and
+        # the runner has 16 GB.
+        run: ctest --test-dir build -j3 --output-on-failure

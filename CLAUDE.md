@@ -14,7 +14,7 @@ its rules, `docs/spike-survey.md` a dated log of measurements and design decisio
 cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON   # pinned LLVM 21 + camada into build/deps
 cmake --build build                                       # the existing build/ may use Makefiles
 ctest --test-dir build -L vereda -j8                      # Vereda's own suite (fast; the suite dir is the label)
-ctest --test-dir build -j$(nproc)                         # everything, incl. ~7,400 imported esbmc* tests
+ctest --test-dir build -j$(nproc)                         # everything, incl. ~6,500 imported esbmc* tests
 ctest --test-dir build -R 'vereda/loop_nested$' --output-on-failure   # one test
 ```
 
@@ -53,9 +53,12 @@ passing, promote it to CORE. New test files need a cmake re-configure to be pick
 (the glob uses CONFIGURE_DEPENDS, so `cmake --build` usually handles it).
 `tests/import_esbmc.py <esbmc>/regression [suite ...]` imports ESBMC's C tests,
 translating flags; tests needing flags Vereda lacks become FUTURE with a `// Needs:` line,
-and `--mark` flips the mode of tests Vereda currently disagrees with. `esbmc*` suites get a
-60 s per-test timeout (`ESBMC_REGRESS_TIMEOUT`); a run that times out is skipped in any
-mode, and `--mark` never changes a mode because of one.
+and `--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
+timeout (`REGRESS_TIMEOUT`); a run that times out is skipped in any mode, and `--mark`
+never changes a mode because of one.
+Every test also runs under a memory limit (`REGRESS_MEMORY_LIMIT`, 4096 MB of address
+space); going past it fails the test, except a KNOWNBUG one, and `--mark` leaves its mode
+alone. CI runs 3 tests at a time so that three such tests fit its 16 GB.
 When adding a flag that has an ESBMC equivalent, add it to the tables in that script.
 
 ## Architecture
