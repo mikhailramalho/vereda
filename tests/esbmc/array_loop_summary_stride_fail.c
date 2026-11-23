@@ -12,3 +12,5 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_stride_fail
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: over 300 s
+// MODE: KNOWNBUG

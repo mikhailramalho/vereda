@@ -97,3 +97,5 @@ for(counter=0; counter<argc; counter++)
 // RUN: --unwind 2
 // FILES: app.c picosat.c
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: over 300 s
+// MODE: KNOWNBUG

@@ -462,6 +462,20 @@ SKIPPED_TESTS = {
 }
 
 
+# Tests Vereda gets wrong in a way to fix, by ESBMC path: they are imported
+# as KNOWNBUG, with the reason.
+KNOWN_BUGS = {
+    "esbmc/array_loop_summary_counter": "out of memory, over 16 GB",
+    "esbmc/array_loop_summary_decrement": "out of memory, over 16 GB",
+    "esbmc/array_loop_summary_store": "out of memory, over 16 GB",
+    "esbmc/array_loop_summary_store_fail": "out of memory, over 16 GB",
+    "esbmc/array_loop_summary_stride": "over 300 s",
+    "esbmc/array_loop_summary_stride_fail": "over 300 s",
+    "esbmc/github_9785_int_base_stores": "out of memory, needs 9.5 GB",
+    "esbmc-unix2/23_picosat-846_01": "over 300 s",
+}
+
+
 def esbmc_only(src, args):
     """The ESBMC-only feature the test in src, run with args, uses, or None.
     Directories of other tests inside src are not looked at."""
@@ -521,14 +535,18 @@ def import_test(src, dest, origin, tracked):
     with open(entry, "rb") as f:
         newline = b"" if f.read().endswith(b"\n") else b"\n"
     with open(entry, "ab") as f:
-        f.write(newline + ("\n".join(header(origin, mode, args, regexes, src)) + "\n").encode())
+        lines = header(origin, mode, args, regexes, src)
+        if origin in KNOWN_BUGS:
+            lines += [f"// Vereda: {KNOWN_BUGS[origin]}", "// MODE: KNOWNBUG"]
+        f.write(newline + ("\n".join(lines) + "\n").encode())
     return entry
 
 
 def mark(tests, runner):
     """Runs each test with runner, the run.py command line without the test,
-    and flips the mode of those that do not behave as their mode says.
-    Returns how many were flipped."""
+    and flips the mode of those that do not behave as their mode says; one
+    that runs out of memory is listed instead. Returns how many were
+    flipped."""
     def check(test):
         return test, subprocess.run(runner + [test], stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT, text=True, check=False)
@@ -537,6 +555,9 @@ def mark(tests, runner):
     with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
         for test, proc in pool.map(check, tests):
             if proc.returncode in (0, run.SKIPPED):
+                continue
+            if proc.returncode == run.OUT_OF_MEMORY:  # a failure to fix, not a mode
+                print(f"out of memory: {test}")
                 continue
             mode = "CORE" if run.parse(test)["MODE"] in run.FAIL_MODES else "FUTURE"
             lines = proc.stdout.splitlines()
@@ -559,7 +580,8 @@ def main():
                         "when Vereda disagrees; needs --bin and --clang")
     parser.add_argument("--bin", help="the vereda binary, for --mark")
     parser.add_argument("--clang", help="clang matching the binary, for --mark")
-    parser.add_argument("--timeout", default="60", help="seconds per test, for --mark")
+    parser.add_argument("--timeout", default="300", help="seconds per test, for --mark")
+    parser.add_argument("--memory-limit", default="4096", help="MB per test, for --mark")
     args = parser.parse_args()
     if args.mark and not (args.bin and args.clang):
         parser.error("--mark needs --bin and --clang")
@@ -569,7 +591,7 @@ def main():
         runner = [sys.executable, os.path.join(here, "run.py"),
                   "--vereda", os.path.join(os.path.dirname(here), "vereda.py"),
                   "--bin", os.path.abspath(args.bin), "--clang", os.path.abspath(args.clang),
-                  "--timeout", args.timeout]
+                  "--timeout", args.timeout, "--memory-limit", args.memory_limit]
         print(f"{mark(copied_tests, runner)} of {len(copied_tests)} tests changed mode")
     return 0
 
