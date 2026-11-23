@@ -361,6 +361,8 @@ private:
                               c.getType()->getIntegerBitWidth(), false));
       return guard;
     }
+    if (name == "__vereda_uninitialised") // keeps LLVM from folding reads of the local
+      return guard;
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
     // An unknown external returns an unconstrained value. Sound

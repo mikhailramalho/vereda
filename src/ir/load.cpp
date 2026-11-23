@@ -245,14 +245,28 @@ static void libmToIntrinsics(Module &m) {
 // every use, so each scalar local, and each scalar field of a struct local,
 // first gets a call to a bodyless __VERIFIER_nondet_ function, which the
 // walker reads as one fresh value. A call, not freeze poison: InstCombine
-// may replace that by any constant. Arrays stay in memory, whose initial
-// bytes are nondet already. Each call is tagged with the variable it stands
-// for, so that dropUninitialisedRecords can remove the assignment of it
-// that mem2reg would put in the trace.
+// may replace that by any constant. Each call is tagged with the variable it
+// stands for, so that dropUninitialisedRecords can remove the assignment of
+// it that mem2reg would put in the trace.
+//
+// A local that holds an array, or a variable-length array, stays in memory,
+// whose untouched bytes the walker reads as one unknown value already. But
+// SROA and InstCombine fold a load from an alloca nothing has written to
+// undef, so two reads of one element would differ (issue #9). A call to __vereda_uninitialised, which only writes through its
+// argument and does not capture it, right after the alloca keeps them from
+// folding; the walker treats it as a no-op.
 static const char *UninitialisedMD = "vereda.uninitialised";
 
 static void nondetLocals(Module &m) {
   DenseMap<Type *, FunctionCallee> nondet;
+  Function *opaque = cast<Function>(
+      m.getOrInsertFunction("__vereda_uninitialised",
+                            FunctionType::get(Type::getVoidTy(m.getContext()),
+                                              {PointerType::getUnqual(m.getContext())}, false))
+          .getCallee());
+  opaque->setMemoryEffects(MemoryEffects::argMemOnly(ModRefInfo::Mod));
+  opaque->addParamAttr(0, Attribute::getWithCaptureInfo(m.getContext(), CaptureInfo::none()));
+  auto markUninitialised = [&](IRBuilder<> &b, AllocaInst *a) { b.CreateCall(opaque, {a}); };
   // The types the encoder gives a value of their own: not long double
   // (x86_fp80) or bfloat, which a local only stores and loads as bits.
   auto scalar = [](Type *ty) {
@@ -263,12 +277,26 @@ static void nondetLocals(Module &m) {
     if (f.isDeclaration())
       continue;
     SmallVector<AllocaInst *, 8> locals;
-    for (Instruction &inst : f.getEntryBlock())
-      if (auto *a = dyn_cast<AllocaInst>(&inst); a && a->isStaticAlloca())
+    for (Instruction &inst : instructions(f))
+      if (auto *a = dyn_cast<AllocaInst>(&inst))
         locals.push_back(a);
     for (AllocaInst *a : locals) {
       IRBuilder<> b(a->getNextNode());
       b.SetCurrentDebugLocation(DebugLoc()); // no source line: not a store to show
+      if (!a->isStaticAlloca()) {
+        markUninitialised(b, a);
+        continue;
+      }
+      // Whether the local holds an array with elements; a flexible or
+      // zero-length array member holds no bytes to read.
+      std::function<bool(Type *)> hasArray = [&](Type *ty) {
+        if (auto *st = dyn_cast<StructType>(ty))
+          return any_of(st->elements(), hasArray);
+        auto *at = dyn_cast<ArrayType>(ty);
+        return at && at->getNumElements() > 0;
+      };
+      if (a->isArrayAllocation() || hasArray(a->getAllocatedType()))
+        markUninitialised(b, a);
       TinyPtrVector<DbgVariableRecord *> declares = findDVRDeclares(a);
       MDNode *variable = declares.empty() ? nullptr : declares.front()->getVariable();
       // The scalar leaves of the local, with their index paths.

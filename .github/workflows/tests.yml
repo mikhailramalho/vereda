@@ -1,12 +1,44 @@
 name: Tests
 
+# Changes only to docs/ or Markdown files run no tests. regression is a
+# required check for landing a pull request, so on pull requests the
+# workflow always starts and the job is skipped instead: a skipped job counts
+# as passed, a workflow that never ran leaves the check pending.
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**.md']
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        # Only a file list read in full can say false; any failure here
+        # leaves code unset, and regression runs.
+        run: |
+          code=true
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            files=$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)
+            if [ -n "$files" ] && ! grep -qvE '^docs/|\.md$' <<< "$files"; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   regression:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
