@@ -39,7 +39,7 @@ The binary (`build/vereda`) takes only `.bc`/`.ll`; its flags are `cl::opt`s in
 
 ## Regression tests
 
-A test is a `.c` or `.ll` file directly under `tests/<suite>/`, or
+A test is a `.c`, `.i` or `.ll` file directly under `tests/<suite>/`, or
 `tests/<suite>/<name>/main.c` for multi-file tests. Its comment header (`;` in IR)
 drives `tests/run.py`:
 

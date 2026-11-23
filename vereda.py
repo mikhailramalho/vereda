@@ -13,6 +13,9 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SOURCE_EXTS = (".c", ".i")
+# A linemarker, '# 12 "foo.c" 1' or '#line 12 "foo.c"', as gcc -E and clang -E
+# write them.
+LINEMARKER = re.compile(rb"^[ \t]*#[ \t]*(?:line[ \t]+)?[0-9]+\b.*$", re.MULTILINE)
 IR_EXTS = (".ll", ".bc")
 
 CLANG_FLAGS = [
@@ -68,6 +71,25 @@ def find_binary():
     sys.exit("vereda.py: verifier binary not found; pass --bin")
 
 
+def physical_lines(source, tmp):
+    """The file to compile for a .i source, and the clang flags it needs.
+    clang takes a linemarker's file and line as the location of what follows,
+    but a witness must name the input's own lines, so a .i that holds
+    linemarkers is compiled from a copy in tmp with each one blanked (the
+    other lines keep their numbers); the prefix map then names the source in
+    the debug info, exactly as given."""
+    if not source.endswith(".i"):
+        return source, []
+    with open(source, "rb") as f:
+        text = f.read()
+    if not LINEMARKER.search(text):
+        return source, []
+    copy = os.path.join(tmp, os.path.basename(source))
+    with open(copy, "wb") as f:
+        f.write(LINEMARKER.sub(b"", text))
+    return copy, ["-fdebug-prefix-map=" + copy + "=" + source]
+
+
 def compile_and_link(args, flags, inputs, tmp, run):
     """Compiles each C input with clang and links several modules with
     llvm-link. Returns the IR file to verify, or None on failure."""
@@ -81,8 +103,9 @@ def compile_and_link(args, flags, inputs, tmp, run):
             continue
         print(tag, "Compiling", source)
         ir = os.path.join(tmp, os.path.basename(source) + ext)
-        cmd = ([args.clang] + CLANG_FLAGS + flags + ["-I" + d for d in args.I]
-               + ["-D" + d for d in args.D] + textual + [source, "-o", ir])
+        compiled, mapping = physical_lines(source, tmp)
+        cmd = ([args.clang] + CLANG_FLAGS + flags + mapping + ["-I" + d for d in args.I]
+               + ["-D" + d for d in args.D] + textual + [compiled, "-o", ir])
         if run(cmd) != 0:
             return None
         irs.append(ir)

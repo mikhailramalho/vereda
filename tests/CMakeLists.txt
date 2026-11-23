@@ -16,6 +16,7 @@ foreach(suite IN LISTS suites)
   endif()
   file(GLOB tests LIST_DIRECTORIES false CONFIGURE_DEPENDS
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.c"
+       "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.i"
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.ll"
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*/main.c")
   foreach(test IN LISTS tests)
