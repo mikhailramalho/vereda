@@ -26,3 +26,4 @@ int loop_init() {
 // RUN: --function loop_init --k-induction
 // MODE: FUTURE
 // EXPECT: \n\s*res = ([^ ]+) .*\n.*\n.*\n.*\s*a = \1
+// Vereda: verdict none

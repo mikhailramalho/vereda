@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^Reached Assertion Instances: 1
 // EXPECT: ^Assertion Instances Coverage: 100%$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

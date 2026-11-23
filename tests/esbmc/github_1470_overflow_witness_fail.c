@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: data == 9223372036854775807
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -39,3 +39,4 @@ int main(int argc, char **argv) {
 // FILES: main.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

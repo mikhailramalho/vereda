@@ -35,3 +35,4 @@ int main()
 // EXPECT: ^Falsifying with context bound 3$
 // EXPECT: Falsifying with context bound 1\n(?:(?!VERIFICATION SUCCESSFUL)[\s\S])*Falsifying with context bound 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

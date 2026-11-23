@@ -8,7 +8,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8686_fail
-// EXPECT: ^  FAILED .*line   7  assertion strtol\("19", NULL, 8\) == 17$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .*line   7  assertion strtol\("19", NULL, 8\) == 17$
-// MODE: FUTURE

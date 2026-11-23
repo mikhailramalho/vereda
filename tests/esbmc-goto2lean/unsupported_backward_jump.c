@@ -13,3 +13,4 @@ M:
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported backward conditional jump at .*unsupported_backward_jump\.c:8$
+// Vereda: verdict none

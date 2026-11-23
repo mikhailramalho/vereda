@@ -54,3 +54,4 @@ void main(){
 // RUN: --k-induction-parallel -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

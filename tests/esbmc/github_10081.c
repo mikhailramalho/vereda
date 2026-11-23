@@ -13,3 +13,4 @@ int main()
 // RUN: --sv-comp --force-malloc-success --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

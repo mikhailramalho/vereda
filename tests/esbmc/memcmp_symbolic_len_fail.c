@@ -13,3 +13,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  FAILED .*dereference failure: memcmp length exceeds object bounds$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

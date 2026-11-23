@@ -26,3 +26,4 @@ L:
 // RUN: --unwind 2 --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

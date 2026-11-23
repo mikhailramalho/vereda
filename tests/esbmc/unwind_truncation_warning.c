@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: ^WARNING: the unwinding bound cut a loop short while unwinding checks were disabled
 // Vereda: unmet EXPECT: ^WARNING: the unwinding bound cut a loop short while unwinding checks were disabled
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

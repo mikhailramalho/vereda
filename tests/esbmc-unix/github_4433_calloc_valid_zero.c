@@ -32,3 +32,4 @@ int main(void)
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --no-vla-size-check --32 --no-pointer-check --no-bounds-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

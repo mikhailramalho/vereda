@@ -19,3 +19,4 @@ int main()
 // RUN: --multi-property --falsify-context-bound 1
 // MODE: FUTURE
 // EXPECT: ^ERROR: --falsify-context-bound cannot be combined with --multi-property$
+// Vereda: verdict none

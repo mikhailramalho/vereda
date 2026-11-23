@@ -24,5 +24,5 @@ int main()
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.3\]\s+line\s+20\s+assertion cnt == 0$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -17,3 +17,4 @@ int main() {
 // RUN: --cheri purecap --big-endian --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

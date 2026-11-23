@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^\[Dead code\]$
 // EXPECT: :9: dead code: unreachable branch
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

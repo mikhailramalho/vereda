@@ -24,3 +24,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^WARNING: a loop or recursion inside a step runs more than once$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

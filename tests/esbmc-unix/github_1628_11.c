@@ -9,3 +9,4 @@ int main(void)
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf format specifier \%s requires pointer argument$
+// Vereda: verdict none

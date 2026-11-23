@@ -34,3 +34,4 @@ int main() {
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --no-align-check --k-step 20 --floatbv --unlimited-k-steps --32 --k-induction --max-inductive-step 3 --no-pointer-check --no-bounds-check --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

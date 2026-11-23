@@ -88,3 +88,4 @@ void *checkThread(void *param) {
 // RUN: --unwind 2 --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

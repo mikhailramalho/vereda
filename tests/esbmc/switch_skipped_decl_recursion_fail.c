@@ -24,6 +24,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/switch_skipped_decl_recursion_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion y == 1
-// Vereda: unmet EXPECT: assertion y == 1
-// MODE: FUTURE

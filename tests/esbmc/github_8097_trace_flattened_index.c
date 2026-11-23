@@ -18,3 +18,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  u\.m\[0\]\[2\] = 3
 // MODE: FUTURE
+// Vereda: verdict FAILED

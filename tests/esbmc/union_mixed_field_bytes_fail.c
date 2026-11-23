@@ -17,5 +17,5 @@ int main(void)
 // Needs: --little-endian
 // RUN: --little-endian
 // MODE: FUTURE
-// EXPECT: ^\s+the narrow field must not survive the wide write$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

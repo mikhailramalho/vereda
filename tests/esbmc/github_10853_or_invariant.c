@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)line: 5\s+column: \d+\s+function: "main"\s+value: "i <= 10"
 // EXPECT: (?s)line: 9\s+column: \d+\s+function: "main"\s+value: "j <= 5 \|\| i <= 10"
+// Vereda: verdict none

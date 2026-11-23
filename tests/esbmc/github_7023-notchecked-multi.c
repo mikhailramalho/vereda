@@ -13,7 +13,6 @@ int main()
 // Needs: --result-only
 // RUN: --result-only --multi-property
 // MODE: FUTURE
-// EXPECT: ^ +FAILED .*a is not one$
-// EXPECT: ^ +FAILED .*a is not two$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z
+// Vereda: verdict none

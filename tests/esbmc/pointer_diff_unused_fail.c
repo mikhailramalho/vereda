@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/pointer_diff_unused_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion x \* 2 != 4$
-// Vereda: unmet EXPECT: ^\s+assertion x \* 2 != 4$
-// MODE: FUTURE

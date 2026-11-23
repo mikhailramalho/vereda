@@ -16,3 +16,4 @@ int main()
 // RUN: --smt-formula-too --output -
 // MODE: FUTURE
 // EXPECT: ^\(check-sat\)$
+// Vereda: verdict none

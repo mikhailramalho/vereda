@@ -24,3 +24,4 @@ int main() {
 // RUN: 
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -24,3 +24,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust
 // MODE: KNOWNBUG
 // EXPECT: ^\s*ASSIGN s=sizeof\(signed char \[strlen\(&entry->d_name\[0\]\) \+ 2\]\);$
+// Vereda: verdict none

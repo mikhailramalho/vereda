@@ -16,3 +16,4 @@ int main() {
 // RUN: --floatbv --overflow-check --nan-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

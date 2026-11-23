@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Bug found by the base case \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -14,5 +14,4 @@ int main()
 // RUN: --k-induction --multi-property --check-vacuity --max-k-step 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion x == n$
-// EXPECT: ^\*\* 0 of 1 properties failed, 1 passed$
+// Vereda: verdict none

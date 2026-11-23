@@ -16,3 +16,4 @@ main() {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: Access to object out of bounds: heap object
+// Vereda: verdict none

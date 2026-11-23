@@ -35,3 +35,4 @@ int main()
 // RUN: --unwind 10 --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

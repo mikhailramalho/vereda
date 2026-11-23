@@ -26,3 +26,4 @@ out:
 // RUN: --k-induction --interval-analysis --max-k-step 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

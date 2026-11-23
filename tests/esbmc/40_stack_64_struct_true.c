@@ -16,3 +16,4 @@ int main() {
 // RUN: --64 --stack-limit 96 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

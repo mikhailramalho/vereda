@@ -20,3 +20,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^\s+ASSERT !\(c == 2\) // j$
 // EXPECT: \A(?![\s\S]*ASSERT 0 // j)[\s\S]*\Z
+// Vereda: verdict none

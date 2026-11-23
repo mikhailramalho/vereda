@@ -10,3 +10,4 @@ int main(int argc, char *argv[])
 // RUN: --overflow-check
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict SUCCESSFUL

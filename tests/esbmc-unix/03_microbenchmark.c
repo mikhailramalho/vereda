@@ -485,3 +485,4 @@ int main(void)
 // RUN: --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

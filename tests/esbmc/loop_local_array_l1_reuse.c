@@ -16,3 +16,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: \bt\?1!0&0#\d+ == \{
 // EXPECT: \A(?![\s\S]*\bt\?(?!1!)\d)
+// Vereda: verdict none

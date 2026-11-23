@@ -11,7 +11,7 @@ int main()
 // Needs: --result-only --show-cex
 // RUN: --result-only --show-cex
 // MODE: FUTURE
-// EXPECT: ^  FAILED +\[main\.assertion\.1\]  line 6  assertion x > 100$
 // EXPECT: ^\*\* 1 of 2 properties failed, 1 not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*produced no model)[\s\S]*\Z
+// Vereda: verdict none

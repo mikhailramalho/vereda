@@ -11,5 +11,5 @@ int main(void)
 // Needs: --smt-during-symex
 // RUN: --multi-property --smt-during-symex
 // MODE: FUTURE
-// EXPECT: may fail.*FAILED|FAILED.*may fail
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

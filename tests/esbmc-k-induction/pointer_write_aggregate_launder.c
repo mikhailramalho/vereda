@@ -30,3 +30,4 @@ int main()
 // RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

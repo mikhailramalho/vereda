@@ -31,3 +31,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: github_4715_irep2_native_body_dowhile_cond_loc_01\.c line 17 column 3 function countdown\n\s+IF t > 0 THEN GOTO
+// Vereda: verdict none

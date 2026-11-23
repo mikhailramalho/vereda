@@ -15,3 +15,4 @@ int main(void)
 // RUN: --32 --sv-comp --std c11 --interval-analysis --validate-violation-witness --witness witness.yml --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

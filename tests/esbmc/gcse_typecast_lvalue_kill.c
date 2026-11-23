@@ -16,3 +16,4 @@ int main()
 // RUN: --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -60,9 +60,5 @@ int main(void)
 // Needs: --no-standard-checks
 // RUN: --no-standard-checks --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line \d+\s+assertion VAR\.step == 5$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.2\]\s+line \d+\s+assertion VAR\.step == 6$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.3\]\s+line \d+\s+assertion VAR\.step == 7$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.4\]\s+line \d+\s+assertion VAR\.step == 8$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.5\]\s+line \d+\s+assertion VAR\.step == 9$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

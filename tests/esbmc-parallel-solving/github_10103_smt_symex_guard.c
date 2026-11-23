@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^ERROR: --parallel-solving cannot be combined with --smt-symex-guard$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z
+// Vereda: verdict none

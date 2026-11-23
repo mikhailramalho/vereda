@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: FAILED\s+\[strncasecmp.*array bounds violated
 // Vereda: unmet EXPECT: ^\*\* 2 of 6 properties failed
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -13,4 +13,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  \*a assigns the second element$
+// Vereda: verdict none

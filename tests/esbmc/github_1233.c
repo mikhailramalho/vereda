@@ -24,3 +24,4 @@ int main()
 // EXPECT: ^  middle at file .*github_1233\.c line 15 column 3 function main$
 // EXPECT: ^  main at file .*github_1233\.c line 13 column 1$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

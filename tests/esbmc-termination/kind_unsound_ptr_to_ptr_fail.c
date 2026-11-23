@@ -20,3 +20,4 @@ int main(void)
 // RUN: --state-hashing --add-symex-value-sets --k-step 2 --unlimited-k-steps --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

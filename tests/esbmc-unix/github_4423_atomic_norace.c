@@ -100,3 +100,4 @@ int main(void)
 // RUN: --data-races-check-only --no-assertions --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

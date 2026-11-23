@@ -14,3 +14,4 @@ int main(void)
 // RUN: --unwind 4 --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

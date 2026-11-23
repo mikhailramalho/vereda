@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  unwinding assertion loop \d+$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

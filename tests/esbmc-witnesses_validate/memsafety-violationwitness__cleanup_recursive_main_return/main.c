@@ -16,3 +16,4 @@ int main(void)
 // RUN: --std c11 --memory-leak-check --validate-violation-witness --witness witness.yml --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

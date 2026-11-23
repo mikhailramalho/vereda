@@ -33,3 +33,4 @@ int main(void)
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

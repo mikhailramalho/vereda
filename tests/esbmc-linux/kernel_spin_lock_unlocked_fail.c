@@ -32,3 +32,4 @@ int main()
 // RUN: --unwind 400 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

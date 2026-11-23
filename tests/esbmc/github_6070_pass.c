@@ -16,3 +16,4 @@ int main()
 // RUN: --k-induction --multi-property --cex-output out.cex --unwind 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+dereference failure: Access to object out of bounds$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

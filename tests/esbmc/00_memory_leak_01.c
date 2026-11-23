@@ -18,3 +18,4 @@ void main(){
 // RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

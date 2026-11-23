@@ -33,3 +33,4 @@ int main(void) {
 // EXPECT: ^def sign \(x : BitVec 32\) \(post : BitVec 32 → Prop\) : Prop :=$
 // EXPECT: ^      let s := \(-\(1#32\)\);$
 // EXPECT: ^  \(BitVec\.sle lo hi = true\) →$
+// Vereda: verdict none

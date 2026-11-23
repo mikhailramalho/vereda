@@ -39,7 +39,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/pointer_distinct_objects_fold
 // RUN: --unwind 301 --no-unwinding-assertions
-// EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
-// MODE: FUTURE

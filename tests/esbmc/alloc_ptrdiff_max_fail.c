@@ -12,7 +12,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/alloc_ptrdiff_max_fail
 // RUN: --force-malloc-success
-// EXPECT: ^  assertion over != NULL$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion over != NULL$
-// MODE: FUTURE

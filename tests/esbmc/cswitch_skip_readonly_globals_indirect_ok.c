@@ -52,3 +52,4 @@ int main(void)
 // RUN: --data-races-check --context-bound 3 --cswitch-skip-readonly-globals
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Solution found by the forward condition
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -41,3 +41,4 @@ int main(void)
 // EXPECT: --max-witnesses cap reached
 // EXPECT: ^  Inputs by witness:$
 // EXPECT: ^    #1 : \[0\] =
+// Vereda: verdict none

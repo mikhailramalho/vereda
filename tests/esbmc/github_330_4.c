@@ -11,3 +11,4 @@ int main(argc, argv) char **argv;
 // RUN: --memory-leak-check -Wno-error=implicit-int
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

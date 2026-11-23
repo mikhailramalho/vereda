@@ -14,4 +14,4 @@ int main()
 // RUN: --multi-property --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: post-merge bound should fail for NaN x
+// Vereda: verdict none

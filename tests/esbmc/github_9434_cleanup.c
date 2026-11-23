@@ -35,7 +35,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9434_cleanup
 // RUN: -m64 --unwind 3
-// EXPECT: ^  PASSED .* assertion order == 21$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^  PASSED .* assertion order == 21$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict FAILED

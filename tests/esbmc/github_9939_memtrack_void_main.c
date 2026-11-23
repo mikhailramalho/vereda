@@ -12,3 +12,4 @@ void main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: forgotten memory
 // EXPECT: type: "target"\n.*\n.*\n.*\n\s*line: 7\n\s*column: 1$
+// Vereda: verdict none

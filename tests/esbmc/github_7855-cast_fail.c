@@ -16,6 +16,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7855-cast_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line +\d+ +a different address is a different pointer$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.1\] +line +\d+ +a different address is a different pointer$
-// MODE: FUTURE

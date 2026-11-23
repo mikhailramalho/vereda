@@ -13,3 +13,4 @@ int main(void) { pthread_t id; int i = 0; set_ptr(&i);
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race.*$
+// Vereda: verdict none

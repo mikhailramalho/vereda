@@ -2038,3 +2038,4 @@ int main()
 // EXPECT: ^Function Entry Points & Branches : 542
 // EXPECT: ^Reached : 3
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

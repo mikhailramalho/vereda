@@ -13,3 +13,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: \(signed int\)x \+ \(signed int\)y
+// Vereda: verdict none

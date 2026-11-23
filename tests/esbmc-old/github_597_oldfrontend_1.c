@@ -8,3 +8,4 @@ int main() {
 // RUN: --old-frontend
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

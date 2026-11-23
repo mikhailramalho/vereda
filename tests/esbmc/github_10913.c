@@ -16,3 +16,4 @@ int main()
 // EXPECT: x = 5 \(
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

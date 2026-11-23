@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*loop_transition_invariant)[\s\S]*\Z
+// Vereda: verdict none

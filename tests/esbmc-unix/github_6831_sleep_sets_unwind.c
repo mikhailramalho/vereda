@@ -44,3 +44,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@x$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor 0, pruned_by_hash 0, pruned_by_sleep [1-9][0-9]*, pruned_by_cs_bound 0$
+// Vereda: verdict none

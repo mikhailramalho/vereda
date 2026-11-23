@@ -25,3 +25,4 @@ int main(void)
 // RUN: --loop-invariant-check --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: <data key="startline">7</data>
 // EXPECT: (?s)\A(?!.*key="originfile">)
+// Vereda: verdict none

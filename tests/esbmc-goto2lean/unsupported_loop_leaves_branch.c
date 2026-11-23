@@ -16,3 +16,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported loop that leaves its enclosing branch at .*unsupported_loop_leaves_branch\.c:6$
+// Vereda: verdict none

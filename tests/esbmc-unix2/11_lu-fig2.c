@@ -47,3 +47,4 @@ int main() {
 // RUN: --incremental-bmc --context-bound 2 -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

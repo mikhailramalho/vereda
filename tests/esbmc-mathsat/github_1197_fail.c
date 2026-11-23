@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: already detached
+// Vereda: verdict none

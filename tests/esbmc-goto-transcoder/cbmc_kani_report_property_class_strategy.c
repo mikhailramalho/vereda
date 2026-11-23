@@ -4,3 +4,4 @@ int main() { return 0; }
 // RUN: --report-property-class cover --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^ERROR: --report-property-class needs a single BMC run, not a verification strategy$
+// Vereda: verdict none

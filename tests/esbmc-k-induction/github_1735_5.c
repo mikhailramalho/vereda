@@ -21,3 +21,4 @@ end:
 // RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

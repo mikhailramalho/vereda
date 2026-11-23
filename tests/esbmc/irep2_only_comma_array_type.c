@@ -18,3 +18,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --goto-functions-only
 // MODE: FUTURE
 // EXPECT: IF !\(g\[\(signed long (long )?int\)i\]\[0\] != 0\) THEN GOTO
+// Vereda: verdict none

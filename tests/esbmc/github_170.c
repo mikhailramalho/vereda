@@ -21,3 +21,4 @@ struct s2 *make_s2(char ch)
 // RUN: -fms-extensions -Wno-microsoft-anon-tag --function make_s2 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

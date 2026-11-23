@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: \[Counterexamples - 2 witnesses\]
 // EXPECT: Generating Violation Graphml Witness
 // EXPECT: Generating Violation Yaml Witness
+// Vereda: verdict none

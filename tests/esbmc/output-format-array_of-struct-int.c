@@ -12,3 +12,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bA = \{ \{ \.x\s*=\s*0 \} \}
 // EXPECT: (?s)\A(?!.*key="assumption">[^<]*[{}])
+// Vereda: verdict none

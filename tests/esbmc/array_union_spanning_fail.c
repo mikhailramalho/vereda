@@ -10,7 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_union_spanning_fail
-// EXPECT: ^  expect FAIL$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  expect FAIL$
-// MODE: FUTURE

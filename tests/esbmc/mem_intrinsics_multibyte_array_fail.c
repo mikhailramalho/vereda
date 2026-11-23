@@ -35,4 +35,4 @@ int main()
 // RUN: --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion n < 4 \|\| words\[2\] == 0x01020304u$
+// Vereda: verdict none

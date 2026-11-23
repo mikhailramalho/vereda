@@ -66,3 +66,4 @@ int main()
 // RUN: --context-bound 3 --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

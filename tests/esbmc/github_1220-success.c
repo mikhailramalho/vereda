@@ -16,3 +16,4 @@ void f(unsigned k, unsigned v)
 // RUN: --func f
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

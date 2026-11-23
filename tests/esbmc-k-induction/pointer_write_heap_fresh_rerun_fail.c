@@ -39,3 +39,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: Disabling inductive step
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

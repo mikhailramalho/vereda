@@ -20,3 +20,4 @@ int main()
 // RUN: --k-induction --std=gnu89
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

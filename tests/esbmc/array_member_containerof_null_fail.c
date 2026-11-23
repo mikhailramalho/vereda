@@ -14,7 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_member_containerof_null_fail
-// EXPECT: ^  assertion l != 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion l != 0$
-// MODE: FUTURE

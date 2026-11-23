@@ -7,3 +7,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported expression dereference$
+// Vereda: verdict none

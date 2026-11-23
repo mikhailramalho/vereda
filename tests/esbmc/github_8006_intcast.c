@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s*OTHER FREE\(\(void \*\)addr\);$
 // EXPECT: ^\s*ASSIGN b=\*p \+ 1;$
+// Vereda: verdict none

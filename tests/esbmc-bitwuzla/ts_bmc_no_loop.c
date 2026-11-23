@@ -17,3 +17,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Transition system extracted
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

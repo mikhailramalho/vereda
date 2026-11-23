@@ -26,3 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: FAILED +\[g\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

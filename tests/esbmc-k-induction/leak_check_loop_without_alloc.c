@@ -19,3 +19,4 @@ int main(void)
 // RUN: --k-induction --max-inductive-step 3 --memory-leak-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -30,3 +30,4 @@ int main(void)
 // EXPECT: ^State [0-9]+ file .*field_sensitive_ssa_carried_copy_fail\.c line 22 column 7 function main thread 0$
 // EXPECT: ^  g = \{ \.p=.+, \.k=0 \}$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

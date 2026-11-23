@@ -14,3 +14,4 @@ int main(void)
 // RUN: --witness-output-yaml - --unwind 1600 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

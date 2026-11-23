@@ -19,4 +19,4 @@ int main()
 // RUN: --no-simplify --incremental-bmc --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion r\[1\] == 6$
+// Vereda: verdict none

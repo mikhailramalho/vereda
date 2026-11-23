@@ -14,4 +14,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  the shift result is one$
+// Vereda: verdict none

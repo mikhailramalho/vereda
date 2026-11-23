@@ -100,3 +100,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on sub
+// Vereda: verdict none

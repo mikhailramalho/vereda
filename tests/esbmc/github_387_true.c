@@ -12,3 +12,4 @@ main() {
 // RUN: --no-slice --memory-leak-check --z3 --force-malloc-success -Wno-error=implicit-function-declaration -Wno-error=implicit-int
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

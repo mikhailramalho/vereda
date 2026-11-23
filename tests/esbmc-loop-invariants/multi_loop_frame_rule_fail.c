@@ -35,3 +35,4 @@ int main()
 // RUN: --loop-invariant-check --loop-frame-rule --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

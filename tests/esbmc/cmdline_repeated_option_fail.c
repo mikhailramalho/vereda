@@ -7,3 +7,4 @@ int main()
 // EXPECT: Invalid command line: option .--unwind. cannot be specified more than once
 // Vereda: unmet EXPECT: Invalid command line: option .--unwind. cannot be specified more than once
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

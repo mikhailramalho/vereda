@@ -47,3 +47,4 @@ int main(void)
 // RUN: --memory-leak-check --no-reachable-memory-leak --force-malloc-success --force-realloc-success --add-symex-value-sets --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

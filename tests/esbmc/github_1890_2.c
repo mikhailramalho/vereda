@@ -18,3 +18,4 @@ int main()
 // RUN: --multi-property --k-induction --k-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

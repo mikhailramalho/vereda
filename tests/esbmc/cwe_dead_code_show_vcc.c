@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION CONDITIONS:$
 // EXPECT: (?s)\A(?!.*\[Dead code\])
+// Vereda: verdict none

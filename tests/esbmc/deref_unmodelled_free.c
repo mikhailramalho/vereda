@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^.*dereference failure: invalid pointer freed$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

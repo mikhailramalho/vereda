@@ -34,3 +34,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 5 witnesses\]
 // EXPECT: UNSAT after 5 witnesses
+// Vereda: verdict none

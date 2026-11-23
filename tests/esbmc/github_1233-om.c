@@ -15,3 +15,4 @@ int main()
 // EXPECT: ^  main at file .*github_1233\-om\.c line 3 column 1$
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

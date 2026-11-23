@@ -23,3 +23,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: __ESBMC_unroll at .* is not directly followed by a loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

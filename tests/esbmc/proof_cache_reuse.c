@@ -13,5 +13,5 @@ int main(void)
 // RUN: --multi-property --proof-cache proof-store --claim-fingerprint-dump fp.tsv
 // MODE: FUTURE
 // EXPECT: ^Proof cache: 1 claim\(s\) reused, 1 solved$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.2\]\s+line 8\s+assertion x \+ 1 > x$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

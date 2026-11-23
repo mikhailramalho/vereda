@@ -75,3 +75,4 @@ __VERIFIER_assume(p != ((void *)0));
 // RUN: --unwind 160 --no-unwinding-assertions --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

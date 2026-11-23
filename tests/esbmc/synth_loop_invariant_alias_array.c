@@ -14,3 +14,4 @@ int main(void){ uint32_t n; __VERIFIER_assume(n>=1&&n<=3);
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

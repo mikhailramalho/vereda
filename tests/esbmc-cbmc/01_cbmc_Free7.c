@@ -12,3 +12,4 @@ int main ( void )
 // RUN: --no-slice --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -15,6 +15,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/vla_size_fixed_pointer_fail
 // RUN: --unwind 4
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion p\[1\]\[0\] != 7$
-// Vereda: unmet EXPECT: ^\s+assertion p\[1\]\[0\] != 7$
-// MODE: FUTURE

@@ -30,3 +30,4 @@ main()
 // RUN: --k-induction -Wno-error=implicit-int
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

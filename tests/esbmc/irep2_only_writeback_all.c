@@ -19,3 +19,4 @@ int main(int argc, char **argv)
 // RUN: --symbol-table-only --clang-c-irep2-adjust-only --clang-c-irep2-adjust-writeback-all
 // MODE: FUTURE
 // EXPECT: c = argc == 1 \? &b\[0\] : d;
+// Vereda: verdict none

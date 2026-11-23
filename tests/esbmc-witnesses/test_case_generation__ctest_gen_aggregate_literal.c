@@ -36,3 +36,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Generated CTest test case\: test_case\.c$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

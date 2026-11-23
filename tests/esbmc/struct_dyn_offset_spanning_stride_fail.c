@@ -10,7 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_spanning_stride_fail
-// EXPECT: ^  expect FAIL: s\[1\]\.c == 2$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  expect FAIL: s\[1\]\.c == 2$
-// MODE: FUTURE

@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)\A(?:(?!function_return).)*type: "function_return"(?:(?!function_return).)*\Z
 // EXPECT: value: "\\\\result == 7"\n.*\n.*\n.*\n *line: 13\n
+// Vereda: verdict none

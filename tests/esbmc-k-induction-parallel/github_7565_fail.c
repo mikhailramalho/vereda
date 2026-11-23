@@ -20,3 +20,4 @@ test:
 // RUN: --k-induction-parallel
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

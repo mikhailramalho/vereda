@@ -15,3 +15,4 @@ int main() {
 // RUN: --smt-during-symex
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

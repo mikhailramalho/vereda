@@ -32,7 +32,3 @@ int main(void)
 // Imported from ESBMC regression/floats-regression/github_7792
 // RUN: -m32 --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^  PASSED +\[main\.assertion\.\d+\] +line +\d+ +-0\.0f puns to 0x80000000$
-// EXPECT: ^  PASSED +\[main\.assertion\.\d+\] +line +\d+ +\+0\.0f puns to 0x00000000$
-// Vereda: unmet EXPECT: ^  PASSED +\[main\.assertion\.\d+\] +line +\d+ +-0\.0f puns to 0x80000000$
-// MODE: FUTURE

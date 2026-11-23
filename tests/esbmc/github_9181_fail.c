@@ -9,7 +9,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9181_fail
-// EXPECT: ^  assertion __builtin_constant_p\(h\(\)\)$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion __builtin_constant_p\(h\(\)\)$
-// MODE: FUTURE

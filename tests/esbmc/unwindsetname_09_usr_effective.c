@@ -18,3 +18,4 @@ int main(void)
 // RUN: --unwind 3 --unwindsetname c:@F@compute_sum#:0:11
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

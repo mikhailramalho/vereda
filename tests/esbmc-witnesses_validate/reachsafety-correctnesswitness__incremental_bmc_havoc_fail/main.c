@@ -14,3 +14,4 @@ int main()
 // RUN: --incremental-bmc --validate-correctness-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

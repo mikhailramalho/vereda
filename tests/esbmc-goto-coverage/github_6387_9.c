@@ -18,4 +18,4 @@ int main()
 // RUN: --multi-property --assertion-coverage --function target --witness-output-yaml w.yaml
 // MODE: FUTURE
 // EXPECT: claim\(s\) outside the coverage instrumentation were violated
-// EXPECT: helper never sees 7
+// Vereda: verdict none

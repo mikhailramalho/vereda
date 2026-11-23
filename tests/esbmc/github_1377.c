@@ -263,3 +263,4 @@ int main()
 // RUN: --unwind 1 --no-unwinding-assertions --k-induction --max-inductive-step 1 --overflow --z3 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

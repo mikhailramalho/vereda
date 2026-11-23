@@ -10,3 +10,4 @@ int main(int argc, char **argv, char **envp)
 // EXPECT: ^Symbol\.+: envp_size'$
 // EXPECT: ^Symbol\.+: envp'$
 // EXPECT: ^Type\.+: signed char \* \[envp_size\]$
+// Vereda: verdict none

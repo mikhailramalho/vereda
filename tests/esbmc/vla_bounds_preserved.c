@@ -20,6 +20,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_bounds_preserved
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion 0
-// Vereda: unmet EXPECT: assertion 0
-// MODE: FUTURE

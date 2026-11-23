@@ -43,3 +43,4 @@ int main(){
 // RUN: --no-slice --memory-leak-check --unwind 10 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

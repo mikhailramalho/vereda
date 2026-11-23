@@ -31,3 +31,4 @@ int main(void)
 // RUN: --memory-leak-check --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2 --64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main()
 // RUN: --k-induction --interval-analysis --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

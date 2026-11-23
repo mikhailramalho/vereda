@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: type: "branching"
 // EXPECT: (?s)line: 9\s+column: 5
 // EXPECT: (?s)line: 12\s+column: 5
+// Vereda: verdict none

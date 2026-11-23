@@ -23,3 +23,4 @@ int main()
 // EXPECT: \bdivision by zero\b
 // Vereda: unmet EXPECT: \bdivision by zero\b
 // MODE: FUTURE
+// Vereda: verdict FAILED

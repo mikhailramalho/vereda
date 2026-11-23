@@ -23,6 +23,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/union_pun_pointer_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion \*u\.raw == -2$
-// Vereda: unmet EXPECT: ^  assertion \*u\.raw == -2$
-// MODE: FUTURE

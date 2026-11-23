@@ -39,3 +39,4 @@ int main(void)
 // RUN: --unwind 4 --state-hashing
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

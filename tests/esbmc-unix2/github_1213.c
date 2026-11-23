@@ -22,3 +22,4 @@ int main() {
 // RUN: --ssa-trace --no-slice
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

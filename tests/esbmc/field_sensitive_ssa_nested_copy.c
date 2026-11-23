@@ -37,5 +37,5 @@ int main(void)
 // RUN: --field-sensitive-ssa --unwind 6
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
-// EXPECT: ^Generated 2 VCC\(s\), 0 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^__builtin_va_start\(&ap(\[0\])?[,)]
 // EXPECT: ^__builtin_va_end\(&ap(\[0\])?[,)]
+// Vereda: verdict none

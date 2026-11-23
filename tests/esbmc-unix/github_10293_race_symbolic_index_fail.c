@@ -36,3 +36,4 @@ int main()
 // RUN: --data-races-check-only --incremental-bmc --max-k-step 2 --z3 --tuple-node-flattener
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

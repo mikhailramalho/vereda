@@ -29,3 +29,4 @@ int main(void)
 // RUN: --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

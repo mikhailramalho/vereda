@@ -55,3 +55,4 @@ int main()
 // RUN: --force-malloc-success --force-realloc-success --unwind 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

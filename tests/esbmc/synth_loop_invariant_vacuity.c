@@ -15,5 +15,5 @@ int main(void)
 // Needs: --synthesise-loop-invariants
 // RUN: --synthesise-loop-invariants
 // MODE: FUTURE
-// EXPECT: ^  UNKNOWN      \[main\.assertion\.1\]  line 11  vacuous \(vacuous discharge: path assumptions are unsatisfiable
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+7\s
 // MODE: FUTURE
+// Vereda: verdict FAILED

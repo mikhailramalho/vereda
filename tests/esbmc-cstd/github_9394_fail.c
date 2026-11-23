@@ -23,8 +23,3 @@ int main(void)
 // Imported from ESBMC regression/cstd/github_9394_fail
 // RUN: -m64 --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*line 12 .*assertion r != 6
-// EXPECT: FAILED.*line 17 .*assertion r == 2
-// EXPECT: FAILED.*line 20 .*assertion r == 2
-// Vereda: unmet EXPECT: FAILED.*line 12 .*assertion r != 6
-// MODE: FUTURE

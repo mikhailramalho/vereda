@@ -34,3 +34,4 @@ int main(void)
 // RUN: --context-bound 3 --data-races-check-only --no-assertions --no-pointer-check --no-bounds-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

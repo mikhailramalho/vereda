@@ -29,3 +29,4 @@ int main()
 // RUN: --loop-invariant-check --loop-frame-rule
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: ^.*dereference failure: invalid pointer$
 // Vereda: unmet EXPECT: ^.*dereference failure: invalid pointer$
 // MODE: FUTURE
+// Vereda: verdict FAILED

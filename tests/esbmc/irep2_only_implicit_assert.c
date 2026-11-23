@@ -11,3 +11,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ASSERT x == 1
+// Vereda: verdict none

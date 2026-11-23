@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

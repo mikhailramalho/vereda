@@ -21,6 +21,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/por_local_write_after_spawn_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion \*\(int \*\)arg == 0$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

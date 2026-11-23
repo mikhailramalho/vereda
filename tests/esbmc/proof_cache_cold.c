@@ -12,3 +12,4 @@ int main(void)
 // RUN: --multi-property --proof-cache proof-store --claim-fingerprint-dump fp.tsv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

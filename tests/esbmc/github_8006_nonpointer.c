@@ -18,3 +18,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s*OTHER FREE\(x\);$
 // EXPECT: ^\s*ASSIGN b=\*p \+ 1;$
+// Vereda: verdict none

@@ -16,5 +16,5 @@ int main() {
 // Needs: --ts-bmc
 // RUN: --bitwuzla --no-pointer-check --no-bounds-check --ts-bmc --max-k-step 10
 // MODE: FUTURE
-// EXPECT: ^WARNING: an assertion is reachable after the loop$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

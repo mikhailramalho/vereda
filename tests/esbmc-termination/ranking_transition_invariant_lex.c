@@ -25,3 +25,4 @@ int main()
 // EXPECT: type: "loop_transition_invariant"
 // EXPECT: line: 11$
 // EXPECT: value: ".*AnyPrev.* > .* \|\| .*AnyPrev.* > .*"$
+// Vereda: verdict none

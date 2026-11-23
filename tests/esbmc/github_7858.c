@@ -32,3 +32,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">d-&gt;devnum == -?\d+;
+// Vereda: verdict none

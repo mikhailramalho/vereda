@@ -24,3 +24,4 @@ int main()
 // RUN: --multi-property --result-only --loop-invariant --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

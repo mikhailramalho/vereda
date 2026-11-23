@@ -13,3 +13,4 @@ int main() {
 // EXPECT: \bfoo = 42\b
 // EXPECT: \bfoo = 15\b
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

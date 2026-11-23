@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: ^\s+IF !\(c == 2\) THEN GOTO \d+$
 // EXPECT: ^\s+ASSERT 0 // j$
 // EXPECT: ^\s+ASSIGN g=1;$
+// Vereda: verdict none

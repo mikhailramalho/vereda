@@ -11,3 +11,4 @@ int main() {
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: invalid pointer
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

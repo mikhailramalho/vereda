@@ -15,3 +15,4 @@ int main()
 // RUN: --k-induction-parallel --max-k-step 10
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

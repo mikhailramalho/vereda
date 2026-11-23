@@ -11,3 +11,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bA = \{ 0 \}
+// Vereda: verdict none

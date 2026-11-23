@@ -22,3 +22,4 @@ main()
 // RUN: --32 -Wno-error=implicit-function-declaration -Wno-error=int-conversion
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

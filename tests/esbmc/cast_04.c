@@ -15,3 +15,4 @@ int main()
 // RUN: --struct-fields-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

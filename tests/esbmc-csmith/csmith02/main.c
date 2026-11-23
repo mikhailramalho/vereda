@@ -2970,3 +2970,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --no-unwinding-assertions --unwind 15 --partial-loops --full-inlining --state-hashing --no-library --no-return-value-opt --no-assertions --tuple-sym-flattener
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

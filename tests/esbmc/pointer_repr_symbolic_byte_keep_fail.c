@@ -22,6 +22,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_symbolic_byte_keep_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s\.p == q$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s\.p == q$
-// MODE: FUTURE

@@ -10,3 +10,4 @@ int main(void)
 // RUN: --32 --no-pointer-check --no-bounds-check --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

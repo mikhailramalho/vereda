@@ -8,3 +8,4 @@ int main(int argc, char *argv[])
 // RUN: --tuple-sym-flattener --smt-symex-guard --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

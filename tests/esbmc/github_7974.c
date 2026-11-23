@@ -16,3 +16,4 @@ int main()
 // RUN: --no-propagation
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

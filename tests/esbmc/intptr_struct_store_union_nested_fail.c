@@ -58,3 +58,4 @@ int main(void)
 // RUN: --no-pointer-check --no-bounds-check --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

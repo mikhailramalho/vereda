@@ -6361,3 +6361,4 @@ int main(int argc, char *argv[])
 // RUN: --no-pointer-check --no-bounds-check --no-div-by-zero-check --unwind 1 --claim 1 --context-bound 1 --no-unwinding-assertions --depth 200
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

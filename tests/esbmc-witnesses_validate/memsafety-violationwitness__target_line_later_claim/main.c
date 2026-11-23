@@ -22,3 +22,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.invalidated-dynamic-object\.\d+\]\s+line 15
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

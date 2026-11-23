@@ -59,3 +59,4 @@ int main(void)
 // RUN: --std gnu17
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

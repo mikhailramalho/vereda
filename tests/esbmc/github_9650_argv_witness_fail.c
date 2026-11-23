@@ -15,3 +15,4 @@ int main(int argc, char *argv[])
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"
 // EXPECT: (?s)\A(?!.*\n *line: 0$)
+// Vereda: verdict none

@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: line 18 +assertion
 // Vereda: unmet EXPECT: line 18 +assertion
 // MODE: FUTURE
+// Vereda: verdict FAILED

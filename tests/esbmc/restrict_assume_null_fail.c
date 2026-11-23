@@ -12,3 +12,4 @@ void f(void *restrict a, void *restrict b)
 // RUN: --func f --restrict-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

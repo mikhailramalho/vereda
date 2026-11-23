@@ -16,8 +16,7 @@ int main()
 // Needs: --assertion-coverage-claims
 // RUN: --assertion-coverage-claims
 // MODE: FUTURE
-// EXPECT: UNREACHED: 'unreachable odd branch at file .*github_5747_2\.c line 10
-// EXPECT: REACHED: 'a is even here at file .*github_5747_2\.c line 12
 // EXPECT: Reached Assertion Instances: 1
 // EXPECT: Assertion Instances Coverage: 50%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

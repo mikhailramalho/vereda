@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \A(?!(?s:.)*\x1b\[0;1;35m)
+// Vereda: verdict none

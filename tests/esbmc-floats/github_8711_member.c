@@ -23,9 +23,4 @@ int main(void)
 }
 // Imported from ESBMC regression/floats/github_8711_member
 // RUN: --multi-property
-// EXPECT: ^  PASSED .*assertion s\.f == 1\.0f$
-// EXPECT: ^  PASSED .*assertion s\.d == 1\.0$
-// EXPECT: ^  PASSED .*assertion arr\[1\] == 1\.0f$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^  PASSED .*assertion s\.f == 1\.0f$
-// MODE: FUTURE

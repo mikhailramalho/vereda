@@ -117,3 +117,4 @@ int main()
 // RUN: --incremental-bmc --context-bound 1 --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

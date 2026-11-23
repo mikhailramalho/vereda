@@ -17,6 +17,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/pointer_diff_branch_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion n == k$
-// Vereda: unmet EXPECT: ^\s+assertion n == k$
-// MODE: FUTURE

@@ -118,3 +118,4 @@ int main(){
 // RUN: -I . --unwind 2 --no-unwinding-assertions --context-bound 3
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

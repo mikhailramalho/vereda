@@ -15,5 +15,4 @@ int main(void)
 // RUN: --clz-zero-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: PASSED +\[main\.assertion\.1\] +line +9 +clrsb\(-2\) is 30$
-// EXPECT: FAILED +\[main\.assertion\.2\] +line +10 +clrsb\(-2\) == 31 is wrong$
+// Vereda: verdict none

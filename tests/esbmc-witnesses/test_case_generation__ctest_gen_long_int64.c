@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Generated [0-9]+ CTest test case\(s\) with CMakeLists\.txt
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -16,3 +16,4 @@ int main()
 // RUN: --fp-taylor-terms 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

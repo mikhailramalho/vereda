@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"\n.*\n.*\n.*\n\s*line: 5\n\s*column: 10$
+// Vereda: verdict none

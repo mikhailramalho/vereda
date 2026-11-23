@@ -21,3 +21,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: CHERI capability bounds violated\b
+// Vereda: verdict none

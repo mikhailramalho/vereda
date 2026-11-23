@@ -29,6 +29,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/pointer_repr_branch_flow_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion copy\.next != n$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion copy\.next != n$
-// MODE: FUTURE

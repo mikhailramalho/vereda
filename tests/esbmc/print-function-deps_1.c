@@ -22,3 +22,4 @@ int main() {
 // EXPECT: ^c:@F@main -> c:@F@multiply\(p, r\) \[.*print\-function\-deps_1\.c:\d+\]$
 // EXPECT: ^c:@F@main -> c:@F@add\(prod, return_value.*\) \[.*print\-function\-deps_1\.c:\d+\]$
 // EXPECT: ^__ESBMC_main -> c:@F@main\(\) \[.*print\-function\-deps_1\.c:\d+\]$
+// Vereda: verdict none

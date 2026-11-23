@@ -18,3 +18,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "branching"
 // EXPECT: type: "function_return"
+// Vereda: verdict none

@@ -23,3 +23,4 @@ int main()
 // RUN: --no-simplify --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

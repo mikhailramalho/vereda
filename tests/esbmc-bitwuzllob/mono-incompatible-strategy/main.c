@@ -9,3 +9,4 @@ int main()
 // RUN: --bitwuzllob --k-induction --bitwuzllob-prog fake-mallob.sh
 // MODE: FUTURE
 // EXPECT: does not support --k-induction
+// Vereda: verdict none

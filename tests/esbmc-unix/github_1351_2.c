@@ -74,3 +74,4 @@ int main(void)
 // RUN: --incremental-bmc --base-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

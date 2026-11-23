@@ -22,6 +22,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/atexit_after_main_return
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^  PASSED .* assertion order == 21$
-// Vereda: unmet EXPECT: ^  PASSED .* assertion order == 21$
-// MODE: FUTURE

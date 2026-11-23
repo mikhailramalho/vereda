@@ -14,3 +14,4 @@ int main(int argc, char *argv[])
 // RUN: --witness-output-yaml w.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

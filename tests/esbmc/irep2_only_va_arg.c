@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: ASSIGN return_value\$___ESBMC_va_arg\$1=va_arg\(ap(\[0\])?\)
 // EXPECT: DECL double return_value\$___ESBMC_va_arg\$2;
 // EXPECT: ASSIGN return_value\$___ESBMC_va_arg\$2=va_arg\(ap(\[0\])?\)
+// Vereda: verdict none

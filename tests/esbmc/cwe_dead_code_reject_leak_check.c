@@ -13,3 +13,4 @@ int main(void)
 // RUN: --dead-code-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --memory-leak-check$
+// Vereda: verdict none

@@ -18,3 +18,4 @@ out:
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported unstructured jump out of a branch at .*unsupported_jump_out_of_branch\.c:9$
+// Vereda: verdict none

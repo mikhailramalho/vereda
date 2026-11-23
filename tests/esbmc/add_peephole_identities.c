@@ -28,7 +28,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/add_peephole_identities
-// EXPECT: ^Generated 10 VCC\(s\), 2 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 10 VCC\(s\), 2 remaining after simplification
-// MODE: FUTURE

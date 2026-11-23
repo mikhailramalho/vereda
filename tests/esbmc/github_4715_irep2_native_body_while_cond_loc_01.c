@@ -26,3 +26,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: github_4715_irep2_native_body_while_cond_loc_01\.c line 13 column 3 function countdown\n\s+ASSIGN tmp\$1=t;
 // EXPECT: github_4715_irep2_native_body_while_cond_loc_01\.c line 13 column 10 function countdown\n\s+ASSIGN t=t - 1;
+// Vereda: verdict none

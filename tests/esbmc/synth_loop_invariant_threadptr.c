@@ -38,3 +38,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants: the program creates threads, and cutting a loop deletes the interleaving points its body carried\. Synthesising nothing rather than report a claim only violable through one of them as passed$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

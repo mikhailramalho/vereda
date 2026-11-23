@@ -30,4 +30,4 @@ int main()
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion x == 0$
+// Vereda: verdict none

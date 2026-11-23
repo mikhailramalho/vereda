@@ -28,3 +28,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 5"
 // EXPECT: (?s)\A(?!.*result == 5.*result == 5)
+// Vereda: verdict none

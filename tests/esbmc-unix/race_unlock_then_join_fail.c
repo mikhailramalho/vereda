@@ -34,3 +34,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@global
+// Vereda: verdict none

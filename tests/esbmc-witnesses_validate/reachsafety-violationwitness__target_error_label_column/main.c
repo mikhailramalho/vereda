@@ -7,3 +7,4 @@ int main(void)
 // RUN: --error-label ERROR --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main() {
 // RUN: --k-induction --goto-unwind
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

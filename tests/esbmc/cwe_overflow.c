@@ -12,3 +12,4 @@ int main(void)
 // EXPECT: ^  CWE: CWE-190, CWE-191$
 // Vereda: unmet EXPECT: ^  CWE: CWE-190, CWE-191$
 // MODE: FUTURE
+// Vereda: verdict FAILED

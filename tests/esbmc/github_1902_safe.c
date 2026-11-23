@@ -21,3 +21,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Solution found by the forward condition; all states are reachable \(k = 1\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Forward condition shows all executions terminate \(k = 33\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

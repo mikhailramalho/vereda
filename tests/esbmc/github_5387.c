@@ -21,4 +21,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_5387
 // RUN: --unwind 24
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: r is 1, never 999

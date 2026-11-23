@@ -5,3 +5,4 @@ int main(void) { __VERIFIER_assert(f(3) == 0); return 0; } // f
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported recursive function f$
+// Vereda: verdict none

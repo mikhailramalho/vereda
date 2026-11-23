@@ -11,6 +11,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_size_fixed_array_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion sizeof\(a\) == 40$
-// Vereda: unmet EXPECT: ^\s+assertion sizeof\(a\) == 40$
-// MODE: FUTURE

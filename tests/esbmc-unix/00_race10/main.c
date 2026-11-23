@@ -35,3 +35,4 @@ int main(void)
 // RUN: --data-races-check --context-bound 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

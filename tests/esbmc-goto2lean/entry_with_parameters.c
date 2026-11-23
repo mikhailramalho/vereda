@@ -10,3 +10,4 @@ int main(void) { return 0; }
 // RUN: --goto2lean --function mid
 // MODE: FUTURE
 // EXPECT: ^theorem mid_safe : ∀ \(lo : BitVec 32\) \(hi : BitVec 32\), Prog\.mid lo hi \(fun _ => True\) := by$
+// Vereda: verdict none

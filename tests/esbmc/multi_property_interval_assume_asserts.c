@@ -13,5 +13,5 @@ int main()
 // Needs: --interval-analysis --interval-analysis-assume-asserts
 // RUN: --interval-analysis --interval-analysis-assume-asserts --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+9\s+assertion x > 5$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

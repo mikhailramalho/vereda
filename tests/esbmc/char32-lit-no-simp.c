@@ -14,3 +14,4 @@ int main()
 // RUN: --no-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -15,3 +15,4 @@ int main(){
 // EXPECT: \bSAME-OBJECT\(str0, str1\)$
 // Vereda: unmet EXPECT: \bassertion str0 <= str1$
 // MODE: FUTURE
+// Vereda: verdict FAILED

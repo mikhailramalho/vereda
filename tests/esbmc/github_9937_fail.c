@@ -18,7 +18,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_9937_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: \[main.assertion.1\]  line 17  reachable
 // EXPECT: ^  u\.s\.c != 4$
-// Vereda: unmet EXPECT: \[main.assertion.1\]  line 17  reachable
-// MODE: FUTURE

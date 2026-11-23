@@ -12,3 +12,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^WARNING: No nondet variables found\. No CTest test case generated\.$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -17,3 +17,4 @@ int main() {
 // EXPECT: PARSING ERROR
 // Vereda: unmet EXPECT: PARSING ERROR
 // MODE: FUTURE
+// Vereda: verdict none

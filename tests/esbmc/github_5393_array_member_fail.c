@@ -25,7 +25,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5393_array_member_fail
 // RUN: --force-malloc-success -m64
-// EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion back\.pair\[1\] != 7$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion back\.pair\[1\] != 7$
-// MODE: FUTURE

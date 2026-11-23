@@ -36,3 +36,4 @@ int main(void)
 // EXPECT: ^  PASSED       \[main\.assertion\.\d+\]  line 25  loop invariant base case \[i <= 4\]$
 // EXPECT: ^  FAILED       \[main\.assertion\.\d+\]  line 25  loop invariant base case \[return_value\S* == 5\]$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^  __ESBMC_exists\(\(void \*\)\(&i\), i > 0 && i < 0\)$
 // Vereda: unmet EXPECT: ^  __ESBMC_exists\(\(void \*\)\(&i\), i > 0 && i < 0\)$
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -99,3 +99,4 @@ void *checkThread(void *param) {
 // RUN: --context-bound 2 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -34,3 +34,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

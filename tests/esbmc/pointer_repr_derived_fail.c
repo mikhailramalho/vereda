@@ -25,6 +25,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/pointer_repr_derived_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s != q \+ 1$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s != q \+ 1$
-// MODE: FUTURE

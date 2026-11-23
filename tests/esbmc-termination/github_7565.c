@@ -20,3 +20,4 @@ test:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^.*all executions terminate.*$
+// Vereda: verdict none

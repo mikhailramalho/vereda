@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^Symex completed in: [0-9.]+s \(39 assignments\)$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

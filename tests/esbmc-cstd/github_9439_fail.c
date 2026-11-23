@@ -11,3 +11,4 @@ int main(void)
 // EXPECT: dereference failure on memchr: reading memory segment of size 4 with 64 bytes$
 // Vereda: unmet EXPECT: dereference failure on memchr: reading memory segment of size 4 with 64 bytes$
 // MODE: FUTURE
+// Vereda: verdict FAILED

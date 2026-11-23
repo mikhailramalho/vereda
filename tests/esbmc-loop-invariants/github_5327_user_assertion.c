@@ -27,3 +27,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: Vacuous discharge: claim 'assertion
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

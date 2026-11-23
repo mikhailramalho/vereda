@@ -48,3 +48,4 @@ int main(void)
 // RUN: --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

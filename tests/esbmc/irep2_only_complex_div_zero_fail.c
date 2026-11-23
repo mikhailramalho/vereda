@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: ^  division by zero$
 // EXPECT: ^  b\.real \* b\.real \+ b\.imag \* b\.imag != 0$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

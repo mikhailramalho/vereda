@@ -22,5 +22,5 @@ int main()
 // Needs: --interval-analysis --interval-analysis-wrapped --interval-analysis-arithmetic
 // RUN: --interval-analysis --interval-analysis-wrapped --interval-analysis-arithmetic
 // MODE: FUTURE
-// EXPECT: FAILED +\[main\.assertion\.1\] +line +18 +assertion x != 2
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

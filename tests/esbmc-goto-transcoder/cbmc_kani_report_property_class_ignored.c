@@ -4,3 +4,4 @@ int main() { return 0; }
 // RUN: --report-property-class cover --ignore-property-class cover
 // MODE: FUTURE
 // EXPECT: ^ERROR: cover is both ignored and reported$
+// Vereda: verdict none

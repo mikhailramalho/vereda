@@ -22,3 +22,4 @@ int main(void)
 // RUN: --dead-code-check --data-races-check-only
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --data-races-check-only$
+// Vereda: verdict none

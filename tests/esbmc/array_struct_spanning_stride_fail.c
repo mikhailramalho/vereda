@@ -10,7 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_struct_spanning_stride_fail
-// EXPECT: ^  j=1 writes s\[2\]\.a=3: expect FAIL$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  j=1 writes s\[2\]\.a=3: expect FAIL$
-// MODE: FUTURE

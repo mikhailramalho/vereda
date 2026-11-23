@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean --overflow-check
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported overflow check on shl$
+// Vereda: verdict none

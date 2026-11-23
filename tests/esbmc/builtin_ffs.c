@@ -49,3 +49,4 @@ int main(void)
 // RUN: --clz-zero-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

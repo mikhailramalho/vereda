@@ -33,3 +33,4 @@ void test_vector_growth()
 // RUN: --force-malloc-success --force-realloc-success --function  test_vector_growth --unwind 21
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

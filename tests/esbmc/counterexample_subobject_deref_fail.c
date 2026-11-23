@@ -34,3 +34,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  p->g = \{ \.g=9, \.in=\{ \.pad=0, \.g=5 \} \}$
 // MODE: FUTURE
+// Vereda: verdict FAILED

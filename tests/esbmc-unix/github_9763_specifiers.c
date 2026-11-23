@@ -21,3 +21,4 @@ int main(void)
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

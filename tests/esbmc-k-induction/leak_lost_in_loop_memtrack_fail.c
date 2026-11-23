@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: cannot check for leaks the objects a loop allocated
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

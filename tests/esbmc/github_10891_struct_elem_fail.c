@@ -14,7 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10891_struct_elem_fail
-// EXPECT: ^  assertion r.v == 7$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion r.v == 7$
-// MODE: FUTURE

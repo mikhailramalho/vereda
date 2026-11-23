@@ -6366,3 +6366,4 @@ int main(int argc, char *argv[])
 // RUN: --unwind 1 --function BZ2_bzclose --depth 200
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

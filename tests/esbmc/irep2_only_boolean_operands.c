@@ -12,3 +12,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: IF !\(\(_Bool\)return_value\$_foo\$1 \?
+// Vereda: verdict none

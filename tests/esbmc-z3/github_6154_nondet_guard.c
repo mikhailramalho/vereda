@@ -26,3 +26,4 @@ int main()
 // RUN: --z3 --dont-care-about-missing-extensions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

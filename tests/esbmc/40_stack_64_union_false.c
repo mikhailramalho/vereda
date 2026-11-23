@@ -15,3 +15,4 @@ int main() {
 // RUN: --64 --stack-limit 31
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

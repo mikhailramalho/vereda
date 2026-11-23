@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)\A(?:(?!function_return).)*(?:type: "function_return"(?:(?!function_return).)*){3}\Z
 // EXPECT: (?s)result == 1".*result == 2".*result == 5"
+// Vereda: verdict none

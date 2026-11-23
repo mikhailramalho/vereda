@@ -27,4 +27,4 @@ int main()
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion b.a\[0\] == 0
+// Vereda: verdict none

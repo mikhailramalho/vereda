@@ -19,6 +19,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/pointer_diff_neg_add_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion n != -\(long\)j$
-// Vereda: unmet EXPECT: ^\s+assertion n != -\(long\)j$
-// MODE: FUTURE

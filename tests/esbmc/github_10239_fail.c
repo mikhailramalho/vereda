@@ -13,8 +13,8 @@ int main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc/github_10239_fail
 // RUN: --multi-property
 // EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.\d+\]
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line 8\s+assertion argv\[3\]\[0\] == argv\[4\]\[0\]$
 // EXPECT: ^\s*FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line 9\s
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.\d+\]
 // MODE: FUTURE
+// Vereda: verdict FAILED

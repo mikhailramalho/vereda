@@ -37,5 +37,5 @@ int main(void)
 // Needs: --field-sensitive-ssa
 // RUN: --field-sensitive-ssa --unwind 6
 // MODE: FUTURE
-// EXPECT: ^Generated 2 VCC\(s\)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

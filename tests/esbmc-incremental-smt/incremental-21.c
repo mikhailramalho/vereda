@@ -22,3 +22,4 @@ int main()
 // RUN: --smt-during-symex --add-symex-value-sets -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

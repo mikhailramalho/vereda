@@ -14,3 +14,4 @@ DONE:;
 // RUN: --error-label ERR
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

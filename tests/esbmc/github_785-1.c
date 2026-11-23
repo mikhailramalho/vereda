@@ -24,3 +24,4 @@ int main()
 // RUN: --32 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

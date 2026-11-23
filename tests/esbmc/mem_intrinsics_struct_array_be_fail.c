@@ -30,4 +30,4 @@ int main()
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion n < 4 \|\| \(d\[0\] == 6 && d\[1\] == 5 && d\[2\] == 8 && d\[3\] == 7\)$
+// Vereda: verdict none

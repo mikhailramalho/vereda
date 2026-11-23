@@ -17,4 +17,4 @@ int main(void)
 // RUN: --force-malloc-success --malloc-zero-is-null
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s*NULL alternative of malloc\(0\) reached$
+// Vereda: verdict none

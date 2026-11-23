@@ -23,3 +23,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  h = \{ \.i=16909060, \.s=258 \}$
+// Vereda: verdict none

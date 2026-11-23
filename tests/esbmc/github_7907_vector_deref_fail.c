@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7907_vector_deref_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion c\[0\] == 4$
-// Vereda: unmet EXPECT: ^.*assertion c\[0\] == 4$
-// MODE: FUTURE

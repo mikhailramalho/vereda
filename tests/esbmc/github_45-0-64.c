@@ -35,3 +35,4 @@ int main()
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: unmet EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE
+// Vereda: verdict FAILED

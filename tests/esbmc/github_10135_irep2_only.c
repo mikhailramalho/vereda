@@ -52,3 +52,4 @@ int main(void)
 // RUN: --64 --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

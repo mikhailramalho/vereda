@@ -17,3 +17,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)\A(?:(?!type: "branching").)*(?:type: "branching"(?:(?!type: "branching").)*){1,1000}\Z
+// Vereda: verdict none

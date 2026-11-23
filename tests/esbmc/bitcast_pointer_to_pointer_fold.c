@@ -14,7 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitcast_pointer_to_pointer_fold
-// EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict FAILED

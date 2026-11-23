@@ -17,6 +17,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_8712_shared_counter_fail
 // RUN: --unwind 12
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+14\s+assertion g != 5$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

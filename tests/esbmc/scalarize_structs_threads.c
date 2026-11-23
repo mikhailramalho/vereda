@@ -32,3 +32,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: --scalarize-structs is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -55,3 +55,4 @@ int main ()
 // RUN: --memory-leak-check --z3 --floatbv --unwind 64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

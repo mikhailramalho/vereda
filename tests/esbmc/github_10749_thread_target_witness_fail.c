@@ -24,3 +24,4 @@ int main(void)
 // EXPECT: ^    format_version: "2\.4"$
 // EXPECT: (?s)type: "function_enter"\s+action: "follow"\s+location:\s+file_name: "[^"]*github_10749_thread_target_witness_fail\.c"\s+line: 15\s+column: 30\s+function: "main"\s+- segment:
 // EXPECT: (?s)type: "target"(?:(?!waypoint:).)*function: "t"\s+thread_id: 1
+// Vereda: verdict none

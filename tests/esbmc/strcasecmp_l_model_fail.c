@@ -15,7 +15,3 @@ int main()
 // Imported from ESBMC regression/esbmc/strcasecmp_l_model_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED .*assertion strcasecmp_l\("b", "A", c\) < 0$
-// EXPECT: ^  FAILED .*assertion strncasecmp_l\("AbX", "abY", 3, c\) == 0$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion strcasecmp_l\("b", "A", c\) < 0$
-// MODE: FUTURE

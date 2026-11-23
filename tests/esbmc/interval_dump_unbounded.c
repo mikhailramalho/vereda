@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^200000 <= c:.*@main@i$
 // EXPECT: ^300000 <= c:.*@main@k$
 // EXPECT: ^c:.*@main@m <= -400000$
+// Vereda: verdict none

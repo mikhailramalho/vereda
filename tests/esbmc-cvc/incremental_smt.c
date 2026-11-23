@@ -24,3 +24,4 @@ int main(){
 // RUN: --smt-during-symex --smt-symex-guard --cvc5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

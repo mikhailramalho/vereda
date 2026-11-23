@@ -33,3 +33,4 @@ int main() /* check_derivative */
 // RUN: -I .
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

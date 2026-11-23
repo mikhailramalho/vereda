@@ -32,3 +32,4 @@ int main()
 // RUN: --force-malloc-success --irep2-bodies
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

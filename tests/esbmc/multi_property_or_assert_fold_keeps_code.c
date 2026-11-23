@@ -16,3 +16,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+10\s+w$
 // MODE: FUTURE
+// Vereda: verdict FAILED

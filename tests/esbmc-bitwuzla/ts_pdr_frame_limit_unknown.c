@@ -22,3 +22,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^PDR: frame limit reached$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: ^\(signed int\)b -= a;$
 // EXPECT: ^\(signed int\)b \*= a;$
 // EXPECT: ^\(signed int\)b &= a;$
+// Vereda: verdict none

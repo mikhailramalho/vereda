@@ -36,3 +36,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \barray size in bytes overflows address space size$
+// Vereda: verdict none

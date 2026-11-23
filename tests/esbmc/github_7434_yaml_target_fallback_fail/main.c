@@ -8,3 +8,4 @@
 // EXPECT: type: "target"
 // EXPECT: file_name: "[^"]*main\.c"
 // EXPECT: (?s)\A(?!.*file_name: "[^"]*body\.h")
+// Vereda: verdict none

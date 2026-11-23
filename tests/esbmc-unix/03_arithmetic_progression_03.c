@@ -86,3 +86,4 @@ int main()
 // RUN: --unwind 4 --context-bound 2 --no-unwinding-assertions -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

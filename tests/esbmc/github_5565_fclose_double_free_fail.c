@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: \bdereference failure: invalidated dynamic object freed\b
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

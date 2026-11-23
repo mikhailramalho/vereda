@@ -13,3 +13,4 @@ L:
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported read of y where it is not bound$
+// Vereda: verdict none

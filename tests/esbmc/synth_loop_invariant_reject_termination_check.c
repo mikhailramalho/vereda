@@ -17,3 +17,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^ERROR: --loop-invariant-check cannot be combined with --termination$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z
+// Vereda: verdict none

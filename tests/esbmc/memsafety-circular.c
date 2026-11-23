@@ -13,3 +13,4 @@ int main()
 // RUN: --force-malloc-success --memory-leak-check --no-reachable-memory-leak -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

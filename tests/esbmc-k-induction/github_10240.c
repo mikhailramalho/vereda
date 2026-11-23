@@ -21,3 +21,4 @@ int main()
 // RUN: --interval-analysis --k-induction --max-k-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

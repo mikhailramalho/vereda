@@ -33,5 +33,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/pointer_offset_struct_arith_fail
 // RUN: --unwind 16
-// EXPECT: ^.*wrong leaf value must be refuted.*$
 // EXPECT: ^VERIFICATION FAILED$

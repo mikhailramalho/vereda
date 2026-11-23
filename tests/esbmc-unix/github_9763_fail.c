@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^  FAILED       \[main\.assertion\.[0-9]+\]  line 16  printf has more format specifiers than arguments$
 // EXPECT: ^\*\* 1 of [0-9]+ properties failed
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

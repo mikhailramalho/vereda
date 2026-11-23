@@ -22,3 +22,4 @@ int main() {
 // RUN: --force-malloc-success --compact-trace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

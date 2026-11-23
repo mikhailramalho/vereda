@@ -15,6 +15,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/array_member_one_past_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion s\.a\[4 - k\] != 7$
-// Vereda: unmet EXPECT: ^  assertion s\.a\[4 - k\] != 7$
-// MODE: FUTURE

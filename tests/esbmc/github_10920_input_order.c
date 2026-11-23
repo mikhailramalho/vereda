@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^    #2 : \[0\] = [56], \[1\] = 10, \[2\] = [01]$
 // EXPECT: enumeration stopped: UNSAT after 2 witnesses
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

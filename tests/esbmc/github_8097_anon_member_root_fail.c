@@ -30,3 +30,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: forgotten memory: dynamic_1_value$
 // EXPECT: ^  PASSED +\[main.memory-leak.2\] .*forgotten memory: dynamic_2_value$
+// Vereda: verdict none

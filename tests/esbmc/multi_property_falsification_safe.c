@@ -16,7 +16,6 @@ int main()
 // Needs: --falsification
 // RUN: --falsification --multi-property --max-k-step 10
 // MODE: FUTURE
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.1\]\s+line\s+12\s+assertion x == n$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.2\]\s+line\s+13\s+assertion x < 5$
 // EXPECT: ^VERIFICATION UNKNOWN$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

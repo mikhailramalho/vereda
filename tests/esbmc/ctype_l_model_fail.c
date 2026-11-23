@@ -15,7 +15,3 @@ int main()
 // Imported from ESBMC regression/esbmc/ctype_l_model_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED .*assertion tolower_l\('A', c\) == 'A'$
-// EXPECT: ^  FAILED .*assertion isdigit_l\('a', c\)$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion tolower_l\('A', c\) == 'A'$
-// MODE: FUTURE

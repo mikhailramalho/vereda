@@ -13,3 +13,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: 2 passed
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

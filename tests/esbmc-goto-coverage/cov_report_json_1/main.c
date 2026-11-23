@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Coverage report written to cov-report\.json$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

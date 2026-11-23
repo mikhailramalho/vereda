@@ -15,3 +15,4 @@ int main(void)
 // RUN: --overflow-check --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

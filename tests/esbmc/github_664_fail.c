@@ -9,3 +9,4 @@ int main()
 // RUN: --file-output out.txt
 // MODE: FUTURE
 // EXPECT: ^ESBMC version
+// Vereda: verdict none

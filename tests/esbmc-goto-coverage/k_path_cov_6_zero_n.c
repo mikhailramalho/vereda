@@ -21,3 +21,4 @@ int main()
 // RUN: --k-path-coverage=0 --unwind 2 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^ERROR: --k-path-coverage=N requires 1 <= N <= 30 \(got 0\)$
+// Vereda: verdict none

@@ -23,3 +23,4 @@ int main(void) {
 // RUN: --k-induction --validate-correctness-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

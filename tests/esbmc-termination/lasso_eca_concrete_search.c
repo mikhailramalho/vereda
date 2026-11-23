@@ -905,3 +905,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Recurrent set shows a non-terminating execution$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

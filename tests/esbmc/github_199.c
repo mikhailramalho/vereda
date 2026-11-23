@@ -17,3 +17,4 @@ int main() {
 // RUN: --error-label ERROR --smt-during-symex --smt-symex-guard --z3 --unwind 1 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

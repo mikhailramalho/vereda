@@ -70,3 +70,4 @@ ELSE:
 // RUN: --sv-comp --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --floatbv --no-vla-size-check --32 --no-pointer-check --interval-analysis --no-bounds-check --goto-unwind --unlimited-goto-unwind --k-induction --max-inductive-step 3 --max-k-step 6 --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -26,3 +26,4 @@ int main()
 // RUN: --k-induction --add-symex-value-sets --smt-during-symex --smt-symex-guard --smt-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

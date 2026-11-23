@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Inductive step shows a non-terminating execution.*$
 // EXPECT: ^CWE: CWE-835$
+// Vereda: verdict none

@@ -29,6 +29,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/por_multi_target_pointer_write_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion seen == 2$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

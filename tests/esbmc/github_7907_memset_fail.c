@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7907_memset_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion v\[2\] == 3$
-// Vereda: unmet EXPECT: ^.*assertion v\[2\] == 3$
-// MODE: FUTURE

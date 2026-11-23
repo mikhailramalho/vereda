@@ -189,3 +189,4 @@ int main()
 // RUN: --no-pointer-arith-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

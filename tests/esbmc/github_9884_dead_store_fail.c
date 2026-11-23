@@ -21,3 +21,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"
 // EXPECT: (?s)\A(?!.*type: "branching")
+// Vereda: verdict none

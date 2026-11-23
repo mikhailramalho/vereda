@@ -24,3 +24,4 @@ int main() {
 // RUN: --unwind 1 --no-unwinding-assertions --no-por -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

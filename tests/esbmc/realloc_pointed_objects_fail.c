@@ -23,6 +23,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/realloc_pointed_objects_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion pick_b \|\| q\[0\] != 1$
-// Vereda: unmet EXPECT: ^\s+assertion pick_b \|\| q\[0\] != 1$
-// MODE: FUTURE

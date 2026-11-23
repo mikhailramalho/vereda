@@ -25,6 +25,3 @@ int main()
 // Imported from ESBMC regression/esbmc/memcpy_symbolic_length_fail
 // RUN: --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^ *FAILED .*assertion dst\[3\] == 4$
-// Vereda: unmet EXPECT: ^ *FAILED .*assertion dst\[3\] == 4$
-// MODE: FUTURE

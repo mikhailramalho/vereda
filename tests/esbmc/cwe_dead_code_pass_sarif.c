@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: "version": "2.1.0"
 // EXPECT: "results": \[\]
+// Vereda: verdict none

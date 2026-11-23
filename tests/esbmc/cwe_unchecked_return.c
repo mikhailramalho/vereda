@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  unchecked return value of calloc: p$
 // EXPECT: ^  CWE: CWE-252$
+// Vereda: verdict none

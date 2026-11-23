@@ -199,3 +199,4 @@ int main()
 // RUN: --unwind 7 --tuple-node-flattener --no-string-literal  --smtlib --smt-formula-only -D__REGMAP_DEFINED
 // MODE: FUTURE
 // EXPECT: ^Encoding to solver time:
+// Vereda: verdict none

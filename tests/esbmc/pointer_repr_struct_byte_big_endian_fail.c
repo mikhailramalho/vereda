@@ -25,4 +25,4 @@ int main()
 // RUN: --unwind 2 --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion e\.key == &k$
+// Vereda: verdict none

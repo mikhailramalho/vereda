@@ -21,3 +21,4 @@ int main ( void )
 // RUN: --no-slice --memory-leak-check --unwind 1 -Wno-error=int-conversion --no-reachable-memory-leak --no-abnormal-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

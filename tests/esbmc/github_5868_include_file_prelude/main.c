@@ -11,3 +11,4 @@ int main()
 // RUN: --include-file pch.h --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

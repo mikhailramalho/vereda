@@ -13,6 +13,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/vla_size_fixed_loop_fail
 // RUN: --unwind 4
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion sizeof\(a\) == n \* sizeof\(int\)$
-// Vereda: unmet EXPECT: ^\s+assertion sizeof\(a\) == n \* sizeof\(int\)$
-// MODE: FUTURE

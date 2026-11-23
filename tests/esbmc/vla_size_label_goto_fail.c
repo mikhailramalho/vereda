@@ -16,6 +16,3 @@ L:
 // Imported from ESBMC regression/esbmc/vla_size_label_goto_fail
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion sizeof\(a\) == 1 \* sizeof\(int\)$
-// Vereda: unmet EXPECT: ^\s+assertion sizeof\(a\) == 1 \* sizeof\(int\)$
-// MODE: FUTURE

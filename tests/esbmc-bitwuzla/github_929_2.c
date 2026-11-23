@@ -16,3 +16,4 @@ int main()
 // RUN: --bitwuzla --smt-formula-only --output -
 // MODE: FUTURE
 // EXPECT: ^\(set-logic QF\_BV\)$
+// Vereda: verdict none

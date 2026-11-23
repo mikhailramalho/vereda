@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: dereference failure: array bounds violated: heap object$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

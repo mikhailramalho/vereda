@@ -22,6 +22,6 @@ int main() {
 // Imported from ESBMC regression/esbmc/github_2630
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 3 of 16 properties failed, 13 passed$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

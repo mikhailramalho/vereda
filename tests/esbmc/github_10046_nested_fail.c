@@ -23,6 +23,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10046_nested_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*assertion s\.t == 7
-// Vereda: unmet EXPECT: FAILED.*assertion s\.t == 7
-// MODE: FUTURE

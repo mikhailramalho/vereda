@@ -12,3 +12,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^  let k := \(BitVec\.ofInt 32 \(-3\)\);$
+// Vereda: verdict none

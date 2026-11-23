@@ -14,3 +14,4 @@ int main()
 // RUN: --parallel-solving --k-induction
 // MODE: FUTURE
 // EXPECT: ^\*\* 2 of 2 properties failed$
+// Vereda: verdict none

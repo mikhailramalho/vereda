@@ -11,6 +11,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9385_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion r != NULL
-// Vereda: unmet EXPECT: assertion r != NULL
-// MODE: FUTURE

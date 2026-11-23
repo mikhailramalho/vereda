@@ -36,3 +36,4 @@ void foo(__linseg_supovr uint32_t* param1_p, uint32_t param2) {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

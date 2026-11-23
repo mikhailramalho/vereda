@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: ^    format_version: "2\.4"$
 // EXPECT: (?s)type: "function_enter"(?:(?!waypoint:).)*line: 12\s+column: 30
 // EXPECT: (?s)\A(?!.*thread_id)
+// Vereda: verdict none

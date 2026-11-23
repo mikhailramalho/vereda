@@ -33,3 +33,4 @@ int main() {
 // RUN: --array-flattener -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

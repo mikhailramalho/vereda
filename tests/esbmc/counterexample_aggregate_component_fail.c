@@ -29,3 +29,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  harr\[0\] = \{ \.un=9, \.t=4 \}$
 // MODE: FUTURE
+// Vereda: verdict FAILED

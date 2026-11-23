@@ -13,3 +13,4 @@ int main(void) {
 // EXPECT: ^  let post_1 := c;$
 // EXPECT: ^  let ret_1 := c;$
 // EXPECT: ^  \(\(result_1 = post_1\) ∧ \(post_1 = ret_1\)\) ∧ \($
+// Vereda: verdict none

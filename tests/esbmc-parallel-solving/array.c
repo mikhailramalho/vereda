@@ -15,3 +15,4 @@ int main() {
 // RUN: --parallel-solving --array-flattener
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -11,3 +11,4 @@ int main()
 // EXPECT: dereference failure: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

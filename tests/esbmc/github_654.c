@@ -12,3 +12,4 @@ int main()
 // RUN: --cex-output output
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

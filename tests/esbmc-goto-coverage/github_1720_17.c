@@ -15,3 +15,4 @@ int main()
 // EXPECT: ^Total Conditions:  8
 // EXPECT: ^Condition Coverage: 50%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

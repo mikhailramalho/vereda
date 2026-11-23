@@ -9,3 +9,4 @@ void func1() { a c = *(a *)&b; }
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*dereference failure:
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

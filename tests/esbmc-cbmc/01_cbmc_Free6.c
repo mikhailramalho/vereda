@@ -34,3 +34,4 @@ int main(int argc, char *argv[]) {
 // RUN: --claim 1 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

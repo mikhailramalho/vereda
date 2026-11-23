@@ -20,3 +20,4 @@ int main()
 // EXPECT: ^VERIFICATION UNKNOWN$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
 // EXPECT: \A(?![\s\S]*VERIFICATION UNKNOWN[\s\S]*VERIFICATION UNKNOWN)[\s\S]*\Z
+// Vereda: verdict none

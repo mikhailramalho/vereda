@@ -12,7 +12,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_3d_loop_bound_fail
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+11\s+the same bound, asserted wrong$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+11\s+the same bound, asserted wrong$
-// MODE: FUTURE

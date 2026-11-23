@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  u = \{ \.a = 0 \}\n\nState 5 file [^\n]*field_sensitive_ssa_trace_fail\.c line 17 [^\n]*\n-+\n  u = \{ \.a=1, \.b=2 \}\n\nState 6 file
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

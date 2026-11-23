@@ -13,3 +13,4 @@ int main()
 // RUN: --overflow-check --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

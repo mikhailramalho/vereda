@@ -8284,3 +8284,4 @@ NTSTATUS ZwClose(HANDLE Handle )
 // RUN: --unwind 1 --no-bounds-check --no-pointer-check --no-div-by-zero-check --error-label ERROR -Wno-error=int-conversion
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -24,3 +24,4 @@ int main()
 // RUN: --generate-testcase
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

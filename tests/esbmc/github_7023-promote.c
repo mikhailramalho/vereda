@@ -12,8 +12,6 @@ int main()
 // Needs: --result-only
 // RUN: --result-only
 // MODE: FUTURE
-// EXPECT: ^  PASSED +\[main\.assertion\.1\] +line +7 +sum stays bounded$
-// EXPECT: ^  PASSED +\[main\.assertion\.2\] +line +8 +a stays bounded$
-// EXPECT: ^\*\* 0 of 2 properties failed, 2 passed$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z
+// Vereda: verdict none

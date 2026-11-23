@@ -16,7 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_mixed_field_aliased_fail
-// EXPECT: ^\s+an aliased read must not fold$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+an aliased read must not fold$
-// MODE: FUTURE

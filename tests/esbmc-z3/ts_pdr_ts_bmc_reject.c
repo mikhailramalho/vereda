@@ -17,3 +17,4 @@ int main() {
 // RUN: --z3 --ts-pdr --ts-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --ts-pdr cannot be combined with --ts-bmc$
+// Vereda: verdict none

@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  use of uninitialized variable: a$
 // EXPECT: ^  CWE: CWE-457$
+// Vereda: verdict none

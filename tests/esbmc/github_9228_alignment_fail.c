@@ -15,4 +15,4 @@ int main(void)
 // RUN: --std c11 --64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion \(uintptr_t\)buf % 64 == 0$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: Both k-induction and --termination specified. Using --termination.
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

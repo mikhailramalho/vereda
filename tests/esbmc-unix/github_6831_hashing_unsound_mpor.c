@@ -24,3 +24,4 @@ int main() {
 // RUN: --state-hashing
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

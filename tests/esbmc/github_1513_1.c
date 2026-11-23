@@ -113,3 +113,4 @@ int main() {
 // RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

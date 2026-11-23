@@ -12,3 +12,4 @@ void func1(int y)
 // EXPECT: \sarray (upper|lower) bound$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

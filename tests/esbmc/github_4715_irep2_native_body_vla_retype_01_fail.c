@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: array bounds violated: array `a. upper bound
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the symbolic-extent row.s earlier store must not be dropped$
 // MODE: FUTURE
+// Vereda: verdict FAILED

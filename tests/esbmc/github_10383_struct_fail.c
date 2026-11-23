@@ -20,5 +20,4 @@ int main(void)
 // RUN: --std c2x --z3 --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*member set$
-// EXPECT: FAILED.*element set$
+// Vereda: verdict none

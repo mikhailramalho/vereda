@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^ERROR: Please specify --base-k-step >= 1
 // EXPECT: ^ESBMC version
+// Vereda: verdict none

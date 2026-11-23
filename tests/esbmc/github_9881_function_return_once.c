@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 7"\n.*\n.*\n.*\n *line: 16$
 // EXPECT: (?s)\A(?!.*result == 3")
+// Vereda: verdict none

@@ -4,3 +4,4 @@
 // RUN: --k-induction
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

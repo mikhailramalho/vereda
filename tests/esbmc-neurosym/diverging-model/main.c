@@ -9,3 +9,4 @@ int main()
 // RUN: --neurosym --neurosym-prog always-sat-neurosym.sh --neurosym-model-prog "z3 -in"
 // MODE: FUTURE
 // EXPECT: refusing to build a counterexample from a diverging model
+// Vereda: verdict none

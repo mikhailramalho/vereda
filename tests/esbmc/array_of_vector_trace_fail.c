@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  x = \{ 20, 21, 22, 23 \}$
 // MODE: FUTURE
+// Vereda: verdict FAILED

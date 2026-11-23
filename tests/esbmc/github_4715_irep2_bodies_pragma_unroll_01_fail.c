@@ -21,3 +21,4 @@ int main()
 // RUN: --no-unwinding-assertions --irep2-bodies
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

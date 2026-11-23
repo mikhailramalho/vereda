@@ -27,3 +27,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: Access to object out of bounds
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

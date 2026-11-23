@@ -25,3 +25,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

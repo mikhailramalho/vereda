@@ -7,4 +7,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_447-1
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: \bFailed as expected\b

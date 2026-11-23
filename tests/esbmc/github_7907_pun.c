@@ -52,3 +52,4 @@ int main(void)
 // RUN: --little-endian --unwind 17
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

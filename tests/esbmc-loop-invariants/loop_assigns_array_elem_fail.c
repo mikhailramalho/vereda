@@ -24,3 +24,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*global\[5\] not in assigns clause.*$
+// Vereda: verdict none

@@ -24,3 +24,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Thread interleavings 7$(?![\s\S]*Thread interleavings)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

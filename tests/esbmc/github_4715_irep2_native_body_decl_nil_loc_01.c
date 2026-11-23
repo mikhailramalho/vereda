@@ -26,3 +26,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: // \d+ no location\n\s+DECL union [^\n]*compound-literal\$1;\n\s+// \d+ file [^\n]*github_4715_irep2_native_body_decl_nil_loc_01\.c line 12 [^\n]*\n\s+ASSIGN
+// Vereda: verdict none

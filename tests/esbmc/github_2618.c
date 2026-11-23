@@ -23,3 +23,4 @@ int main() {
 // RUN: --parallel-solving --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

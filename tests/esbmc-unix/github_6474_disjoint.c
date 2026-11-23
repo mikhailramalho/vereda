@@ -45,3 +45,4 @@ int main(void)
 // RUN: --deadlock-check --unwind 2 --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -8,3 +8,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: unknown target triple
 // EXPECT: ^ERROR: PARSING ERROR$
+// Vereda: verdict none

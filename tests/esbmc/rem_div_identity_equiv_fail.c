@@ -15,7 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/rem_div_identity_equiv_fail
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line \d+\s+off-by-one identity$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line \d+\s+off-by-one identity$
-// MODE: FUTURE

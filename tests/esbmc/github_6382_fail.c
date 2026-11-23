@@ -41,5 +41,5 @@ int main()
 // RUN: --multi-property --unwind 11 --context-bound 2 --no-standard-checks --no-library-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^ +FAILED .*line +\d+ +assert data equal$
 // EXPECT: \A(?![\s\S]*Sem is not initialized)[\s\S]*\Z
+// Vereda: verdict none

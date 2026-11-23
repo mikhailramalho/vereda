@@ -22,3 +22,4 @@ int main(int argc, char **argv)
 // RUN: --func f -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

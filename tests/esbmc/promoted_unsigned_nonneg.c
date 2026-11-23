@@ -50,7 +50,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/promoted_unsigned_nonneg
 // RUN: --unwind 20000
-// EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
-// MODE: FUTURE

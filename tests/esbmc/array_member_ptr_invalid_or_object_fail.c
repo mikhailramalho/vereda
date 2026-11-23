@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

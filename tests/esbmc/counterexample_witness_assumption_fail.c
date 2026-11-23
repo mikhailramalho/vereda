@@ -28,3 +28,4 @@ int main(void)
 // EXPECT: ^      <data key="assumption">p\.in == 7;</data>$
 // EXPECT: ^      <data key="assumption">q-&gt;out == 21;</data>$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

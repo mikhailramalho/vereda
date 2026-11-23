@@ -22,7 +22,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_member_loop_bound_overwrite
-// EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

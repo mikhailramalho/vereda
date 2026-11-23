@@ -22,3 +22,4 @@ int main(void)
 // EXPECT: "external/cwe/cwe-835"
 // EXPECT: "helpUri": "https://cwe.mitre.org/data/definitions/835.html"
 // EXPECT: "version": "4.20"
+// Vereda: verdict none

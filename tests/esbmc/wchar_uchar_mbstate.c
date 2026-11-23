@@ -16,3 +16,4 @@ int main(void)
 // RUN: 
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

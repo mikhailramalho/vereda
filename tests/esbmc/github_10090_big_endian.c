@@ -19,4 +19,4 @@ int main(void)
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*assertion s\[1\]\.h == 0x0403
+// Vereda: verdict none

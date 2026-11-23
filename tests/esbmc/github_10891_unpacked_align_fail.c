@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: Incorrect alignment when accessing data object$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

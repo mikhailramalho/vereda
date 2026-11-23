@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: "name": "CWE"
 // EXPECT: "version": "4.20"
 // EXPECT: "id": "122"
+// Vereda: verdict none

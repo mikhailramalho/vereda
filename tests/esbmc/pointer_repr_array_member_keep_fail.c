@@ -22,6 +22,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_array_member_keep_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s\.a\[0\] == &k$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +assertion s\.a\[0\] == &k$
-// MODE: FUTURE

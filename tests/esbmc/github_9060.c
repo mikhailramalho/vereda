@@ -32,3 +32,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*ASSIGN x=&g;\n\n\n(?:[^\n]+\n)*[^\n]*@t\?1!0\.[pq] = )
 // EXPECT: \A(?![\s\S]*ASSIGN x=&g;\n\n\n(?:[^\n]+\n)*[^\n]*@F@f@s\?1!0\.[pq] = )
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

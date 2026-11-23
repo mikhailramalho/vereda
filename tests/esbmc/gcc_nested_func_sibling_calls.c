@@ -22,3 +22,4 @@ int main()
 // RUN: --gcc-nested-functions --no-library
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

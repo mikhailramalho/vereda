@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: line: 6$
 // EXPECT: column: 3$
 // EXPECT: specification: "F end"
+// Vereda: verdict none

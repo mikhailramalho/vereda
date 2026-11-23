@@ -25,3 +25,4 @@ int main()
 // RUN: --overflow-check --smt-during-symex --smt-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

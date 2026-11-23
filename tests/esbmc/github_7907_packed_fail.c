@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^.*dereference failure: Misaligned access to struct field$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

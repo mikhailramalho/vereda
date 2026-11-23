@@ -21,3 +21,4 @@ int main() {
 // RUN: --cheri hybrid
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

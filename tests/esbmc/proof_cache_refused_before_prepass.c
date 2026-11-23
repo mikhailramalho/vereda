@@ -12,3 +12,4 @@ int main(void)
 // RUN: --proof-cache proof-store --falsify-context-bound 2
 // MODE: FUTURE
 // EXPECT: ^ERROR: --proof-cache reuses claims one at a time and needs --multi-property$
+// Vereda: verdict none

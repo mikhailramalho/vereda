@@ -19,3 +19,4 @@ int main(void) {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 12
+// Vereda: verdict none

@@ -67,3 +67,4 @@ int main(int argc, char *argv[]) {
 // RUN: --overflow --memory-leak-check --no-unwinding-assertions --unwind 1 --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

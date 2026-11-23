@@ -25,3 +25,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: struct s \{ signed int a; signed char c; unsigned _ExtInt\(24\) anon_pad#2; \}
 // EXPECT: struct t \{ signed char c; unsigned _ExtInt\(24\) anon_pad#1; signed int a; \}
+// Vereda: verdict none

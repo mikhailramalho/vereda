@@ -29,3 +29,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
 // EXPECT: reason: summary exceeded 50 expression nodes
+// Vereda: verdict none

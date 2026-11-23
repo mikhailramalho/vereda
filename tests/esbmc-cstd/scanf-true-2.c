@@ -15,3 +15,4 @@ int main(int argc, char *argv[])
 // RUN: --overflow-check --64 --no-unlimited-scanf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

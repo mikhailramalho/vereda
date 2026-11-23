@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: ^  CWE: CWE-122, CWE-125, CWE-787, CWE-823$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

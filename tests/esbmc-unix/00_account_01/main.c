@@ -74,3 +74,4 @@ int main(int argc, char *argv[]) {
 // FILES: account.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(void)
 // RUN: --smt-during-symex --smt-symex-guard
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

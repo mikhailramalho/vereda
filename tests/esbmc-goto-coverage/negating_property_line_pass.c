@@ -12,3 +12,4 @@ int main(void)
 // RUN: --negating-property main:7
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

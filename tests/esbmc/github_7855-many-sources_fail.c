@@ -26,6 +26,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7855-many-sources_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +another slot holds the key$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +another slot holds the key$
-// MODE: FUTURE

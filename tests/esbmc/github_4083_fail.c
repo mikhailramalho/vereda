@@ -22,3 +22,4 @@ END:
 // RUN: --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

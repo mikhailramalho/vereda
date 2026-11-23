@@ -16,3 +16,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: REACHED: 'a == 1 at file \S*condition_coverage_goal_key\.c line 8 column 3 function main'$
 // EXPECT: ^Total Conditions:  8$
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main()
 // EXPECT: \bdivision by zero\b
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

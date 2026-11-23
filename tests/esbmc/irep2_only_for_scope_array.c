@@ -17,3 +17,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^ *2: DEAD c:irep2_only_for_scope_array\.c@[0-9]*@F@main@i$
+// Vereda: verdict none

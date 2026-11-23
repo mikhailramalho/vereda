@@ -64,3 +64,4 @@ int main()
 // RUN: --loop-invariant-check --unwind 10
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

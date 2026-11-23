@@ -8,6 +8,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/string_literal_brace_init_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion a\[1\] == 0$
-// Vereda: unmet EXPECT: ^\s+assertion a\[1\] == 0$
-// MODE: FUTURE

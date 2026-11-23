@@ -16,3 +16,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^TS-CHECK accepted states=2 inputs=0 defs=2 bad=1 prefix_bad=0 extract_s=
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -21,3 +21,4 @@ int main(void)
 // EXPECT: (?s)\A(?!.*no body for function fseeko)
 // Vereda: unmet EXPECT: (?s)\A(?!.*no body for function fseeko)
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

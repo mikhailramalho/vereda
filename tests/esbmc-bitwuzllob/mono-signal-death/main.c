@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: died with signal .*discarding its verdict
 // EXPECT: SMT solver failed
+// Vereda: verdict none

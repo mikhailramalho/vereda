@@ -26,3 +26,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)\A(?!.*WARNING: Vacuous discharge)
+// Vereda: verdict none

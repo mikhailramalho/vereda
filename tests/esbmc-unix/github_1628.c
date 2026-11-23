@@ -12,3 +12,4 @@ int main(int argc, char **argv)
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf format specifier \%s requires pointer argument$
+// Vereda: verdict none

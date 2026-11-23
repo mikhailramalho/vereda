@@ -14,3 +14,4 @@ main()
 // EXPECT: ^Bug found \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*Unable to prove or falsify the program)[\s\S]*\Z
+// Vereda: verdict none

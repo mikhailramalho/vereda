@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the row.s first store is still readable$
 // MODE: FUTURE
+// Vereda: verdict FAILED

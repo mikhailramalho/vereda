@@ -85,3 +85,4 @@ int main() {
 // RUN: --unwind 1 --no-unwinding-assertion
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the else arm.s store survives the merge$
 // MODE: FUTURE
+// Vereda: verdict FAILED

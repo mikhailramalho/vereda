@@ -24,3 +24,4 @@ int main(void) {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED.*line  8  loop invariant inductive step$
+// Vereda: verdict none

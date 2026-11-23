@@ -19,3 +19,4 @@ int main()
 // RUN: --std c23 --clang-c-irep2-adjust-only --symbol-table-only
 // MODE: FUTURE
 // EXPECT: ^__builtin_c23_va_start\(&ap(\[0\])?[,)]
+// Vereda: verdict none

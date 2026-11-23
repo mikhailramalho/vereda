@@ -14,3 +14,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^k-Path Coverage: 66.66666666666667%$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

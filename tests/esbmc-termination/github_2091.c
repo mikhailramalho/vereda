@@ -11,3 +11,4 @@ int main() {
 // RUN: --termination
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -13,3 +13,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: file ([A-Za-z]:)?/esbmc-vfs/libc/library/string\.c line \d+ column \d+ function memcpy
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

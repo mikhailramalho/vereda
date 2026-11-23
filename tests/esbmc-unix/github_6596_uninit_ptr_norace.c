@@ -30,3 +30,4 @@ int main(void)
 // RUN: --32 --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

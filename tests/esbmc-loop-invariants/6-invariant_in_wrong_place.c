@@ -18,3 +18,4 @@ int main()
 // RUN: --loop-invariant-check --multi-property --unwind 1 --no-unwinding-assertions
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

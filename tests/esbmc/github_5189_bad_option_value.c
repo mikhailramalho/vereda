@@ -11,3 +11,4 @@ int main(void)
 // EXPECT: ^ERROR: Invalid command line: the argument .+for option .--unwind. is invalid
 // Vereda: unmet EXPECT: ^ERROR: Invalid command line: the argument .+for option .--unwind. is invalid
 // MODE: FUTURE
+// Vereda: verdict none

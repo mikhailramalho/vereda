@@ -13,3 +13,4 @@ int main()
 // RUN: --z3 --unwind 13 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

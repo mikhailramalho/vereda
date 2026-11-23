@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="originfile">[^<]*helper\.h
 // EXPECT: <data key="startline">6</data>
+// Vereda: verdict none

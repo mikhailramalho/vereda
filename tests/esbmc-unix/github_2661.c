@@ -63,3 +63,4 @@ int main()
 // RUN: --data-races-check-only --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^\s*R/W data race on c:@balance$
+// Vereda: verdict none

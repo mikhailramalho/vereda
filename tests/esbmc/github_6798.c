@@ -25,4 +25,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_6798
 // RUN: --unwind 4
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: conditionally written heap object

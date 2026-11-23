@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: file_name: "[^"]*main\.c"
 // EXPECT: line: 9$
 // EXPECT: (?s)\A(?!.*\n *line: 29$)
+// Vereda: verdict none

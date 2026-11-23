@@ -25,3 +25,4 @@ void main()
 // RUN: --interval-analysis --interval-analysis-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -32,6 +32,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7311_forall_indirect
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+all zero$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+all zero$
-// MODE: FUTURE

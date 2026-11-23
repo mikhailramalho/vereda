@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: Inputs : \[0\] = 1
 // EXPECT: Inputs : \[0\] = 10
 // EXPECT: Inputs : \[0\] = 12
+// Vereda: verdict none

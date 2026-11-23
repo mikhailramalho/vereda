@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^Solution found by the forward condition; all states are reachable \(k = 5\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

@@ -17,3 +17,4 @@ int main() {
 // RUN: --big-endian --bv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -33,3 +33,4 @@ int main()
 // RUN: --incremental-bmc --smt-during-symex --smt-symex-assume --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

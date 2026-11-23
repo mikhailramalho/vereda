@@ -13,3 +13,4 @@ int main(void)
 // RUN: --std c2x
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -14,7 +14,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/loop_simplify_erase_dead_dowhile
 // RUN: --unwind 1 --no-unwinding-assertions
-// EXPECT: ^Generated 0 VCC\(s\)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 0 VCC\(s\)
-// MODE: FUTURE

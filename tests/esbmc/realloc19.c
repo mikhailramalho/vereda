@@ -128,3 +128,4 @@ int main(void) {
 // RUN: --force-malloc-success --force-realloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

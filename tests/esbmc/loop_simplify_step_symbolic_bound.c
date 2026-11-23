@@ -19,3 +19,4 @@ int main()
 // RUN: --interval-analysis --unwind 1 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

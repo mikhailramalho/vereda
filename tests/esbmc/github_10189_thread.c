@@ -24,3 +24,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^The program can start a thread: verifying its schedules$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

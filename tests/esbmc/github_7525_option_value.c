@@ -14,3 +14,4 @@ ERROR:
 // MODE: FUTURE
 // EXPECT: ^WARNING: .--smtlib-solver-prog. takes a value, so .--all-claims. was read as that value
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

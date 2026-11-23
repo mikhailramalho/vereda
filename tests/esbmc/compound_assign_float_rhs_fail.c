@@ -10,6 +10,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/compound_assign_float_rhs_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion x == \(1LL << 53\)
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

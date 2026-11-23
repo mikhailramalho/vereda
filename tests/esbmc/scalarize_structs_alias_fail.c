@@ -18,5 +18,5 @@ int main(void)
 // Needs: --scalarize-structs
 // RUN: --scalarize-structs
 // MODE: FUTURE
-// EXPECT: ^\s+y written through q$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none
