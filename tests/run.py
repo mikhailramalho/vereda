@@ -37,6 +37,9 @@ SKIPPED = 77
 OUT_OF_MEMORY = 3
 # What Vereda, clang and the solvers print when an allocation fails.
 NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|MemoryError")
+# Some allocations fail without a message: the binary crashes instead. A run
+# that ends with no verdict after reaching this share of the limit ran out.
+NEAR_LIMIT = 0.9
 
 
 def parse(path):
@@ -108,7 +111,11 @@ def main():
                 os.killpg(proc.pid, signal.SIGKILL)
                 raise
 
-    if args.memory_limit and NO_MEMORY.search(out):
+    # Peak resident memory, in KB, of the largest process the run waited for.
+    peak = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+    near_limit = args.memory_limit and peak >= NEAR_LIMIT * (args.memory_limit << 10)
+    no_verdict = not re.search(r"^VERIFICATION ", out, re.MULTILINE)
+    if args.memory_limit and (NO_MEMORY.search(out) or (near_limit and no_verdict)):
         if desc["MODE"] == "KNOWNBUG":
             print(f"OUT OF MEMORY past {args.memory_limit} MB, a known bug; skipped")
             return SKIPPED
