@@ -175,10 +175,13 @@ jobs:
 
       # One comment per pull request, edited on each later run and posted
       # even when the benchmark found a regression. When nothing changed,
-      # the comment of an earlier run is deleted rather than left stale.
+      # the comment of an earlier run is deleted rather than left stale. A
+      # fork's pull request gets a read-only token whatever permissions asks
+      # for, so it gets no comment and keeps its results in the summary.
       - name: Comment on the pull request
         if: >
           always() && github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
           (steps.bench.outcome == 'success' || steps.bench.outcome == 'failure' ||
            steps.screen.outputs.build == 'false')
         env:
