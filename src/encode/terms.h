@@ -123,6 +123,9 @@ private:
 
   const Node *node(const Ref &e) const;
   Ref make(Node n);
+  // Whether c (1) or its negation (-1) is a conjunct of g, found going up
+  // g's left spine of ands for a bounded number of steps; 0 when neither is.
+  int conjunct(const Ref &g, const Ref &c) const;
   // f pushed through an ite with constant branches, so that it folds on
   // each; null when no operand is one, or two have different conditions.
   // Pointers from an allocation that may fail, ite(ok, p, null), stay
