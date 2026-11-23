@@ -11,9 +11,9 @@ namespace vereda::ir {
 // plan (section 4.1): mem2reg, SROA, InstCombine, loop-simplify, LCSSA.
 // Indirect calls become tests of the pointer and direct calls, and direct
 // calls to a function of another type convert their arguments.
-// Then links in the library models (models-<pointer bits>.bc in models, a
-// directory; none when empty or missing) for the functions the module
-// still calls without defining.
+// setjmp and longjmp become control flow. Then links in the library models
+// (models-<pointer bits>.bc in models, a directory; none when empty or
+// missing) for the functions the module still calls without defining.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "");
 

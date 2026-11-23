@@ -33,6 +33,3 @@ int main(void)
 
 // Imported from ESBMC regression/cstd/jump_bug
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

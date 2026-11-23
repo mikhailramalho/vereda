@@ -356,6 +356,18 @@ private:
         name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
         name == "__longjmp_chk")
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+    // From ir's lowering of longjmp: a jump no frame on the stack resumes.
+    // Inner frames return for their caller to try; the outermost has none.
+    if (name == "__vereda_longjmp_unmatched") {
+      if (stack.size() > 1)
+        return guard;
+      if (counts(false))
+        assertion(c, guard, "longjmp to a jmp_buf whose setjmp is not active", "");
+      return t.boolean(false);
+    }
+    if (name == "__vereda_longjmp_unsupported")
+      throw Unsupported("longjmp back past a value its setjmp needs in " +
+                        c.getFunction()->getName().str());
     if (name == "malloc" || name == "calloc") {
       allocateHeap(c, name, guard, st);
       return guard;

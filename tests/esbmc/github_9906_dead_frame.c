@@ -16,6 +16,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9906_dead_frame
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: longjmp to a jmp_buf whose setjmp is not active
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

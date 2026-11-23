@@ -17,6 +17,3 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc/github_9906_recursive_main
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

@@ -33,6 +33,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/siglongjmp_frames_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

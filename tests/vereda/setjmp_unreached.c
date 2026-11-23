@@ -1,6 +1,6 @@
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Only a reached setjmp or longjmp gives UNKNOWN (#10): one in a function
-// main never calls does not cost the verdict.
+// A longjmp in a function main never calls costs nothing: its jmp_buf was
+// never set, but no check is reached.
 #include <setjmp.h>
 extern void __VERIFIER_assert(int);
 static jmp_buf env;

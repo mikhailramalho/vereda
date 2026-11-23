@@ -525,6 +525,19 @@ bool Encoder::intrinsic(CallBase &c) {
     return true;
   }
   SMTExprRef (Terms::*op)(const SMTExprRef &, const SMTExprRef &) = nullptr;
+  SMTExprRef (Terms::*less)(const SMTExprRef &, const SMTExprRef &) = &Terms::slt;
+  switch (f->getIntrinsicID()) { // InstCombine's min and max
+  case Intrinsic::umin:
+  case Intrinsic::umax: less = &Terms::ult; [[fallthrough]];
+  case Intrinsic::smin:
+  case Intrinsic::smax: {
+    SMTExprRef a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+    bool min = f->getIntrinsicID() == Intrinsic::umin || f->getIntrinsicID() == Intrinsic::smin;
+    bind(&c, t.ite((t.*less)(a, b), min ? a : b, min ? b : a));
+    return true;
+  }
+  default: break;
+  }
   SMTExprRef (Terms::*overflow)(const SMTExprRef &, const SMTExprRef &) = nullptr;
   switch (f->getIntrinsicID()) {
   case Intrinsic::sadd_with_overflow: op = &Terms::add; overflow = &Terms::saddo; break;

@@ -1,13 +1,9 @@
-// RUN: --property-file %S/properties/unreach-call.prp --witness -
-// EXPECT: ^VERIFICATION UNKNOWN
-// EXPECT: call to _?setjmp at
-// EXPECT: ^UNKNOWN$
-// EXPECT-NOT: VERIFICATION FAILED
-// EXPECT-NOT: entry_type
-// setjmp and longjmp have no model yet (#11). Walked as bodyless calls,
-// setjmp returned a nondet value and longjmp returned normally, so this
-// program, which never calls reach_error, was reported FALSE (#10). A reached
-// call now gives UNKNOWN, with no witness.
+// RUN: --property-file %S/properties/unreach-call.prp
+// EXPECT: ^VERIFICATION SUCCESSFUL$
+// EXPECT: ^TRUE$
+// Walked as bodyless calls, setjmp returned a nondet value and longjmp
+// returned normally, so this program, which never calls reach_error, was
+// reported FALSE (#10). The longjmp now resumes the setjmp with 1 (#11).
 #include <setjmp.h>
 extern void reach_error(void);
 static jmp_buf env;

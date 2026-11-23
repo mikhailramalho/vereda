@@ -3,6 +3,7 @@
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/Dominators.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/InstrTypes.h>
@@ -10,6 +11,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Operator.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/FileSystem.h>
@@ -353,6 +355,224 @@ static void dropUninitialisedRecords(Module &m) {
                 rec.eraseFromParent();
 }
 
+static bool isSetjmp(StringRef n) {
+  return n == "setjmp" || n == "_setjmp" || n == "__sigsetjmp" || n == "sigsetjmp";
+}
+static bool isLongjmp(StringRef n) {
+  return n == "longjmp" || n == "_longjmp" || n == "siglongjmp" || n == "__longjmp_chk";
+}
+
+// setjmp and longjmp become ordinary control flow (#11), as ESBMC's
+// lower_longjmp does. Globals hold a jump in flight: pending, the value
+// setjmp is to return and a token naming the setjmp's frame and call site.
+// A setjmp takes a token from a counter the first time its frame runs it,
+// keeps it in a slot of the frame, stores it in its jmp_buf and returns 0
+// into a block of its own, its resume block. A longjmp loads the token from
+// its jmp_buf, sets the value (1 for 0, C11 7.13.2.1p4) and pending, and
+// goes to a dispatch; so does each call that may longjmp when it returns
+// with pending set. The dispatch compares the token with the slot of each
+// setjmp of its function: a match clears pending and goes back to that
+// setjmp's resume block with the value, a loop the walker bounds like any
+// other. No match calls __vereda_longjmp_unmatched and returns, for the
+// caller to dispatch in turn; in the outermost frame the walker checks it as
+// a longjmp to a setjmp no longer active, undefined behaviour by
+// 7.13.2.1p2, as ESBMC does.
+//
+// This runs before mem2reg, which gives each local that is not volatile
+// the value it had at the longjmp when the jump arrives. 7.13.2.1p3 makes
+// those changed since the setjmp indeterminate; the value they had is the
+// one a program compiled at -O0 sees, and sv-benchmarks' longjmp tasks
+// expect it (42-poison-reduced_true).
+static void lowerLongjmp(Module &m) {
+  if (none_of(m, [](Function &f) { return isSetjmp(f.getName()) || isLongjmp(f.getName()); }))
+    return;
+  lowerCalls(m); // a longjmp through a pointer becomes a direct call
+  auto callee = [](Instruction &inst) -> Function * {
+    auto *c = dyn_cast<CallInst>(&inst);
+    return c ? dyn_cast<Function>(c->getCalledOperand()->stripPointerCasts()) : nullptr;
+  };
+  // The setjmps and longjmps this pass can lower; any other is left to the
+  // walker, which refuses it when reached.
+  auto lowerable = [&](Instruction &inst, bool (*is)(StringRef)) {
+    Function *f = callee(inst);
+    if (!f || !is(f->getName()))
+      return false;
+    auto &c = cast<CallInst>(inst);
+    return c.arg_size() >= 1 + (is == isLongjmp) && c.getArgOperand(0)->getType()->isPointerTy() &&
+           (is == isSetjmp ? c.use_empty() || c.getType()->isIntegerTy()
+                           : c.getArgOperand(1)->getType()->isIntegerTy());
+  };
+  // The functions that may longjmp out of a call to them.
+  DenseSet<Function *> jumps;
+  auto mayJump = [&](Instruction &inst) {
+    Function *g = callee(inst);
+    return lowerable(inst, isLongjmp) || (g && jumps.contains(g));
+  };
+  for (bool changed = true; changed;) {
+    changed = false;
+    for (Function &f : m)
+      if (!jumps.contains(&f) && any_of(instructions(f), mayJump)) {
+        jumps.insert(&f);
+        changed = true;
+      }
+  }
+
+  LLVMContext &ctx = m.getContext();
+  Type *i8 = Type::getInt8Ty(ctx), *i32 = Type::getInt32Ty(ctx), *i64 = Type::getInt64Ty(ctx);
+  auto global = [&](Type *ty, StringRef name) {
+    return new GlobalVariable(m, ty, false, GlobalValue::InternalLinkage,
+                              Constant::getNullValue(ty), name);
+  };
+  GlobalVariable *pending = global(i8, "__vereda_longjmp_pending"),
+                 *value = global(i32, "__vereda_longjmp_value"),
+                 *token = global(i64, "__vereda_longjmp_token"),
+                 *counter = global(i64, "__vereda_setjmp_count");
+  FunctionType *voidFn = FunctionType::get(Type::getVoidTy(ctx), false);
+  FunctionCallee unmatched = m.getOrInsertFunction("__vereda_longjmp_unmatched", voidFn),
+                 unsupported = m.getOrInsertFunction("__vereda_longjmp_unsupported", voidFn);
+
+  for (Function &f : m) {
+    if (f.isDeclaration())
+      continue;
+    SmallVector<CallInst *, 4> setjmps, points;
+    for (Instruction &inst : instructions(f)) {
+      if (lowerable(inst, isSetjmp))
+        setjmps.push_back(cast<CallInst>(&inst));
+      else if (mayJump(inst))
+        points.push_back(cast<CallInst>(&inst));
+    }
+
+    struct Site {
+      AllocaInst *slot;
+      BasicBlock *resume;
+      PHINode *result;
+    };
+    SmallVector<Site, 2> sites;
+    BasicBlock &entry = f.getEntryBlock();
+    // The slots are zeroed in a block of the static allocas alone, which
+    // mem2reg still promotes.
+    if (!setjmps.empty()) {
+      Instruction *first = &*find_if(entry, [](Instruction &i) { return !isa<AllocaInst>(i); });
+      for (Instruction &i : make_early_inc_range(make_range(first->getIterator(), entry.end())))
+        if (auto *a = dyn_cast<AllocaInst>(&i); a && isa<Constant>(a->getArraySize()))
+          a->moveBefore(first->getIterator());
+      entry.splitBasicBlock(first);
+    }
+    DebugLoc loopLoc = setjmps.empty() ? DebugLoc() : setjmps.front()->getDebugLoc();
+    for (CallInst *c : setjmps) {
+      IRBuilder<> b(entry.getTerminator());
+      AllocaInst *slot = b.CreateAlloca(i64);
+      b.CreateStore(b.getInt64(0), slot);
+      b.SetInsertPoint(c);
+      Value *next = b.CreateAdd(b.CreateLoad(i64, counter), b.getInt64(1));
+      Value *old = b.CreateLoad(i64, slot);
+      Value *n = b.CreateSelect(b.CreateIsNull(old), next, old);
+      b.CreateStore(next, counter);
+      b.CreateAlignedStore(n, c->getArgOperand(0), Align(1));
+      b.CreateStore(n, slot);
+      BasicBlock *from = c->getParent(), *resume = from->splitBasicBlock(c, "setjmp.resume");
+      from->getTerminator()->setDebugLoc(c->getDebugLoc()); // the jump-back loop's location
+      PHINode *result = nullptr;
+      if (!c->use_empty()) {
+        result = PHINode::Create(c->getType(), 0, "setjmp", resume->begin());
+        result->addIncoming(ConstantInt::get(c->getType(), 0), from);
+        c->replaceAllUsesWith(result);
+      }
+      c->eraseFromParent();
+      sites.push_back({slot, resume, result});
+    }
+
+    // When each resume block dominates every jump, a jump goes straight
+    // back to it, making a loop with the resume block as its head. Else all
+    // go through restart, between the allocas and the rest of the function,
+    // which switches to the resume block: those loops' head is restart,
+    // which dominates every block. Mixing the two would let restart skip
+    // the head of a direct jump's loop. The loops are irreducible after all
+    // when restart enters a loop at a resume block; the walker refuses such
+    // a function.
+    DominatorTree dt(f);
+    bool direct = all_of(points, [&](CallInst *p) {
+      return all_of(sites, [&](Site &s) { return dt.dominates(s.resume, p->getParent()); });
+    });
+    PHINode *target = nullptr; // in restart, the site a jump resumes, from 1
+    if (!direct) {
+      BasicBlock *restart = entry.splitBasicBlock(entry.getTerminator(), "longjmp.restart");
+      BasicBlock *rest = restart->getUniqueSuccessor();
+      restart->getTerminator()->eraseFromParent();
+      IRBuilder<> b(restart);
+      b.SetCurrentDebugLocation(loopLoc);
+      target = b.CreatePHI(i32, 0);
+      target->addIncoming(b.getInt32(0), &entry);
+      Value *resumed = b.CreateLoad(i32, value);
+      for (Site &s : sites)
+        if (s.result)
+          s.result->addIncoming(b.CreateSExtOrTrunc(resumed, s.result->getType()), restart);
+      SwitchInst *sw = b.CreateSwitch(target, rest, sites.size());
+      for (auto [i, s] : enumerate(sites))
+        sw->addCase(b.getInt32(i + 1), s.resume);
+    }
+
+    for (CallInst *p : points) {
+      BasicBlock *from = p->getParent();
+      BasicBlock *dispatch = BasicBlock::Create(ctx, "longjmp.dispatch", &f);
+      IRBuilder<> b(p); // the dispatch's checks and calls get p's location
+      bool longjmp = lowerable(*p, isLongjmp);
+      if (longjmp) {
+        Value *v = b.CreateSExtOrTrunc(p->getArgOperand(1), i32);
+        b.CreateStore(b.CreateAlignedLoad(i64, p->getArgOperand(0), Align(1)), token);
+        b.CreateStore(b.CreateSelect(b.CreateIsNull(v), b.getInt32(1), v), value);
+        b.CreateStore(b.getInt8(1), pending);
+      }
+      // After a longjmp, the block left holds the call itself, now dead.
+      BasicBlock *next = from->splitBasicBlock(longjmp ? p : p->getNextNode());
+      from->getTerminator()->eraseFromParent();
+      b.SetInsertPoint(from);
+      if (longjmp)
+        b.CreateBr(dispatch);
+      else
+        b.CreateCondBr(b.CreateIsNotNull(b.CreateLoad(i8, pending)), dispatch, next);
+      b.SetInsertPoint(dispatch);
+      Value *n = b.CreateLoad(i64, token);
+      for (auto [i, s] : enumerate(sites)) {
+        Value *slot = b.CreateLoad(i64, s.slot);
+        BasicBlock *hit = BasicBlock::Create(ctx, "longjmp.hit", &f),
+                   *miss = BasicBlock::Create(ctx, "longjmp.miss", &f);
+        b.CreateCondBr(b.CreateAnd(b.CreateIsNotNull(slot), b.CreateICmpEQ(n, slot)), hit, miss);
+        b.SetInsertPoint(hit);
+        b.CreateStore(b.getInt8(0), pending);
+        if (direct) {
+          if (s.result)
+            s.result->addIncoming(b.CreateSExtOrTrunc(b.CreateLoad(i32, value), s.result->getType()),
+                                  hit);
+          b.CreateBr(s.resume);
+        } else {
+          b.CreateBr(target->getParent());
+          target->addIncoming(b.getInt32(i + 1), hit);
+        }
+        b.SetInsertPoint(miss);
+      }
+      b.CreateCall(unmatched);
+      if (f.getReturnType()->isVoidTy())
+        b.CreateRetVoid();
+      else
+        b.CreateRet(PoisonValue::get(f.getReturnType()));
+    }
+
+    // Through restart, a jump skips the code before its setjmp, which may
+    // define a value used after it (a VLA's address). Such a function only
+    // calls __vereda_longjmp_unsupported, which gives UNKNOWN when reached.
+    if (target && verifyFunction(f)) {
+      DISubprogram *sp = f.getSubprogram();
+      f.dropAllReferences();
+      f.setSubprogram(sp);
+      IRBuilder<> b(BasicBlock::Create(ctx, "", &f));
+      b.SetCurrentDebugLocation(loopLoc);
+      b.CreateCall(unsupported);
+      b.CreateUnreachable();
+    }
+  }
+}
+
 // -fno-finite-loops should have kept these out; any left would let LoopInfo
 // and SCEV assume termination.
 static bool hasMustProgress(const Module &m) {
@@ -427,6 +647,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   stripUBAssumptions(*module);
   nondetLocals(*module);
+  lowerLongjmp(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))
     return std::move(e);
   lowerCalls(*module); // before InstCombine, which folds tests of constants

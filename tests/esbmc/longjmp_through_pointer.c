@@ -19,6 +19,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/longjmp_through_pointer
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN
