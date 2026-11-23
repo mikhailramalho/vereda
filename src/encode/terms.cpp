@@ -521,6 +521,11 @@ bool Terms::arithmetic(const Ref &e) {
 }
 
 Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
+  // Storing a constant array's own value changes nothing. A flush stores each
+  // byte's provenance, which for a zero-filled object's own arrays is the
+  // value they already hold, so that array stays constant.
+  if (auto it = filled.find(array.get()); it != filled.end() && it->second.second.get() == value.get())
+    return array;
   return make({Op::Store, array, index, value});
 }
 
