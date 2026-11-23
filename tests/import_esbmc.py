@@ -16,8 +16,9 @@ __VERIFIER_assert, __VERIFIER_assume, __VERIFIER_atomic_begin,
 __VERIFIER_atomic_end, memset and memcpy in the copied sources,
 __ESBMC_builtin_object_size and __ESBMC_alloca become clang's
 __builtin_object_size and __builtin_alloca, __ESBMC_bitcast(tgt, src)
-becomes __builtin_memcpy(tgt, src, sizeof *(tgt)), and
-__ESBMC_unreachable becomes reach_error in tests run with
+becomes __builtin_memcpy(tgt, src, sizeof *(tgt)), __ESBMC_unroll(N)
+right before a loop becomes #pragma unroll N+1, the bound ESBMC gives
+it, and __ESBMC_unreachable becomes reach_error in tests run with
 --enable-unreachability-intrinsic, a flag then dropped. Setting
 __ESBMC_rounding_mode becomes fesetround() where that covers every use
 of it, and nondet_X becomes __VERIFIER_nondet_X. ESBMC flags with a
@@ -304,6 +305,32 @@ def rewrite_bitcasts(text):
     return "".join(out)
 
 
+UNROLL = re.compile(r"^([ \t]*)__ESBMC_unroll\s*\(([^;\n]*)\)\s*;[ \t]*$", re.M)
+LOOP_START = re.compile(r"\s*(for|while|do)\b")
+
+
+def rewrite_unroll(text):
+    """Turns a line holding only __ESBMC_unroll(N); into #pragma unroll N+1
+    when the next code is a loop, as the pragma must be; a call anywhere
+    else is left alone. ESBMC reads clang's #pragma unroll M as the loop's
+    unwinding bound and implements __ESBMC_unroll(N) as that bound with
+    M = N + 1 (loop_unroll.cpp), so the two mean the same to it."""
+    # Comments and literals blanked out, newlines kept, so offsets match.
+    code = "".join(c if is_code else re.sub(r"[^\n]", " ", c) for is_code, c in segments(text))
+    out, i = [], 0
+    for m in UNROLL.finditer(code):
+        if not LOOP_START.match(code, m.end()):
+            continue
+        n = m.group(2).strip()
+        after = code.index(";", m.end(2)) + 1  # a comment after the call stays
+        out.append(text[i:m.start()] + m.group(1) + "#pragma unroll "
+                   + (str(int(n) + 1) if n.isdigit() else f"(({n}) + 1)")
+                   + text[after:m.end()].rstrip())
+        i = m.end()
+    out.append(text[i:])
+    return "".join(out)
+
+
 # ESBMC's rounding mode is a variable its fenv.h model reads; each value it
 # can be set to, and the C rounding mode for it. 1, ties away from zero, has
 # none.
@@ -395,7 +422,8 @@ def rename_builtins(path, unreachable):
             texts[name] = f.read()
     nondets = nondets_to_rename(texts.values())
     for name, text in texts.items():
-        renamed = rewrite_bitcasts(rewrite_rounding(rewrite_asserts(text, unreachable)))
+        renamed = rewrite_unroll(rewrite_bitcasts(rewrite_rounding(
+            rewrite_asserts(text, unreachable))))
         if nondets:
             renamed = code_sub(NONDET, lambda m: "__VERIFIER_" + m.group(0)
                                if m.group(0) in nondets else m.group(0), renamed)

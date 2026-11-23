@@ -8,7 +8,7 @@ int foo();
 
 int main()
 {
-  __ESBMC_unroll(5);
+  #pragma unroll 6
   for(int i = 0; i < 5; i++)
     ;
 
@@ -19,7 +19,7 @@ int main()
 int foo()
 {
   int i = 0;
-  __ESBMC_unroll(10);
+  #pragma unroll 11
   while(i < 10)
     i++;
   return i;

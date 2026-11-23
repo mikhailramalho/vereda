@@ -7,7 +7,7 @@ int main()
 {
   int i = 0;
 
-  __ESBMC_unroll(3);
+  #pragma unroll 4
   while(i < 10)
     i++;
 

@@ -7,7 +7,7 @@ int main()
 {
   int sum = 0;
 
-  __ESBMC_unroll(2);
+  #pragma unroll 3
   for(int i = 0, j = 10; i < j; i++, j--)
     sum += i;
 

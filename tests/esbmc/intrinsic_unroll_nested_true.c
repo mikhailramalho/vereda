@@ -10,7 +10,7 @@ int main()
 
   for(int k = 0; k < 3; k++)
   {
-    __ESBMC_unroll(10);
+    #pragma unroll 11
     for(int i = 0, j = 10; i < j; i++, j--)
       sum += i;
   }
