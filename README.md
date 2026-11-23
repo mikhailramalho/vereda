@@ -125,8 +125,8 @@ other flag become FUTURE.
 - `docs/plan.md`: goals, design and milestones.
 - `docs/architecture.md`: the stages under `src/`, their interfaces and
   layering rules.
-- `docs/spike-survey.md`: dated measurements and the design decisions made
-  from them.
+- `docs/survey/`: dated measurements and the design decisions made from
+  them, one file per entry.
 
 ## License
 
