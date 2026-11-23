@@ -15,5 +15,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/object_size_per_object_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE

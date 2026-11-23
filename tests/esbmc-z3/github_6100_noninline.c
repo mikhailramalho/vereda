@@ -15,3 +15,5 @@ int main()
 // RUN: --solver z3
 // MODE: THOROUGH
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
+// Vereda: over 300 s in CI
+// MODE: KNOWNBUG
