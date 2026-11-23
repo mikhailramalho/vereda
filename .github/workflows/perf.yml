@@ -1,8 +1,9 @@
 # Catches performance regressions: builds the pull request's base and head,
 # runs the benchmark list (tests/bench.txt) with both binaries side by
 # side on this runner, and fails when head is much slower, uses much more
-# memory, times out or changes a verdict (tests/bench.py). Verdicts are
-# tests.yml's job; this one only compares base with head.
+# memory, times out or changes a verdict (tests/bench.py), and posts the
+# table on the pull request. Verdicts are tests.yml's job; this one only
+# compares base with head.
 name: Performance
 
 on:
@@ -16,6 +17,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   bench:
@@ -82,7 +84,27 @@ jobs:
             -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
           ninja -C base/build
 
+      # The default shell runs with pipefail, so a regression still fails
+      # this step through tee.
       - name: Benchmark
         run: >
           head/tests/bench.py --clang $LLVM/bin/clang --base-root base
-          base/build/vereda head/build/vereda
+          base/build/vereda head/build/vereda | tee bench.md
+
+      # One comment per pull request, edited on each later run, posted even
+      # when the benchmark found a regression.
+      - name: Comment on the pull request
+        if: always() && github.event_name == 'pull_request' && hashFiles('bench.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          { echo "## Performance: base → head"
+            echo
+            echo "Base $BASE, head $HEAD."
+            echo
+            cat bench.md; } > comment.md
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file comment.md \
+            --edit-last --create-if-none

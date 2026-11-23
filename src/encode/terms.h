@@ -8,6 +8,8 @@
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/Twine.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -26,7 +28,14 @@ public:
   bool isFalse(const Ref &e) const;
 
   Ref bv(const llvm::APInt &v);
-  Ref bv(int64_t v, unsigned width) { return bv(llvm::APInt(width, v, /*isSigned=*/v < 0)); }
+  // v must fit in width bits, signed or unsigned: with assertions off APInt
+  // keeps the bits that do not, and every later fold goes wrong (#59).
+  Ref bv(int64_t v, unsigned width) {
+    if (!llvm::isIntN(width, v) && !llvm::isUIntN(width, static_cast<uint64_t>(v)))
+      llvm::report_fatal_error(llvm::Twine("constant ") + llvm::Twine(v) + " does not fit in " +
+                               llvm::Twine(width) + " bits");
+    return bv(llvm::APInt(width, v, /*isSigned=*/v < 0));
+  }
   Ref boolean(bool b);
   Ref symbol(const std::string &name, const camada::SMTSortRef &sort) {
     return s.mkSymbol(name, sort);
