@@ -127,6 +127,47 @@ def header(origin, mode, args, expected, test_dir):
     return lines + ["// EXPECT: " + r for r in regexes]
 
 
+# Output only ESBMC prints, which no Vereda run can match: its formula
+# statistics, its summary with a passed count, and its wording for a failed
+# assert(), 'assertion <condition>' (Vereda names the check function, as in
+# __assert_fail; 'unwinding assertion loop N' is common to both).
+ESBMC_OUTPUT = re.compile(r"VCC\\?\(s\\?\)|properties failed, .*passed"
+                          r"|(?<!unwinding)(?<!unwinding )(?<!unwinding\\s)(?<!unwinding\\s\+)"
+                          r"\bassertion(?: |\\s)(?!loop)")
+
+
+def esbmc_output(regex, messages):
+    """Whether an expectation matches only ESBMC's output: ESBMC_OUTPUT, or
+    the message of an __ESBMC_assert, which the import keeps as a comment only."""
+    plain = re.sub(r"\\(.)", r"\1", regex)
+    return bool(ESBMC_OUTPUT.search(regex)) or any(len(m) >= 6 and m in plain for m in messages)
+
+
+def assert_messages(src):
+    """The messages of the __ESBMC_assert calls in the C files of test
+    directory src, as the import writes them into comments."""
+    messages = set()
+    for name in os.listdir(src):
+        path = os.path.join(src, name)
+        if not name.endswith((".c", ".h")) or not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8", errors="replace") as f:
+            text = f.read()
+        for m in ASSERT.finditer(text):
+            parsed = call_arguments(text, m.end() - 1)
+            if parsed and len(parsed[0]) == 2:
+                start, end = parsed[0][1]
+                messages.add(message_comment(text[start:end]))
+    return messages
+
+
+def expectations(lines, src):
+    """The output regexes of a test.desc, without the ones only ESBMC's
+    output matches."""
+    messages = assert_messages(src)
+    return [r.strip() for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
+
+
 def outside(test_dir, path):
     """Whether path, relative to test_dir, leaves it."""
     real = os.path.realpath(os.path.join(test_dir, path))
@@ -523,7 +564,7 @@ def import_test(src, dest, origin, tracked):
         if os.path.exists(dest + ".c"):
             os.remove(dest + ".c")
         return reason
-    regexes = [r.strip() for r in lines[3:] if r.strip()]
+    regexes = expectations(lines[3:], src)
 
     entry = copy_files(src, dest, source, tracked)
     if not entry:
@@ -550,29 +591,52 @@ def import_test(src, dest, origin, tracked):
     return entry
 
 
+def record_verdict(test, verdict):
+    """Records verdict as the test's `// Vereda: verdict` line, or drops the
+    line when verdict is None (a CORE test needs none)."""
+    # surrogateescape: a few imported sources are not UTF-8; their bytes stay.
+    with open(test, encoding="utf-8", errors="surrogateescape") as f:
+        lines = [l for l in f.read().splitlines(keepends=True)
+                 if not run.RECORDED.match(l)]
+    if verdict:
+        lines.append(f"// Vereda: verdict {verdict}\n")
+    with open(test, "w", encoding="utf-8", errors="surrogateescape") as f:
+        f.write("".join(lines))
+
+
 def mark(tests, runner):
     """Runs each test with runner, the run.py command line without the test,
     and flips the mode of those that do not behave as their mode says; one
-    that runs out of memory is listed instead. Returns how many were
+    that runs out of memory is listed instead. A test left KNOWNBUG or FUTURE
+    gets its verdict recorded, which run.py then checks; one whose recorded
+    verdict changed is listed, since this accepts it. Returns how many were
     flipped."""
     def check(test):
         return test, subprocess.run(runner + [test], stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT, text=True, check=False)
+                                    stderr=subprocess.STDOUT, text=True, check=False,
+                                    env={**os.environ, "REGRESS_REMARK": "1"})
 
     flipped = 0
     with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
         for test, proc in pool.map(check, tests):
-            if proc.returncode in (0, run.SKIPPED):
-                continue
+            lines = proc.stdout.splitlines()
+            now = next((l[len("verdict: "):] for l in reversed(lines)
+                        if l.startswith("verdict: ")), None)
             if proc.returncode == run.OUT_OF_MEMORY:  # a failure to fix, not a mode
                 print(f"out of memory: {test}")
                 continue
-            mode = "CORE" if run.parse(test)["MODE"] in run.FAIL_MODES else "FUTURE"
-            lines = proc.stdout.splitlines()
-            why = ([l for l in lines if l.startswith("unmet")] or lines[-1:])[:1]
-            with open(test, "a", encoding="utf-8") as f:
-                f.write("".join(f"// Vereda: {w[:150]}\n" for w in why) + f"// MODE: {mode}\n")
-            flipped += 1
+            desc = run.parse(test)
+            if now and desc["VERDICT"] not in (None, now) and desc["MODE"] in run.FAIL_MODES:
+                print(f"verdict {desc['VERDICT']} -> {now}: {test}")
+            if proc.returncode not in (0, run.SKIPPED):
+                mode = "CORE" if desc["MODE"] in run.FAIL_MODES else "FUTURE"
+                why = ([l for l in lines if l.startswith("unmet")] or lines[-1:])[:1]
+                with open(test, "a", encoding="utf-8") as f:
+                    f.write("".join(f"// Vereda: {w[:150]}\n" for w in why)
+                            + f"// MODE: {mode}\n")
+                flipped += 1
+            if now:  # a timeout tells nothing, so it keeps the earlier record
+                record_verdict(test, now if run.parse(test)["MODE"] in run.FAIL_MODES else None)
     return flipped
 
 
