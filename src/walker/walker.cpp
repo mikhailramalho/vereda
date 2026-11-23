@@ -314,6 +314,13 @@ private:
     }
     if (!callee->isDeclaration())
       return enter(c, *callee, guard, st);
+    // A bodyless setjmp would return a nondet value and longjmp would return
+    // normally, which neither under- nor over-approximates the jump (#10).
+    // Only a reached call refuses, so dead code does not cost the verdict.
+    if (name == "setjmp" || name == "_setjmp" || name == "__sigsetjmp" || name == "sigsetjmp" ||
+        name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
+        name == "__longjmp_chk")
+      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     if (name == "malloc" || name == "calloc") {
       allocateHeap(c, name, guard, st);
       return guard;
