@@ -2,7 +2,7 @@
 # runs the benchmark list (tests/bench.txt) with both binaries side by
 # side on this runner, and fails when head is much slower, uses much more
 # memory, times out or changes a verdict (tests/bench.py), and posts the
-# table on the pull request. Verdicts are tests.yml's job; this one only
+# tests that got better or worse on the pull request. Verdicts are tests.yml's job; this one only
 # compares base with head.
 name: Performance
 
@@ -84,27 +84,40 @@ jobs:
             -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
           ninja -C base/build
 
-      # The default shell runs with pipefail, so a regression still fails
-      # this step through tee.
+      # The full table goes to the step summary; changes.md holds only the
+      # tests that regressed or improved, and does not exist when none did.
       - name: Benchmark
+        id: bench
         run: >
           head/tests/bench.py --clang $LLVM/bin/clang --base-root base
-          base/build/vereda head/build/vereda | tee bench.md
+          --changes changes.md base/build/vereda head/build/vereda
 
-      # One comment per pull request, edited on each later run, posted even
-      # when the benchmark found a regression.
+      # One comment per pull request, edited on each later run and posted
+      # even when the benchmark found a regression. When nothing changed,
+      # the comment of an earlier run is deleted rather than left stale.
       - name: Comment on the pull request
-        if: always() && github.event_name == 'pull_request' && hashFiles('bench.md') != ''
+        if: >
+          always() && github.event_name == 'pull_request' &&
+          (steps.bench.outcome == 'success' || steps.bench.outcome == 'failure')
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          { echo "## Performance: base → head"
-            echo
-            echo "Base $BASE, head $HEAD."
-            echo
-            cat bench.md; } > comment.md
-          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file comment.md \
-            --edit-last --create-if-none
+          if [ -s changes.md ]; then
+            { echo "## Performance: base → head"
+              echo
+              echo "Base $BASE, head $HEAD. Only the tests that got better or worse;"
+              echo "the full table is in the job's summary."
+              echo
+              cat changes.md; } > comment.md
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file comment.md \
+              --edit-last --create-if-none
+          else
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq \
+              '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("## Performance"))) | .id' |
+            while read -r id; do
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$id"
+            done
+          fi
