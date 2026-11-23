@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
+// Vereda: verdict none

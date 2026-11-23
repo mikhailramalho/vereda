@@ -20,8 +20,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10888_arrays_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED .* assertion g.f2\[0\] == t.a\[0\]$
-// EXPECT: ^\*\* 1 of 3 properties failed, 2 passed$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .* assertion g.f2\[0\] == t.a\[0\]$
-// MODE: FUTURE

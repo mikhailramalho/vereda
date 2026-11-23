@@ -28,3 +28,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: Solution found by the forward condition
+// Vereda: verdict none

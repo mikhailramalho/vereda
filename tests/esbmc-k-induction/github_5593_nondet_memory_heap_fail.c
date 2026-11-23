@@ -25,3 +25,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: cannot generalise the memory __VERIFIER_nondet_memory havocs
+// Vereda: verdict none

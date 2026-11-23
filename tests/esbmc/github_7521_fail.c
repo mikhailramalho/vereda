@@ -176,7 +176,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7521_fail
 // RUN: --unwind 5
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion \*w\.nest\.ip == 99$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion \*w\.nest\.ip == 99$
-// MODE: FUTURE

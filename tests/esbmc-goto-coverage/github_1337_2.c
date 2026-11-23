@@ -30,3 +30,4 @@ int main()
 // EXPECT: ^Total Asserts: 4
 // EXPECT: ^Total Assertion Instances: 4
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
+// Vereda: verdict none

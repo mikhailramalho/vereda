@@ -1662,3 +1662,4 @@ SSL_METHOD *sslv3_base_method() {
 // RUN: --k-induction --add-symex-value-sets --k-step 7 --no-pointer-check --smt-during-symex
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

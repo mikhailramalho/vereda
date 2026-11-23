@@ -37,6 +37,4 @@ int main()
 // RUN: --multi-property --loop-invariant --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*in loop: false
-// EXPECT: PASSED.*post loop: qa mod
-// EXPECT: PASSED.*post loop: qa ge
+// Vereda: verdict none

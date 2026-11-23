@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8703_fail
-// EXPECT: ^  FAILED .*assertion errno == 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion errno == 0$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

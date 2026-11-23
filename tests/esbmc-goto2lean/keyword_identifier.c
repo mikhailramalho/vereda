@@ -6,3 +6,4 @@ int main(void){ unsigned _ = __VERIFIER_nondet_uint(); __VERIFIER_assert(_ == _)
 // MODE: FUTURE
 // EXPECT: ^  ∀ «_» : BitVec 32,$
 // EXPECT: ^  \(«_» = «_»\) ∧ \($
+// Vereda: verdict none

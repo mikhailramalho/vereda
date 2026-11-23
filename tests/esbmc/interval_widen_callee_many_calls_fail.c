@@ -34,3 +34,4 @@ int main()
 // RUN: --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

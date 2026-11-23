@@ -20,3 +20,4 @@ int main() {
 // RUN: --verbosity 9 --unwind 3 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

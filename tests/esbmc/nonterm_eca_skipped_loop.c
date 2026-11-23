@@ -36,3 +36,4 @@ end:
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

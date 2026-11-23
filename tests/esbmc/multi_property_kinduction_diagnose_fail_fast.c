@@ -24,7 +24,5 @@ int main()
 // RUN: --k-induction --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+16\s+assertion i != 2$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.2\]\s+line\s+17\s+assertion n < 10
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.3\]\s+line\s+18\s+assertion j == 3
 // EXPECT: ^This report is partial: the run stopped before every property reached a verdict
+// Vereda: verdict none

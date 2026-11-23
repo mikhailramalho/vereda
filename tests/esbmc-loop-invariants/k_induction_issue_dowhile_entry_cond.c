@@ -34,3 +34,4 @@ int main(void)
 // RUN: --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

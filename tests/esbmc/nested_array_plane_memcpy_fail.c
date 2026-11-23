@@ -30,3 +30,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the plane.s first element was grafted too$
 // MODE: FUTURE
+// Vereda: verdict FAILED

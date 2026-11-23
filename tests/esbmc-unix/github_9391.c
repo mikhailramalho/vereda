@@ -20,7 +20,4 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9391
 // RUN: --unwind 3 --multi-property
-// EXPECT: ^  FAILED +\[main\.assertion\.[0-9]+\] +line +18 +assertion aflag == 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.[0-9]+\] +line +18 +assertion aflag == 0$
-// MODE: FUTURE

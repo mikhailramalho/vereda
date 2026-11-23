@@ -19,3 +19,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

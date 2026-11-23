@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Generating HTML report for trace: 1$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

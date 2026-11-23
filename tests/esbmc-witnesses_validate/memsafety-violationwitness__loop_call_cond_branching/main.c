@@ -16,3 +16,4 @@ int main(void)
 // RUN: --unwind 3 --no-unwinding-assertions --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

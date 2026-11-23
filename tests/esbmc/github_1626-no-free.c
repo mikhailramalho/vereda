@@ -23,3 +23,4 @@ int main() {
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

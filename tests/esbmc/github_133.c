@@ -22,3 +22,4 @@ int main() {
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+array bounds violated: array upper bound$
 // MODE: FUTURE
+// Vereda: verdict FAILED

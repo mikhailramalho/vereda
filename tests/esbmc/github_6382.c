@@ -42,5 +42,5 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Removed [1-9]\d* library assertion\(s\)$
-// EXPECT: ^ +PASSED .*line +\d+ +assert data equal$
 // EXPECT: \A(?![\s\S]*Sem is not initialized)[\s\S]*\Z
+// Vereda: verdict none

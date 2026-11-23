@@ -31,3 +31,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Recurrent set shows a non-terminating execution
+// Vereda: verdict none

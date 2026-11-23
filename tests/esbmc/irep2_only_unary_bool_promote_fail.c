@@ -12,3 +12,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --unwind 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

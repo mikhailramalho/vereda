@@ -41,3 +41,4 @@ l2:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Solution found by the inductive step.*$
+// Vereda: verdict none

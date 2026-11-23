@@ -32,3 +32,4 @@ int main(void)
 // EXPECT: \[Counterexamples - 2 witnesses\]
 // EXPECT: --max-witnesses cap reached
 // EXPECT: ^  (│|\|)    \.\.\. [0-9]+ earlier states omitted \(--full-traces to show them\) \.\.\.$
+// Vereda: verdict none

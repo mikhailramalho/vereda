@@ -21,3 +21,4 @@ int main()
 // EXPECT: \bnum != 0\b
 // EXPECT: \bdivision by zero\b
 // EXPECT: \bnum1 != 0\b
+// Vereda: verdict none

@@ -13,4 +13,4 @@ int main(void)
 // RUN: --64 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion !signbit\(r\)$
+// Vereda: verdict none

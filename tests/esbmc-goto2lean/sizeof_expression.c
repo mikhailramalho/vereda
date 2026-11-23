@@ -13,3 +13,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  let s := \(4#64\);$
 // EXPECT: ^  let b := \(4#64\);$
+// Vereda: verdict none

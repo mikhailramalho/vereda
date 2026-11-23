@@ -15,3 +15,4 @@ int main()
 // RUN: --unwind 3 --no-pointer-check --no-bound --no-div-by-zero-check --no-slice -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

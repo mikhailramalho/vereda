@@ -13,3 +13,4 @@ c() {
 // RUN: --k-induction --function c -Wno-error=implicit-function-declaration -Wno-error=implicit-int
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

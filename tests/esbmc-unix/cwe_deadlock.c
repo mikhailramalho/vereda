@@ -39,3 +39,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  Deadlocked state in pthread_mutex_lock$
 // EXPECT: ^  CWE: CWE-833$
+// Vereda: verdict none

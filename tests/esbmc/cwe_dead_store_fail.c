@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: "ruleId": "dead-store"
 // EXPECT: "level": "error"
 // EXPECT: "id": "563"
+// Vereda: verdict none

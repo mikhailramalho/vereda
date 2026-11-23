@@ -16,3 +16,4 @@ int main(void)
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --generate-json-report
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

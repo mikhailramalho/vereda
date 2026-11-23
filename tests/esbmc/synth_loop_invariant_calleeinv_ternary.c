@@ -33,3 +33,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^  PASSED       \[main\.assertion\.1\]  line 23  loop invariant base case$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

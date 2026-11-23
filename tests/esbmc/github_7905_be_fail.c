@@ -16,4 +16,4 @@ int main(void)
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion h\[0\] != 2$
+// Vereda: verdict none

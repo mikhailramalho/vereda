@@ -21,5 +21,5 @@ int main(void)
 // Needs: --clang-c-irep2-adjust-only
 // RUN: --64 --clang-c-irep2-adjust-only
 // MODE: FUTURE
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line 17\s+assertion p\.f != 12345$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -323,3 +323,4 @@ assert(0);
 // RUN: --unwind 1 --context-bound 2 --schedule --depth 300 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

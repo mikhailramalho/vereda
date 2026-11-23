@@ -19157,3 +19157,4 @@ int main(void)
 // RUN: --depth 99
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

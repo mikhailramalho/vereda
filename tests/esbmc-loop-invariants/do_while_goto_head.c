@@ -17,3 +17,4 @@ int main() {
 // RUN: --loop-invariant --max-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

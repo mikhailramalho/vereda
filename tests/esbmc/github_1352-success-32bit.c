@@ -68,3 +68,4 @@ int main()
 // RUN: --unwind 1 --no-unwinding-assertion --force-malloc-success --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

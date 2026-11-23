@@ -28,5 +28,5 @@ int main(void) {
 // Needs: --interval-analysis
 // RUN: --interval-analysis
 // MODE: FUTURE
-// EXPECT: ^Generated 3 VCC\(s\), 0 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

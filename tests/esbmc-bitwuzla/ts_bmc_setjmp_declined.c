@@ -20,3 +20,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^WARNING: calls c:@F@_?setjmp, which extraction declines$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

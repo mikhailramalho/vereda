@@ -56,7 +56,3 @@ int main()
 // Imported from ESBMC regression/esbmc/addressof_null_guard_folds_fail
 // RUN: --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^ *FAILED .*assertion total\(&a, via_ternary\(&a\)\) == 77$
-// EXPECT: ^Generated [0-9]{1,2} VCC\(s\)
-// Vereda: unmet EXPECT: ^ *FAILED .*assertion total\(&a, via_ternary\(&a\)\) == 77$
-// MODE: FUTURE

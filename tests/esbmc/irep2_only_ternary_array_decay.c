@@ -18,3 +18,4 @@ int main(int argc, char **argv)
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

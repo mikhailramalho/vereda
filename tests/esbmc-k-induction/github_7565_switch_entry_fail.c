@@ -39,3 +39,4 @@ l2:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*Bug found.*$
+// Vereda: verdict none

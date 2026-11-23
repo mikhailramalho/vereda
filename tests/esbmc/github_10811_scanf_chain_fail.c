@@ -10,7 +10,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10811_scanf_chain_fail
-// EXPECT: ^  assertion x == 0 \|\| p != \(void \*\)0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion x == 0 \|\| p != \(void \*\)0$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -16,3 +16,4 @@ int main(void) {
 // EXPECT: ^  -- call to g \(no body\): ignored$
 // EXPECT: ^  True ∧ \(\n  True →$
 // EXPECT: ^  simp only \[Prog\.h, Prog\.main\]$
+// Vereda: verdict none

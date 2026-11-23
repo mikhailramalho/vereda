@@ -20,3 +20,4 @@ int main() {
 // RUN: --unwind 1 --no-unwinding-assertions
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict SUCCESSFUL

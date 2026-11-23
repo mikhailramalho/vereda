@@ -11,3 +11,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: file ([A-Za-z]:)?/esbmc-vfs/libc/library/libm/musl/__cosdf\.c line \d+
 // EXPECT: file ([A-Za-z]:)?/esbmc-vfs/libc/library/libm/pow\.c line \d+
+// Vereda: verdict none

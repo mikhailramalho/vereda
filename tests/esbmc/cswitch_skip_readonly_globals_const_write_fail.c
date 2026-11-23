@@ -21,3 +21,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: write access to const object `t'
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

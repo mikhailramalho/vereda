@@ -11,3 +11,4 @@ int main(void)
 // RUN: --excessive-alloc-check=0 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --excessive-alloc-check=K requires K >= 1 \(got 0\)$
+// Vereda: verdict none

@@ -464,3 +464,4 @@ return ;
 // RUN: --no-pointer-check --no-bounds-check --no-div-by-zero-check --error-label ERROR --unwind 7 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

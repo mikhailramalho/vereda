@@ -31,7 +31,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_member_of_index_fail
 // EXPECT: ^  s->c\[.*\]\.x = .*\.x=2
-// EXPECT: ^  c holds 1 and 2$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  s->c\[.*\]\.x = .*\.x=2
 // MODE: FUTURE
+// Vereda: verdict FAILED

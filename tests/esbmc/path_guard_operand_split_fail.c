@@ -24,5 +24,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/path_guard_operand_split_fail
 // RUN: --unwind 136 --no-unwinding-assertions
-// EXPECT: ^.*legal encodings must stay reachable.*$
 // EXPECT: ^VERIFICATION FAILED$

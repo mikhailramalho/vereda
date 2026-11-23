@@ -30,3 +30,4 @@ int main() {
 // RUN: --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

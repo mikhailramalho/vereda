@@ -8,3 +8,4 @@ int main()
 // RUN: --function _mm_adds_pi8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

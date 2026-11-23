@@ -15,3 +15,4 @@ int main(void)
 // RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

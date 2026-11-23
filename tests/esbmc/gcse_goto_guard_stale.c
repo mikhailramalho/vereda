@@ -19,3 +19,4 @@ L:
 // RUN: --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

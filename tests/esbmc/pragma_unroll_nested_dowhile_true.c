@@ -80,3 +80,4 @@ int main()
 // EXPECT: Applying #pragma unroll 4 to loop
 // EXPECT: Applying #pragma unroll 5 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

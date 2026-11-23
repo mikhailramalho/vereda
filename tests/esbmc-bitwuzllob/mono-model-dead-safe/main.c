@@ -9,3 +9,4 @@ int main()
 // RUN: --bitwuzllob --bitwuzllob-prog always-unsat-mallob.sh --bitwuzllob-model-prog dead-model.sh
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

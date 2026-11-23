@@ -23,3 +23,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 11 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

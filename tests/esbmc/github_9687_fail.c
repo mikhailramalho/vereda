@@ -12,3 +12,4 @@ int main(void)
 // EXPECT: ^    format_version: "2\.1"$
 // EXPECT: ^              format: "ext_c_expression"$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

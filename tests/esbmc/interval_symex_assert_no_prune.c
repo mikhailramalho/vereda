@@ -12,3 +12,4 @@ int main()
 // RUN: --interval-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

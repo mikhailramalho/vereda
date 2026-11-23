@@ -11,7 +11,4 @@ long long f(long long T, long long s)
 }
 // Imported from ESBMC regression/esbmc/github_7840
 // RUN: --overflow-check --entry f
-// EXPECT: ^Generated 0 VCC\(s\), 0 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^Generated 0 VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

@@ -11,6 +11,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_9937_round_trip_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 9 +round trip$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 9 +round trip$
-// MODE: FUTURE

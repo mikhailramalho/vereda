@@ -27,3 +27,4 @@ int main(void)
 // EXPECT: ^  resolved = &handler$
 // Vereda: unmet EXPECT: ^  resolved = &handler$
 // MODE: FUTURE
+// Vereda: verdict FAILED

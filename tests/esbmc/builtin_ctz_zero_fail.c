@@ -13,3 +13,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  __builtin_clz/ctz of zero is undefined$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

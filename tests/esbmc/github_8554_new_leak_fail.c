@@ -12,3 +12,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: forgotten memory: realloc_\d+_array$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

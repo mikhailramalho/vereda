@@ -13,3 +13,4 @@ int main()
 // EXPECT: \ba = 1\b
 // EXPECT: \bb = 2\b
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

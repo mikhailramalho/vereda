@@ -20,3 +20,4 @@ int main()
 // EXPECT: ^k-Path Coverage: 12\.5%$
 // EXPECT: ^Coverage report written to cov-report\.json$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -23,3 +23,4 @@ int main(void)
 // RUN: --force-malloc-success --malloc-zero-is-null --no-pointer-check --no-bounds-check --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

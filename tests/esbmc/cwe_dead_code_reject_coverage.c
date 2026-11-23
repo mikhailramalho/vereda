@@ -11,3 +11,4 @@ int main(void)
 // RUN: --dead-code-check --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --assertion-coverage$
+// Vereda: verdict none

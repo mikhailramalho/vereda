@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: FAILED +\[strlen\.invalidated-dynamic-object\.[0-9]+\].*dereference failure: invalidated dynamic object
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

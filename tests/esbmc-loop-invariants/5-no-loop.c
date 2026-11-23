@@ -16,3 +16,4 @@ int main()
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

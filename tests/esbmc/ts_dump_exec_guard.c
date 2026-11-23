@@ -14,3 +14,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^Transition system: 1 state variables, 0 inputs, 3 step definitions,
 // EXPECT: ^  \[.*\] error label: goto_symex::guard[?!&#0-9]*$
+// Vereda: verdict none

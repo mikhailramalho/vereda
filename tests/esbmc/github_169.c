@@ -15,3 +15,4 @@ void h(f) { c(f, ); }
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: unmet EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE
+// Vereda: verdict none

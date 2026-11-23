@@ -26,3 +26,4 @@ int main() {
 // RUN: --unwindsetname compute_sum:0:11
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

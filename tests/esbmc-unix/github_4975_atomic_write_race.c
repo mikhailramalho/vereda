@@ -53,3 +53,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@mThread$
+// Vereda: verdict none

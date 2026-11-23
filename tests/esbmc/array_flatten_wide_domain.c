@@ -22,3 +22,4 @@ int main()
 // RUN: --array-flattener
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

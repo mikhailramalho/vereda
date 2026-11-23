@@ -36,3 +36,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Number of generated interleavings: 40$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

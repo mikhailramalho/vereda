@@ -68,3 +68,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: array bounds violated\b
+// Vereda: verdict none

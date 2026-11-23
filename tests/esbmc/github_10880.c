@@ -8,3 +8,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: searched for a violation first
 // EXPECT: the run continues with no context
+// Vereda: verdict none

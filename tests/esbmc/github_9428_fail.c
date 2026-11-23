@@ -10,6 +10,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9428_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion asinh\(-big\) == -INFINITY$
-// Vereda: unmet EXPECT: assertion asinh\(-big\) == -INFINITY$
-// MODE: FUTURE

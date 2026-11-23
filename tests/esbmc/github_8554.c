@@ -12,3 +12,4 @@ int main() {
 // RUN: --memory-leak-check --no-reachable-memory-leak --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

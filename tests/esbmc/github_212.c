@@ -102,3 +102,4 @@ Do something with data.
 // RUN: --no-div-by-zero-check --force-malloc-success -Dldv_assume=__VERIFIER_assume --z3 --memory-leak-check -D__VERIFIER_error=ESBMC_error --no-unwinding-assertions --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

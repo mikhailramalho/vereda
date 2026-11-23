@@ -19,6 +19,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7907_noalign_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion r.tag == 5$
-// Vereda: unmet EXPECT: ^.*assertion r.tag == 5$
-// MODE: FUTURE

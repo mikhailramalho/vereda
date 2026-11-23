@@ -27,3 +27,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: Proof cache: inactive \(thread interleavings after the first, where a claim carries a schedule its cone does not name\); every claim will be solved and none stored$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

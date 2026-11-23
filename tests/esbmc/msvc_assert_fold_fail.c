@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/msvc_assert_fold_fail
-// EXPECT: FAILED.*assertion n <= 2
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: FAILED.*assertion n <= 2
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

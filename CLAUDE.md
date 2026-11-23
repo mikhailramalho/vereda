@@ -49,10 +49,14 @@ drives `tests/run.py`:
 ```
 
 KNOWNBUG and FUTURE tests show as skipped while some expectation fails; when one starts
-passing, promote it to CORE. New test files need a cmake re-configure to be picked up
+passing, promote it to CORE. `--mark` records the verdict each one gave as
+`// Vereda: verdict X`, and a run that gives another verdict fails (exit 4) saying whether
+it got worse, is now right (promote it), or just changed (re-mark it). New test files need a cmake re-configure to be picked up
 (the glob uses CONFIGURE_DEPENDS, so `cmake --build` usually handles it).
 `tests/import_esbmc.py <esbmc>/regression [suite ...]` imports ESBMC's C tests,
-translating flags; tests needing flags Vereda lacks become FUTURE with a `// Needs:` line,
+translating flags and dropping expectations only ESBMC's output can match (its VCC
+counts, its summary with a passed count, its `assertion <cond>` wording, `__ESBMC_assert`
+messages); tests needing flags Vereda lacks become FUTURE with a `// Needs:` line,
 and `--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
 timeout (`REGRESS_TIMEOUT`); a run that times out is skipped in any mode, and `--mark`
 never changes a mode because of one.

@@ -99,3 +99,4 @@ for(counter=0; counter<argc; counter++)
 // FILES: app.c picosat.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

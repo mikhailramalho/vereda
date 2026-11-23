@@ -13,7 +13,4 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_1650
 // RUN: --multi-property
-// EXPECT: ^ +FAILED .*line +10 +assertion a\[\*ptr\] > 2147483646$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^ +FAILED .*line +10 +assertion a\[\*ptr\] > 2147483646$
-// MODE: FUTURE

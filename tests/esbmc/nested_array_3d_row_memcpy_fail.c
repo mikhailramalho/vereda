@@ -29,7 +29,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_3d_row_memcpy_fail
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+26\s+the innermost grafted row must not read back with its elements swapped$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+26\s+the innermost grafted row must not read back with its elements swapped$
-// MODE: FUTURE

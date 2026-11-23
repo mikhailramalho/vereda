@@ -17,3 +17,4 @@ int main()
 // EXPECT: ^\s*array bounds violated: array upper bound$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

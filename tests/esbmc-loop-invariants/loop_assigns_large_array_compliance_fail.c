@@ -21,3 +21,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+10\s+assigns compliance: c:@global not in assigns clause$
+// Vereda: verdict none

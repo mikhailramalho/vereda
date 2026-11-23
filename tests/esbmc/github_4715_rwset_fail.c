@@ -56,3 +56,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race on .*$
+// Vereda: verdict none

@@ -23,5 +23,6 @@ int main()
 // EXPECT: ^  u\.s\.c\[1\] = 4
 // EXPECT: ^  r = &x$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  u\.s\.c\[1\] = 4
+// Vereda: unmet EXPECT: ^  r = &x$
 // MODE: FUTURE
+// Vereda: verdict FAILED

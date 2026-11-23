@@ -45,9 +45,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/va_list_own_cursor_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 42  assertion copy_first\(1, 3, 4\) == 34$
-// EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 43  assertion restart\(1, 3, 4\) == 34$
-// EXPECT: ^  FAILED +\[main\.assertion\.3\] +line 44  assertion two_lists\(1, 5, 6\) == 56$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 42  assertion copy_first\(1, 3, 4\) == 34$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

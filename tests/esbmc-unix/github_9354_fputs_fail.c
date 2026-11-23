@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: FAILED +\[strlen\.array-bounds-violated\.[0-9]+\].*dereference failure: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

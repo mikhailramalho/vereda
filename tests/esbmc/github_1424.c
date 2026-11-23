@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: \A(?!(?s:.)*external symbol tentative_global)
 // Vereda: unmet EXPECT: no definition for external symbol undefined_extern declared at file .*github_1424\.c line 5
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

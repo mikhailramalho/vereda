@@ -95,3 +95,4 @@ int minus(int a, int b) {
 // RUN: --overflow-check --z3 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

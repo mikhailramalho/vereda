@@ -15,4 +15,4 @@ int main()
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion x == 0x04u
+// Vereda: verdict none

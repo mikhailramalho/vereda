@@ -16,3 +16,4 @@ int main(void)
 // Imported from ESBMC regression/cstd/strcoll
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

@@ -14,6 +14,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7906_vector_stmt_expr_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion x\[3\] == 1$
-// Vereda: unmet EXPECT: ^.*assertion x\[3\] == 1$
-// MODE: FUTURE

@@ -14,7 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10891_write_offset_fail
-// EXPECT: ^  assertion buf\[1\] == 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion buf\[1\] == 0$
-// MODE: FUTURE

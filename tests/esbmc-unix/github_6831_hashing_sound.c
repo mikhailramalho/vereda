@@ -25,3 +25,4 @@ int main(void)
 // RUN: --state-hashing
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

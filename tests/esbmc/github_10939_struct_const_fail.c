@@ -8,7 +8,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10939_struct_const_fail
-// EXPECT: assertion v.u == 0x3f800001u
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: assertion v.u == 0x3f800001u
-// MODE: FUTURE

@@ -15,3 +15,4 @@ int main()
 // RUN: --k-induction-parallel --all-witnesses --max-k-step 10
 // MODE: FUTURE
 // EXPECT: ^ERROR: --k-induction-parallel cannot be combined with --all-witnesses$
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main(void) {
 // EXPECT: ^  \(∀ i : BitVec 32, \(i ≤ \(4294967295#32\)\)\) ∧ \($
 // EXPECT: any other quantifier needs a manual proof
 // EXPECT: ^  sorry$
+// Vereda: verdict none

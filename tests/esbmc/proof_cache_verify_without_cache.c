@@ -12,3 +12,4 @@ int main(void)
 // RUN: --multi-property --proof-cache-verify
 // MODE: FUTURE
 // EXPECT: ^ERROR: --proof-cache-verify has no cache to check without --proof-cache <dir>$
+// Vereda: verdict none

@@ -48,3 +48,4 @@ int main(void)
 // RUN: --std c11
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

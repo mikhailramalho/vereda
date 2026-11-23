@@ -13,3 +13,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: .--smtlib-solver-prog. takes a value, so .--show-loo. was read as that value
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

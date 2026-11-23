@@ -18,7 +18,7 @@ int main()
 // Imported from ESBMC regression/esbmc/abs_overflow_check
 // RUN: --overflow-check --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\*\* 0 of 10 properties failed, 10 passed$
 // EXPECT: PASSED\s+\[main.arithmetic-overflow.7\]\s+line 15\s+arithmetic overflow on abs
-// Vereda: unmet EXPECT: ^\*\* 0 of 10 properties failed, 10 passed$
+// Vereda: unmet EXPECT: PASSED\s+\[main.arithmetic-overflow.7\]\s+line 15\s+arithmetic overflow on abs
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

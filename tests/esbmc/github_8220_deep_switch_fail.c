@@ -41,3 +41,4 @@ int main(void)
 // RUN: --sv-comp --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

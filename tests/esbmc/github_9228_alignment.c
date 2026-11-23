@@ -19,3 +19,4 @@ int main(void)
 // RUN: --std c11 --64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -4,3 +4,4 @@ int main() { return 0; }
 // RUN: --report-property-class assertion
 // MODE: FUTURE
 // EXPECT: ^ERROR: --report-property-class takes reachability_check or cover, not 'assertion'$
+// Vereda: verdict none

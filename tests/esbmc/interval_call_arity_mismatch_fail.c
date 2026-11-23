@@ -18,4 +18,4 @@ void f(int a)
 // RUN: --std c17 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: the second call passes no argument
+// Vereda: verdict none

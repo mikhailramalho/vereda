@@ -13,3 +13,4 @@ int main(void)
 // RUN: --malloc-zero-is-null
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

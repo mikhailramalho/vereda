@@ -18,3 +18,4 @@ int main(void)
 // RUN: --restrict-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

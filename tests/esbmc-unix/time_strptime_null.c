@@ -13,3 +13,4 @@ int main()
 // EXPECT: strptime format must not be NULL
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

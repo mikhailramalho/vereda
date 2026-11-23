@@ -17,3 +17,4 @@ int main() {
 // EXPECT: (?s)dereference failure.*^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: (?s)dereference failure.*^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict FAILED

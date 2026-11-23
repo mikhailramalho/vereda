@@ -33,3 +33,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">local == 7;
 // EXPECT: (?s)\A(?!.*key="assumption">[^<]*(dynamic_|symex_|&amp;))
+// Vereda: verdict none

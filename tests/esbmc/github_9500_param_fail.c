@@ -16,4 +16,4 @@ int main(void) {
 // RUN: --interval-analysis --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion n != 2$
+// Vereda: verdict none

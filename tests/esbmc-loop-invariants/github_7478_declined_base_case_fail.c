@@ -21,3 +21,4 @@ int main()
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+11\s+loop invariant base case$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.3\]\s+line\s+11\s+loop invariant inductive step$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

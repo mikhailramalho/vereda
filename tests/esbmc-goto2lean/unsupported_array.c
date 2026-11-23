@@ -4,3 +4,4 @@ int main(void) { int a[2] = {1, 2}; int *p = a; __VERIFIER_assert(p[1] == 2); re
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported type array$
+// Vereda: verdict none

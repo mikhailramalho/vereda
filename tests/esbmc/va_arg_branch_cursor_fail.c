@@ -34,8 +34,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/va_arg_branch_cursor_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 31  assertion branch\(c, 1, 2\) == \(c \? 12 : 2\)$
-// EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 32  assertion ternary\(c, 1, 2\) == \(c \? 12 : 2\)$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 31  assertion branch\(c, 1, 2\) == \(c \? 12 : 2\)$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -13,3 +13,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: accessed expired variable pointer `main::\$tmp::return_value\$_f\$1'
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

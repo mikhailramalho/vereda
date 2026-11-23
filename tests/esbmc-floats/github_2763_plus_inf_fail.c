@@ -15,3 +15,4 @@ int main()
 // RUN: --round-to-plus-inf
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

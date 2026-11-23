@@ -18,3 +18,4 @@ int main()
 // RUN: --fixedbv -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

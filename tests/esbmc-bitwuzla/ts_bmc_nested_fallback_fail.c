@@ -16,3 +16,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^WARNING: main has more than one loop$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

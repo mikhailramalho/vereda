@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: ^\[Dead code\]$
 // EXPECT: ^No provably-dead code found\.$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

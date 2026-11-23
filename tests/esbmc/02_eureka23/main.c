@@ -15,3 +15,4 @@ int main()
 // RUN: -Wno-error=implicit-function-declaration --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

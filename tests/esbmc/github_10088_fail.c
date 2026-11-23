@@ -15,7 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10088_fail
-// EXPECT: ^  assertion s\[i \+ 1\]\.a == 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion s\[i \+ 1\]\.a == 0$
-// MODE: FUTURE

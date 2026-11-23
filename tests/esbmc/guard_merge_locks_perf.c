@@ -180,3 +180,4 @@ ERROR:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: unwinding assertion loop 3
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: .--smtlib-solver-prog. takes a value, so .--no-assertions. was read as that value
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

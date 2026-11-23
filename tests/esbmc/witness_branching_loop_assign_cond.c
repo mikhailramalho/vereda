@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)value: "true".*value: "true".*type: "target"
 // EXPECT: (?s)\A(?!.*value: "false")
+// Vereda: verdict none

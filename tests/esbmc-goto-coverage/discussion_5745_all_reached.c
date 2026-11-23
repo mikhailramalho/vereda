@@ -17,3 +17,4 @@ int main()
 // EXPECT: Unreached Asserts: 0
 // EXPECT: Assertion Instances Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

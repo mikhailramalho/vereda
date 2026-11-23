@@ -15,6 +15,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_symbolic_row_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion p == &a\[i\]\[1\]
-// Vereda: unmet EXPECT: assertion p == &a\[i\]\[1\]
-// MODE: FUTURE

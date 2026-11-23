@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^No target candidate for function call \*ext_cb; assuming unreachable \(--closed-world-fnptr\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

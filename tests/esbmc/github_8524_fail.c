@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^\s+r = 5 \(
 // Vereda: unmet EXPECT: ^\s+r = 5 \(
 // MODE: FUTURE
+// Vereda: verdict FAILED

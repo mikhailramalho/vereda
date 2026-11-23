@@ -13,3 +13,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: &Q\[0\]
+// Vereda: verdict none

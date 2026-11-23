@@ -38,3 +38,4 @@ int main(void)
 // EXPECT: action: "cycle"
 // EXPECT: line: 23$
 // EXPECT: column: 3$
+// Vereda: verdict none

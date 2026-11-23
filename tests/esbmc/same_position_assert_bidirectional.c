@@ -15,5 +15,5 @@ int main()
 // Needs: --k-induction --bidirectional
 // RUN: --k-induction --max-k-step 8 --bidirectional --z3
 // MODE: FUTURE
-// EXPECT: ^\*\* 0 of 6 properties failed, 6 passed$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

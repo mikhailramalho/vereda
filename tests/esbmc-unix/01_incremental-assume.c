@@ -25,3 +25,4 @@ int main(void)
 // RUN: --no-por --smt-symex-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

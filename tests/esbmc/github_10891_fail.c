@@ -17,6 +17,6 @@ int main(void)
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: PASSED +\[main\.assertion\.[0-9]+\] +line [0-9]+ +dereference failure: Object accessed with incompatible base type
-// EXPECT: FAILED +\[main\.assertion\.[0-9]+\] +line [0-9]+ +assertion s\.v == 7$
 // Vereda: unmet EXPECT: PASSED +\[main\.assertion\.[0-9]+\] +line [0-9]+ +dereference failure: Object accessed with incompatible base type
 // MODE: FUTURE
+// Vereda: verdict FAILED

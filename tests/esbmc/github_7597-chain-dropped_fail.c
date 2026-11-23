@@ -22,5 +22,5 @@ int main(void)
 // RUN: --no-standard-checks --no-summarize-array-loops
 // MODE: FUTURE
 // EXPECT: ^WARNING: constant propagation gave up on a `with` chain past 1024 symbolic updates
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion i == 1024$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

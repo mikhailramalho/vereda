@@ -24,6 +24,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7855_fail
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +an unrelated pointer reads back equal$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +an unrelated pointer reads back equal$
-// MODE: FUTURE

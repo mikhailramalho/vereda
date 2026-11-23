@@ -317,3 +317,4 @@ void main()
 // RUN: --unwind 34 --overflow-check --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

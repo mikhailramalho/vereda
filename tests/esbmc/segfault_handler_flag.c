@@ -10,3 +10,4 @@ int main()
 // RUN: --segfault-handler
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

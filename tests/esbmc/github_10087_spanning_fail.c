@@ -15,4 +15,4 @@ int main(void)
 // RUN: --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED.*assertion s\[i\]\.b == 0$
+// Vereda: verdict none

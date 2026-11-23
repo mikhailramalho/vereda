@@ -45,3 +45,4 @@ int main(void)
 // RUN: --z3 --no-pointer-check --no-bounds-check --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

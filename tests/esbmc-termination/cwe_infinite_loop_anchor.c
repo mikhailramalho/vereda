@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: "ruleId": "infinite-loop"
 // EXPECT: "uri": ".*cwe_infinite_loop_anchor\.c"
+// Vereda: verdict none

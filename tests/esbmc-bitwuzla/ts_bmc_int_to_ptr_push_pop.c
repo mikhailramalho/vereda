@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^TS BMC step 10: safe
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

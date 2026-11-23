@@ -8,3 +8,4 @@ int main() { pthread_t a; pthread_create(&a, 0, t, 0); assert(x == 5); return 0;
 // RUN: --schedule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

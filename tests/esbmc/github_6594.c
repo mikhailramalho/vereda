@@ -62,3 +62,4 @@ int main(void)
 // RUN: --32 --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

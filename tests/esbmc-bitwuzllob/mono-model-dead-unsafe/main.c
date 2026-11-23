@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: the local model solver is unavailable; cannot build a counterexample
 // EXPECT: SMT solver failed
+// Vereda: verdict none

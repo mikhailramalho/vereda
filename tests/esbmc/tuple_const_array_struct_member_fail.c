@@ -83,3 +83,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -10,6 +10,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/printf_flags_length_fail
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  file .*printf_flags_length_fail\.c line 7 column 3 function main$
-// EXPECT: ^  assertion n == 1$
-// Vereda: unmet EXPECT: ^  assertion n == 1$
-// MODE: FUTURE

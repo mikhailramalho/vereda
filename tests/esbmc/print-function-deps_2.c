@@ -15,3 +15,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^c:@F@main -> c:@F@swap\(&x, &y\) \[.*print\-function\-deps_2\.c:\d+\]$
 // EXPECT: ^__ESBMC_main -> c:@F@main\(\) \[.*print\-function\-deps_2\.c:\d+\]$
+// Vereda: verdict none

@@ -26,3 +26,4 @@ int main()
 // RUN: --interval-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

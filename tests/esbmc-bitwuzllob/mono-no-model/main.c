@@ -9,3 +9,4 @@ int main()
 // RUN: --bitwuzllob --bitwuzllob-prog fake-mallob.sh
 // MODE: FUTURE
 // EXPECT: requires a local interactive SMT-LIB2 solver
+// Vereda: verdict none

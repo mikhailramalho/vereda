@@ -14,6 +14,6 @@ int main()
 // RUN: --result-only
 // MODE: FUTURE
 // EXPECT: ^ +NOT CHECKED .*a is not (one|two)$
-// EXPECT: ^\*\* 1 of 3 properties failed, 1 passed, 1 not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*PASSED .*a is not )[\s\S]*\Z
+// Vereda: verdict none

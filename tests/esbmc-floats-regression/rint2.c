@@ -31,3 +31,4 @@ int main(void)
 // RUN: --floatbv --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

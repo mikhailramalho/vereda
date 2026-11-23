@@ -27,3 +27,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  a = 1\.250000e\+0f \(
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -51,3 +51,4 @@ int main()
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --floatbv --unwind 3 --context-bound 3 --smt-during-symex --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

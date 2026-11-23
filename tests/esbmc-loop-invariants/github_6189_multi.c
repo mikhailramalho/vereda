@@ -41,3 +41,4 @@ int main()
 // RUN: --multi-property --result-only --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

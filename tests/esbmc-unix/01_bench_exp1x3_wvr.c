@@ -76,3 +76,4 @@ int main() {
 // RUN: --unwind 4 --context-bound 3 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

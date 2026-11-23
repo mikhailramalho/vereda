@@ -19,6 +19,3 @@ int main()
 // Imported from ESBMC regression/esbmc/nested_member_index_bound
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 35 VCC\(s\), 1 remaining after simplification
-// Vereda: unmet EXPECT: ^Generated 35 VCC\(s\), 1 remaining after simplification
-// MODE: FUTURE

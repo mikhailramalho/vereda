@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: value: "\(signed int\)c >= 0 && i <= 3 && \(signed int\)c \+ 1 > 0"$
+// Vereda: verdict none

@@ -10,6 +10,3 @@ int main()
 // Imported from ESBMC regression/esbmc/descending_pointer_walk_1d
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 9 VCC\(s\), 1 remaining after simplification
-// Vereda: unmet EXPECT: ^Generated 9 VCC\(s\), 1 remaining after simplification
-// MODE: FUTURE

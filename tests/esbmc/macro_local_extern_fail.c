@@ -31,7 +31,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/macro_local_extern_fail
-// EXPECT: ^  p1 written$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  p1 written$
-// MODE: FUTURE

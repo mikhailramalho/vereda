@@ -17,7 +17,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10891_union_store_fail
-// EXPECT: ^  assertion r.v == 8$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion r.v == 8$
-// MODE: FUTURE

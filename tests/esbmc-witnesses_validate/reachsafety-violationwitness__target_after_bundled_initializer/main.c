@@ -8,3 +8,4 @@ int main(void)
 // RUN: --overflow-check --no-fp-overflow-check --validate-violation-witness --witness witness.yml --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

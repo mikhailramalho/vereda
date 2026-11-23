@@ -15,3 +15,4 @@ int main(void)
 // RUN: --gcc-nested-functions --no-library --goto-functions-only
 // MODE: FUTURE
 // EXPECT: esbmc-nested\.gcc_nested_func_stable_name\.c@F@__esbmc_nested_
+// Vereda: verdict none

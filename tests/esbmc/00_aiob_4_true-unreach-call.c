@@ -186,3 +186,4 @@ return ;
 // RUN: --floatbv --z3 --no-pointer-check --no-bounds-check --error-label ERROR --unwind 48
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

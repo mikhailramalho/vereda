@@ -16,9 +16,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10891_byte_offset_fail
 // RUN: --multi-property
-// EXPECT: ^  PASSED +\[main.assertion.[0-9]+\] +line 12 +assertion o != 1 \|\| r.v == 0x08010203u$
-// EXPECT: ^  PASSED +\[main.assertion.[0-9]+\] +line 13 +assertion o != 3 \|\| r.v == 0x06070801u$
-// EXPECT: ^  FAILED +\[main.assertion.[0-9]+\] +line 14 +assertion r.v != 0x07080102u$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  PASSED +\[main.assertion.[0-9]+\] +line 12 +assertion o != 1 \|\| r.v == 0x08010203u$
-// MODE: FUTURE

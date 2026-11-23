@@ -24,6 +24,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7548_getline_stale_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion line\[0\] == 'a'$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

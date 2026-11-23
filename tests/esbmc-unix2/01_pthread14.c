@@ -36,3 +36,4 @@ int main()
 // RUN: --no-por -Wno-error=implicit-function-declaration -Wno-error=int-conversion
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -17,6 +17,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7907_layout_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion offsetof\(struct S, v\) == 4$
-// Vereda: unmet EXPECT: ^.*assertion offsetof\(struct S, v\) == 4$
-// MODE: FUTURE

@@ -27,3 +27,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Bug found by the base case \(k = [0-9]+\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

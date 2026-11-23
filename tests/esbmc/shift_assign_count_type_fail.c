@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  undefined behavior on shift operation lshr$
 // MODE: FUTURE
+// Vereda: verdict FAILED

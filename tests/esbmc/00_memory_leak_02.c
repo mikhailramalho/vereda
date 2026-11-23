@@ -22,3 +22,4 @@ int main()
 // RUN: --memory-leak-check -Wno-error=implicit-function-declaration --no-reachable-memory-leak --no-abnormal-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

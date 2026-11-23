@@ -27,3 +27,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[exit\.memory-leak\.\d+\]
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

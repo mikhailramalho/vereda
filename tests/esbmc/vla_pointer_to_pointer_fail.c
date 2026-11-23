@@ -16,8 +16,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_pointer_to_pointer_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED .* assertion \(\*\*pp\)\[m - 1\] == 8$
 // EXPECT: ^\*\* 1 of [0-9]+ properties failed
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .* assertion \(\*\*pp\)\[m - 1\] == 8$
-// MODE: FUTURE

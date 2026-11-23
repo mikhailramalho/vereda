@@ -4,3 +4,4 @@ int main(void) {}
 // RUN: --k-induction --base-k-step 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

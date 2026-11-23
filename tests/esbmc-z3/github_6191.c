@@ -13,3 +13,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Violated property:$
 // EXPECT: \A(?![\s\S]*Can't get boolean value)[\s\S]*\Z
+// Vereda: verdict none

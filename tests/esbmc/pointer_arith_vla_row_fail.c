@@ -14,7 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer_arith_vla_row_fail
-// EXPECT: ^  vla row$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  vla row$
-// MODE: FUTURE

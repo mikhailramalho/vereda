@@ -9,3 +9,4 @@ int main()
 // RUN: --bitwuzllob --bitwuzllob-prog always-sat-mallob.sh --bitwuzllob-model-prog cutoff-model.sh
 // MODE: FUTURE
 // EXPECT: ^ERROR: SMT solver process failed
+// Vereda: verdict none

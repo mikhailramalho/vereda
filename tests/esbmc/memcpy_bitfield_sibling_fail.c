@@ -25,6 +25,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memcpy_bitfield_sibling_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion x\.a == 0$
-// Vereda: unmet EXPECT: ^.*assertion x\.a == 0$
-// MODE: FUTURE

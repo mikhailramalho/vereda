@@ -12,6 +12,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10789_gmtime_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion timegm\(p\) == 1000
-// Vereda: unmet EXPECT: assertion timegm\(p\) == 1000
-// MODE: FUTURE

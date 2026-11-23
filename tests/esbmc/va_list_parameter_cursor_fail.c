@@ -27,6 +27,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/va_list_parameter_cursor_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion f\(2, 1, 2\) == 12
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

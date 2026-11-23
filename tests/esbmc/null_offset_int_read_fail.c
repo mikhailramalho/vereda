@@ -19,3 +19,4 @@ int main() { return detach(var_group1) != 0; }
 // EXPECT: ^  dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

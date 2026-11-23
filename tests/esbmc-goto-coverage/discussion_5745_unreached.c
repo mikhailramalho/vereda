@@ -37,9 +37,6 @@ int main()
 // MODE: FUTURE
 // EXPECT: Reached Assertion Instances: 3
 // EXPECT: Unreached Asserts: 4
-// EXPECT: dead concrete else A.*discussion_5745_unreached\.c line 15.* : UNREACHED
-// EXPECT: dead concrete else B.*discussion_5745_unreached\.c line 16.* : UNREACHED
-// EXPECT: dead symbolic then A.*discussion_5745_unreached\.c line 26.* : UNREACHED
-// EXPECT: dead symbolic then B.*discussion_5745_unreached\.c line 27.* : UNREACHED
 // EXPECT: Assertion Instances Coverage: 42.8
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

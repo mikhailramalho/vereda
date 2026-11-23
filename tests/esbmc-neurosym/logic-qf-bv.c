@@ -11,3 +11,4 @@ int main()
 // EXPECT: \(set-logic QF_BV\)
 // EXPECT: \(check-sat\)
 // EXPECT: SMT formula written to standard output
+// Vereda: verdict none

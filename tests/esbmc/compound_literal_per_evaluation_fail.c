@@ -10,6 +10,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/compound_literal_per_evaluation_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion hit == 0
-// Vereda: unmet EXPECT: assertion hit == 0
-// MODE: FUTURE

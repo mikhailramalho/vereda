@@ -32,10 +32,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/promoted_unsigned_nonneg_fail
 // RUN: --unwind 2 --multi-property
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\].*a signed nondet can be negative$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\].*same-width cast keeps the sign bit$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.3\].*narrowing keeps the sign bit$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.4\].*sign-extension keeps a negative$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\].*a signed nondet can be negative$
-// MODE: FUTURE

@@ -9,3 +9,4 @@ main()
 // RUN: --parallel-solving -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=format-security
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

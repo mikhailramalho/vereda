@@ -17,3 +17,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ASSIGN p=&a\[0\] \+ 1;
 // EXPECT: ASSIGN d=&a\[0\] - q;
+// Vereda: verdict none

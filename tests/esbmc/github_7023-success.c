@@ -10,8 +10,6 @@ int main()
 // Needs: --result-only
 // RUN: --result-only
 // MODE: FUTURE
-// EXPECT: ^ +PASSED .*line +5 +addition commutes$
-// EXPECT: ^ +PASSED .*line +6 +zero annihilates$
-// EXPECT: ^\*\* 0 of 2 properties failed, 2 passed$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z
+// Vereda: verdict none

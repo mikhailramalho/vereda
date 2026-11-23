@@ -47,3 +47,4 @@ int main() {
 // RUN: --unwind 10 --context-bound 2 -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

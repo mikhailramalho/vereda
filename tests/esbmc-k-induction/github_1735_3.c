@@ -18,3 +18,4 @@ c:
 // RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

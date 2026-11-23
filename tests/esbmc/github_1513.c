@@ -52,3 +52,4 @@ void generate_fortune(struct Player *player) {
 // RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property --no-unwinding-assertions --no-remove-unreachable
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

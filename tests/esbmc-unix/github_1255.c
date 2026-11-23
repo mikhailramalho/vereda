@@ -28,3 +28,4 @@ int main() {
 // RUN: --data-races-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

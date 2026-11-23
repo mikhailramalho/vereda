@@ -18,3 +18,4 @@ int main() {
 // EXPECT: ^WARNING: havocked state holds a pointer or an empty aggregate$
 // EXPECT: ^TS-CHECK rejected$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

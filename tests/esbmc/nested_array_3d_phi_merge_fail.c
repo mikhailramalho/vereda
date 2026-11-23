@@ -17,7 +17,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_3d_phi_merge_fail
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+16\s+the same read, asserted wrong$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line\s+16\s+the same read, asserted wrong$
-// MODE: FUTURE

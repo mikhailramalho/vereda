@@ -21,3 +21,4 @@ done:
 // RUN: --gcc-nested-functions --no-library
 // MODE: FUTURE
 // EXPECT: GCC __label__ declarations are not supported
+// Vereda: verdict none

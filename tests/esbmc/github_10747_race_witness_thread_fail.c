@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: format_version: "2\.4"
 // EXPECT: (?s)type: "target"(?:(?!waypoint:).)*thread_id: any\s+- waypoint:\s+type: "target"(?:(?!waypoint:).)*thread_id: any
+// Vereda: verdict none

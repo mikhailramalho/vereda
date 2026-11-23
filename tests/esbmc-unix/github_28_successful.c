@@ -39,3 +39,4 @@ int main()
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --no-align-check --k-step 2 --floatbv --unlimited-k-steps --context-bound 2 --64 --k-induction --max-inductive-step 3 --no-pointer-check --no-bounds-check -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

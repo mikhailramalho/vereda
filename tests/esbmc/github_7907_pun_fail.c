@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7907_pun_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*assertion buf\[3\] == 4$
-// Vereda: unmet EXPECT: ^.*assertion buf\[3\] == 4$
-// MODE: FUTURE

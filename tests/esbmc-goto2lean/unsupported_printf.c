@@ -8,3 +8,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported statement code_printf
+// Vereda: verdict none

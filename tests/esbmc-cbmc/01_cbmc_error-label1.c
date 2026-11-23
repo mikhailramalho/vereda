@@ -14,3 +14,4 @@ int main()
 // RUN: --error-label ERROR
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

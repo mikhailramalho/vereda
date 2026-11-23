@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^\s*FAILED\s+\[main\.invalidated-dynamic-object\.1\]\s+line 11\s+dereference failure: invalidated dynamic object$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

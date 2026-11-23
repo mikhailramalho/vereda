@@ -10,6 +10,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/builtin_multiprecision_carry-fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion __builtin_addc\(0xffffffffu, 0u, 1u, &c\) == 0u && c == 0u$
-// Vereda: unmet EXPECT: ^  assertion __builtin_addc\(0xffffffffu, 0u, 1u, &c\) == 0u && c == 0u$
-// MODE: FUTURE

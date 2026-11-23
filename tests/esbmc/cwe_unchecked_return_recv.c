@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  unchecked return value of recv: n$
 // EXPECT: ^  CWE: CWE-252$
+// Vereda: verdict none

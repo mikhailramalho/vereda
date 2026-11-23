@@ -23,3 +23,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  r != 1$
 // MODE: FUTURE
+// Vereda: verdict FAILED

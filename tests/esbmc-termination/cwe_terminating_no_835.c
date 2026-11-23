@@ -15,3 +15,4 @@ int main(void)
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

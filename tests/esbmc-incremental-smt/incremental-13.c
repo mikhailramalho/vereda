@@ -16,3 +16,4 @@ int main()
 // RUN: --smt-during-symex --smt-symex-assert --incremental-bmc --unlimited-k-steps --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

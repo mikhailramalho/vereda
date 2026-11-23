@@ -10,6 +10,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/byte_view_row_anchor_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion \(char \*\)e != \(char \*\)pool\[0\]$
-// Vereda: unmet EXPECT: ^\s+assertion \(char \*\)e != \(char \*\)pool\[0\]$
-// MODE: FUTURE

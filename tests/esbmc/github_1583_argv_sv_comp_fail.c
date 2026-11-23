@@ -21,3 +21,4 @@ int main(int argc, char *argv[])
 // RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

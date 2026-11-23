@@ -27,3 +27,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Summarised 1 array loop\(s\)$
+// Vereda: verdict none

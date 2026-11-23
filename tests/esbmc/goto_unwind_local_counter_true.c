@@ -20,3 +20,4 @@ int main()
 // RUN: --k-induction --goto-unwind --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

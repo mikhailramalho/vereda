@@ -15,4 +15,4 @@ int main(void) {
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
+// Vereda: verdict none

@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: type: "target"
 // EXPECT: file_name: "[^"]*github_7434_yaml_target_hoist\.c"
 // EXPECT: line: 12$
+// Vereda: verdict none

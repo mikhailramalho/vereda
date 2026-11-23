@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Ranking function shows all executions terminate$
 // EXPECT: ^Generating Correctness Yaml Witness for: .*ranking_witness\.c$
+// Vereda: verdict none

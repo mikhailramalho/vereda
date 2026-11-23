@@ -13,3 +13,4 @@ int main()
 // RUN: --mathsat
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

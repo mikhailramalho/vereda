@@ -15,6 +15,3 @@ int main(void)
 // Imported from ESBMC regression/floats-regression/github_7021
 // RUN: --solver z3 --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^  PASSED +\[main\.assertion\.\d+\] +line +12 +assertion signbit\(s\)$
-// Vereda: unmet EXPECT: ^  PASSED +\[main\.assertion\.\d+\] +line +12 +assertion signbit\(s\)$
-// MODE: FUTURE

@@ -12,3 +12,4 @@ int main(void)
 // RUN: --std c11 --volatile-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

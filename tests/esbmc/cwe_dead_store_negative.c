@@ -18,3 +18,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*dead store)[\s\S]*\Z
+// Vereda: verdict none

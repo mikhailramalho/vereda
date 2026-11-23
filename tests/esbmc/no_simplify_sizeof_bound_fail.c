@@ -10,4 +10,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/no_simplify_sizeof_bound_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: the array does not have four elements

@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: ^Location\.+: file .*irep2_only_implicit_callee_location_stmt\.c line 8 column 3 function main$
 // EXPECT: ^Symbol\.+: c:@F@inner$
 // EXPECT: ^Location\.+: file .*irep2_only_implicit_callee_location_stmt\.c line 12 column 5 function main$
+// Vereda: verdict none

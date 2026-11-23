@@ -18,4 +18,4 @@ int main()
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion n < 4$
+// Vereda: verdict none

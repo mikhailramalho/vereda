@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: unreachable up to the current unwinding bound
 // EXPECT: ^  CWE: CWE-561$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

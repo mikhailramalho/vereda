@@ -17,3 +17,4 @@ int main()
 // RUN: --smt-during-symex --smt-symex-guard --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -13,6 +13,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/vla_size_loop_pointer_fail
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion p\[1\]\[0\] == 3$
-// Vereda: unmet EXPECT: ^\s+assertion p\[1\]\[0\] == 3$
-// MODE: FUTURE

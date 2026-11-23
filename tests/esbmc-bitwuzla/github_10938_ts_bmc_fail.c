@@ -15,3 +15,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)
 // EXPECT: ^(VERIFICATION FAILED|ERROR: Solver error before the loop)$
+// Vereda: verdict none

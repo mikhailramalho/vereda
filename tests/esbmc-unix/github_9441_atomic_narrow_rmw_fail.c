@@ -25,5 +25,5 @@ int main(void)
 // Needs: --no-standard-checks
 // RUN: --64 --no-standard-checks --unwind 20
 // MODE: FUTURE
-// EXPECT: ^  FAILED +\[main\.assertion\.[0-9]+\] .*assertion c == 2$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

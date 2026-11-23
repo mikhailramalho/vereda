@@ -15,3 +15,4 @@ int main()
 // EXPECT: ^.*dereference failure on memchr: reading memory segment of size 4 with 8 bytes.*$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -13,3 +13,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^CLAIM-FP [0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9]+\s+UNSAT\s
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

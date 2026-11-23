@@ -20,3 +20,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*restrict pointer aliasing$
+// Vereda: verdict none

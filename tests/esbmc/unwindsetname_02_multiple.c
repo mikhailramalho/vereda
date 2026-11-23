@@ -53,3 +53,4 @@ int main() {
 // RUN: --unwindsetname func_ten:0:11,func_five:0:6,func_three:0:4 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(){
 // RUN: --interval-analysis --goto-contractor --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

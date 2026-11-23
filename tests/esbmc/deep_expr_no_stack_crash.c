@@ -19,3 +19,4 @@ int main(void){
 // EXPECT: ^(ERROR: expression nesting is too deep to migrate.*|VERIFICATION SUCCESSFUL)$
 // Vereda: unmet EXPECT: ^(ERROR: expression nesting is too deep to migrate.*|VERIFICATION SUCCESSFUL)$
 // MODE: FUTURE
+// Vereda: verdict none

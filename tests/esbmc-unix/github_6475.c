@@ -37,3 +37,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*Deadlocked state.*$
 // EXPECT: ^  CWE: CWE-833$
+// Vereda: verdict none

@@ -35,3 +35,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Context bound \d+ covered every interleaving
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

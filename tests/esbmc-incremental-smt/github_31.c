@@ -26,3 +26,4 @@ int main()
 // RUN: --no-bounds-check --no-pointer-check --no-div-by-zero-check --smt-during-symex --smt-symex-guard --z3 --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

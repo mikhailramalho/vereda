@@ -31,3 +31,4 @@ int main(void)
 // RUN: --context-bound 3 --cswitch-skip-readonly-globals
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

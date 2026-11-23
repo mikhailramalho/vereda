@@ -18,4 +18,4 @@ int main(void)
 // RUN: --no-vla-size-check --no-bounds-check --reserve-first-page
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion \(unsigned long( int)?\)a == 0$
+// Vereda: verdict none

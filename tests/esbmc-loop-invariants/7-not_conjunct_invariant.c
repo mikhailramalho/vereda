@@ -21,3 +21,4 @@ int main()
 // RUN: --loop-invariant-check --multi-property
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

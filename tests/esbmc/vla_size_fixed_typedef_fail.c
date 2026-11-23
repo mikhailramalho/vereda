@@ -10,6 +10,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_size_fixed_typedef_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion sizeof\(x\) == 5 \* sizeof\(int\)$
-// Vereda: unmet EXPECT: ^\s+assertion sizeof\(x\) == 5 \* sizeof\(int\)$
-// MODE: FUTURE

@@ -40,3 +40,4 @@ int main()
 // RUN: --irep2-bodies --unwind 5 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

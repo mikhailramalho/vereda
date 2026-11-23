@@ -35,3 +35,4 @@ int main(void)
 // RUN: --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -11,3 +11,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: assertion
+// Vereda: verdict none

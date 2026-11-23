@@ -51,3 +51,4 @@ int main()
 // RUN: --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

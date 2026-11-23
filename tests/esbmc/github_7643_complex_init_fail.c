@@ -10,6 +10,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7643_complex_init_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion __real__ z == 2$
-// Vereda: unmet EXPECT: ^  assertion __real__ z == 2$
-// MODE: FUTURE

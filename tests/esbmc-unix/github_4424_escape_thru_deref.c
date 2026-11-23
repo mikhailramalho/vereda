@@ -12,3 +12,4 @@ int main(void) { pthread_t id; int i = 0; int **pp = &g; *pp = &i;
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race.*$
+// Vereda: verdict none

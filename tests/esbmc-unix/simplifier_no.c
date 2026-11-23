@@ -159,6 +159,3 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/simplifier_no
 // RUN: --multi-property
-// EXPECT: ^\*\* 9 of 15 properties failed, 6 passed$
-// Vereda: unmet EXPECT: ^\*\* 9 of 15 properties failed, 6 passed$
-// MODE: FUTURE

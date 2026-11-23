@@ -28,3 +28,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*can start a thread)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

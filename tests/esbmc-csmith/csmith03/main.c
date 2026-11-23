@@ -1607,3 +1607,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --no-unwinding-assertions --unwind 15 --direct-interleavings --print-stack-traces --z3 --memstats
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

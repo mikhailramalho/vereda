@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: ^  \+- Witness 1 of [0-9]+ -+$
 // EXPECT: ^  \|  Inputs : \[0\] = -?[0-9]+$
 // EXPECT: ^  \+-+$
+// Vereda: verdict none

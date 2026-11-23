@@ -9,3 +9,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^ESBMC version
 // EXPECT: ^ERROR: --k-step \(2\) must be smaller than --max-k-step \(1\)\.
+// Vereda: verdict none

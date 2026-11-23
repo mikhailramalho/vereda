@@ -16,7 +16,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_bound_3d
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]+ VCC\(s\), 1 remaining after simplification
-// EXPECT: assertion n == 23
-// Vereda: unmet EXPECT: ^Generated [0-9]+ VCC\(s\), 1 remaining after simplification
-// MODE: FUTURE

@@ -10,3 +10,4 @@ int main()
 // RUN: --summarize-array-loops --uninitialised-vars-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

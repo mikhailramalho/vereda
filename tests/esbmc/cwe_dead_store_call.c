@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: dead store: assignment to x never read
 // EXPECT: ^  CWE: CWE-563$
+// Vereda: verdict none

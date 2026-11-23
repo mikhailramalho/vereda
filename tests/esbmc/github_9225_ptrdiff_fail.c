@@ -13,6 +13,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9225_ptrdiff_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion a - q == -2$
-// Vereda: unmet EXPECT: ^  assertion a - q == -2$
-// MODE: FUTURE

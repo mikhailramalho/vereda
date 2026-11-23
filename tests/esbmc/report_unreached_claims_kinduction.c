@@ -16,4 +16,4 @@ int main(void)
 // RUN: --report-unreached-claims --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[never_called\.assertion\.1\]\s+line\s+4\s+assertion v > 0 \(never reached\)$
+// Vereda: verdict none

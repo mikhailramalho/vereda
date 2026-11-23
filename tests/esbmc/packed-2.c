@@ -18,3 +18,4 @@ short fun2(P *p, size_t i)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct .*P.*$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

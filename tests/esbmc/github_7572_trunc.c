@@ -25,5 +25,6 @@ int main(void)
 // EXPECT: ^  PASSED       \[main\.assertion\.1\]\s+line 14  floating-point conversion out of range of unsignedbv on typecast$
 // EXPECT: ^  PASSED       \[main\.assertion\.3\]\s+line 19  floating-point conversion out of range of signedbv on typecast$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^  PASSED       \[main\.assertion\.1\]\s+line 14  floating-point conversion out of range of unsignedbv on 
+// Vereda: unmet EXPECT: ^  PASSED       \[main\.assertion\.1\]\s+line 14  floating-point conversion out of range of unsignedbv on typecast$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

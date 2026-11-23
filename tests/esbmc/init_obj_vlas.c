@@ -10,3 +10,4 @@ int main()
 // EXPECT: ^ERROR: __ESBMC_init_object does not support VLAs$
 // Vereda: unmet EXPECT: ^ERROR: __ESBMC_init_object does not support VLAs$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

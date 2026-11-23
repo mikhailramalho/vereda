@@ -14,4 +14,4 @@ int main(void)
 // RUN: --64 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion isnan\(r\)$
+// Vereda: verdict none

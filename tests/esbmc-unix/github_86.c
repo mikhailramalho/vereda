@@ -23,3 +23,4 @@ int main()
 // RUN: --schedule --memory-leak-check --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

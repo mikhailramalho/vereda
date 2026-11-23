@@ -34,3 +34,4 @@ int main()
 // RUN: --data-races-check --no-assertions --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

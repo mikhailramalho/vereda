@@ -11,7 +11,13 @@ describes it:
 
 IR files use ';' instead of '//'. KNOWNBUG and FUTURE tests are expected to
 fail; the run then passes, with exit code 77 so that ctest calls it skipped,
-exactly when some expectation does not hold. A run past --timeout is skipped
+exactly when some expectation does not hold, as long as the verdict is the one
+--mark in import_esbmc.py recorded as `// Vereda: verdict X`: a different
+verdict fails the run with exit code 4, saying whether it got worse (it was the
+expected one), is now right (promote the test or re-mark it), or just changed.
+Every run ends with a `verdict: X` line, which --mark reads, and with
+REGRESS_REMARK set (as --mark sets it) the recorded verdict is not checked. A run past
+--timeout is skipped
 too, whatever the mode: how long a test takes depends on the machine and its
 load, so a timeout says nothing about the verdict. A run that goes past
 --memory-limit fails, with exit code 3 so that --mark in import_esbmc.py
@@ -37,12 +43,18 @@ import tempfile
 import time
 
 HEADER = re.compile(r"^\s*(?://|;)\s*(RUN|EXPECT|EXPECT-NOT|MODE|FILES):\s*(.*?)\s*$")
+# The verdict a marked test gave when --mark last ran it.
+RECORDED = re.compile(r"^\s*(?://|;)\s*Vereda: verdict (\S+)\s*$")
+# An expectation that is just the verdict, as test.desc files write it.
+EXPECTED = re.compile(r"\^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\$?")
 FAIL_MODES = ("KNOWNBUG", "FUTURE")
 # Exit code of a KNOWNBUG or FUTURE test that fails as expected; ctest
 # reports it as skipped (SKIP_RETURN_CODE in CMakeLists.txt).
 SKIPPED = 77
 # Exit code of a run that went past --memory-limit.
 OUT_OF_MEMORY = 3
+# Exit code of a KNOWNBUG or FUTURE test whose verdict is not the recorded one.
+VERDICT_CHANGED = 4
 # What Vereda, clang and the solvers print when an allocation fails.
 NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|MemoryError")
 # Some allocations fail without a message: the binary crashes instead. A run
@@ -88,9 +100,12 @@ def record(test, start, out, verdict=None):
 
 def parse(path):
     """The header of the test at path, as a dict keyed by directive."""
-    desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": ""}
+    desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "",
+            "VERDICT": None}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
+            if r := RECORDED.match(line):
+                desc["VERDICT"] = r.group(1)
             m = HEADER.match(line)
             if not m:
                 continue
@@ -113,6 +128,32 @@ def clip(out):
     if len(lines) <= 2 * CLIP + 1:
         return out
     return "\n".join(lines[:CLIP] + [f"[... {len(lines) - 2 * CLIP} lines ...]"] + lines[-CLIP:])
+
+
+def verdict_of(out):
+    """The run's verdict, or 'none' when it printed none."""
+    verdicts = re.findall(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", out, re.MULTILINE)
+    return verdicts[-1] if verdicts else "none"
+
+
+def changed(desc, out, cmd):
+    """Whether a marked test's verdict is not the one --mark recorded;
+    prints the run and how it changed if so."""
+    now, then = verdict_of(out), desc["VERDICT"]
+    if desc["MODE"] not in FAIL_MODES or not then or now == then:
+        return False
+    expected = next((m.group(1) for r in desc["EXPECT"] if (m := EXPECTED.fullmatch(r))), None)
+    if then == expected:
+        why = f"got worse: {then} when marked, {now} now"
+    elif now == expected:
+        why = (f"verdict now right ({now}, {then} when marked): promote the test to CORE "
+               "if the other expectations hold, or re-mark it")
+    else:
+        why = f"verdict changed: {then} when marked, {now} now; re-mark it"
+    print("+", " ".join(cmd))
+    print(clip(out))
+    print(f"{desc['MODE']} test {why}")
+    return True
 
 
 def execute(cmd, timeout, memory_limit):
@@ -181,6 +222,9 @@ def main():
         return OUT_OF_MEMORY
 
     record(test, start, out)
+    print(f"verdict: {verdict_of(out)}")
+    if not os.environ.get("REGRESS_REMARK") and changed(desc, out, cmd):
+        return VERDICT_CHANGED
     unmet = [f"EXPECT: {r}" for r in desc["EXPECT"] if not re.search(r, out, re.MULTILINE)]
     unmet += [f"EXPECT-NOT: {r}" for r in desc["EXPECT-NOT"] if re.search(r, out, re.MULTILINE)]
     expected_to_fail = desc["MODE"] in FAIL_MODES

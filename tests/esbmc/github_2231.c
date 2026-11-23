@@ -101,3 +101,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: dereference failure: NULL pointer
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

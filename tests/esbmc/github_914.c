@@ -158,3 +158,4 @@ int ludcmp(int nmax, int n, double eps)
 // RUN: --interval-analysis --no-unwinding-assertions --unwind 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

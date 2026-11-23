@@ -1675,3 +1675,4 @@ XXX percentage an existing variable is used: 78.6
 // RUN: --no-unwinding-assertions --unwind 15 --show-goto-value-sets --falsification --no-pointer-check --ssa-symbol-table --partial-loops --no-align-check --memory-leak-check --little-endian --force-malloc-success --mathsat
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

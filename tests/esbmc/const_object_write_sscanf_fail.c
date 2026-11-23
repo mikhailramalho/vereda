@@ -10,3 +10,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: write access to const object `c'$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

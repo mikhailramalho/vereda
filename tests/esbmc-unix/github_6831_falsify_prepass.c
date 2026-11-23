@@ -41,3 +41,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 2$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -34,3 +34,4 @@ int main(void)
 // RUN: --incremental-context-bound --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --incremental-context-bound cannot be combined with --incremental-bmc$
+// Vereda: verdict none

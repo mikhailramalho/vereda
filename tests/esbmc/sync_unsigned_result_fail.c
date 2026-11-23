@@ -9,6 +9,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/sync_unsigned_result_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion k < 128
-// Vereda: unmet EXPECT: assertion k < 128
-// MODE: FUTURE

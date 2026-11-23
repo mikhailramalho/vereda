@@ -24,3 +24,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported nested loop
+// Vereda: verdict none

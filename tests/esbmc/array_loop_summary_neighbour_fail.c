@@ -11,3 +11,4 @@ int main()
 // RUN: --summarize-array-loops --unwind 51 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

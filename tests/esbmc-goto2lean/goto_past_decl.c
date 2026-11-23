@@ -17,3 +17,4 @@ L:
 // MODE: FUTURE
 // EXPECT: ^    let join_2 := \(fun \(x : BitVec 32\) =>$
 // EXPECT: ^      join_2 x\) ∧$
+// Vereda: verdict none

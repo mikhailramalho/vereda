@@ -22,6 +22,6 @@ int main(void)
 // Needs: --little-endian
 // RUN: --little-endian --multi-property
 // MODE: FUTURE
-// EXPECT: ^  FAILED .* assertion v.p == 1 && v.q == 0x0201 && v.r == 4$
 // EXPECT: ^\*\* 1 of [0-9]+ properties failed
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

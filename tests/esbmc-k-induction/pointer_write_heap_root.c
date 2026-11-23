@@ -43,3 +43,4 @@ int main()
 // RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

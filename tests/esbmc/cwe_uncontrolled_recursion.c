@@ -17,3 +17,4 @@ int main(void)
 // EXPECT: ^  CWE: CWE-674$
 // Vereda: unmet EXPECT: ^  uncontrolled recursion in f$
 // MODE: FUTURE
+// Vereda: verdict FAILED

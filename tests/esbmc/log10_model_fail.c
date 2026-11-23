@@ -11,7 +11,7 @@ int main()
 // Imported from ESBMC regression/esbmc/log10_model_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: FAILED\s+\[main.assertion.2\].*log10\(1000.0\) != 3.0
-// Vereda: unmet EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
+// Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*log10\(1000.0\) != 3.0
 // MODE: FUTURE
+// Vereda: verdict FAILED

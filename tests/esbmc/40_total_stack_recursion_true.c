@@ -16,3 +16,4 @@ int main(void)
 // RUN: --unwind 6 --stack-limit 512 --total-stack-limit 1280
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

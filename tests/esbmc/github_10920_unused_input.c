@@ -15,3 +15,4 @@ int main()
 // EXPECT: ^\[Counterexamples - 1 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

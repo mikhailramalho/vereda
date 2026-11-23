@@ -32,3 +32,4 @@ int main(void) {
 // EXPECT: (?s)type: "function_enter"(?:(?!waypoint:).)*line: 19\s+column: 32
 // EXPECT: (?s)function: "t1"\s+thread_id: 1.*function: "t2"\s+thread_id: 2.*function: "t1"\s+thread_id: 1
 // EXPECT: (?s)type: "target"(?:(?!thread_id).)*\Z
+// Vereda: verdict none

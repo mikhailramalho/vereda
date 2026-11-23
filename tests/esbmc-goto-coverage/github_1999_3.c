@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^Condition Properties - UNSATISFIED:  0
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: :9: dead code: unreachable branch
 // EXPECT: ^  CWE: CWE-561$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

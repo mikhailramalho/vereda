@@ -29,3 +29,4 @@ int main()
 // RUN: --generate-testcase --unwind 3 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -16,3 +16,4 @@ int main(void)
 // RUN: --interval-analysis --interval-analysis-arithmetic
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

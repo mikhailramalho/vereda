@@ -16,3 +16,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  \(∀ i : BitVec 32, \(\(i ≤ \(i \+ x\)\) ∨ \(\(4294967285#32\) < i\)\)\) ∧ \($
 // EXPECT: ^  all_goals bv_decide$
+// Vereda: verdict none

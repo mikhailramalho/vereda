@@ -20,3 +20,4 @@ c:
 // RUN: --k-induction --no-remove-unreachable --goto-functions-only
 // MODE: FUTURE
 // EXPECT: main \(c:@F@main\):\n[^\n]*\n\s*ASSIGN a=NONDET\(_Bool\);\n[^\n]*\n\s*ASSIGN b=NONDET\(_Bool\);\n[^\n]*\n\s*GOTO \d+\n
+// Vereda: verdict none

@@ -13,3 +13,4 @@ int main(void)
 // RUN: --fixedbv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

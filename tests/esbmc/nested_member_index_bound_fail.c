@@ -19,4 +19,3 @@ int main()
 // Imported from ESBMC regression/esbmc/nested_member_index_bound_fail
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: the walk does not cover four elements

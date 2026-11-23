@@ -17,6 +17,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/vector_op_nonconstant_lane_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion c\[2\] == 3$
-// Vereda: unmet EXPECT: ^\s+assertion c\[2\] == 3$
-// MODE: FUTURE

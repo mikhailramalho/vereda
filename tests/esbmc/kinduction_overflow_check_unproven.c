@@ -14,3 +14,4 @@ int main(void)
 // RUN: --overflow-check --k-induction --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

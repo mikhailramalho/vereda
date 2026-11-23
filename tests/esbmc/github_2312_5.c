@@ -12,3 +12,4 @@ int main(int argc, char *argv[])
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict FAILED

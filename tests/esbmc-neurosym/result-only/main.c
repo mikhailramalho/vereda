@@ -9,3 +9,4 @@ int main()
 // RUN: --neurosym --neurosym-prog fake-neurosym.sh --result-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

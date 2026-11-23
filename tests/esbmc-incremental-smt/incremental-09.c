@@ -22,3 +22,4 @@ int main() {
 // RUN: --smt-during-symex --smt-symex-assert --k-induction --z3 --max-k-step 5
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -74,3 +74,4 @@ int main()
 // RUN: --unwind 4 --context-bound 4 --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

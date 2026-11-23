@@ -18,3 +18,4 @@ int main()
 // EXPECT: switch\-line\-no\.c line 8.*\n.*\n\s*data =
 // Vereda: unmet EXPECT: switch\-line\-no\.c line 8.*\n.*\n\s*data =
 // MODE: FUTURE
+// Vereda: verdict FAILED

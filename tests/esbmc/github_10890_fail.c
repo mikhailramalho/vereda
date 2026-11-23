@@ -19,7 +19,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10890_fail
 // RUN: -m64
-// EXPECT: ^  assertion u.v == 0x11223344u$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion u.v == 0x11223344u$
-// MODE: FUTURE

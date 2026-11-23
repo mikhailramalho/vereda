@@ -15,3 +15,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  FAILED +\[main\.pointer-arithmetic-out-of-bounds\.\d+\] +line 10 +pointer arithmetic out of bounds: array upper bound$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

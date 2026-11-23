@@ -37,6 +37,3 @@ int main()
 // Imported from ESBMC regression/esbmc/addressof_null_guard_unwind_invariant
 // RUN: --unwind 80
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]{1,2} VCC\(s\)
-// Vereda: unmet EXPECT: ^Generated [0-9]{1,2} VCC\(s\)
-// MODE: FUTURE

@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: ^.*floating-point conversion out of range.*$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -24,5 +24,4 @@ int main()
 // RUN: --loop-invariant --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.3\]\s+line\s+16\s+assertion n != 7 \(loop invariant too weak
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.4\]\s+line\s+16\s+assertion n != 7$
+// Vereda: verdict none

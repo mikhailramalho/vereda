@@ -8,3 +8,4 @@ int main()
 // EXPECT: ^ERROR: PARSING ERROR$
 // Vereda: unmet EXPECT: ^ERROR: PARSING ERROR$
 // MODE: FUTURE
+// Vereda: verdict none

@@ -57,3 +57,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@data$
+// Vereda: verdict none

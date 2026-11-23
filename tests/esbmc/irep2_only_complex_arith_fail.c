@@ -21,5 +21,5 @@ int main(void)
 // Needs: --clang-c-irep2-adjust-only
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
-// EXPECT: ^  assertion __imag__ z == 99\.0$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

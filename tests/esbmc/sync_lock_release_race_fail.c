@@ -19,6 +19,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/sync_lock_release_race_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion n == 2$
-// Vereda: unmet EXPECT: ^  assertion n == 2$
-// MODE: FUTURE

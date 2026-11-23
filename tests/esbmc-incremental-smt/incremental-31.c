@@ -63,3 +63,4 @@ int main() {
 // RUN: --context-bound 2 --data-races-check --multi-property --smt-symex-assume --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

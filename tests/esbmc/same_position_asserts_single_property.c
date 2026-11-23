@@ -14,3 +14,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)j < 4\]$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

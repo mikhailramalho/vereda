@@ -25,3 +25,4 @@ int main()
 // RUN: --loop-invariant-check --loop-frame-rule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

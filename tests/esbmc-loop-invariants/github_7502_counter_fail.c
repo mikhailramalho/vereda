@@ -20,5 +20,5 @@ int main()
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.5\]\s+line\s+16\s+assertion cnt == 4 \(loop invariant too weak
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

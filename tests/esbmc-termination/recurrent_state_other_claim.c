@@ -14,3 +14,4 @@ int main(void)
 // RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --no-pointer-check --no-bounds-check --no-assertions --stack-limit 1024
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

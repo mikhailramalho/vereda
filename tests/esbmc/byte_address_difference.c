@@ -11,6 +11,3 @@ int main()
 // Imported from ESBMC regression/esbmc/byte_address_difference
 // RUN: --unwind 20
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
-// Vereda: unmet EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

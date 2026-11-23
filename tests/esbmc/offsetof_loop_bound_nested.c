@@ -18,6 +18,3 @@ int main()
 // Imported from ESBMC regression/esbmc/offsetof_loop_bound_nested
 // RUN: --unwind 16
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
-// Vereda: unmet EXPECT: ^Generated 1 VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

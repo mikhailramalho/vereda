@@ -10,3 +10,4 @@ int main()
 // RUN: --overflow-check --no-fp-conversion-check --no-fp-overflow-check --no-pointer-check --no-bounds-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -9,3 +9,4 @@ int main()
 // RUN: --neurosym --neurosym-prog fake-neurosym.sh
 // MODE: FUTURE
 // EXPECT: requires a local interactive SMT-LIB2 solver
+// Vereda: verdict none

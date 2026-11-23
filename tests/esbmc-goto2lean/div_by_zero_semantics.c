@@ -11,3 +11,4 @@ int main(void) {
 // RUN: --goto2lean --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^  let q := \(BitVec\.smtUDiv x y\);$
+// Vereda: verdict none

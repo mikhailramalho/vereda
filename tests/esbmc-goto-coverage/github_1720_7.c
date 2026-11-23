@@ -23,3 +23,4 @@ int main()
 // EXPECT: ^Reached Conditions:  6
 // EXPECT: ^Short Circuited Conditions:  0
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

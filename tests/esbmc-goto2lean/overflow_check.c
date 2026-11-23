@@ -18,3 +18,4 @@ int main(void) {
 // EXPECT: ^  ¬\(\(BitVec\.uaddOverflow lo hi\) = true\) ∧ \($
 // EXPECT: ^  ¬\(\(\(2#32\) == 0#32\) = true\) ∧ \($
 // EXPECT: ^  post \(BitVec\.smtUDiv \(lo \+ hi\) \(2#32\)\)\)\)$
+// Vereda: verdict none

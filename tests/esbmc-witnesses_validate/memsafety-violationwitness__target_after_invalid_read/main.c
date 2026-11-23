@@ -14,3 +14,4 @@ int main(void)
 // RUN: --32 --std c11 --validate-violation-witness --witness witness.yml --memory-leak-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

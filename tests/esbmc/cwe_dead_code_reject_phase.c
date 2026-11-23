@@ -10,3 +10,4 @@ int main(void)
 // RUN: --dead-code-check --forward-condition
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --forward-condition$
+// Vereda: verdict none

@@ -44,3 +44,4 @@ int main()
 // RUN: --k-induction --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

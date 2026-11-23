@@ -27,3 +27,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^WARNING: --field-sensitive-ssa is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

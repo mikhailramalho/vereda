@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 3"\n.*\n.*\n.*\n *line: 9\n *column: 43$
 // EXPECT: value: "\\\\result == 5"\n.*\n.*\n.*\n *line: 11\n *column: 29$
+// Vereda: verdict none

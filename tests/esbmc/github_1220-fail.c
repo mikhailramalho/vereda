@@ -17,3 +17,4 @@ void f(unsigned k, unsigned v)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b
+// Vereda: verdict none

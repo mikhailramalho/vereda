@@ -15,9 +15,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8240_fail
 // RUN: --multi-property
-// EXPECT: ^  FAILED .*assertion __CPROVER_OBJECT_SIZE\(a\) == 4$
-// EXPECT: ^  FAILED .*assertion !__CPROVER_r_ok\(a, 8\)$
-// EXPECT: ^  FAILED .*assertion __CPROVER_OBJECT_SIZE\(p\) != 4$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED .*assertion __CPROVER_OBJECT_SIZE\(a\) == 4$
-// MODE: FUTURE

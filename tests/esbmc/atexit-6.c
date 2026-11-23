@@ -111,3 +111,4 @@ int main() {
 // RUN: --memory-leak-check --force-malloc-success --incremental-bmc --no-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -32,7 +32,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9434
 // RUN: -m64 --unwind 20
-// EXPECT: ^  PASSED .* assertion done == 1$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^  PASSED .* assertion done == 1$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
+// Vereda: verdict FAILED

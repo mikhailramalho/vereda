@@ -39,3 +39,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: array bounds violated: heap object$
+// Vereda: verdict none

@@ -26,6 +26,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/va_copy_callee_va_list_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion g\(1, 3\) == 9
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

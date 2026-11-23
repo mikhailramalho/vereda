@@ -32,5 +32,5 @@ int main(void)
 // Needs: --no-standard-checks
 // RUN: --no-standard-checks
 // MODE: FUTURE
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.\d+\]\s+line \d+\s+assertion VAR\.out == 1$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

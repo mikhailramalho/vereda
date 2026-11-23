@@ -40,3 +40,4 @@ int main()
 // RUN: --loop-invariant-check --multi-property --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

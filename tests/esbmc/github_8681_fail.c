@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.1\]\s+line\s+8\s
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

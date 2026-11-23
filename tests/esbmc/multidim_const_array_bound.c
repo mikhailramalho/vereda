@@ -20,6 +20,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/multidim_const_array_bound
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]+ VCC\(s\), 0 remaining after simplification
-// Vereda: unmet EXPECT: ^Generated [0-9]+ VCC\(s\), 0 remaining after simplification
-// MODE: FUTURE

@@ -29,3 +29,4 @@ int main()
 // EXPECT: FAILED .* line 20 +dereference failure: invalidated dynamic object$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

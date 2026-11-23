@@ -162,3 +162,4 @@ int main()
 // RUN: --unwind 10 --no-standard-checks --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

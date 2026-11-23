@@ -26,4 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  PASSED +\[main\.assertion\.1\] +line 17 +loop invariant base case$
-// EXPECT: ^\*\* 0 of 4 properties failed, 4 passed$
+// Vereda: verdict none

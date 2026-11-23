@@ -40,3 +40,4 @@ int main()
 // RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

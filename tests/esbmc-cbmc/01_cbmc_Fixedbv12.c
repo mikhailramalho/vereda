@@ -16,3 +16,4 @@ int main()
 // RUN: --fixedbv --no-slice --32 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

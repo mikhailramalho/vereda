@@ -18,3 +18,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  PASSED .*line +6  arithmetic overflow on add$
 // MODE: FUTURE
+// Vereda: verdict FAILED

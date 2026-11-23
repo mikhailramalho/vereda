@@ -14,3 +14,4 @@ int main()
 // RUN: --fp-taylor-terms 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

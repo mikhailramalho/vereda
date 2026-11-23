@@ -17,3 +17,4 @@ int main()
 // RUN: --unknown-method-args-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

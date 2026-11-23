@@ -12,3 +12,4 @@ int main() {
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: \bfoo = 42\b
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

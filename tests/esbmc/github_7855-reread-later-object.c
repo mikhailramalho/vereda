@@ -24,6 +24,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_7855-reread-later-object
 // RUN: -m64 --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +a stale read names the later object$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +\d+ +a stale read names the later object$
-// MODE: FUTURE

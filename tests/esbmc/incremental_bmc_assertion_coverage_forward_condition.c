@@ -19,3 +19,4 @@ int main()
 // EXPECT: ^Solution found by the forward condition; all states are reachable \(k = 5\)$
 // EXPECT: ^Reached Assertion Instances: 2$
 // EXPECT: ^Assertion Instances Coverage: 100%$
+// Vereda: verdict none

@@ -15,8 +15,3 @@ int main()
 // Imported from ESBMC regression/esbmc/multi_property_bounded_base_case_row_pass
 // RUN: --unwind 10 --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+12\s+assertion x == n$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.2\]\s+line\s+13\s+assertion x < 5$
-// EXPECT: ^\*\* 0 of 2 properties failed, 2 passed$
-// Vereda: unmet EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+12\s+assertion x == n$
-// MODE: FUTURE

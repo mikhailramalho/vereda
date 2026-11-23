@@ -12,3 +12,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^  arithmetic overflow on add$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

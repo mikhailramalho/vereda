@@ -28,3 +28,4 @@ int main()
 // RUN: --no-por --no-goto-merge
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

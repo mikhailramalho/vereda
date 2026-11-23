@@ -24,3 +24,4 @@ int main(void) {
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$
+// Vereda: verdict none

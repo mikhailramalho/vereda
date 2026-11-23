@@ -16,6 +16,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9433_fail
 // RUN: -m64 --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion pthread_getspecific\(k1\) != &a$
-// Vereda: unmet EXPECT: assertion pthread_getspecific\(k1\) != &a$
-// MODE: FUTURE

@@ -32,3 +32,4 @@ int main()
 // EXPECT: FAILED.*dereference failure: invalid pointer on DST$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

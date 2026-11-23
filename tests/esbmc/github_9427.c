@@ -15,3 +15,4 @@ int main(void)
 // RUN: --64 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

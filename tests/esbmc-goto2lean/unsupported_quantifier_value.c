@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported quantifier used as a value \(only guards of ASSERT, ASSUME and GOTO\)$
+// Vereda: verdict none

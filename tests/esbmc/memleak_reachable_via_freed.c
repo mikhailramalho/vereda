@@ -24,3 +24,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: forgotten memory: dynamic_2_array
+// Vereda: verdict none

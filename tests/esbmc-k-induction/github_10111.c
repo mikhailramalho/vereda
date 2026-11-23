@@ -17,3 +17,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Bug found \(k = 3\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

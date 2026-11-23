@@ -23,3 +23,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

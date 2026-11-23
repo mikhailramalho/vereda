@@ -14,3 +14,4 @@ int main() {
 // EXPECT: ^WARNING: main has more than one loop$
 // EXPECT: ^TS-CHECK rejected$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -22,3 +22,4 @@ int main()
 // EXPECT: ^Short Circuited Conditions:  10
 // EXPECT: ^Total Conditions:  22
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

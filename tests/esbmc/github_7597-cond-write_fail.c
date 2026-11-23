@@ -53,8 +53,5 @@ int main(void)
 // Needs: --no-standard-checks
 // RUN: --no-standard-checks --multi-property
 // MODE: FUTURE
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]\s+line \d+\s+assertion VAR\.step == 5$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.2\]\s+line \d+\s+assertion VAR\.out == \(IO\.in > 0 \? IO\.in \+ 2 : 0\)$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.3\]\s+line \d+\s+assertion VAR\.step == 6$
-// EXPECT: ^\s*FAILED\s+\[main\.assertion\.4\]\s+line \d+\s+assertion VAR\.arr\[3\] == \(IO\.in > 0 \? IO\.in \+ 3 : 0\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

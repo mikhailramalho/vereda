@@ -52,3 +52,4 @@ int main()
 // RUN: --unwind 1 --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

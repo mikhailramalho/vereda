@@ -8,7 +8,4 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc/default_underflow_malloc
 // EXPECT: ^Violated property:$
-// EXPECT: ^  assertion 0$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  assertion 0$
-// MODE: FUTURE

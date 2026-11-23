@@ -48,3 +48,4 @@ int main()
 // RUN: --claim 1 --unwind 8 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -56,3 +56,4 @@ int main()
 // RUN: --unwind 2 --no-unwinding-assertions --context-bound 3 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

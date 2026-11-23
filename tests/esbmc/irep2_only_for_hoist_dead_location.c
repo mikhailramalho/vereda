@@ -12,3 +12,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: //\s*\d+ no location\n[^\n]*DEAD [^\n]*@F@main@i$
+// Vereda: verdict none

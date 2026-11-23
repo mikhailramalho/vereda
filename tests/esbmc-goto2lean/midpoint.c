@@ -21,3 +21,4 @@ int main(void) {
 // EXPECT: ^  \(lo ≤ hi\) →$
 // EXPECT: ^  \(\(lo ≤ m\) ∧ \(m ≤ hi\)\) ∧ \($
 // EXPECT: ^  all_goals bv_decide$
+// Vereda: verdict none

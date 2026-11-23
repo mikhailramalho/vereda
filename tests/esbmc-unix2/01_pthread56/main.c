@@ -41,3 +41,4 @@ int main()
 // RUN: --force-malloc-success --incremental-bmc --context-bound 2 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

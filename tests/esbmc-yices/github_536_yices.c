@@ -11,3 +11,4 @@ int main()
 // RUN: --smt-model --yices
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

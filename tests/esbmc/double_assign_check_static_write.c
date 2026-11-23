@@ -21,3 +21,4 @@ int main(void)
 // RUN: --double-assign-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

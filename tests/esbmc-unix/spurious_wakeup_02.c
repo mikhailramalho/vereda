@@ -36,3 +36,4 @@
 // RUN: --context-bound 2 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

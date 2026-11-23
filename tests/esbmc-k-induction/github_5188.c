@@ -18,3 +18,4 @@ int g(int a, int b)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on add
+// Vereda: verdict none

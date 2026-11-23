@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean --unsigned-overflow-check --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^  ¬\(\(y == 0#32\) = true\) ∧ \($
+// Vereda: verdict none

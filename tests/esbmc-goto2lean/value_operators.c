@@ -58,3 +58,4 @@ int main(void) {
 // EXPECT: ^  let same := x;$
 // EXPECT: ^  let tb := true;$
 // EXPECT: ^  \(\(a ≠ b\) ∨ True\) ∧ \($
+// Vereda: verdict none

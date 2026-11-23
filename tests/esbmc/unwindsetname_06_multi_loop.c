@@ -35,3 +35,4 @@ int main() {
 // RUN: --unwindsetname multi_loop:0:6,multi_loop:1:4 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

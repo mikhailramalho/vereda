@@ -17,3 +17,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: Total stack limit property was violated when declaring buf
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

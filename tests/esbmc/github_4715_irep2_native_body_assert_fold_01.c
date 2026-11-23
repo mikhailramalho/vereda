@@ -38,3 +38,4 @@ int main(void)
 // EXPECT: ASSERT !\(c == 4\) // d
 // EXPECT: ASSERT c == 4 // e
 // EXPECT: ASSERT !\(c == 5\) // f
+// Vereda: verdict none

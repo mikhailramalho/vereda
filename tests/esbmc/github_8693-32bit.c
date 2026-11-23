@@ -27,3 +27,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  PASSED +\[main\.assertion\.1\]
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

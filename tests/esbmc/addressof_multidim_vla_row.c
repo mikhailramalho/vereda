@@ -22,4 +22,4 @@ int main(void)
 // RUN: --no-pointer-arith-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated [0-9]+ VCC\(s\), 4 remaining after simplification
+// Vereda: verdict none

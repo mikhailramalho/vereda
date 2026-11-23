@@ -19,3 +19,4 @@ int main(void)
 // EXPECT: github_7267\-genuine\-dead\-code\.c:11: dead code: unreachable branch \[guard: x > 10\]$
 // EXPECT: CWE-561
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

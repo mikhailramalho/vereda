@@ -10,3 +10,4 @@ int main()
 // RUN: --k-induction --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -22,3 +22,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ASSIGN \*cse_symbol\$\d+=5;
 // EXPECT: ASSIGN a\[cse_symbol\$\d+\]=7;(\n\s*(//|ASSERT)[^\n]*)*\n\s*ASSIGN a\[cse_symbol\$\d+\]=8;
+// Vereda: verdict none

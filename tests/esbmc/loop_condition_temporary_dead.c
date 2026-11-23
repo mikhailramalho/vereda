@@ -17,3 +17,4 @@ int main()
 // EXPECT: \$_more\$1 THEN GOTO (\d+)\n[\s\S]*?\n\s+\1: DEAD c:@F@main::\$tmp::return_value\$_more\$1\n
 // EXPECT: \$_more\$2 THEN GOTO \d+\n(\s+//[^\n]*\n)?\s+DEAD c:@F@main::\$tmp::return_value\$_more\$2\n
 // EXPECT: \$_more\$2 THEN GOTO (\d+)\n[\s\S]*?\n\s+\1: DEAD c:@F@main::\$tmp::return_value\$_more\$2\n
+// Vereda: verdict none

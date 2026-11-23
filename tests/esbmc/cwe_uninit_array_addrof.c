@@ -11,3 +11,4 @@ int main(void)
 // RUN: --uninitialised-vars-check --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

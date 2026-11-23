@@ -26,6 +26,6 @@ int main(void)
 // RUN: --synthesise-loop-invariants --unwind 12
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
-// EXPECT: UNKNOWN.*assertion sn > a
 // EXPECT: loop invariant too weak to prove this claim
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

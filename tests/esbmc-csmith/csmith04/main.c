@@ -2974,3 +2974,4 @@ FYI: the random generator makes assumptions about the integer size. See platform
 // RUN: --no-unwinding-assertions --unwind 15 --no-div-by-zero-check --no-slice --memstats --ssa-no-location --interactive-ileaves --schedule --i386-macos --symex-trace
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

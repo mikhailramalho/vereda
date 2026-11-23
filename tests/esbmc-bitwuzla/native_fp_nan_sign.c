@@ -18,3 +18,4 @@ int main(void)
 // RUN: --solver bitwuzla
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

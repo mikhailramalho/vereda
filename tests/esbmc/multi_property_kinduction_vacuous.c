@@ -15,6 +15,6 @@ int main()
 // RUN: --k-induction --multi-property --check-vacuity --max-k-step 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.1\]\s+line\s+10\s+assertion x == 7 \(vacuous discharge: path assumptions are unsatisfiable;
 // EXPECT: ^\*\* 0 of 1 properties failed, 1 unknown$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
+// Vereda: verdict none

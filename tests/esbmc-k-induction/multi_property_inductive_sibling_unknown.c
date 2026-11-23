@@ -17,6 +17,5 @@ int main(void)
 // Needs: --k-induction
 // RUN: --k-induction --multi-property --max-k-step 5
 // MODE: FUTURE
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+10\s+assertion x > 0$
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.2\]\s+line\s+11\s+assertion y != 3 \(inductive step could not prove this claim\)$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

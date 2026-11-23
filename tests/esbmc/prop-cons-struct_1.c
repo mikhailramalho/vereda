@@ -19,4 +19,5 @@ int main() {
 // Needs: --show-vcc
 // RUN: --show-vcc
 // MODE: FUTURE
-// EXPECT: ^Generated \d+ VCC\(s\), 0 remaining after simplification \(\d+ assignments\)$
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

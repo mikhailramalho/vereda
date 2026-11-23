@@ -7,3 +7,4 @@ int main(void) {
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported instruction type 11 at .*unsupported_atomic_end\.c:2$
+// Vereda: verdict none

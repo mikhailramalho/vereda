@@ -15,3 +15,4 @@ int main(void)
 // RUN: --floatbv --32 --big-endian --interval-analysis -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

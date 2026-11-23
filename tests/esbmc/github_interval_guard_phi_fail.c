@@ -26,3 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: loop_idx_vfy = 3
+// Vereda: verdict none

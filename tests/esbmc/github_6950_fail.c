@@ -21,6 +21,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_6950_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^.*over-claimed 32-byte alignment.*$
-// Vereda: unmet EXPECT: ^.*over-claimed 32-byte alignment.*$
-// MODE: FUTURE

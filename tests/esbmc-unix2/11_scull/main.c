@@ -389,3 +389,4 @@ int main() {
 // RUN: --unwind 1 --no-unwinding-assertions
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

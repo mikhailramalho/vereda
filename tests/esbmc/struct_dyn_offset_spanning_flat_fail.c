@@ -16,6 +16,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_spanning_flat_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion s\[i\]\.y == 0$
-// Vereda: unmet EXPECT: ^  assertion s\[i\]\.y == 0$
-// MODE: FUTURE

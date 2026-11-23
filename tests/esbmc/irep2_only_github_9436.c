@@ -31,3 +31,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --ub-shift-check --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

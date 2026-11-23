@@ -82,3 +82,4 @@ int main() {
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --floatbv --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1 --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

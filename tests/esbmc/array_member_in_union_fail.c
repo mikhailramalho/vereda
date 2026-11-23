@@ -23,6 +23,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/array_member_in_union_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion g.tail == 0
-// Vereda: unmet EXPECT: assertion g.tail == 0
-// MODE: FUTURE

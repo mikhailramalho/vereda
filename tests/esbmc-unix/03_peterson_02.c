@@ -45,3 +45,4 @@ int main(void) {
 // RUN: --unwind 1 --no-unwinding-assertions --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

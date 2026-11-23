@@ -16,3 +16,4 @@ int main()
 // EXPECT: dereference failure: accessed expired variable pointer `buf'
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

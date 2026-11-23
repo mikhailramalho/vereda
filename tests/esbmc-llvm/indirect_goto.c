@@ -20,3 +20,4 @@ int main(){
 // Imported from ESBMC regression/llvm/indirect_goto
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict UNKNOWN

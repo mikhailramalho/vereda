@@ -28,6 +28,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/por_local_memmove_read_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion g == 0$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

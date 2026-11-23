@@ -30,6 +30,6 @@ int main(void)
 // RUN: -m64 --incremental-bmc --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  FAILED +\[main\.null-pointer-dereference\.\d+\] +line +26 +dereference failure: NULL pointer$
-// EXPECT: ^  FAILED +\[main\.assertion\.\d+\] +line +27 +assertion 0$
 // Vereda: unmet EXPECT: ^  FAILED +\[main\.null-pointer-dereference\.\d+\] +line +26 +dereference failure: NULL pointer$
 // MODE: FUTURE
+// Vereda: verdict FAILED

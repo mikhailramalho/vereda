@@ -30,3 +30,4 @@ int main()
 // RUN: --no-por --context-bound 3 --state-hashing
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

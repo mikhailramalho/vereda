@@ -10,3 +10,4 @@ int main()
 // RUN: --k-induction --base-k-step 2 --max-k-step 10
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

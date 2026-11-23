@@ -19,3 +19,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: accessed expired variable pointer.*$
+// Vereda: verdict none

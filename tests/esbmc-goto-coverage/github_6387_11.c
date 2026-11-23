@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE: 2 goal\(s\) undecided
 // EXPECT: reason: --multi-fail-fast limit reached
+// Vereda: verdict none

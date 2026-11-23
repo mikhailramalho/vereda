@@ -15,3 +15,4 @@ int main(void)
 // EXPECT: object size exceeds PTRDIFF_MAX
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

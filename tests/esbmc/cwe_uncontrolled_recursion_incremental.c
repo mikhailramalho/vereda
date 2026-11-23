@@ -20,3 +20,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*uncontrolled recursion)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE
+// Vereda: verdict none

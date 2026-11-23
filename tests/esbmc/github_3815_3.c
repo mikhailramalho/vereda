@@ -25,3 +25,4 @@ int main()
 // RUN: --no-standard-checks --unwind 3 --no-unwinding-assertions --timeout 60
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

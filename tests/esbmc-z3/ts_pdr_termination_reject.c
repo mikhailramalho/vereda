@@ -18,3 +18,4 @@ int main() {
 // RUN: --z3 --ts-pdr --termination
 // MODE: FUTURE
 // EXPECT: ^ERROR: --ts-pdr cannot be combined with --termination$
+// Vereda: verdict none

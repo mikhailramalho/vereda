@@ -31,3 +31,4 @@ int main(void)
 // RUN: --clang-c-irep2-adjust-only --std c11 --unwind 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

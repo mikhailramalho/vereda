@@ -21,3 +21,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^WARNING: --field-sensitive-ssa is ignored with --all-witnesses$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

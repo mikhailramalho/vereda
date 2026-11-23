@@ -7,6 +7,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_size_same_declaration_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion sizeof\(a\) == 2 \* sizeof\(int\)$
-// Vereda: unmet EXPECT: ^\s+assertion sizeof\(a\) == 2 \* sizeof\(int\)$
-// MODE: FUTURE

@@ -14,3 +14,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^ERROR: Bitwuzla error encountered$
 // EXPECT: invalid value '9' for numeric option '--rewrite-level', maximum is 2
+// Vereda: verdict none

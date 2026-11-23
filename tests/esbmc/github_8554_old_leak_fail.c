@@ -12,3 +12,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: forgotten memory: dynamic_\d+_value$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

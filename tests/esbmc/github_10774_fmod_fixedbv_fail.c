@@ -10,4 +10,4 @@ int main()
 // RUN: --fixedbv --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: fmod\(5,3\) is 2, not 1
+// Vereda: verdict none

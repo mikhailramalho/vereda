@@ -13,3 +13,4 @@ int main(void)
 // RUN: --64 --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

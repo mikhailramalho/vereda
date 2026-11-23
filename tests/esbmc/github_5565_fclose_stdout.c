@@ -16,3 +16,4 @@ int main(void)
 // RUN: --memory-leak-check --no-reachable-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

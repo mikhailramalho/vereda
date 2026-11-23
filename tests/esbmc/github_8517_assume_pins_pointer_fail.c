@@ -36,6 +36,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_8517_assume_pins_pointer_fail
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion unpack\(d\) == 2
-// Vereda: unmet EXPECT: assertion unpack\(d\) == 2
-// MODE: FUTURE

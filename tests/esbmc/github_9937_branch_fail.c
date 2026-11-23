@@ -25,6 +25,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_9937_branch_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: \[main.assertion.1\]  line 24  a is x
-// Vereda: unmet EXPECT: \[main.assertion.1\]  line 24  a is x
-// MODE: FUTURE

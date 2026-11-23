@@ -76,3 +76,4 @@ assert(trans_preds(_-2, p(_,data(__CNT__,__START_ASYNC__,_,_,_,_,_,_,_,_,_,_,_,_
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

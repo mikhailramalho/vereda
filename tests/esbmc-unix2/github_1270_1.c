@@ -107,3 +107,4 @@ int *create_fresh_int_array(int size) {
 // RUN: --force-malloc-success --unwind 10 --no-unwinding-assertions --context-bound 2 --memory-leak-check --no-abnormal-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

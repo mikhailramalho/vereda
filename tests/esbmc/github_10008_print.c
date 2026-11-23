@@ -9,3 +9,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ^ +ASSIGN v=\{ \.[^=]+=\{ \.s=17, \.c=0 \} \};$
+// Vereda: verdict none

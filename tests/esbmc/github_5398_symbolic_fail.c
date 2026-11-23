@@ -22,3 +22,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: array bounds violated: heap object$
+// Vereda: verdict none

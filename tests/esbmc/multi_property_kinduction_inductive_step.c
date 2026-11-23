@@ -16,6 +16,5 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion i <= n$
-// EXPECT: ^\*\* 0 of 1 properties failed, 1 passed$
 // EXPECT: ^No bug has been found in the base case$
+// Vereda: verdict none

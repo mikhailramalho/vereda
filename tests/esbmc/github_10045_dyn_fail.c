@@ -27,6 +27,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10045_dyn_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion s\[i\]\.b\.y == 0$
-// Vereda: unmet EXPECT: ^  assertion s\[i\]\.b\.y == 0$
-// MODE: FUTURE

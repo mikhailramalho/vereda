@@ -18,3 +18,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE
 // EXPECT: reason: the unwinding bound cut off
+// Vereda: verdict none

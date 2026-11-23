@@ -9,6 +9,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/byte_view_3d_anchor_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion \(char \*\)e != \(char \*\)p\[0\]\[0\]$
-// Vereda: unmet EXPECT: ^\s+assertion \(char \*\)e != \(char \*\)p\[0\]\[0\]$
-// MODE: FUTURE

@@ -24,3 +24,4 @@ int main(void)
 // EXPECT: alloca: size exceeds PTRDIFF_MAX
 // Vereda: unmet EXPECT: alloca: size exceeds PTRDIFF_MAX
 // MODE: FUTURE
+// Vereda: verdict FAILED

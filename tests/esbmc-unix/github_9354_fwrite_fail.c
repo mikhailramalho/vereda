@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: FAILED +\[fwrite\.array-bounds-violated\.[0-9]+\].*dereference failure: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

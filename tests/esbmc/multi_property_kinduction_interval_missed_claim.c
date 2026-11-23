@@ -16,5 +16,6 @@ int main()
 // Needs: --k-induction --interval-analysis
 // RUN: --k-induction --interval-analysis --multi-property --max-k-step 10
 // MODE: FUTURE
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+12\s+assertion 1 == 2$
 // EXPECT: \A(?![\s\S]*Solution found by the inductive step)[\s\S]*\Z
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

@@ -14,3 +14,4 @@ int main() {
 // RUN: --force-malloc-success --conv-assert-to-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

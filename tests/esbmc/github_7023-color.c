@@ -13,7 +13,7 @@ int main()
 // Needs: --result-only --color always
 // RUN: --result-only --color always
 // MODE: FUTURE
-// EXPECT: ^  \x1b\[32mPASSED +\x1b\[0m +\[main\.assertion\.1\] +line +5 +addition commutes$
 // EXPECT: ^  \x1b\[31mFAILED +\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$
 // EXPECT: ^  \x1b\[33mNOT CHECKED\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$
 // EXPECT: ^\*\* \x1b\[31m1 of 3 properties failed\x1b\[0m, \x1b\[32m1 passed\x1b\[0m, \x1b\[33m1 not checked\x1b\[0m$
+// Vereda: verdict none

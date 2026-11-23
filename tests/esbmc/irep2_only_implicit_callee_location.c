@@ -14,3 +14,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Symbol\.+: c:@F@assert$
 // EXPECT: ^Location\.+: file .*irep2_only_implicit_callee_location\.c line 8 column 3 function main$
+// Vereda: verdict none

@@ -5908,3 +5908,4 @@ int main(int argc, char *argv[])
 // RUN: --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$ .*
+// Vereda: verdict UNKNOWN

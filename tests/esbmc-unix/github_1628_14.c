@@ -11,3 +11,4 @@ int main(void)
 // RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf format specifier \%p requires pointer argument$
+// Vereda: verdict none

@@ -67,3 +67,4 @@ int main()
 // RUN: --unwind 1 --no-unwinding-assertion --force-malloc-success --no-pointer-check --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

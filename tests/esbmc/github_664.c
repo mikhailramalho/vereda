@@ -9,3 +9,4 @@ int main()
 // RUN: --verbosity clang:9 --file-output out.txt
 // MODE: FUTURE
 // EXPECT: ^ESBMC version
+// Vereda: verdict none

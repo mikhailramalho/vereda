@@ -16,8 +16,6 @@ int main()
 // RUN: --incremental-bmc --multi-property --max-k-step 10
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^No bug has been found in the base case$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+12\s+assertion x == n$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.2\]\s+line\s+13\s+assertion x < 5$
-// EXPECT: ^\*\* 0 of 2 properties failed, 2 passed$
 // Vereda: unmet EXPECT: ^No bug has been found in the base case$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -30,3 +30,4 @@ int main() {
 // RUN: --k-induction-parallel
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

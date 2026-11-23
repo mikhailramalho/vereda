@@ -18,3 +18,4 @@ int main() {
 // MODE: FUTURE
 // EXPECT: ^PDR: state component f is not a bit-vector of at most 64 bits$
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

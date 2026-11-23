@@ -12,3 +12,4 @@ int main(void)
 // RUN: --64 --witness-output-yaml w.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

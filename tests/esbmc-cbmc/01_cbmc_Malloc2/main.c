@@ -35,3 +35,4 @@ int main(void)
 // RUN: --32 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

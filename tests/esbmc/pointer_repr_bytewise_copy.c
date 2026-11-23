@@ -26,3 +26,4 @@ int main()
 // RUN: --unwind 129 --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

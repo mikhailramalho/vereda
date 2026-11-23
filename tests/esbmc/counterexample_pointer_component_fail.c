@@ -16,3 +16,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  arr\[0\] = &x$
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -9,3 +9,4 @@ int main(void) {
 // RUN: --goto2lean --output missing/out.lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: cannot write missing/out\.lean$
+// Vereda: verdict none

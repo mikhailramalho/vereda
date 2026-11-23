@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: ^clang invocation:.*'-isystem' '([A-Za-z]:)?/esbmc-vfs/libc/headers'
 // EXPECT: ^clang invocation:.*'-resource-dir' '([A-Za-z]:)?/esbmc-vfs/clang'
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

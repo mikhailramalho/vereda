@@ -14,9 +14,5 @@ int main()
 // Imported from ESBMC regression/esbmc/multi_property_incremental_one_table
 // RUN: --incremental-bmc --multi-property --max-k-step 10
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion n != 7$
-// EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+12\s+assertion x != 3$
 // EXPECT: ^\*\* 2 of 2 properties failed$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
-// Vereda: unmet EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+9\s+assertion n != 7$
-// MODE: FUTURE

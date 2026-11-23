@@ -35,3 +35,4 @@ int main() {
 // RUN: --force-malloc-success --data-races-check --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

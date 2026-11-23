@@ -41,6 +41,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_race_symbolic_struct_member
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion seen == 2$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

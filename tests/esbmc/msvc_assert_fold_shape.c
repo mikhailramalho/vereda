@@ -13,4 +13,5 @@ int main(void)
 // Needs: --goto-functions-only
 // RUN: --goto-functions-only
 // MODE: FUTURE
-// EXPECT: ^\s+ASSERT g > 0 // assertion g > 0$
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

@@ -108,3 +108,4 @@ int main() {
 // RUN: --context-bound 2 --unwind 4  --no-por --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main(void)
 // EXPECT: ^  isinf\(f\) \|\| !\(isinf\(IEEE_ADD\(f, -0\.000000f\)\)\)$
 // EXPECT: ^  IEEE_ADD\(f, 0\.000000\) >= -2\.147484e\+9f && IEEE_ADD\(f, 0\.000000\) < 2\.147484e\+9f$
 // EXPECT: ^  IEEE_ADD\(f, -0\.000000f\) >= -2\.147484e\+9f && IEEE_ADD\(f, -0\.000000f\) < 2\.147484e\+9f$
+// Vereda: verdict none

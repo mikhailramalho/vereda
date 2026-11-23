@@ -22,3 +22,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: @main@code_ptr = \{ .*<plugins, 0, 1, signed int>
 // EXPECT: @run@q = \{ <x, 0, 1, signed int> \}
+// Vereda: verdict none

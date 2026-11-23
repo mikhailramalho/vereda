@@ -18,6 +18,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/vector_struct_array_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion a\[i\].v\[2\] == 4$
-// Vereda: unmet EXPECT: ^\s+assertion a\[i\].v\[2\] == 4$
-// MODE: FUTURE

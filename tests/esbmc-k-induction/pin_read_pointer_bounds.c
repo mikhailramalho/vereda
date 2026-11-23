@@ -26,3 +26,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^dereference failure: array bounds violated$
 // EXPECT: \A(?![\s\S]*dereference failure: invalid pointer)[\s\S]*\Z
+// Vereda: verdict none

@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^WARNING: constant propagation gave up on a `with` chain past 1024 symbolic updates
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

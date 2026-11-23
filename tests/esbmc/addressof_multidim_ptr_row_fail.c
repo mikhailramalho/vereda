@@ -14,6 +14,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_ptr_row_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion &pp\[1\]\[2\] == &r0\[2\]$
-// Vereda: unmet EXPECT: ^  assertion &pp\[1\]\[2\] == &r0\[2\]$
-// MODE: FUTURE

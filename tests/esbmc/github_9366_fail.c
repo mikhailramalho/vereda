@@ -14,6 +14,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9366_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion isnan\(__real__ r\)$
-// Vereda: unmet EXPECT: ^  assertion isnan\(__real__ r\)$
-// MODE: FUTURE

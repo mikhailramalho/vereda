@@ -16,6 +16,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10811_sscanf_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion a\[0\] == 1$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

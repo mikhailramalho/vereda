@@ -30,3 +30,4 @@ printf("Condition 1 is false");
 // MODE: FUTURE
 // EXPECT: ^Condition Coverage: 50%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

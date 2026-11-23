@@ -13,3 +13,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: return_value\$_more\$1\?1!
 // EXPECT: \A(?![\s\S]*return_value\$_more\$1\?(?!1!)\d)
+// Vereda: verdict none

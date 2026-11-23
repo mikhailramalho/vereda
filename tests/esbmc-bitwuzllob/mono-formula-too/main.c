@@ -10,3 +10,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: SMT formula written to
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

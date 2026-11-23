@@ -15,3 +15,4 @@ int main()
 // RUN: --summarize-array-loops --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

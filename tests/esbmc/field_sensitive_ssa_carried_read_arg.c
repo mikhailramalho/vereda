@@ -21,3 +21,4 @@ int main(void)
 // RUN: --field-sensitive-ssa
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

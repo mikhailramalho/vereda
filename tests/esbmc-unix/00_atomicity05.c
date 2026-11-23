@@ -27,3 +27,4 @@ int main()
 // RUN: --atomicity-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

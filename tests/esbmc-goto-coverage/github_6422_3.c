@@ -13,3 +13,4 @@ int main(void)
 // EXPECT: ^Reached : 3
 // EXPECT: ^Branch Coverage: 100%$
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

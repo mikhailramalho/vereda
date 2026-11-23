@@ -33,3 +33,4 @@ int main(void)
 // EXPECT: ^    format_version: "2\.4"$
 // EXPECT: type: "function_enter"
 // EXPECT: (?s)\A(?!.*type: "branching")
+// Vereda: verdict none

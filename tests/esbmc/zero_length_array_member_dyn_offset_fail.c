@@ -27,7 +27,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/zero_length_array_member_dyn_offset_fail
 // RUN: -m64
-// EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion buf\[i \+ 1\] == 5$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+assertion buf\[i \+ 1\] == 5$
-// MODE: FUTURE

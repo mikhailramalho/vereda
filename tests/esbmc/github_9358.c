@@ -16,3 +16,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^  PASSED .* printf %s argument is not NUL-terminated within its object$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

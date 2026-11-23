@@ -20,3 +20,4 @@ int main(void) {
 // EXPECT: ^def find_loop1 \(n : BitVec 32\) \(key : BitVec 32\) \(i : BitVec 32\)$
 // EXPECT: ^    ret i\)\)$
 // EXPECT: ^  find_loop1 n key i \(fun \(n : BitVec 32\) \(key : BitVec 32\) \(i : BitVec 32\) =>$
+// Vereda: verdict none

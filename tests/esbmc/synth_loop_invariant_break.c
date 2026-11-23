@@ -28,3 +28,4 @@ int main(void)
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants added no invariant: no loop matched the affine counter/accumulator shape, or every match was declined; the run proceeds unchanged$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

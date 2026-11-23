@@ -26,3 +26,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">x == 0;
 // EXPECT: (?s)\A(?!.*key="assumption">[^<]*[{}])
+// Vereda: verdict none

@@ -14,3 +14,4 @@ int main()
 // RUN: --64 --no-slice --result-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

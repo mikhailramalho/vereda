@@ -21,5 +21,5 @@ int main()
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.3\]\s+line\s+12\s+loop invariant inductive step$
-// EXPECT: ^\s+PASSED\s+\[main\.assertion\.5\]\s+line\s+16\s+assertion cnt == 0$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -22,3 +22,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ASSIGN i=10
+// Vereda: verdict none

@@ -16,3 +16,4 @@ int main() {
 // RUN: --cheri purecap --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

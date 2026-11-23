@@ -20,3 +20,4 @@ L:
 // RUN: --k-induction --loop-invariant --interval-analysis --interval-analysis-arithmetic --max-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

@@ -116,3 +116,4 @@ void unlock(pthread_mutex_t *lock) {
 // RUN: --context-bound 4 --32 --incremental-bmc --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -15,3 +15,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.heap-array-bounds-violated\.\d+\]\s+line 9
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

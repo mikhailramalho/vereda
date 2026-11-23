@@ -13,6 +13,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8564_width_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion x < 10000000000ULL$
-// Vereda: unmet EXPECT: ^  assertion x < 10000000000ULL$
-// MODE: FUTURE

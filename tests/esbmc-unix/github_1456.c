@@ -30,3 +30,4 @@ int main() {
 // RUN: --data-races-check --smt-symex-guard --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

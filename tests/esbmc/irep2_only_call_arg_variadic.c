@@ -13,3 +13,4 @@ int main(void)
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: vfun\(1, \(void \*\)\(&a\[0\]\)\)
+// Vereda: verdict none

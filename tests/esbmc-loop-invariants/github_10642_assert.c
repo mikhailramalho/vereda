@@ -16,5 +16,5 @@ int main() {
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
-// EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.[0-9]+\]\s+line\s+10\s+assertion y == 5 \(loop invariant too weak
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

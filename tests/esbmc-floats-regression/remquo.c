@@ -39,3 +39,4 @@ int main(void)
 // Imported from ESBMC regression/floats-regression/remquo
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

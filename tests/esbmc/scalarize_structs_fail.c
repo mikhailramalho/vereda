@@ -25,3 +25,4 @@ int main(void)
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^  s\.total = 18 \(00000000 00000000 00000000 00010010\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

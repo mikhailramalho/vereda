@@ -21,3 +21,4 @@ int main()
 // RUN: --goto-functions-only --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: FUNCTION_CALL:.*\*x\.update\(\)
+// Vereda: verdict none

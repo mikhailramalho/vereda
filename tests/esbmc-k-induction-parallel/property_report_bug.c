@@ -12,5 +12,5 @@ int main(void)
 // RUN: --k-induction-parallel
 // MODE: FUTURE
 // EXPECT: ^  FAILED +\[main\.null-pointer-dereference\.1\]  line 7  dereference failure: NULL pointer$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 passed$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

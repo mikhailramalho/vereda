@@ -23,3 +23,4 @@ int main(int argc, char **argv)
 // RUN: --cheri hybrid --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

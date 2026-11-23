@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+only the row.s first element was grafted$
 // MODE: FUTURE
+// Vereda: verdict FAILED

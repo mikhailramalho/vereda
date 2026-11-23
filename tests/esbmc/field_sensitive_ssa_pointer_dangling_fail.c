@@ -26,3 +26,4 @@ int main(void)
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
 // EXPECT: ^  dereference failure: accessed expired variable pointer `s'$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

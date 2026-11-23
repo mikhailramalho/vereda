@@ -13,3 +13,4 @@ int main(void)
 // RUN: --k-induction --max-k-step 10 --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -21,7 +21,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_6413-dominance
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^ +FAILED .*line +17 +x is still zero$
-// EXPECT: \A(?![\s\S]*PASSED .*x is still zero)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

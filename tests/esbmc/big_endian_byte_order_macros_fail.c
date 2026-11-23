@@ -18,4 +18,4 @@ int main()
 // RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  assertion p\[0\] == 4$
+// Vereda: verdict none

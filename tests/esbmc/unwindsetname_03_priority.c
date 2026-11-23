@@ -26,3 +26,4 @@ int main() {
 // RUN: --unwindsetname test_priority:0:4 --unwindset 3:11 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

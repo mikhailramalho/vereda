@@ -18,4 +18,4 @@ int main()
 // RUN: --little-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+assertion u.c\[20\] == 1$
+// Vereda: verdict none

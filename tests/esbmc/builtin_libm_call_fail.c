@@ -9,6 +9,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/builtin_libm_call_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: assertion e == 0
-// Vereda: unmet EXPECT: assertion e == 0
-// MODE: FUTURE

@@ -22,3 +22,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ASSERT !\(c == 1\) // x
 // EXPECT: ASSERT c == 2 // y
+// Vereda: verdict none

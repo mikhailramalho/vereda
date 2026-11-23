@@ -14,4 +14,4 @@ int main()
 // RUN: --interval-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Generated 2 VCC\(s\), 0 remaining after simplification
+// Vereda: verdict none

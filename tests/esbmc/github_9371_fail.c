@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9371_fail
 // RUN: -m64
-// EXPECT: ^  FAILED +\[main\.assertion\.1\]  line 17  assertion !\(isinf\(__real__ r\) \|\| isinf\(__imag__ r\)\)$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  FAILED +\[main\.assertion\.1\]  line 17  assertion !\(isinf\(__real__ r\) \|\| isinf\(__imag__ r\)\)$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
+// Vereda: verdict UNKNOWN

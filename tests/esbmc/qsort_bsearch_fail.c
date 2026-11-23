@@ -23,3 +23,4 @@ int main(void)
 // EXPECT: FAILED\s+\[main.assertion.2\].*a\[0\] == 3
 // Vereda: unmet EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
 // MODE: FUTURE
+// Vereda: verdict FAILED

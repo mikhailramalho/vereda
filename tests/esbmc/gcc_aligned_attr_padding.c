@@ -15,3 +15,4 @@ int main(void)
 // RUN: --goto-functions-only
 // MODE: FUTURE
 // EXPECT: struct s \{ signed int a; signed char c; unsigned _ExtInt\(88\) anon_pad#2; \}
+// Vereda: verdict none

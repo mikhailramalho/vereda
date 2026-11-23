@@ -32,3 +32,4 @@ int main(void)
 // RUN: --k-induction --max-k-step 4
 // MODE: FUTURE
 // EXPECT: ^WARNING: k-induction cannot havoc what a loop writes through a pointer. Disabling inductive step$
+// Vereda: verdict none

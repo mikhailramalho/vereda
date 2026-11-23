@@ -18,3 +18,4 @@ int main()
 // RUN: --interval-analysis --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+13\s+w$
+// Vereda: verdict none

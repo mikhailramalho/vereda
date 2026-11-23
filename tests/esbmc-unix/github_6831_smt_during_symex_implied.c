@@ -24,3 +24,4 @@ int main(void)
 // MODE: FUTURE
 // EXPECT: ^Enabling --smt-during-symex to use features that involve encoding SMT during symex$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

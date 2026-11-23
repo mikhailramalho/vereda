@@ -21,3 +21,4 @@ int main(void)
 // EXPECT: ^  p = &c$
 // Vereda: unmet EXPECT: ^  p = &c$
 // MODE: FUTURE
+// Vereda: verdict FAILED

@@ -27,3 +27,4 @@ int main()
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.\d+\]\s+line\s+14\s+bound$
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none
