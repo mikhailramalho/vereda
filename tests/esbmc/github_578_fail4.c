@@ -9,7 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_578_fail4
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

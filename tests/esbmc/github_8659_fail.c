@@ -7,8 +7,6 @@ int main(void)
   return r;
 }
 // Imported from ESBMC regression/esbmc/github_8659_fail
-// Needs: --overflow-check
-// RUN: --overflow-check --z3
-// MODE: FUTURE
+// RUN: --overflow-check --solver z3
 // EXPECT: ^  FAILED .*line 6  arithmetic overflow on sub$
 // EXPECT: ^VERIFICATION FAILED$

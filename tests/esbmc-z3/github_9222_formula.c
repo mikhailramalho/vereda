@@ -8,9 +8,7 @@ int main(void)
   return a * b + (int)(u * v);
 }
 // Imported from ESBMC regression/z3/github_9222_formula
-// Needs: --overflow-check --unsigned-overflow-check
-// RUN: --z3 --overflow-check --unsigned-overflow-check --smt-formula-only
-// MODE: FUTURE
+// RUN: --solver z3 --overflow-check --unsigned-overflow-check --dump-smt-only
 // EXPECT: bvsmul_noovfl
 // EXPECT: bvsmul_noudfl
 // EXPECT: bvumul_noovfl

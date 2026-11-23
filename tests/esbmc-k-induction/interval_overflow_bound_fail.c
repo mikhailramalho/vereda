@@ -10,7 +10,7 @@ int main()
   return x;
 }
 // Imported from ESBMC regression/k-induction/interval_overflow_bound_fail
-// Needs: --k-induction --max-inductive-step 3 --overflow-check --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
+// Needs: --k-induction --max-inductive-step 3 --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
 // RUN: --k-induction --max-inductive-step 3 --overflow-check --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

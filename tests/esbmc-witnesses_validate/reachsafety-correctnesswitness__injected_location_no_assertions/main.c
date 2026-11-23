@@ -9,7 +9,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/injected_location_no_assertions
-// Needs: --no-assertions --overflow-check --validate-correctness-witness --witness witness.yml
+// Needs: --no-assertions --validate-correctness-witness --witness witness.yml
 // RUN: --no-assertions --overflow-check --no-pointer-check --no-bounds-check --validate-correctness-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

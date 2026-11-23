@@ -11,10 +11,10 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8700_fail
-// Needs: --overflow-check
 // RUN: --overflow-check --multi-property
-// MODE: FUTURE
 // EXPECT: ^  PASSED .*line +6  arithmetic overflow on add$
 // EXPECT: ^  FAILED .*line +8  arithmetic overflow on add$
 // EXPECT: ^  FAILED .*line +10  arithmetic overflow on add$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^  PASSED .*line +6  arithmetic overflow on add$
+// MODE: FUTURE

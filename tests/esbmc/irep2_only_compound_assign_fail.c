@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_compound_assign_fail
-// Needs: --overflow-check --clang-c-irep2-adjust-only
+// Needs: --clang-c-irep2-adjust-only
 // RUN: --overflow-check --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

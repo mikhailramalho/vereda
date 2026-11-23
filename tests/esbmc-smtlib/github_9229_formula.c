@@ -5,7 +5,7 @@ int main(void)
   return a + b;
 }
 // Imported from ESBMC regression/smtlib/github_9229_formula
-// Needs: --unsigned-overflow-check --smtlib --output out.smt2 CHECK_FILE out.smt2 contains \(bvuge \S+ \|c:github_9229_formula\.c@\d+@F@main@a\? CHECK_FILE out.smt2 absent \(bvuge \S+ \|c:github_9229_formula\.c@\d+@F@main@b\?
+// Needs: --smtlib --output out.smt2 CHECK_FILE out.smt2 contains \(bvuge \S+ \|c:github_9229_formula\.c@\d+@F@main@a\? CHECK_FILE out.smt2 absent \(bvuge \S+ \|c:github_9229_formula\.c@\d+@F@main@b\?
 // RUN: --unsigned-overflow-check --smtlib --smt-formula-only --output out.smt2
 // MODE: FUTURE
 // EXPECT: ^SMT formula written to output file out\.smt2$

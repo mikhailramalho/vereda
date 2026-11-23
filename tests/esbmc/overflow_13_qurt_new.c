@@ -163,7 +163,7 @@ int  qurt()
 }
 
 // Imported from ESBMC regression/esbmc/overflow_13_qurt_new
-// Needs: --claim 1 --overflow-check
+// Needs: --claim 1
 // RUN: --claim 1 --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

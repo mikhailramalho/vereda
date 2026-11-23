@@ -517,7 +517,8 @@ f1() {
 	}
 }
 // Imported from ESBMC regression/esbmc/28_fm
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration -Wno-error=implicit-int
-// MODE: FUTURE
+// RUN: --overflow-check
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

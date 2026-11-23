@@ -8,8 +8,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/z3/github_9229_fail
-// Needs: --unsigned-overflow-check
-// RUN: --unsigned-overflow-check --z3
-// MODE: FUTURE
+// RUN: --unsigned-overflow-check --solver z3
 // EXPECT: ^  !overflow\("\+", a, b\)$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^  !overflow\("\+", a, b\)$
+// MODE: FUTURE

@@ -4653,7 +4653,7 @@ for(counter=0; counter<argc; counter++)
     return 0;
 }
 // Imported from ESBMC regression/nonz3/29_exStbHwAcc
-// Needs: --overflow-check REQUIRES arch32
+// Needs: REQUIRES arch32
 // RUN: --overflow-check  --unwind 3 --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

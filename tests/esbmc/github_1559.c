@@ -5,7 +5,5 @@ int main()
   unsigned int z = y - x;
 }
 // Imported from ESBMC regression/esbmc/github_1559
-// Needs: --unsigned-overflow-check
-// RUN: --unsigned-overflow-check --z3
-// MODE: FUTURE
+// RUN: --unsigned-overflow-check --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$

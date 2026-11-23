@@ -95,7 +95,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2232
-// Needs: --overflow --memory-leak-check --no-unwinding-assertion --gcse
+// Needs: --memory-leak-check --no-unwinding-assertion --gcse
 // RUN: --overflow --memory-leak-check --unwind 1 --no-unwinding-assertion --gcse
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

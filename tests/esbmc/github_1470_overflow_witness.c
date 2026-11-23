@@ -14,7 +14,5 @@ int main(void)
   return result == 0;
 }
 // Imported from ESBMC regression/esbmc/github_1470_overflow_witness
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

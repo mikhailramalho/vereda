@@ -38,8 +38,7 @@ int main(){
     n = p * q;
 }
 // Imported from ESBMC regression/esbmc/github_1172-2
-// Needs: --overflow
-// RUN: --unwind 1 --overflow --no-unwinding-assertions
-// MODE: FUTURE
+// RUN: --unwind 1 --overflow-check --no-unwinding-assertions
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \barithmetic overflow on mul\b

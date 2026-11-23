@@ -9,7 +9,5 @@ int main()
   assert(resp==a-b);
 }
 // Imported from ESBMC regression/esbmc/overflow_minus3
-// Needs: --unsigned-overflow-check
-// RUN: --unsigned-overflow-check --z3
-// MODE: FUTURE
+// RUN: --unsigned-overflow-check --solver z3
 // EXPECT: ^VERIFICATION FAILED$

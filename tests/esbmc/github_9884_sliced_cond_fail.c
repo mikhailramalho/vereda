@@ -17,7 +17,7 @@ int main(void)
   return x + 1;
 }
 // Imported from ESBMC regression/esbmc/github_9884_sliced_cond_fail
-// Needs: --overflow-check --no-assertions --witness-output-yaml -
+// Needs: --no-assertions --witness-output-yaml -
 // RUN: --overflow-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

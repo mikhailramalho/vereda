@@ -16,7 +16,5 @@ int main() {
   return y;
 }
 // Imported from ESBMC regression/esbmc/abs_int_min_overflow
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

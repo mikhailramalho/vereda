@@ -100,7 +100,6 @@ int main()
   
 }
 // Imported from ESBMC regression/esbmc/overflow_05_crc
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

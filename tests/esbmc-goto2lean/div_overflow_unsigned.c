@@ -5,7 +5,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/div_overflow_unsigned
-// Needs: --goto2lean --unsigned-overflow-check
+// Needs: --goto2lean
 // RUN: --goto2lean --unsigned-overflow-check --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^  ¬\(\(y == 0#32\) = true\) ∧ \($

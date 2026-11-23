@@ -96,7 +96,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/symex_ssa_00
-// Needs: --overflow-check --unsigned-overflow-check --memory-leak-check
+// Needs: --memory-leak-check
 // RUN: --overflow-check --unsigned-overflow-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

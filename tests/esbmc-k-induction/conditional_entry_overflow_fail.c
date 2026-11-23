@@ -19,7 +19,7 @@ mid:
   return z;
 }
 // Imported from ESBMC regression/k-induction/conditional_entry_overflow_fail
-// Needs: --k-induction --overflow-check --no-assertions
+// Needs: --k-induction --no-assertions
 // RUN: --k-induction --overflow-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

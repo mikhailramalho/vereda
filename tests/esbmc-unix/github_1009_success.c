@@ -1936,7 +1936,7 @@ void CWE190_Integer_Overflow__int_fgets_multiply_53d_goodB2GSink(int data)
   }
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009_success
-// Needs: --state-hashing --add-symex-value-sets --k-step 2 --unlimited-k-steps --overflow-check --no-assertions --k-induction --max-inductive-step 3 REQUIRES signed_wchar_host
+// Needs: --state-hashing --add-symex-value-sets --k-step 2 --unlimited-k-steps --no-assertions --k-induction --max-inductive-step 3 REQUIRES signed_wchar_host
 // RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --floatbv --unlimited-k-steps --64 --no-pointer-check --no-bounds-check --overflow-check --no-assertions --k-induction --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

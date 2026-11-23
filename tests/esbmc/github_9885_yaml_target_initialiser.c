@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9885_yaml_target_initialiser
-// Needs: --overflow-check --witness-output-yaml -
+// Needs: --witness-output-yaml -
 // RUN: --overflow-check --unwind 4 --no-unwinding-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

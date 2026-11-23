@@ -19,7 +19,5 @@ int main(void)
   return t;
 }
 // Imported from ESBMC regression/esbmc/printf_nonconst_format_overflow
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

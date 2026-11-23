@@ -7,7 +7,5 @@ int g(long long a, long long b)
   return (int)a * (int)b;
 }
 // Imported from ESBMC regression/esbmc/github_7840_fail
-// Needs: --overflow-check
-// RUN: --overflow-check --function g
-// MODE: FUTURE
+// RUN: --overflow-check --entry g
 // EXPECT: ^VERIFICATION FAILED$

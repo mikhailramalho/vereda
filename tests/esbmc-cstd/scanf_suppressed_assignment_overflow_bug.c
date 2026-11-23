@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/scanf_suppressed_assignment_overflow_bug
-// Needs: --overflow-check
-// RUN: --overflow-check --64
-// MODE: FUTURE
+// RUN: --overflow-check -m64
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

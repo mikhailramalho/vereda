@@ -49,7 +49,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/cstd/fprintf
-// Needs: --overflow-check
-// RUN: --overflow-check --64
-// MODE: FUTURE
+// RUN: --overflow-check -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

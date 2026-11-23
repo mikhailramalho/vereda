@@ -7,7 +7,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/cstd/scanf_bigint_1
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

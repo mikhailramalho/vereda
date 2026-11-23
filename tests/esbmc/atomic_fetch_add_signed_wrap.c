@@ -21,7 +21,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/atomic_fetch_add_signed_wrap
-// Needs: --overflow-check --unsigned-overflow-check
 // RUN: --overflow-check --unsigned-overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -19,7 +19,5 @@ int main()
   
 }
 // Imported from ESBMC regression/esbmc/overflow_20_typecast
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

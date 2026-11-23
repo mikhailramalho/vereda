@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
   }
 }
 // Imported from ESBMC regression/cstd/scanf_float_bug
-// Needs: --overflow-check
 // RUN: --overflow-check
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

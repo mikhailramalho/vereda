@@ -12,7 +12,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/overflow_check
-// Needs: --goto2lean --unsigned-overflow-check
+// Needs: --goto2lean
 // RUN: --goto2lean --unsigned-overflow-check
 // MODE: FUTURE
 // EXPECT: ^  ¬\(\(BitVec\.uaddOverflow lo hi\) = true\) ∧ \($

@@ -21,7 +21,7 @@ int main(void)
   return y;
 }
 // Imported from ESBMC regression/loop-invariants/github_5327
-// Needs: --overflow-check --loop-invariant-check
+// Needs: --loop-invariant-check
 // RUN: --overflow-check --loop-invariant-check --unwind 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

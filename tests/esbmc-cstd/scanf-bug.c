@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 // Imported from ESBMC regression/cstd/scanf-bug
-// Needs: --overflow-check
-// RUN: --overflow-check --64
-// MODE: FUTURE
+// RUN: --overflow-check -m64
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

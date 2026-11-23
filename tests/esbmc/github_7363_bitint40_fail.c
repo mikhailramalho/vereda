@@ -9,8 +9,10 @@ int main()
   return (int)r;
 }
 // Imported from ESBMC regression/esbmc/github_7363_bitint40_fail
-// Needs: --overflow-check REQUIRES bitint
+// Needs: REQUIRES bitint
 // RUN: --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*arithmetic overflow on add$
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

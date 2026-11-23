@@ -10,8 +10,8 @@ long long f(long long T, long long s)
   return (long long)result;
 }
 // Imported from ESBMC regression/esbmc/github_7840
-// Needs: --overflow-check
-// RUN: --overflow-check --function f
-// MODE: FUTURE
+// RUN: --overflow-check --entry f
 // EXPECT: ^Generated 0 VCC\(s\), 0 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^Generated 0 VCC\(s\), 0 remaining after simplification
+// MODE: FUTURE

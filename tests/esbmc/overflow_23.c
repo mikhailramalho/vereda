@@ -50,7 +50,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_23
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

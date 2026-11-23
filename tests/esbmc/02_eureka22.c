@@ -48,7 +48,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/02_eureka22
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

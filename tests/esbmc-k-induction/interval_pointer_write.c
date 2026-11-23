@@ -17,7 +17,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/k-induction/interval_pointer_write
-// Needs: --k-induction --max-inductive-step 3 --overflow-check --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
+// Needs: --k-induction --max-inductive-step 3 --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
 // RUN: --k-induction --max-inductive-step 3 --overflow-check --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --interval-analysis-extrapolate-under-approximate --interval-analysis-assume-asserts
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

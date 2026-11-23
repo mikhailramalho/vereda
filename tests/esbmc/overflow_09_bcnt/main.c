@@ -84,7 +84,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_09_bcnt
-// Needs: --overflow-check
 // RUN: --unwind 17 --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

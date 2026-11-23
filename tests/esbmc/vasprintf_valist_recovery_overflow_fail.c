@@ -28,7 +28,7 @@ int main(void)
   return sum != 0;
 }
 // Imported from ESBMC regression/esbmc/vasprintf_valist_recovery_overflow_fail
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

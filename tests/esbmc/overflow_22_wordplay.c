@@ -1124,7 +1124,5 @@ int intmask (char *s)
 }
 
 // Imported from ESBMC regression/esbmc/overflow_22_wordplay
-// Needs: --overflow-check
 // RUN: --unwind 1 --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

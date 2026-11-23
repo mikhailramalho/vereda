@@ -14,7 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ub_04_shift_left_overflow
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,7 +9,7 @@ namespace vereda::ir {
 
 inline std::string sanitizerCheck(unsigned code) {
   static const char *const names[] = {
-      "arithmetic overflow on +",           // AddOverflow
+      "arithmetic overflow on add",         // AddOverflow
       "__builtin_unreachable",              // BuiltinUnreachable
       "control-flow integrity",             // CFICheckFail
       "division by zero or overflow",       // DivremOverflow
@@ -21,8 +21,8 @@ inline std::string sanitizerCheck(unsigned code) {
       "invalid Objective-C cast",           // InvalidObjCCast
       "load of invalid value",              // LoadInvalidValue
       "missing return",                     // MissingReturn
-      "arithmetic overflow on *",           // MulOverflow
-      "arithmetic overflow on unary -",     // NegateOverflow
+      "arithmetic overflow on mul",         // MulOverflow
+      "arithmetic overflow on neg",         // NegateOverflow
       "null passed as nonnull argument",    // NullabilityArg
       "null returned as nonnull",           // NullabilityReturn
       "null passed as nonnull argument",    // NonnullArg
@@ -30,7 +30,7 @@ inline std::string sanitizerCheck(unsigned code) {
       "array bounds violated",              // OutOfBounds
       "pointer arithmetic overflow",        // PointerOverflow
       "shift out of bounds",                // ShiftOutOfBounds
-      "arithmetic overflow on -",           // SubOverflow
+      "arithmetic overflow on sub",         // SubOverflow
       "type mismatch",                      // TypeMismatch
       "alignment assumption violated",      // AlignmentAssumption
       "VLA bound not positive",             // VLABoundNotPositive

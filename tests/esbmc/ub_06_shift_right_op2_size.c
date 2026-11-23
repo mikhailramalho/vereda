@@ -13,7 +13,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ub_06_shift_right_op2_size
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

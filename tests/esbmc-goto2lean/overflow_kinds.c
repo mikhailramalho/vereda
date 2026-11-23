@@ -14,7 +14,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/overflow_kinds
-// Needs: --goto2lean --overflow-check --unsigned-overflow-check
+// Needs: --goto2lean
 // RUN: --goto2lean --overflow-check --unsigned-overflow-check --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^  ¬\(\(BitVec\.ssubOverflow x y\) = true\) ∧ \($

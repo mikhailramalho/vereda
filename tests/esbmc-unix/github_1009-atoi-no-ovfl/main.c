@@ -9,7 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009-atoi-no-ovfl
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

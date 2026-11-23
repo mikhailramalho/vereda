@@ -11,7 +11,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/00_bitshift_04
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

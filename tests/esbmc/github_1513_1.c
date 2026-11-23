@@ -109,7 +109,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_1513_1
-// Needs: --overflow --memory-leak-check --timeout 30
+// Needs: --memory-leak-check --timeout 30
 // RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

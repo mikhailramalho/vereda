@@ -59,7 +59,9 @@ CMake keeps a build directory's first compiler. If you switch
 
 `vereda.py` takes C (`.c`, `.i`) or IR (`.ll`, `.bc`) inputs and its own
 flags (`--clang`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
-`--property-file`, `-v`), and forwards everything else to the binary.
+`--property-file`, `-v`, and ESBMC's `--overflow-check`,
+`--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
+sanitizer checks), and forwards everything else to the binary.
 `vereda.py -h` lists both sets. The main verifier flags:
 
 | Flag | Meaning |

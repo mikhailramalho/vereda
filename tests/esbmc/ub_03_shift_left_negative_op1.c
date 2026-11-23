@@ -11,7 +11,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ub_03_shift_left_negative_op1
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

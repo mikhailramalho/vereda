@@ -5,7 +5,7 @@ int main(void)
   return x + 1;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/target_after_bundled_initializer_overflow
-// Needs: --overflow-check --no-fp-overflow-check --validate-violation-witness --witness witness.yml
+// Needs: --no-fp-overflow-check --validate-violation-witness --witness witness.yml
 // RUN: --overflow-check --no-fp-overflow-check --validate-violation-witness --witness witness.yml --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

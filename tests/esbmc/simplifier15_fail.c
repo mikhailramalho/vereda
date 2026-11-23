@@ -14,7 +14,5 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/simplifier15_fail
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -7,9 +7,7 @@ int main(void)
   return (int)(u * v);
 }
 // Imported from ESBMC regression/z3/github_9222_unsigned_fail
-// Needs: --unsigned-overflow-check
-// RUN: --z3 --unsigned-overflow-check
-// MODE: FUTURE
+// RUN: --solver z3 --unsigned-overflow-check
 // EXPECT: ^\s+u = 65536
 // EXPECT: ^\s+v = 65536
 // EXPECT: arithmetic overflow on mul

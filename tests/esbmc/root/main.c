@@ -11,7 +11,5 @@ int main(void) {
   c += (l < t);
 }
 // Imported from ESBMC regression/esbmc/.
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

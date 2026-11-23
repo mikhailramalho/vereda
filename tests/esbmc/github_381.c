@@ -8,7 +8,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_381
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: github_381\.c line 7 column 3 function main$
+// Vereda: unmet EXPECT: github_381\.c line 7 column 3 function main$
+// MODE: FUTURE

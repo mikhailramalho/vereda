@@ -27,7 +27,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_github_9436
-// Needs: --clang-c-irep2-adjust-only --ub-shift-check --overflow-check
+// Needs: --clang-c-irep2-adjust-only
 // RUN: --clang-c-irep2-adjust-only --ub-shift-check --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

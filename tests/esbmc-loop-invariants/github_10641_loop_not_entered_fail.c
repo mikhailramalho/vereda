@@ -18,7 +18,7 @@ int main()
   return x;
 }
 // Imported from ESBMC regression/loop-invariants/github_10641_loop_not_entered_fail
-// Needs: --loop-invariant-check --overflow-check
+// Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

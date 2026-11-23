@@ -128,9 +128,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/cstd/scanf-false-3
-// Needs: --overflow-check
-// RUN: --overflow-check --64 --incremental-bmc
-// MODE: FUTURE
+// RUN: --overflow-check -m64 --incremental-bmc
 // EXPECT: ^Violated property:$
 // EXPECT: dereference failure: NULL pointer
 // EXPECT: ^VERIFICATION FAILED$

@@ -27,7 +27,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9436
-// Needs: --ub-shift-check --overflow-check
 // RUN: --ub-shift-check --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

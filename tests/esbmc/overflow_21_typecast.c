@@ -9,8 +9,8 @@ int main()
   a = (int)b;
 }
 // Imported from ESBMC regression/esbmc/overflow_21_typecast
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^.*floating-point conversion out of range.*$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^.*floating-point conversion out of range.*$
+// MODE: FUTURE

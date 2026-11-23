@@ -6,7 +6,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/guarded_overflow
-// Needs: --goto2lean --unsigned-overflow-check
+// Needs: --goto2lean
 // RUN: --goto2lean --unsigned-overflow-check
 // MODE: FUTURE
 // EXPECT: ^  \(\(c ≠ 0#32\) → ¬\(\(BitVec\.uaddOverflow a b\) = true\)\) ∧ \($

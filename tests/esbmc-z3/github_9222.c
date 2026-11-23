@@ -20,7 +20,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/z3/github_9222
-// Needs: --overflow-check --unsigned-overflow-check
-// RUN: --z3 --overflow-check --unsigned-overflow-check
-// MODE: FUTURE
+// RUN: --solver z3 --overflow-check --unsigned-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

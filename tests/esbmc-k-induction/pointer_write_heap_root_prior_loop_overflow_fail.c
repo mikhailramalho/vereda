@@ -22,7 +22,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/k-induction/pointer_write_heap_root_prior_loop_overflow_fail
-// Needs: --k-induction --overflow-check --no-assertions
+// Needs: --k-induction --no-assertions
 // RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success --overflow-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

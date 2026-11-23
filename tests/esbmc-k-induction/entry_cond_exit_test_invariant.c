@@ -16,7 +16,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/k-induction/entry_cond_exit_test_invariant
-// Needs: --k-induction --overflow-check --no-assertions --interval-analysis --interval-analysis-arithmetic
+// Needs: --k-induction --no-assertions --interval-analysis --interval-analysis-arithmetic
 // RUN: --k-induction --max-k-step 10 --overflow-check --no-assertions --interval-analysis --interval-analysis-arithmetic
 // MODE: FUTURE
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$

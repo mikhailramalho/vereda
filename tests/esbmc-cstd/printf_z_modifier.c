@@ -11,7 +11,7 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_z_modifier
-// Needs: --overflow-check REQUIRES arch32
+// Needs: REQUIRES arch32
 // RUN: --overflow-check --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -53,7 +53,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1200
-// Needs: --k-induction --overflow
+// Needs: --k-induction
 // RUN: --unwind 1 --k-induction --overflow
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

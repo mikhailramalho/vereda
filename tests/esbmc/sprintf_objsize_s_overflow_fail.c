@@ -16,7 +16,5 @@ int main(void)
   return sum;
 }
 // Imported from ESBMC regression/esbmc/sprintf_objsize_s_overflow_fail
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

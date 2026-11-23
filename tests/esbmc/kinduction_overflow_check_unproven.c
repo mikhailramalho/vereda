@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/kinduction_overflow_check_unproven
-// Needs: --overflow-check --k-induction
+// Needs: --k-induction
 // RUN: --overflow-check --k-induction --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$

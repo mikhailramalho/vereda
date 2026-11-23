@@ -11,7 +11,5 @@ int main()
   b.a += a;
 }
 // Imported from ESBMC regression/esbmc/github_162_fail
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

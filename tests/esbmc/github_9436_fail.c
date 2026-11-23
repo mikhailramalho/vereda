@@ -5,8 +5,8 @@ int main(void)
   return c;
 }
 // Imported from ESBMC regression/esbmc/github_9436_fail
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: undefined behavior on shift operation shl$
+// Vereda: unmet EXPECT: undefined behavior on shift operation shl$
+// MODE: FUTURE

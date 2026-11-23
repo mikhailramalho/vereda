@@ -115,7 +115,7 @@ void main()
     }
 }
 // Imported from ESBMC regression/esbmc/overflow_10_fir
-// Needs: --overflow-check --boolector
+// Needs: --boolector
 // RUN: --unwind 34 --overflow-check --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

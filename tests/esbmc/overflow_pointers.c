@@ -13,7 +13,5 @@ int main()
   assert(my_strlen(str) == 5);
 } 
 // Imported from ESBMC regression/esbmc/overflow_pointers
-// Needs: --overflow-check
 // RUN: --overflow-check --unwind 6
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

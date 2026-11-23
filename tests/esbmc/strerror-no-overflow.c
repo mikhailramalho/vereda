@@ -8,7 +8,8 @@ int main()
 	assert(err); // C99 says this must not be NULL
 }
 // Imported from ESBMC regression/esbmc/strerror-no-overflow
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

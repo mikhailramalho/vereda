@@ -12,8 +12,8 @@ int main(void)
   return u;
 }
 // Imported from ESBMC regression/esbmc/shift_assign_count_type_fail
-// Needs: --ub-shift-check
 // RUN: --ub-shift-check
-// MODE: FUTURE
 // EXPECT: ^  undefined behavior on shift operation lshr$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^  undefined behavior on shift operation lshr$
+// MODE: FUTURE

@@ -7,8 +7,8 @@ unsigned long long q(unsigned a, unsigned b)
   return (unsigned long long)a * (unsigned long long)b;
 }
 // Imported from ESBMC regression/esbmc/github_7840_unsigned
-// Needs: --unsigned-overflow-check
-// RUN: --unsigned-overflow-check --function q
-// MODE: FUTURE
+// RUN: --unsigned-overflow-check --entry q
 // EXPECT: ^Generated 3 VCC\(s\), 2 remaining after simplification
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^Generated 3 VCC\(s\), 2 remaining after simplification
+// MODE: FUTURE

@@ -7,7 +7,5 @@ int main()
   assert(resp==a-b);
 }
 // Imported from ESBMC regression/esbmc/overflow_02_sub
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$

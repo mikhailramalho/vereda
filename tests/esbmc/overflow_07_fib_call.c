@@ -82,7 +82,7 @@ int main()
 
 
 // Imported from ESBMC regression/esbmc/overflow_07_fib_call
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-int
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

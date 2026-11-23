@@ -12,7 +12,7 @@ int main() {
 	return 0;
 }
 // Imported from ESBMC regression/mathsat/00_Division_false-no-overflow
-// Needs: --overflow-check --mathsat
+// Needs: --mathsat
 // RUN: --floatbv --overflow-check --mathsat
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

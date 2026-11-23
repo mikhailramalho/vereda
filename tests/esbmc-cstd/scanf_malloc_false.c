@@ -36,7 +36,7 @@ int main() {
     return 0;
 }  
 // Imported from ESBMC regression/cstd/scanf_malloc_false
-// Needs: --overflow-check --k-induction --no-unlimited-scanf-check
+// Needs: --k-induction --no-unlimited-scanf-check
 // RUN: --overflow-check --k-induction --no-unlimited-scanf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

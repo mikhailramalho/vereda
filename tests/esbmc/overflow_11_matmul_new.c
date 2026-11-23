@@ -80,7 +80,8 @@ int main()
 	 
 
 // Imported from ESBMC regression/esbmc/overflow_11_matmul_new
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-int
-// MODE: FUTURE
+// RUN: --overflow-check
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

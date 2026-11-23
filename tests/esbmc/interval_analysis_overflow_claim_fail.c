@@ -7,7 +7,7 @@ int main()
   return b;
 }
 // Imported from ESBMC regression/esbmc/interval_analysis_overflow_claim_fail
-// Needs: --overflow-check --interval-analysis
+// Needs: --interval-analysis
 // RUN: --overflow-check --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^  arithmetic overflow on add$

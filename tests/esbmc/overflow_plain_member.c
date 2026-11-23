@@ -13,7 +13,5 @@ int main()
   b.a += a;
 }
 // Imported from ESBMC regression/esbmc/overflow_plain_member
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,7 +15,5 @@ int g(int a, int b)
   return prod;
 }
 // Imported from ESBMC regression/k-induction/github_5188_bounded
-// Needs: --overflow-check
-// RUN: --function g --overflow-check --unwind 4 --no-unwinding-assertions
-// MODE: FUTURE
+// RUN: --entry g --overflow-check --unwind 4 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$

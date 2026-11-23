@@ -7,7 +7,7 @@ int main()
   assert(x == 20);
 }
 // Imported from ESBMC regression/cstd/printf_bug_2
-// Needs: --overflow-check REQUIRES arch32
+// Needs: REQUIRES arch32
 // RUN: --overflow-check --32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

@@ -7,7 +7,7 @@ int main(void)
   return a;
 }
 // Imported from ESBMC regression/floats-regression/github_7792_claims
-// Needs: --overflow-check --show-claims
+// Needs: --show-claims
 // RUN: --overflow-check --show-claims
 // MODE: FUTURE
 // EXPECT: ^  isinf\(f\) \|\| !\(isinf\(IEEE_ADD\(f, 0\.000000\)\)\)$

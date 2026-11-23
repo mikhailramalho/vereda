@@ -22,7 +22,5 @@ int main() {
   return v;
 }
 // Imported from ESBMC regression/esbmc/if_cond_overflow_check
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

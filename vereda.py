@@ -30,19 +30,25 @@ CLANG_FLAGS = [
     "-fbracket-depth=1024",
 ]
 
-# SV-COMP property formula -> (the binary's --property, extra clang flags).
-# Only signed overflow: SV-COMP's no-overflow is a signed result out of
-# range, and clang's shift checks also flag negative operands, which are not.
+# ESBMC's flags for the checks clang's sanitizers insert. They trap into
+# llvm.ubsantrap, which the binary takes as a failed check.
+SANITIZERS = {
+    "--overflow-check": "signed-integer-overflow",
+    "--unsigned-overflow-check": "unsigned-integer-overflow",
+    "--ub-shift-check": "shift",
+}
+# SV-COMP property formula -> (the binary's --property, sanitizers). Only
+# signed overflow: SV-COMP's no-overflow is a signed result out of range,
+# and clang's shift checks also flag negative operands, which are not.
 PROPERTIES = {
     "G ! call(reach_error())": ("unreach-call", []),
-    "G ! overflow": ("no-overflow", ["-fsanitize=signed-integer-overflow",
-                                     "-fsanitize-trap=signed-integer-overflow"]),
+    "G ! overflow": ("no-overflow", ["signed-integer-overflow"]),
 }
 CHECK = re.compile(r"CHECK\(\s*init\((\w+)\(\)\)\s*,\s*LTL\((.*)\)\s*\)")
 
 
 def read_property(path):
-    """(entry function, the binary's --property, clang flags) for an SV-COMP
+    """(entry function, the binary's --property, sanitizers) for an SV-COMP
     property file. Exits on a property the binary cannot check."""
     with open(path, encoding="utf-8") as f:
         checks = [CHECK.fullmatch(line.strip()) for line in f if line.strip()]
@@ -105,13 +111,19 @@ def main():
                         help="write the IR handed to the binary next to the input as <input>.ll")
     parser.add_argument("--property-file",
                         help="SV-COMP property file: unreach-call or no-overflow")
+    for flag, check in SANITIZERS.items():
+        parser.add_argument(flag, dest="sanitize", action="append_const", const=check,
+                            default=[], help=f"check with clang's -fsanitize={check}")
     parser.add_argument("-v", "--verbose", action="store_true", help="echo every command run")
     args, rest = parser.parse_known_args()
     flags = ["-m32"] * args.m32 + ["-m64"] * args.m64
     if args.property_file:
         entry, prop, sanitize = read_property(args.property_file)
-        flags += sanitize
+        args.sanitize += sanitize
         rest += ["--entry", entry, "--property", prop]
+    if args.sanitize:
+        flags += [f + ",".join(sorted(set(args.sanitize)))
+                  for f in ("-fsanitize=", "-fsanitize-trap=")]
 
     binary = args.bin or find_binary()
     if args.help:

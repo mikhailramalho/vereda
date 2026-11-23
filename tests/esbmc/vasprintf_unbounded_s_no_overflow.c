@@ -29,7 +29,7 @@ int main(void)
   return sum;
 }
 // Imported from ESBMC regression/esbmc/vasprintf_unbounded_s_no_overflow
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

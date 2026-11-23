@@ -28,7 +28,7 @@ int main(void)
   return sum;
 }
 // Imported from ESBMC regression/esbmc/vsnprintf_const_format
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

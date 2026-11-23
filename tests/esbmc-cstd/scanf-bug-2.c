@@ -6,7 +6,8 @@ int main(int argc, char *argv[])
     printf("%d",*ptr);   // output --539222987
 }
 // Imported from ESBMC regression/cstd/scanf-bug-2
-// Needs: --overflow-check
-// RUN: --overflow-check --64
+// RUN: --overflow-check -m64
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
+// MODE: CORE

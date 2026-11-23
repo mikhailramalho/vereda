@@ -124,7 +124,6 @@ int main(void)
 
 
 // Imported from ESBMC regression/esbmc/overflow_17_crc_new
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
     printf("%f",tmp);
 }
 // Imported from ESBMC regression/cstd/scanf_float_bug_2
-// Needs: --overflow-check
 // RUN: --overflow-check
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

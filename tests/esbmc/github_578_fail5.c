@@ -20,7 +20,7 @@ int main()
   assert(r==-4);
 }
 // Imported from ESBMC regression/esbmc/github_578_fail5
-// Needs: --overflow-check
-// RUN: --unwind 32 --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --unwind 32 --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

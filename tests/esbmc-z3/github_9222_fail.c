@@ -7,9 +7,7 @@ int main(void)
   return a * b;
 }
 // Imported from ESBMC regression/z3/github_9222_fail
-// Needs: --overflow-check
-// RUN: --z3 --overflow-check
-// MODE: FUTURE
+// RUN: --solver z3 --overflow-check
 // EXPECT: ^\s+a = [0-9]+
 // EXPECT: ^\s+b = -[0-9]+
 // EXPECT: arithmetic overflow on mul

@@ -105,7 +105,6 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1289
-// Needs: --overflow
-// RUN: --overflow
-// MODE: FUTURE
+// RUN: --overflow-check
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

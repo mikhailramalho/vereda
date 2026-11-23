@@ -13,7 +13,7 @@ int main()
   int b = 5 / num1; // division by zero in line 7
 }
 // Imported from ESBMC regression/esbmc/github_1890_1
-// Needs: --overflow-check --k-induction
+// Needs: --k-induction
 // RUN: --multi-property --overflow-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

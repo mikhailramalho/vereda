@@ -109,7 +109,7 @@ int minus(int a, int b) {
   return a - b;
 }
 // Imported from ESBMC regression/esbmc-unix/overflow_minus4
-// Needs: --overflow-check --context-bound 2
+// Needs: --context-bound 2
 // RUN: --overflow-check --z3 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,5 @@ int main(int argc, char *argv[])
   assert(n == 42);
 }
 // Imported from ESBMC regression/cstd/fscanf
-// Needs: --overflow-check
-// RUN: --overflow-check --64
-// MODE: FUTURE
+// RUN: --overflow-check -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

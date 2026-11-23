@@ -12,7 +12,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/floats/Float-div4
-// Needs: --overflow-check --nan-check
+// Needs: --nan-check
 // RUN: --floatbv --overflow-check --nan-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

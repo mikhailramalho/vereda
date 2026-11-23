@@ -23,7 +23,7 @@ int main(void)
   return t;
 }
 // Imported from ESBMC regression/esbmc/vsnprintf_const_format_exact
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

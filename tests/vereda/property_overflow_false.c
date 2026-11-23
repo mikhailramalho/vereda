@@ -1,5 +1,5 @@
 // RUN: --property-file %S/properties/no-overflow.prp
-// EXPECT: ^  arithmetic overflow on \+$
+// EXPECT: ^  arithmetic overflow on add$
 // EXPECT: ^FALSE_OVERFLOW$
 // EXPECT-NOT: reach_error$
 // Under no-overflow clang's sanitizer checks are the properties; a reachable

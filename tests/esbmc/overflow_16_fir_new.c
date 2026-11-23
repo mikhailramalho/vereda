@@ -313,7 +313,7 @@ void main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/overflow_16_fir_new
-// Needs: --overflow-check --boolector
+// Needs: --boolector
 // RUN: --unwind 34 --overflow-check --boolector
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

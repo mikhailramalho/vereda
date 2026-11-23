@@ -14,7 +14,5 @@ int main(void)
   return t;
 }
 // Imported from ESBMC regression/esbmc/printf_const_format_exact
-// Needs: --overflow-check
 // RUN: --overflow-check --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

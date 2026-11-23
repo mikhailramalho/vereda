@@ -14,8 +14,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7572_trunc_fail
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^  FAILED       \[main\.assertion\.1\]\s+line 12  floating-point conversion out of range of unsignedbv on typecast$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^  FAILED       \[main\.assertion\.1\]\s+line 12  floating-point conversion out of range of unsignedbv on 
+// MODE: FUTURE

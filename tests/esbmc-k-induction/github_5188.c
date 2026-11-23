@@ -13,7 +13,7 @@ int g(int a, int b)
   return prod;
 }
 // Imported from ESBMC regression/k-induction/github_5188
-// Needs: --k-induction --overflow-check
+// Needs: --k-induction
 // RUN: --function g --k-induction --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

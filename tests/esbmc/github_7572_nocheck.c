@@ -13,7 +13,7 @@ int main(void)
   return (int)x + b;
 }
 // Imported from ESBMC regression/esbmc/github_7572_nocheck
-// Needs: --overflow-check --no-fp-conversion-check
+// Needs: --no-fp-conversion-check
 // RUN: --overflow-check --no-fp-conversion-check
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*floating-point conversion out of range)[\s\S]*\Z

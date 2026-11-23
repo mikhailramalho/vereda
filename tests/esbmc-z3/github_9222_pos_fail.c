@@ -7,8 +7,6 @@ int main(void)
   return a * b;
 }
 // Imported from ESBMC regression/z3/github_9222_pos_fail
-// Needs: --overflow-check
-// RUN: --z3 --overflow-check
-// MODE: FUTURE
+// RUN: --solver z3 --overflow-check
 // EXPECT: arithmetic overflow on mul
 // EXPECT: ^VERIFICATION FAILED$

@@ -6,7 +6,7 @@ int main()
     f*=2; // overflows in the last iteration
 }
 // Imported from ESBMC regression/floats/Float-overflow2
-// Needs: --overflow-check
-// RUN: --floatbv --overflow-check
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

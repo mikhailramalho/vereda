@@ -259,7 +259,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/esbmc/github_1377
-// Needs: --k-induction --max-inductive-step 1 --overflow
+// Needs: --k-induction --max-inductive-step 1
 // RUN: --unwind 1 --no-unwinding-assertions --k-induction --max-inductive-step 1 --overflow --z3 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

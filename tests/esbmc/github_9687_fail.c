@@ -6,7 +6,7 @@ int main(void)
   return y;
 }
 // Imported from ESBMC regression/esbmc/github_9687_fail
-// Needs: --overflow-check --no-assertions --witness-output-yaml -
+// Needs: --no-assertions --witness-output-yaml -
 // RUN: --overflow-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^    format_version: "2\.1"$

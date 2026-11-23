@@ -7,7 +7,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2337_2
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

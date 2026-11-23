@@ -27,7 +27,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7858-named-local
-// Needs: --overflow-check --witness-output-graphml -
+// Needs: --witness-output-graphml -
 // RUN: --64 --overflow-check --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

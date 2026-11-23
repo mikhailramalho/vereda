@@ -7,7 +7,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/simplifier-mult-fail
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

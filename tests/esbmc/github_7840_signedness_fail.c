@@ -8,7 +8,5 @@ long long p(unsigned a, unsigned b)
   return (long long)a * (long long)b;
 }
 // Imported from ESBMC regression/esbmc/github_7840_signedness_fail
-// Needs: --overflow-check
-// RUN: --overflow-check --function p
-// MODE: FUTURE
+// RUN: --overflow-check --entry p
 // EXPECT: ^VERIFICATION FAILED$

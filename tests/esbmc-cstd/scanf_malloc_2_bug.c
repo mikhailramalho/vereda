@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
   free(toParseStr);
 }
 // Imported from ESBMC regression/cstd/scanf_malloc_2_bug
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE

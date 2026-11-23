@@ -8,7 +8,7 @@ int main() {
   return x;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/invariant_havoc_overflow_after_loop_multi_fail
-// Needs: --overflow-check --k-induction --validate-correctness-witness --witness witness.yml
+// Needs: --k-induction --validate-correctness-witness --witness witness.yml
 // RUN: --overflow-check --k-induction --validate-correctness-witness --witness witness.yml --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -10,7 +10,7 @@ int main(void)
   return next(__VERIFIER_nondet_int());
 }
 // Imported from ESBMC regression/esbmc/github_9885_yaml_target_return
-// Needs: --overflow-check --witness-output-yaml -
+// Needs: --witness-output-yaml -
 // RUN: --overflow-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

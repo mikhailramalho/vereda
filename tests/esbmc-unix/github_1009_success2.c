@@ -50,7 +50,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix/github_1009_success2
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE

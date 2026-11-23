@@ -12,7 +12,5 @@ int main(int argc, char *argv[])
   }
 }
 // Imported from ESBMC regression/cstd/scanf_malloc_3
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

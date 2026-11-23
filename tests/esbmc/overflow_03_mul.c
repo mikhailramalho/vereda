@@ -8,7 +8,5 @@ int main()
   assert(resp==a*b);
 }
 // Imported from ESBMC regression/esbmc/overflow_03_mul
-// Needs: --overflow-check
-// RUN: --overflow-check -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$

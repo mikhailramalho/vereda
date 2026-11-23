@@ -472,7 +472,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/nonz3/overflow_12_adpcm
-// Needs: --overflow-check
-// RUN: --unwind 100 --overflow-check --z3
-// MODE: FUTURE
+// RUN: --unwind 100 --overflow-check --solver z3
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

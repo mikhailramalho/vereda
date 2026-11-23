@@ -85,7 +85,5 @@ int main()
 
 	
 // Imported from ESBMC regression/esbmc/overflow_18_insertsort_new
-// Needs: --overflow-check
 // RUN: --unwind 34 --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

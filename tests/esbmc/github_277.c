@@ -7,7 +7,5 @@ int main(void) {
   c += (l < t);
 }
 // Imported from ESBMC regression/esbmc/github_277
-// Needs: --overflow-check
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
