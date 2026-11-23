@@ -484,10 +484,18 @@ private:
     if (auto *a = dyn_cast<AllocaInst>(&inst)) {
       const DataLayout &dl = a->getDataLayout();
       unsigned bits = mem.pointerBits();
-      SMTExprRef count = enc.resize(enc.value(a->getArraySize()), bits, false);
-      SMTExprRef elem = t.bv(dl.getTypeAllocSize(a->getAllocatedType()), bits);
       // A stack object that does not fit is a stack overflow, which the
-      // verifier assumes away: the path ends, like ESBMC.
+      // verifier assumes away: the path ends, like ESBMC. An element that
+      // does not fit even the pointer width (a constant-size VLA turned into
+      // one array by instcombine, #59) ends it before any term is built.
+      uint64_t elemSize = dl.getTypeAllocSize(a->getAllocatedType());
+      if (!isUIntN(bits, elemSize)) {
+        s.addConstraint(t.lnot(guard));
+        enc.bind(a, mem.null());
+        return true;
+      }
+      SMTExprRef count = enc.resize(enc.value(a->getArraySize()), bits, false);
+      SMTExprRef elem = t.bv(elemSize, bits);
       SMTExprRef ok = t.land(t.lnot(t.umulo(count, elem)),
                               mem.fits(t.mul(count, elem)));
       enc.bind(a, mem.allocate(t.mul(count, elem), a->getAlign().value(), guard));
@@ -636,9 +644,12 @@ private:
       ok = t.land(ok, enc.fresh(Type::getInt1Ty(c.getContext()), "malloc_succeeds"));
     SMTExprRef p = mem.allocate(size, 16, t.land(guard, ok));
     if (isCalloc) {
-      uint64_t n = constantSize(c.getArgOperand(0), guard, "calloc") *
-                   constantSize(c.getArgOperand(1), guard, "calloc");
-      mem.set(st, p, t.bv(0, 8), n);
+      // A product beyond the largest object makes ok false: nothing to zero.
+      uint64_t n;
+      if (!__builtin_mul_overflow(constantSize(c.getArgOperand(0), guard, "calloc"),
+                                  constantSize(c.getArgOperand(1), guard, "calloc"), &n) &&
+          isUIntN(bits - 1, n))
+        mem.set(st, p, t.bv(0, 8), n);
     }
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
