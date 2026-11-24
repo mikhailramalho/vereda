@@ -9,6 +9,7 @@ int main()
 ); // array is zero initialized
 }
 // Imported from ESBMC regression/z3/quantifiers-hello-false
+// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

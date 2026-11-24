@@ -16,8 +16,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9272_object_fail
-// Needs: __ESBMC_POINTER_OBJECT __ESBMC_same_object
-// EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Needs: __ESBMC_POINTER_OBJECT, __ESBMC_same_object
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// EXPECT: ^VERIFICATION FAILED$

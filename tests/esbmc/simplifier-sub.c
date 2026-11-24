@@ -17,7 +17,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/simplifier-sub
 // Needs: __ESBMC_POINTER_OFFSET
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// EXPECT: ^VERIFICATION SUCCESSFUL$

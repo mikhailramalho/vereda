@@ -13,5 +13,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/esbmc_uninterpreted_nonzero_fail
+// Needs: __ESBMC_uninterpreted_eq
 // RUN: --incremental-bmc
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

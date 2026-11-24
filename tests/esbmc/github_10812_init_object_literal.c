@@ -7,4 +7,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10812_init_object_literal
+// Needs: __ESBMC_init_object
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

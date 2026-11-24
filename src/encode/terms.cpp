@@ -394,6 +394,10 @@ Ref Terms::land(const Ref &a, const Ref &b) {
   if ((na && na->op == Op::Not && na->a.get() == b.get()) ||
       (nb && nb->op == Op::Not && nb->a.get() == a.get()))
     return boolean(false);
+  // A condition the guard already has: g and c is g, and g and not c is
+  // false, which prunes the edge while it is walked.
+  if (int k = conjunct(a, b))
+    return k > 0 ? a : boolean(false);
   return make({Op::And, a, b});
 }
 Ref Terms::lor(const Ref &a, const Ref &b) {
@@ -404,8 +408,48 @@ Ref Terms::lor(const Ref &a, const Ref &b) {
   if ((na && na->op == Op::Not && na->a.get() == b.get()) ||
       (nb && nb->op == Op::Not && nb->a.get() == a.get()))
     return boolean(true);
+  // Branches rejoining, as ESBMC's guard |= with the one-conjunct suffixes
+  // it sees in practice: (p and x) or (p and y) is p and (x or y), so an
+  // if/else diamond joins back to p, and p or (p and x) is p.
+  bool andA = na && na->op == Op::And, andB = nb && nb->op == Op::And;
+  if (andB && nb->a.get() == a.get())
+    return a;
+  if (andA && na->a.get() == b.get())
+    return b;
+  if (andA && andB && na->a.get() == nb->a.get())
+    return land(na->a, lor(na->b, nb->b));
   return make({Op::Or, a, b});
 }
+
+// Guards grow as land(parent, condition), a chain down the left side; the
+// folds look that far up it, enough for nested branches and constant per
+// call.
+static constexpr unsigned SpineBound = 64;
+
+int Terms::conjunct(const Ref &g, const Ref &c) const {
+  auto find = [this](const camada::SMTExpr *e) {
+    auto it = nodes.find(e);
+    return it == nodes.end() ? nullptr : &it->second;
+  };
+  const Node *nc = find(c.get());
+  const camada::SMTExpr *e = g.get();
+  for (unsigned i = 0; i < SpineBound; ++i) {
+    const Node *n = find(e);
+    bool isAnd = n && n->op == Op::And;
+    const camada::SMTExpr *lit = isAnd ? n->b.get() : e; // the bottom is a conjunct too
+    if (lit == c.get())
+      return 1;
+    const Node *nl = find(lit);
+    if ((nc && nc->op == Op::Not && nc->a.get() == lit) ||
+        (nl && nl->op == Op::Not && nl->a.get() == c.get()))
+      return -1;
+    if (!isAnd)
+      return 0;
+    e = n->a.get();
+  }
+  return 0;
+}
+
 Ref Terms::lxor(const Ref &a, const Ref &b) {
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca) return ca->isOne() ? lnot(b) : b;

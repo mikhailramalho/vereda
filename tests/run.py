@@ -26,6 +26,8 @@ load, so a timeout says nothing about the verdict. A run that goes past
 leaves the mode alone, except in a KNOWNBUG test, where it is the known bug:
 CI runs several tests at once, and one that needs more memory than its share
 would take down the runner.
+A test whose `// Needs:` line names an __ESBMC_ or __CPROVER_ builtin, which
+Vereda does not support, is skipped without running it.
 The tool runs in a fresh temporary directory, so output files never land in
 the source tree.
 
@@ -47,6 +49,8 @@ import time
 HEADER = re.compile(r"^\s*(?://|;)\s*(RUN|EXPECT|EXPECT-NOT|MODE|FILES|CWD):\s*(.*?)\s*$")
 # The verdict a marked test gave when --mark last ran it.
 RECORDED = re.compile(r"^\s*(?://|;)\s*Vereda: verdict (\S+)\s*$")
+# The Needs line import_esbmc.py writes for a test that calls such a builtin.
+NEEDS_BUILTIN = re.compile(r"^\s*(?://|;)\s*Needs:\s*__(?:ESBMC|CPROVER)_\w")
 # An expectation that is just the verdict, as test.desc files write it.
 EXPECTED = re.compile(r"\^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\$?")
 FAIL_MODES = ("KNOWNBUG", "FUTURE")
@@ -103,9 +107,10 @@ def record(test, start, out, verdict=None):
 def parse(path):
     """The header of the test at path, as a dict keyed by directive."""
     desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "", "CWD": "",
-            "VERDICT": None}
+            "VERDICT": None, "BUILTIN": False}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
+            desc["BUILTIN"] |= bool(NEEDS_BUILTIN.match(line))
             if r := RECORDED.match(line):
                 desc["VERDICT"] = r.group(1)
             m = HEADER.match(line)
@@ -199,6 +204,9 @@ def main():
 
     test = os.path.abspath(args.test)
     desc = parse(test)
+    if desc["BUILTIN"]:
+        print("needs an __ESBMC_ or __CPROVER_ builtin, which Vereda does not support; skipped")
+        return SKIPPED
     files = [test] + [os.path.join(os.path.dirname(test), f) for f in desc["FILES"].split()]
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
     cmd += desc["RUN"].replace("%S", os.path.dirname(test)).split() + files

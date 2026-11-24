@@ -21,7 +21,5 @@ int main()
 // Imported from ESBMC regression/esbmc/github_5658_object_size_nondet
 // Needs: __ESBMC_get_object_size
 // RUN: --entry f
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// EXPECT: ^VERIFICATION SUCCESSFUL$

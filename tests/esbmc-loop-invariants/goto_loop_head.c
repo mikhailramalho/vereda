@@ -16,8 +16,8 @@ L:
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/goto_loop_head
+// Needs: __ESBMC_loop_invariant
 // Needs: --k-induction --loop-invariant --interval-analysis --interval-analysis-arithmetic
 // RUN: --k-induction --loop-invariant --interval-analysis --interval-analysis-arithmetic --max-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

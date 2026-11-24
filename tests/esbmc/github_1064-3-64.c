@@ -13,8 +13,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1064-3-64
+// Needs: __ESBMC_POINTER_OBJECT
 // RUN: -m64
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict none
+// EXPECT: ^VERIFICATION SUCCESSFUL$

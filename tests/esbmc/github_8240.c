@@ -22,7 +22,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8240
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Needs: __CPROVER_OBJECT_SIZE, __CPROVER_r_ok
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

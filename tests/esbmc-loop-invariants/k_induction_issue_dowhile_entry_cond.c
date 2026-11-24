@@ -30,8 +30,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/k_induction_issue_dowhile_entry_cond
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
 // RUN: --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

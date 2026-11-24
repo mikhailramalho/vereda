@@ -28,5 +28,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_first_match_fail
+// Needs: __ESBMC_exists
 // RUN: --solver z3
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

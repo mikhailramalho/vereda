@@ -1,15 +1,37 @@
 #include "solver/solver.h"
 
 #include <camada/camadafeatures.h>
+#if CAMADA_HAVE_BITWUZLA
+#include <camada/solvers/bitwuzlasolver.h>
+#endif
 
 using namespace llvm;
 
 namespace vereda::solver {
 
+#if CAMADA_HAVE_BITWUZLA
+namespace {
+// Bitwuzla with bv-cnf-scope=permanent. Each checkSatAssuming pushes a level
+// for its assumption. Under the default, adaptive, the clauses that define the
+// AIG nodes a check needs mostly take that level, so they carry its activation
+// literal and go at the pop, to be encoded again by the next check that needs
+// them. Permanent adds them at level 0 and keeps them; only the clause that
+// asserts the assumption takes the level. Keeping them cannot change an
+// answer: each defines a fresh variable from its inputs. Measured in
+// docs/survey/2026-11-23-what-the-decrement-test-s-solve-depends-on.md.
+struct Bitwuzla : camada::BitwuzlaSolver {
+  Bitwuzla() { reset(); } // configureOptions applies only from here on
+  void configureOptions(BitwuzlaOptions *o) override {
+    bitwuzla_set_option_mode(o, BITWUZLA_OPT_BV_CNF_SCOPE, "permanent");
+  }
+};
+} // namespace
+#endif
+
 Expected<camada::SMTSolverRef> create(const std::string &name) {
 #if CAMADA_HAVE_BITWUZLA
   if (name == "bitwuzla")
-    return camada::createBitwuzlaSolver();
+    return camada::SMTSolverRef(new Bitwuzla());
 #endif
 #if CAMADA_HAVE_Z3
   if (name == "z3")

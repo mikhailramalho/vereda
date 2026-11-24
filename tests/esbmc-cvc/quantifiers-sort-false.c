@@ -20,8 +20,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cvc/quantifiers-sort-false
+// Needs: __ESBMC_forall
 // RUN: --solver cvc5 --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

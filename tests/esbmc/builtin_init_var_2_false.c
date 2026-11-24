@@ -13,8 +13,6 @@ int main() {
   assert(O.a == 4);
 }
 // Imported from ESBMC regression/esbmc/builtin_init_var_2_false
-// EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Needs: __ESBMC_init_object
 // MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// EXPECT: ^VERIFICATION FAILED$

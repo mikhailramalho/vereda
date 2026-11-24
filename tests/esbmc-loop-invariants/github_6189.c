@@ -32,8 +32,8 @@ int main()
   __VERIFIER_assert(hi_idx == SIZE); // end: hi_idx
 }
 // Imported from ESBMC regression/loop-invariants/github_6189
+// Needs: __ESBMC_loop_invariant
 // Needs: --result-only --loop-invariant-check
 // RUN: --multi-property --result-only --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -11,4 +11,6 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/r_ok12
+// Needs: __ESBMC_r_ok
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

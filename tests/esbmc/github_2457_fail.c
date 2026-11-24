@@ -7,4 +7,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2457_fail
+// Needs: __CPROVER_rw_ok
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

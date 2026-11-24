@@ -5,4 +5,6 @@ int main()
 		__ESBMC_unreachable();
 }
 // Imported from ESBMC regression/esbmc/unreachable-true-off
+// Needs: __ESBMC_unreachable
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -30,11 +30,11 @@
 // G ! call(reach_error())
 void reach_error(){};
 #define \
-  __CPROVER_assert(condition, message) ({ if (!condition) {reach_error();}})
+  __VERIFIER_assert(condition) ({ if (!condition) {reach_error();}}) // message
 
 extern void abort(void);
 #define \
-  __CPROVER_assume(condition) \
+  __VERIFIER_assume(condition) \
     ({ \
       if (!(condition)) { \
         abort(); \
@@ -208,34 +208,34 @@ int main() {
         if (input_action.thread == 0) {
           if (input_action.type == CpuWrite) {
             // Guard: CPU write buffer is empty
-            __CPROVER_assume(cpu0Writes_issued < litmus_input.cpu0Writes_total);
-            __CPROVER_assume(wrBuffer0.num_pending_operations < W_BUFFER_SIZE);
+            __VERIFIER_assume(cpu0Writes_issued < litmus_input.cpu0Writes_total);
+            __VERIFIER_assume(wrBuffer0.num_pending_operations < W_BUFFER_SIZE);
             tso_core_write(input_action, g_history, &global_time, &wrBuffer0);
             litmus_input.cpu0_time++;
             cpu0Writes_issued++;
           } else if (input_action.type == CpuFence) {
             // Guard: CPU write buffer is empty
-            __CPROVER_assume(cpu0Writes_issued < litmus_input.cpu0Writes_total);
-            __CPROVER_assume(wrBuffer0.num_pending_operations == 0);
+            __VERIFIER_assume(cpu0Writes_issued < litmus_input.cpu0Writes_total);
+            __VERIFIER_assume(wrBuffer0.num_pending_operations == 0);
             tso_core_fence(input_action, g_history, &global_time);
             litmus_input.cpu0_time++;
             cpu0Writes_issued++;
           } else if (input_action.type == CpuRead) {
-            __CPROVER_assume(cpu0Reads_issued < litmus_input.cpu0Reads_total);
+            __VERIFIER_assume(cpu0Reads_issued < litmus_input.cpu0Reads_total);
             tso_core_read(input_action, g_history, &global_time, &wrBuffer0, sharedMemory);
             litmus_input.cpu0_time++;
             cpu0Reads_issued++;
           } else {
           // Guard: There should no further user inputs
-            __CPROVER_assume(0);
+            __VERIFIER_assume(0);
           }
         } else {
-          __CPROVER_assume(0);
+          __VERIFIER_assume(0);
         }
         break;
       case STEP_WRITE_BUFFER_0: // Write buffer takes a step
         // Guard: Write buffer has an element to fire
-        __CPROVER_assume(wrBuffer0.num_pending_operations > 0);
+        __VERIFIER_assume(wrBuffer0.num_pending_operations > 0);
         stepWriteBuffer(&wrBuffer0, sharedMemory);
         break;
 #endif
@@ -247,40 +247,40 @@ int main() {
         if (input_action.thread == 1) {
           if (input_action.type == CpuWrite) {
             // Guard: CPU write buffer is empty
-            __CPROVER_assume(cpu1Writes_issued < litmus_input.cpu1Writes_total);
-            __CPROVER_assume(wrBuffer1.num_pending_operations < W_BUFFER_SIZE);
+            __VERIFIER_assume(cpu1Writes_issued < litmus_input.cpu1Writes_total);
+            __VERIFIER_assume(wrBuffer1.num_pending_operations < W_BUFFER_SIZE);
             tso_core_write(input_action, g_history, &global_time, &wrBuffer1);
             litmus_input.cpu1_time++;
             cpu1Writes_issued++;
           } else if (input_action.type == CpuFence) {
             // Guard: CPU write buffer is empty
-            __CPROVER_assume(cpu1Writes_issued < litmus_input.cpu1Writes_total);
-            __CPROVER_assume(wrBuffer1.num_pending_operations == 0);
+            __VERIFIER_assume(cpu1Writes_issued < litmus_input.cpu1Writes_total);
+            __VERIFIER_assume(wrBuffer1.num_pending_operations == 0);
             tso_core_fence(input_action, g_history, &global_time);
             litmus_input.cpu1_time++;
             cpu1Writes_issued++;
           } else if (input_action.type == CpuRead) {
-            __CPROVER_assume(cpu1Reads_issued < litmus_input.cpu1Reads_total);
+            __VERIFIER_assume(cpu1Reads_issued < litmus_input.cpu1Reads_total);
             tso_core_read(input_action, g_history, &global_time, &wrBuffer1, sharedMemory);
             litmus_input.cpu1_time++;
             cpu1Reads_issued++;
           } else {
           // Guard: There should no further user inputs
-            __CPROVER_assume(0);
+            __VERIFIER_assume(0);
           }
         } else {
-          __CPROVER_assume(0);
+          __VERIFIER_assume(0);
         }
         break;
       case STEP_WRITE_BUFFER_1: // Write buffer takes a step
         // Guard: Write buffer has an element to fire
-        __CPROVER_assume(wrBuffer1.num_pending_operations > 0);
+        __VERIFIER_assume(wrBuffer1.num_pending_operations > 0);
         stepWriteBuffer(&wrBuffer1, sharedMemory);
         break;
 #endif
       default:
         // Disallow any other choices for the guarded command.
-        __CPROVER_assume(0);
+        __VERIFIER_assume(0);
         break;
       }
     }
@@ -312,7 +312,7 @@ void randomise_input(inputT* litmus_input) {
   for (int i = 0; i < MAX_TIME; i++)
     if (i < cpu0_operations) {
       headerT header = __VERIFIER_nondet_headerT();
-      __CPROVER_assume(header.address < MAX_LOC);
+      __VERIFIER_assume(header.address < MAX_LOC);
       header.thread = 0;
       header.mdata = 0;
       litmus_input->cpu0_input[i] = header;
@@ -321,7 +321,7 @@ void randomise_input(inputT* litmus_input) {
   for (int i = 0; i < MAX_TIME ; i++)
     if (i < cpu1_operations) {
       headerT header = __VERIFIER_nondet_headerT();
-      __CPROVER_assume(header.address < MAX_LOC);
+      __VERIFIER_assume(header.address < MAX_LOC);
       header.thread = 1;
       header.mdata = 0;
       litmus_input->cpu1_input[i] = header;
@@ -585,10 +585,10 @@ int store_buffering_2_assertions(headerT* g_history){
               (event_i2 != -1) &&
               (event_i3 != -1) &&
               1)
-      __CPROVER_assert( !(
+      __VERIFIER_assert( !(
               (g_history[event_i1].data == 0) &&
-              (g_history[event_i3].data == 0) ),
-              "2SB");
+              (g_history[event_i3].data == 0) )
+); // 2SB
   return 0;
 }
 

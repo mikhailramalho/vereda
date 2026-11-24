@@ -22,8 +22,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_nondet_guard
+// Needs: __ESBMC_forall
 // Needs: --dont-care-about-missing-extensions
 // RUN: --z3 --dont-care-about-missing-extensions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

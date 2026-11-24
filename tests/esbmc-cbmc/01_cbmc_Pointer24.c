@@ -14,7 +14,5 @@ int main()
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer24
 // Needs: __ESBMC_same_object
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -21,8 +21,8 @@ int main()
   assert(x == 0);
 }
 // Imported from ESBMC regression/loop-invariants/count_down_02
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

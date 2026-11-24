@@ -18,9 +18,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_misplaced_call_warning
+// Needs: __ESBMC_unroll
 // Needs: --verbosity 9
 // RUN: --unwind 6 --verbosity 9
 // MODE: FUTURE
 // EXPECT: __ESBMC_unroll at .* is not directly followed by a loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

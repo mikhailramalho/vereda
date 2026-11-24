@@ -60,8 +60,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/digital-controller
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --unwind 10
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

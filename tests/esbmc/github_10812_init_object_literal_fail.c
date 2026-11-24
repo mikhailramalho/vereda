@@ -6,8 +6,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10812_init_object_literal_fail
+// Needs: __ESBMC_init_object
+// MODE: FUTURE
 // EXPECT: ^  dereference failure: write access to string constant$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  dereference failure: write access to string constant$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
