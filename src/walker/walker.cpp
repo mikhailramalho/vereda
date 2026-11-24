@@ -8,8 +8,10 @@
 #include <llvm/ADT/MapVector.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CaptureTracking.h>
 #include <llvm/Analysis/LoopInfo.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
@@ -377,6 +379,11 @@ private:
 
     // Bodyless verifier functions, as ESBMC treats them by default: a defined
     // one is an ordinary call, except reach_error under unreach-call, above.
+    if (name == "__VERIFIER_nondet_memory") {
+      havoc(st, name, c, c.getArgOperand(0), constantSize(c.getArgOperand(1), guard, name),
+            guard);
+      return guard;
+    }
     if (name.starts_with("__VERIFIER_nondet_")) {
       SMTExprRef v = enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
@@ -412,13 +419,95 @@ private:
       return guard;
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
-    // An unknown external returns an unconstrained value. Sound
-    // while nothing has memory; revisit with the memory model.
+    // An unknown external returns an unconstrained value and may write all
+    // of each object it gets a pointer to (read, fgets), except a constant
+    // and what its attributes, which LLVM infers for the C library, say it
+    // only reads. Of the variadic arguments only scanf's are written
+    // (printf's %n is not modelled). It may also write through pointers
+    // stored in those objects, or to globals, which this does not cover.
+    // Uninterpreted functions (__CPROVER_uninterpreted_*) write nothing, nor
+    // do the pthread functions here, as threads are not modelled yet.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
+    if (!c.onlyReadsMemory() && !name.starts_with("pthread_") &&
+        !name.contains("_uninterpreted_"))
+      for (unsigned i = 0; i < c.getFunctionType()->getNumParams(); ++i) {
+        Value *a = c.getArgOperand(i);
+        auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
+        if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
+          havoc(st, name, c, a, std::nullopt, guard);
+      }
+    if (name.ends_with("scanf") && c.getFunctionType()->isVarArg())
+      return scan(c, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
       enc.bind(&c, enc.fresh(c.getType(), tag));
     return guard;
+  }
+
+  // The variadic arguments of scanf, fscanf and sscanf (C17 7.21.6.2): with
+  // a constant format, each conversion writes the bytes its type takes, a
+  // string up to its width or the end of the object, and the result r says
+  // how many were assigned: the first r, or none for EOF. A %n is written
+  // only when the conversions before it were, if any. With another format,
+  // every argument's whole object may be written.
+  SMTExprRef scan(CallBase &c, StringRef name, const std::string &tag, SMTExprRef guard,
+                  memory::State &st) {
+    unsigned arg = c.getFunctionType()->getNumParams();
+    SMTExprRef r = enc.fresh(c.getType(), tag);
+    enc.bind(&c, r);
+    StringRef f;
+    if (!getConstantStringInfo(c.getArgOperand(arg - 1), f)) {
+      for (; arg < c.arg_size(); ++arg)
+        havoc(st, name, c, c.getArgOperand(arg), std::nullopt, guard);
+      return guard;
+    }
+    const DataLayout &dl = c.getDataLayout();
+    unsigned bits = r->getWidth(), ptr = dl.getPointerSize(), assigned = 0;
+    for (size_t i = 0; i < f.size() && arg < c.arg_size(); ++i) {
+      if (f[i] != '%' || ++i == f.size() || f[i] == '%')
+        continue;
+      bool suppressed = f[i] == '*';
+      i += suppressed;
+      uint64_t width = 0;
+      for (; i < f.size() && isDigit(f[i]); ++i)
+        width = width * 10 + (f[i] - '0');
+      size_t from = i;
+      while (i < f.size() && StringRef("hljztL").contains(f[i]))
+        ++i;
+      StringRef length = f.slice(from, i);
+      if (i == f.size())
+        break;
+      char conv = f[i];
+      if (conv == '[') // the set may start with ] or ^]
+        i = std::min(f.find(']', i + (f.substr(i + 1).starts_with("^") ? 3 : 2)), f.size());
+      if (suppressed)
+        continue;
+      Value *a = c.getArgOperand(arg++);
+      SMTExprRef p = enc.value(a);
+      std::optional<uint64_t> n;
+      if (StringRef("diouxXn").contains(conv))
+        n = length == "hh" ? 1 : length == "h" ? 2
+          : length == "ll" || length == "L" || length == "j" ? 8 // glibc's %Ld is long long
+          : length.empty() ? 4 : ptr; // l, z and t: the pointer width on Linux
+      else if (StringRef("aAeEfFgG").contains(conv))
+        n = length == "L" ? dl.getTypeAllocSize(Type::getX86_FP80Ty(c.getContext()))
+          : length == "l" ? 8 : 4;
+      else if (conv == 'p')
+        n = ptr;
+      else if (conv == 'c')
+        n = (width ? width : 1) * (length == "l" ? 4 : 1);
+      else if (width) // s or [: the characters and a null
+        n = (width + 1) * (length == "l" ? 4 : 1);
+      else
+        n = single(t.sub(mem.size(mem.object(p)), mem.offset(p)), guard);
+      SMTExprRef done = conv == 'n' ? t.sge(r, t.bv(assigned ? int64_t(assigned) : -1, bits))
+                                    : t.sgt(r, t.bv(assigned++, bits));
+      memory::State written = st;
+      havoc(written, name, c, a, n, guard);
+      st = mem.ite(done, written, st);
+    }
+    SMTExprRef range = t.land(t.sge(r, t.bv(-1, bits)), t.sle(r, t.bv(assigned, bits)));
+    return t.land(guard, range);
   }
 
   // Walks a defined callee in a new frame.
@@ -511,27 +600,51 @@ private:
     checks.push_back({property, loc, std::move(comment), std::move(expr), index, violated});
   }
 
+  // The one value v takes where guard holds (0 if it holds nowhere), which
+  // the solver checks; folding terms as they are built settles most
+  // without it. None when v may take several.
+  std::optional<uint64_t> single(SMTExprRef v, SMTExprRef guard) {
+    if (const APInt *c = t.constant(v))
+      return c->getLimitedValue();
+    camada::CheckResult feasible = s.checkSatAssuming({guard});
+    if (feasible == camada::CheckResult::UNSAT)
+      return 0; // the path is infeasible
+    if (feasible != camada::CheckResult::SAT)
+      return std::nullopt;
+    auto model = s.getBVUnsigned(v);
+    if (!model)
+      return std::nullopt;
+    SMTExprRef other = t.lnot(t.eq(v, t.bv(model.value(), v->getWidth())));
+    if (s.checkSatAssuming({guard, other}) != camada::CheckResult::UNSAT)
+      return std::nullopt;
+    return model.value();
+  }
+
   // Size operand of a memory function. A symbolic size is accepted when it
-  // has one value on the path, which the solver checks; folding terms as
-  // they are built will settle most of these without it.
-  // A size with several values needs a loop or a quantifier. Memory
-  // limits how many bytes go one at a time.
+  // has one value on the path; one with several needs a loop or a
+  // quantifier. Memory limits how many bytes go one at a time.
   uint64_t constantSize(const Value *v, SMTExprRef guard, StringRef what) {
     if (auto *ci = dyn_cast<ConstantInt>(v))
       return ci->getLimitedValue();
-    SMTExprRef size = enc.value(v);
-    if (const APInt *c = t.constant(size))
-      return c->getLimitedValue();
-    if (s.checkSatAssuming({guard}) != camada::CheckResult::SAT)
-      return 0; // the path is infeasible: no bytes to write
-    auto model = s.getBVUnsigned(size);
-    if (!model)
+    std::optional<uint64_t> n = single(enc.value(v), guard);
+    if (!n)
       throw Unsupported(what.str() + " with a symbolic size");
-    uint64_t value = model.value();
-    SMTExprRef other = t.lnot(t.eq(size, t.bv(value, size->getWidth())));
-    if (s.checkSatAssuming({guard, other}) != camada::CheckResult::UNSAT)
-      throw Unsupported(what.str() + " with a symbolic size");
-    return value;
+    return *n;
+  }
+
+  // Gives the n bytes at a, or its whole object, nondet contents (see
+  // Memory::havoc), for a call to name. A pointer whose object the terms
+  // leave open, as after a store at a symbolic address, is accepted when
+  // the object has one value on the path.
+  void havoc(memory::State &st, StringRef name, CallBase &c, Value *a,
+             std::optional<uint64_t> n, SMTExprRef guard) {
+    SMTExprRef p = enc.value(a);
+    if (mem.havoc(st, p, n))
+      return;
+    std::optional<uint64_t> o = single(mem.object(p), guard);
+    if (!o || !mem.havoc(st, mem.ptr(t.bv(*o, mem.object(p)->getWidth()), mem.offset(p)), n))
+      throw Unsupported("call to " + name.str() + " without a body, which may write an "
+                        "object chosen at run time, at " + ir::location(c).str());
   }
 
   // alloca, load and store, and the atomics. Returns false for any other

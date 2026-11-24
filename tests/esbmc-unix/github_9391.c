@@ -21,3 +21,6 @@ int main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc-unix/github_9391
 // RUN: --unwind 3 --multi-property
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

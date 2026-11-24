@@ -64,6 +64,7 @@ public:
   camada::SMTExprRef null();
   camada::SMTExprRef object(camada::SMTExprRef p);
   camada::SMTExprRef offset(camada::SMTExprRef p);
+  camada::SMTExprRef ptr(camada::SMTExprRef obj, camada::SMTExprRef off);
   // p moved by delta bytes, a pointer-width bitvector.
   camada::SMTExprRef advance(camada::SMTExprRef p, camada::SMTExprRef delta);
 
@@ -106,11 +107,15 @@ public:
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it.
   void own(State &st, camada::SMTExprRef p);
+  // Gives the n bytes at p nondet contents (__VERIFIER_nondet_memory), or
+  // without n the whole object at p, as a call to a function without a body
+  // may write any of it. False, with st unchanged, when the object is
+  // chosen at run time.
+  bool havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 
 private:
-  camada::SMTExprRef ptr(camada::SMTExprRef obj, camada::SMTExprRef off);
   camada::SMTExprRef bytePtr(camada::SMTExprRef p, uint64_t i);
   camada::SMTExprRef base(camada::SMTExprRef obj);
   bool hasPadding(llvm::Type *ty) const;

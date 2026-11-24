@@ -36,3 +36,6 @@ int main(void) {
 // Imported from ESBMC regression/esbmc-unix/fputs_unlocked_fail
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

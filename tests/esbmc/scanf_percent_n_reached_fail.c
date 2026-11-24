@@ -17,4 +17,5 @@ int main()
 // EXPECT: FAILED\s+\[main.assertion.2\]
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

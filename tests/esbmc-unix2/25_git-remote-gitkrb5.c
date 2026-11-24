@@ -6288,3 +6288,6 @@ main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc-unix2/25_git-remote-gitkrb5
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

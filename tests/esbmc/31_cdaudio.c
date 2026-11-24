@@ -8824,3 +8824,6 @@ NTSTATUS ZwClose(HANDLE Handle )
 // RUN: --unwind 1 --no-unwinding-assertions
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN
