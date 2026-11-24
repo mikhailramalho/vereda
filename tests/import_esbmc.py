@@ -173,7 +173,8 @@ def assert_messages(src):
 def as_c(regex):
     """An expectation on ESBMC's counterexample made one on Vereda's, which
     prints it as C: the separator line goes, a State header becomes a
-    comment, and an assignment 'x = 7 (bits)' becomes 'x = 7; // bits'
+    comment, an assignment 'x = 7 (bits)' becomes 'x = 7; // bits' and
+    bits alone '(bits)' become '// bits'
     ('x = &y' becomes 'x = &y;'; an aggregate value stays as it is). The
     Assumption and Violated property blocks, now inside a block comment,
     keep their lines."""
@@ -183,6 +184,8 @@ def as_c(regex):
     value = r"( = (?:\\.|[^\s\\])+)"
     regex = re.sub(value + r" \\\(([^\\]*)(?:\\\))?",
                    lambda m: f"{m[1]}; //" + (f" {m[2]}" if m[2] else ""), regex)
+    # The bits alone, '(01100011)': the comment after the statement.
+    regex = re.sub(r"\\\(((?:[01]{8} )*[01]{8})\\\)", r"// \1", regex)
     if "\\{" not in regex:
         regex = re.sub(r"^(\^(?:  |\\s\+)\S+)" + value + r"\$$", r"\1\2;$", regex)
     return regex

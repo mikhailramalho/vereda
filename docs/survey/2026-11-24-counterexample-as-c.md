@@ -25,7 +25,7 @@ pointers are not printed today (the trace shows integer values only).
 
 `tests/import_esbmc.py` rewrites ESBMC's counterexample expectations the same
 way (`as_c`). Applying it to the tests already there rewrote the
-expectations of 26 imported tests and 5 of Vereda's own
+expectations of 27 imported tests and 5 of Vereda's own
 (`vereda/loop_nondet_false.c` finished by hand), and the new constant for
 the least value made `esbmc/cpachecker-long-min-64.c` pass, so it went back
 to THOROUGH.
