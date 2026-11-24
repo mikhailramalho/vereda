@@ -1,6 +1,8 @@
 #include "ir/load.h"
 
+#include <llvm/ADT/DepthFirstIterator.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Analysis/CycleAnalysis.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
@@ -21,6 +23,9 @@
 #include <llvm/Support/Regex.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/SourceMgr.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/Transforms/Utils/FixIrreducible.h>
+#include <llvm/Transforms/Utils/LowerSwitch.h>
 
 using namespace llvm;
 
@@ -756,8 +761,8 @@ static void lowerLongjmp(Module &m) {
     // which switches to the resume block: those loops' head is restart,
     // which dominates every block. Mixing the two would let restart skip
     // the head of a direct jump's loop. The loops are irreducible after all
-    // when restart enters a loop at a resume block; the walker refuses such
-    // a function.
+    // when restart enters a loop at a resume block; fixIrreducible makes
+    // them loops again.
     DominatorTree dt(f);
     bool direct = all_of(points, [&](CallInst *p) {
       return all_of(sites, [&](Site &s) { return dt.dominates(s.resume, p->getParent()); });
@@ -859,6 +864,50 @@ static bool hasMustProgress(const Module &m) {
   return false;
 }
 
+// Irreducible control flow, a goto into a loop as the reducer-made SV-COMP
+// tasks have (#176), becomes natural loops: FixIrreducible routes every way
+// into an irreducible cycle, and every edge back to the block it takes as
+// the cycle's header, through a new block, irr.guard, that branches to the
+// entry taken. The walker unrolls the cycle as a loop headed there, once
+// per pass through irr.guard: ESBMC's count of the backward goto, or one
+// more on some paths when the pass takes another block than the goto's
+// target as the cycle's header. Its branches carry no location, so no
+// branching waypoint or trace step comes from them. The loop's location,
+// unless its latches already agree on one, is that of a jump back to
+// irr.guard; it goes in loop metadata, which loop-simplify also gives the
+// preheader it makes. The pass takes only branches, so a switch of such a
+// function becomes branches first; one with another terminator
+// (indirectbr) is left for the walker to refuse.
+static void fixIrreducible(Module &m) {
+  FunctionAnalysisManager fam;
+  PassBuilder().registerFunctionAnalyses(fam);
+  auto reducible = [](Cycle *top) {
+    return all_of(depth_first(top), [](Cycle *c) { return c->isReducible(); });
+  };
+  for (Function &f : m) {
+    if (f.isDeclaration() || all_of(fam.getResult<CycleAnalysis>(f).toplevel_cycles(), reducible))
+      continue;
+    fam.invalidate(f, LowerSwitchPass().run(f, fam));
+    if (!hasOnlySimpleTerminator(f))
+      continue;
+    fam.invalidate(f, FixIrreduciblePass().run(f, fam));
+    for (Loop *l : fam.getResult<LoopAnalysis>(f).getLoopsInPreorder()) {
+      SmallVector<BasicBlock *, 4> latches;
+      l->getLoopLatches(latches);
+      auto back =
+          find_if(latches, [](BasicBlock *b) { return bool(b->getTerminator()->getDebugLoc()); });
+      if (!l->getHeader()->getName().starts_with("irr.guard") || l->getLoopID() ||
+          back == latches.end())
+        continue;
+      MDNode *id = MDNode::getDistinct(
+          m.getContext(), {nullptr, (*back)->getTerminator()->getDebugLoc().get()});
+      id->replaceOperandWith(0, id);
+      for (BasicBlock *b : latches)
+        b->getTerminator()->setMetadata(LLVMContext::MD_loop, id);
+    }
+  }
+}
+
 static Error runPipeline(Module &m, StringRef pipeline) {
   LoopAnalysisManager lam;
   FunctionAnalysisManager fam;
@@ -925,12 +974,18 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   // nothing on undefined behaviour. Revisit when a folded check shows up.
   // no-verify-fixpoint, as LLVM's own pipelines run it: a textual pipeline
   // otherwise aborts when InstCombine needs more than one iteration.
-  // inferattrs, last, gives C library declarations the attributes that tell
-  // the walker which arguments a bodyless call only reads.
   if (Error e = runPipeline(*module,
                             "function(instcombine<no-verify-fixpoint>,"
-                            "scalarizer<load-store;variable-insert-extract>,loop-simplify,lcssa),"
-                            "inferattrs"))
+                            "scalarizer<load-store;variable-insert-extract>)"))
+    return std::move(e);
+  // After InstCombine, which sets fixIrreducible's guard on a way in from a
+  // block it finds dead, or reached only by undefined behaviour, to poison,
+  // where the walker may still walk; before loop-simplify and lcssa, which
+  // shape its loops too. inferattrs, last, gives C library declarations the
+  // attributes that tell the walker which arguments a bodyless call only
+  // reads.
+  fixIrreducible(*module);
+  if (Error e = runPipeline(*module, "function(loop-simplify,lcssa),inferattrs"))
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
