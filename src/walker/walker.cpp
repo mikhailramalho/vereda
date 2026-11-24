@@ -520,8 +520,10 @@ private:
       SMTExprRef v = enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
       // For the witness, which reads the value's type from the callee: not
-      // for a call through a mismatched signature.
-      if (c.getCalledFunction())
+      // for a call whose result type differs from it. One declared without
+      // a prototype, as in many SV-COMP tasks, is variadic and called
+      // without the "...", but returns the same type.
+      if (c.getType() == callee->getReturnType())
         trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
       return guard;
     }
