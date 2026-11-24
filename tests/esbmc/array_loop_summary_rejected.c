@@ -25,6 +25,6 @@ int main()
 // RUN: --unwind 12 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Summarised 1 array loop\(s\)$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^Summarised 1 array loop\(s\)$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict SUCCESSFUL
