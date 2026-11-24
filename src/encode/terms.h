@@ -130,6 +130,8 @@ private:
   // stored elsewhere). Null when it is not found within steps nodes, a cap
   // so that a read past many stores stays a select.
   Ref read(Ref &arr, const llvm::APInt &i, unsigned &steps);
+  // select without the cache below.
+  Ref uncached(const Ref &array, const Ref &index);
   enum class Op : uint8_t {
     Add, Sub, Mul, UDiv, SDiv, URem, SRem, Shl, LShr, AShr, BVAnd, BVOr, BVXor,
     BVNot, Concat, Extract, ZExt, SExt, Eq, Ult, Ule, Slt, Sle, And, Or, Xor,
@@ -197,6 +199,10 @@ private:
   std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>,
                      std::pair<Ref, Ref>, PairHash>
       reduced;
+  // Per array and constant index, what select gave: a read walks up to 256
+  // stores, and a load of an element reads it once per byte.
+  std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>, Ref, PairHash>
+      selects;
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const camada::SMTExpr *, std::unordered_set<const camada::SMTExpr *>> freeOf;
 };

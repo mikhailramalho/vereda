@@ -176,14 +176,18 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
       return storeArrays(st, k.first, ptr(k), c);
     // An element moves whole, as one store; its bytes not known are the
     // array's. Keys come in order, so its other bytes follow this one.
+    // The array is read only for those: an element written whole needs no
+    // read.
     Key e{k.first, k.second >> shift << shift};
     if (last == e)
       return;
     last = e;
     const State::Cell &own = *st.separate.find({e.first, 0});
-    SMTExprRef i = index(e.first, ptr(e)), old = t.select(own.data, i), elem;
+    SMTExprRef i = index(e.first, ptr(e)), old, elem;
     for (unsigned j = 0; j < 1u << shift; ++j) {
       const State::Cell *b = st.known.find({e.first, e.second + j});
+      if (!b && !old)
+        old = t.select(own.data, i);
       SMTExprRef byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
       elem = j ? t.concat(byte, elem) : byte;
     }

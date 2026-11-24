@@ -582,6 +582,16 @@ Ref Terms::smulo(const Ref &a, const Ref &b) {
 #undef FOLD2
 
 Ref Terms::select(const Ref &array, const Ref &index) {
+  if (!constant(index))
+    return uncached(array, index);
+  // A reference into the map stays valid while the select below adds to it.
+  Ref &r = selects[{array.get(), index.get()}];
+  if (!r)
+    r = uncached(array, index);
+  return r;
+}
+
+Ref Terms::uncached(const Ref &array, const Ref &index) {
   // A read of a constant array is its value, at any index.
   Ref arr = array;
   unsigned steps = 256;
