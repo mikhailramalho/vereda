@@ -2,6 +2,16 @@
 
 #include <algorithm>
 #include <llvm/ADT/Hashing.h>
+// makeExprRef asserts on a field of the sort that camada's headers declare
+// only without NDEBUG, which the prebuilt library's sorts lack.
+#ifdef NDEBUG
+#include <camada/core/camadaimpl.h>
+#else
+#define NDEBUG
+#include <camada/core/camadaimpl.h>
+#undef NDEBUG
+#include <cassert> // assert again for the rest of this file
+#endif
 
 using llvm::APInt;
 
@@ -9,21 +19,39 @@ namespace vereda::encode {
 
 using Ref = Terms::Ref;
 
+namespace {
+// A bit-vector constant as bv() gives it (terms.h). It lives in the
+// solver's arena, as camada's own tuple and array terms do, so that it is a
+// handle like any other term, but it belongs to no backend.
+struct Const final : camada::SMTExpr {
+  static constexpr auto Backend = static_cast<camada::SMTBackendKind>(0xff);
+  Const(camada::SMTExprKind k, camada::SMTSortRef sort, const APInt &v)
+      : SMTExpr(k, std::move(sort)), value(v) {}
+  camada::SMTBackendKind getBackendKind() const override { return Backend; }
+  bool equal_to(const camada::SMTExpr &o) const override { return &o == this; }
+  APInt value;
+  mutable Ref term; // the solver's, once made
+};
+
+const Const *asConst(const camada::SMTExpr *e) {
+  return e->getKind() == camada::SMTExprKind::BVConst && e->getBackendKind() == Const::Backend
+             ? static_cast<const Const *>(e)
+             : nullptr;
+}
+
+const APInt False(1, 0), True(1, 1);
+} // namespace
+
+Terms::Terms(camada::SMTSolver &s) : s(s), bools{s.mkBool(false), s.mkBool(true)} {}
+
 size_t Terms::KeyHash::operator()(const Key &k) const {
   return llvm::hash_combine(static_cast<uint8_t>(k.op), k.a, k.b, k.c, k.x, k.y);
 }
 
 const APInt *Terms::constant(const Ref &e) const {
-  auto it = values.find(e.get());
-  return it == values.end() ? nullptr : &it->second;
-}
-bool Terms::isTrue(const Ref &e) const {
-  const APInt *v = constant(e);
-  return v && e->isBoolSort() && v->isOne();
-}
-bool Terms::isFalse(const Ref &e) const {
-  const APInt *v = constant(e);
-  return v && e->isBoolSort() && v->isZero();
+  if (const Const *c = asConst(e.get()))
+    return &c->value;
+  return isTrue(e) ? &True : isFalse(e) ? &False : nullptr;
 }
 
 const Terms::Node *Terms::node(const Ref &e) const {
@@ -33,31 +61,40 @@ const Terms::Node *Terms::node(const Ref &e) const {
 
 Ref Terms::bv(const APInt &v) {
   Ref &r = bvs[v];
-  if (!r) {
+  if (!r)
+    r = static_cast<camada::SMTSolverImpl &>(s).makeExprRef<Const>(
+        camada::SMTExprKind::BVConst, s.mkBVSort(v.getBitWidth()), v);
+  return r;
+}
+
+Ref Terms::boolean(bool b) { return bools[b]; }
+
+Ref Terms::solverTerm(const Ref &e) {
+  const Const *c = asConst(e.get());
+  if (!c)
+    return e;
+  if (!c->term) {
     // Up to 64 bits, camada hands the value to the solver as an integer;
     // a string of digits would be parsed back, twice in Bitwuzla.
+    const APInt &v = c->value;
     unsigned w = v.getBitWidth();
     if (w <= 64) {
-      r = s.mkBVFromDec(static_cast<int64_t>(v.getZExtValue()), w);
+      c->term = s.mkBVFromDec(static_cast<int64_t>(v.getZExtValue()), w);
     } else {
       std::string bits(w, '0');
       for (unsigned i = 0; i < w; ++i)
         if (v[i])
           bits[w - 1 - i] = '1';
-      r = s.mkBVFromBin(bits, w);
+      c->term = s.mkBVFromBin(bits, w);
     }
-    values.try_emplace(r.get(), v);
+    made.try_emplace(c->term.get(), e);
   }
-  return r;
+  return c->term;
 }
 
-Ref Terms::boolean(bool b) {
-  Ref &r = bools[b];
-  if (!r) {
-    r = s.mkBool(b);
-    values.try_emplace(r.get(), APInt(1, b));
-  }
-  return r;
+Ref Terms::fromSolver(const Ref &e) const {
+  auto it = made.find(e.get());
+  return it == made.end() ? e : it->second;
 }
 
 bool Terms::entails(const Ref &guard, const Ref &lit) { return entails(guard, lit, 0); }
@@ -196,7 +233,8 @@ Ref Terms::make(Node n) {
 }
 
 Ref Terms::build(const Node &n) {
-  const Ref &a = n.a, &b = n.b;
+  auto term = [this](const Ref &x) { return x ? solverTerm(x) : x; };
+  Ref a = term(n.a), b = term(n.b), c = term(n.c);
   switch (n.op) {
   case Op::Add: return s.mkBVAdd(a, b);
   case Op::Sub: return s.mkBVSub(a, b);
@@ -225,7 +263,7 @@ Ref Terms::build(const Node &n) {
   case Op::Or: return s.mkOr(a, b);
   case Op::Xor: return s.mkXor(a, b);
   case Op::Not: return s.mkNot(a);
-  case Op::Ite: return s.mkIte(a, b, n.c);
+  case Op::Ite: return s.mkIte(a, b, c);
   case Op::UAddO: return s.mkBVUAddOverflow(a, b);
   case Op::SAddO: return s.mkBVSAddOverflow(a, b);
   case Op::USubO: return s.mkBVUSubOverflow(a, b);
@@ -233,7 +271,7 @@ Ref Terms::build(const Node &n) {
   case Op::UMulO: return s.mkBVUMulOverflow(a, b);
   case Op::SMulO: return s.mkBVSMulOverflow(a, b);
   case Op::Select: return s.mkArraySelect(a, b);
-  case Op::Store: return s.mkArrayStore(a, b, n.c);
+  case Op::Store: return s.mkArrayStore(a, b, c);
   }
   llvm_unreachable("unknown op");
 }
@@ -801,7 +839,7 @@ Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
 }
 
 Ref Terms::constArray(const camada::SMTSortRef &index, const Ref &value) {
-  Ref r = s.mkArrayConst(index, value);
+  Ref r = s.mkArrayConst(index, solverTerm(value));
   filled.emplace(r.get(), std::make_pair(r, value));
   return r;
 }

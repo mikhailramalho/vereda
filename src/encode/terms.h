@@ -5,6 +5,15 @@
 // constant index over stores at other constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
 // so pointer equality is structural equality for terms built here.
+//
+// A bit-vector constant is a term of the solver's arena that only Terms can
+// read: its value, and the solver's own term for it, made the first time the
+// constant goes into a term the solver sees. Most constants fold away
+// without ever getting one. camada's backends cast every term they are
+// given to their own type unchecked, so such a constant must not reach
+// camada: Terms swaps in the solver's term for the operations it builds,
+// and other code that hands camada a bit-vector term that may be one passes
+// it through solverTerm. Bools, floats and arrays are never such a constant.
 #pragma once
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
@@ -23,13 +32,20 @@ namespace vereda::encode {
 class Terms {
 public:
   using Ref = camada::SMTExprRef;
-  explicit Terms(camada::SMTSolver &s) : s(s) {}
+  explicit Terms(camada::SMTSolver &s);
   camada::SMTSolver &solver() { return s; }
 
   // The value of a constant term (width 1 for Bool), or null.
   const llvm::APInt *constant(const Ref &e) const;
-  bool isTrue(const Ref &e) const;
-  bool isFalse(const Ref &e) const;
+  bool isTrue(const Ref &e) const { return e.get() == bools[1].get(); }
+  bool isFalse(const Ref &e) const { return e.get() == bools[0].get(); }
+  // e as camada can take it: the solver's term for a bit-vector constant,
+  // made here the first time, and any other term as it is.
+  Ref solverTerm(const Ref &e);
+  // A term camada gave back, with the solver's term for a constant
+  // replaced by the constant: mkIEEEFPToBV gives back the bits a float
+  // was made from.
+  Ref fromSolver(const Ref &e) const;
 
   Ref bv(const llvm::APInt &v);
   // v must fit in width bits, signed or unsigned: with assertions off APInt
@@ -179,8 +195,9 @@ private:
   std::unordered_map<Key, Ref, KeyHash> memo;
   // Node-based maps: folding recurses while holding references into them.
   std::unordered_map<const camada::SMTExpr *, Node> nodes;
-  std::unordered_map<const camada::SMTExpr *, llvm::APInt> values;
   llvm::DenseMap<llvm::APInt, Ref> bvs;
+  // Per solver term made for a constant, the constant.
+  llvm::DenseMap<const camada::SMTExpr *, Ref> made;
   Ref bools[2];
   unsigned joinDepth = 0; // nesting of the concat join, bounded
   struct PairHash {

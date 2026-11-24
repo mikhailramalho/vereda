@@ -193,7 +193,7 @@ SMTSortRef Encoder::fpSort(Type *ty) {
 
 SMTExprRef Encoder::fp(const Value *v) {
   SMTSortRef sort = fpSort(v->getType()); // throws for x86_fp80, held as bits
-  return native() ? value(v) : s.mkBVToIEEEFP(value(v), sort);
+  return native() ? value(v) : s.mkBVToIEEEFP(t.solverTerm(value(v)), sort);
 }
 
 SMTExprRef Encoder::bits(const SMTExprRef &f) { return native() ? f : s.mkIEEEFPToBV(f); }
@@ -205,7 +205,7 @@ SMTExprRef Encoder::toBits(SMTExprRef v, Type *ty) {
   if (auto it = floatBits.find(v.get());
       it != floatBits.end() && !APFloat(*ieee(ty), it->second).isNaN())
     return t.bv(it->second);
-  return s.mkIEEEFPToBV(v);
+  return t.fromSolver(s.mkIEEEFPToBV(v));
 }
 
 SMTExprRef Encoder::fromBits(SMTExprRef b, Type *ty) {
@@ -213,10 +213,10 @@ SMTExprRef Encoder::fromBits(SMTExprRef b, Type *ty) {
     return b;
   const APInt *c = t.constant(b);
   if (!c)
-    return s.mkBVToIEEEFP(b, fpSort(ty));
+    return s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty));
   SMTExprRef &f = floatTerms[{ieee(ty), *c}];
   if (!f) {
-    f = s.mkBVToIEEEFP(b, fpSort(ty));
+    f = s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty));
     floatBits.try_emplace(f.get(), *c);
   }
   return f;
@@ -356,6 +356,7 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       r.convertFromAPInt(*c, opcode == Instruction::SIToFP, APFloat::rmNearestTiesToEven);
       return floatValue(r, dst);
     }
+    a = t.solverTerm(a);
     return bits(opcode == Instruction::SIToFP ? s.mkSBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN))
                                               : s.mkUBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
   }
@@ -423,7 +424,8 @@ SMTExprRef Encoder::isTrue(const Value *v) {
       return t.boolean(!c->isZero());
     SMTExprRef zero = fromBits(t.bv(0, v->getType()->getPrimitiveSizeInBits()), v->getType());
     return t.lnot(native() ? s.mkFPEqual(fp(v), zero)
-                           : s.mkFPEqual(fp(v), s.mkBVToIEEEFP(zero, fpSort(v->getType()))));
+                           : s.mkFPEqual(fp(v), s.mkBVToIEEEFP(t.solverTerm(zero),
+                                                               fpSort(v->getType()))));
   }
   SMTExprRef t = value(v);
   return v->getType()->isIntegerTy(1) ? t : toBool(t);
