@@ -12,7 +12,7 @@ int main()
     __VERIFIER_assert(b[x] == 42);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_k_induction
-// Needs: --summarize-array-loops --k-induction
+// Needs: --k-induction
 // RUN: --summarize-array-loops --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -33,6 +33,10 @@
 // iN at a symbolic offset is one select or store. Its known bytes move to the
 // array an element at a time, and an access through an unknown pointer that
 // may hit it reads or writes one byte of an element.
+//
+// A summarised loop (issue #36) leaves the object it wrote with arrays that
+// are lambdas over the ones before (terms.h): a read of an element the loop
+// wrote reduces to the value its iteration stored there.
 #pragma once
 #include "encode/terms.h"
 #include "memory/cellmap.h"
@@ -114,6 +118,14 @@ public:
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
   void own(State &st, camada::SMTExprRef p, unsigned bits = 8);
+  // Iteration n, a pointer-width term: whether it stored, and the value.
+  using Iteration = std::function<std::pair<camada::SMTExprRef, camada::SMTExprRef>(
+      const camada::SMTExprRef &n)>;
+  // The effect of a loop whose iterations n < count stored a value of type
+  // ty at first + n * stride, as iteration(n) says, where first's object is
+  // a constant and the stride at least the value's size.
+  void summarise(State &st, camada::SMTExprRef first, uint64_t stride, llvm::Type *ty,
+                 camada::SMTExprRef count, Iteration iteration);
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 

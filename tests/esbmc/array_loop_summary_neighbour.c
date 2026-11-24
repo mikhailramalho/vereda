@@ -8,8 +8,5 @@ int main()
   __VERIFIER_assert(a[49] == 50); // a[49] == 50
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_neighbour
-// Needs: --summarize-array-loops
 // RUN: --summarize-array-loops --unwind 51 --no-unwinding-assertions
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

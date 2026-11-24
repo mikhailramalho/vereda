@@ -62,7 +62,8 @@ import run  # pylint: disable=wrong-import-position
 # ESBMC flag -> Vereda flags; a value, if the flag takes one, follows.
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--overflow-check", "--unsigned-overflow-check",
-        "--ub-shift-check", "--unlimited-k-steps"}
+        "--ub-shift-check", "--unlimited-k-steps", "--summarize-array-loops",
+        "--no-summarize-array-loops"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step"}
 RENAMED = {
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
