@@ -10,6 +10,13 @@
 void *memset(void *, int, size_t);
 void *malloc(size_t);
 void *memcpy(void *, const void *, size_t);
+void *memmove(void *, const void *, size_t);
+int tolower(int);
+void *__VERIFIER_nondet_pointer(void);
+int __VERIFIER_nondet_int(void);
+unsigned long __VERIFIER_nondet_ulong(void);
+// Gives the whole object p points into nondet contents (the walker does).
+void __vereda_havoc(void *p);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -59,6 +66,16 @@ char *strncpy(char *dst, const char *src, size_t n) {
 
 char *strcat(char *dst, const char *src) {
   strcpy(dst + strlen(dst), src);
+  return dst;
+}
+
+char *strncat(char *dst, const char *src, size_t n) {
+  size_t i = strlen(dst);
+  size_t j = 0;
+  while (j < n && src[j]) {
+    dst[i++] = src[j++];
+  }
+  dst[i] = 0;
   return dst;
 }
 
@@ -178,3 +195,70 @@ char *strndup(const char *s, size_t n) {
   d[m] = 0;
   return d;
 }
+
+char *index(const char *s, int c) { return strchr(s, c); }
+
+char *rindex(const char *s, int c) { return strrchr(s, c); }
+
+void bzero(void *p, size_t n) { memset(p, 0, n); }
+
+void bcopy(const void *src, void *dst, size_t n) { memmove(dst, src, n); }
+
+void *memccpy(void *dst, const void *src, int c, size_t n) {
+  unsigned char *d = dst;
+  const unsigned char *s = src;
+  for (; n; --n) {
+    *d = *s++;
+    if (*d++ == (unsigned char)c)
+      return d;
+  }
+  return NULL;
+}
+
+int strcasecmp(const char *a, const char *b) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  while (*x && tolower(*x) == tolower(*y)) {
+    ++x;
+    ++y;
+  }
+  return tolower(*x) - tolower(*y);
+}
+
+int strncasecmp(const char *a, const char *b, size_t n) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  for (; n; --n, ++x, ++y)
+    if (tolower(*x) != tolower(*y) || !*x)
+      return tolower(*x) - tolower(*y);
+  return 0;
+}
+
+// Collation is strcmp's order in the "C" locale, where a program starts
+// (C17 7.11.1.1p4). Once setlocale has been given a locale, strcoll and
+// strxfrm give any result; setlocale returns any pointer, as it would
+// without a body.
+static int c_collation = 1;
+
+char *setlocale(int category, const char *locale) {
+  if (locale)
+    c_collation = 0;
+  return __VERIFIER_nondet_pointer();
+}
+
+int strcoll(const char *a, const char *b) {
+  return c_collation ? strcmp(a, b) : __VERIFIER_nondet_int();
+}
+
+size_t strxfrm(char *dst, const char *src, size_t n) {
+  if (!c_collation) {
+    if (n)
+      __vereda_havoc(dst);
+    return __VERIFIER_nondet_ulong();
+  }
+  size_t len = strlen(src);
+  if (len < n)
+    for (size_t i = 0; i <= len; ++i)
+      dst[i] = src[i];
+  return len;
+}
+
+char *strerror(int errnum) { return (char *)(errnum ? "Unknown error" : "Success"); }

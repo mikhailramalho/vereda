@@ -21,6 +21,7 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
 // EXPECT: FAILED\s+\[main.assertion.2\].*a\[0\] == 3
-// Vereda: unmet EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Vereda: the comparators compile to llvm.scmp, which the encoder does not support yet
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: verdict UNKNOWN
