@@ -138,10 +138,8 @@ camada's `BitwuzlaSolver::configureOptions`, two runs each, load about 25:
 | assertion | 20.1 s, 19.3 s | 2.7 GB |
 | permanent | 16.7 s, 17.0 s | 2.4 GB |
 
-Vereda pops only around the dump, never while it solves, so `permanent`
-keeps no clauses of a popped level alive; it only changes how checks
-asked one after another share AIG nodes. Not adopted here: it needs a run
-of the suite and of the ReachSafety tasks first.
+The last section says what the option does and measures it over the
+suite; Vereda now sets it.
 
 ## Word elements
 
@@ -220,11 +218,112 @@ answered unknown. Z3 is no fallback for chains this long, in either tool.
 2. Bitwuzla 0.11 is not slower once `x` is fixed. Here it proposes worse
    values, and under `check-sat-assuming` its adaptive `bv-cnf-scope` adds
    about 11 s in Vereda. `bv-cnf-scope=permanent`, one option set through
-   camada's `configureOptions`, takes Vereda's solve from 28 s to 17 s; a
-   suite run should decide it.
+   camada's `configureOptions`, takes Vereda's solve from 28 s to 17 s.
+   Over the suite it changes no verdict and cuts wall time by 4.5 %, so
+   Vereda now sets it.
 3. Word elements for objects read and written only whole cut the cost of
    walking the chain about 3 times, for roughly 200 lines, and still leave
    5 to 7 s.
 4. Only removing the chain, with #36's loop summaries, gets this test to
    ESBMC's time without depending on which `x` the solver tries first.
 5. Z3 cannot handle chains of this length.
+
+## `bv-cnf-scope=permanent` over the suite
+
+What the option does, from Bitwuzla 0.11's source
+(`src/bitblast/aig/aig_cnf.cpp`, `src/solver/bv/bv_bitblast_solver.cpp`,
+`src/api/cpp/bitwuzla.cpp`). `check_sat` with assumptions pushes a level,
+asserts the assumptions there, solves, and pops before the next call that
+changes the solver. Each AIG node gets clauses that define its CNF variable
+(`x <-> a & b`), and the option picks the level they go at. With
+`assertion`, the level of the first assertion that needs the node. With
+`permanent`, level 0; only the clauses that assert a top-level node take
+the assertion's level. With `adaptive`, the default, the highest level of
+the node's children, except that a node an assertion of a pushed level
+needs over inputs of lower levels takes the assertion's level, unless
+enough such nodes were needed again after earlier pops. Clauses of a
+popped level are disabled and their nodes encoded again when needed.
+
+Vereda builds all its terms at level 0 and poses every check, in
+`decide()` and in the walker's reachability checks, through
+`checkSatAssuming`, so each check is a push and a pop inside Bitwuzla.
+Under `adaptive` much of a check's cone goes at the pop and the next check
+encodes it again. Under `permanent` it stays, and so do the array lemmas,
+which go at level 0. That is sound: the clauses of a node only name a fresh
+variable for a function of its inputs, so they exclude no assignment of the
+inputs, and the lemmas hold in the theory of arrays. The cost is that
+clauses of checks never asked again stay in the SAT solver. Vereda pops
+only around the dump, before anything is solved, and `--incremental-bmc`
+makes a new solver for each bound, so there is no other pop to consider.
+
+Both binaries were built at cdbc223c, one with the option set in
+`src/solver/solver.cpp`. Every test ran through `tests/run.py` (4096 MB
+limit, 120 s timeout) with both binaries side by side, 24 tests at a time,
+load 5 to 30 from other jobs; the 13 tests that timed out ran again with
+285 s. Over the 3365 tests with a verdict in both:
+
+| | adaptive (before) | permanent |
+|---|---|---|
+| Verdicts changed | | 0 of 6645 |
+| Walk time (includes the walker's checks) | 429.7 s | 345.5 s |
+| Solving time | 227.0 s | 238.2 s |
+| Wall time | 1402.7 s | 1340.2 s |
+| Sum of peak memory | 266.0 GB | 266.4 GB |
+
+Both give 1905 SUCCESSFUL, 1346 FAILED, 114 UNKNOWN, 9 timeouts, 8 out of
+memory and 3263 without a verdict (FUTURE tests that need flags Vereda
+lacks). The tests whose wall or solving time moved by more than 10 % and
+0.5 s, measured again side by side with `tests/bench.py --list` (seconds
+and MB, before → after):
+
+| Test | Walk | Solve | Wall | Peak |
+|---|---|---|---|---|
+| 13_ludcmp_new | 95.7 → 64.1 | 0 → 0 | 96.7 → 64.7 | 520 → 377 |
+| 12_lms_new | 157.0 → 119.7 | 0 → 0 | 158.0 → 120.5 | 359 → 390 |
+| array_loop_summary_decrement_fail | 11.6 → 11.9 | 29.1 → 17.8 | 52.5 → 39.4 | 2564 → 2411 |
+| github_9785_int_base_stores_fail | 0 → 0 | 15.9 → 13.5 | 16.7 → 14.1 | 455 → 485 |
+| nested_array_row_memcpy_at_cap | 0 → 0 | 8.5 → 8.1 | 9.4 → 9.0 | 446 → 444 |
+| overflow_22_wordplay | 0.1 → 0.1 | 1.6 → 1.2 | 2.0 → 1.6 | 236 → 198 |
+| github_302 | 64.7 → 55.4 | 17.8 → 36.5 | 83.2 → 92.5 | 633 → 726 |
+| 10_bicycle_01 | 0 → 0 | 7.8 → 8.9 | 8.7 → 9.7 | 433 → 423 |
+| github_9785_two_targets | 0 → 0 | 1.0 → 1.2 | 1.1 → 1.4 | 91 → 91 |
+| github_9785_two_targets_fail | 0 → 0 | 1.4 → 2.2 | 1.6 → 2.3 | 94 → 94 |
+| vereda/mem_inttoptr | 0 → 0 | 2.5 → 3.0 | 2.6 → 3.1 | 102 → 105 |
+| esbmc-cstd/ispunct | 0 → 0 | 1.1 → 3.0 | 1.3 → 3.2 | 147 → 195 |
+| esbmc-cstd/ispunct_bug | 0 → 0 | 0.8 → 2.8 | 1.0 → 3.0 | 135 → 179 |
+
+`deep_binary_chain_pass` (49 → 60 s in the suite run) took 33.0 and 33.2 s
+side by side, none of it in the solver. `array_loop_summary_decrement` and
+`_counter` run out of the 4096 MB with both binaries; without the limit
+neither finished in 295 s with either.
+
+The gains come from many checks on one solver. 12_lms_new and
+13_ludcmp_new have no `--unwind`, so the walker asks whether each loop
+iteration is reachable, one check per iteration on a growing formula, and
+`permanent` keeps the encoding from one to the next; github_302's walk gains
+for the same reason. The losses are single checks: github_302,
+ispunct_bug and the others above have one, and the same clauses at level 0
+instead of under an activation literal send CaDiCaL down another path. With
+a binary that took the mode from the environment, two runs each:
+
+| | adaptive | assertion | permanent |
+|---|---|---|---|
+| github_302 walk | 66.1, 65.6 | 139.7, 141.8 | 54.2, 54.2 |
+| github_302 solve | 20.1, 20.2 | 17.4, 17.4 | 37.5, 36.7 |
+| github_302 peak MB | 637, 637 | 1955, 1952 | 684, 695 |
+| ispunct_bug solve | 0.74, 0.78 | 3.26, 3.60 | 2.60, 2.63 |
+
+`--incremental-bmc`, side by side, gave the same verdicts and bounds with
+both. The 280 suite tests that use it take 3.2 s of solving in all, either
+way. On heavier programs (solve, before → after): github_302, 3 bounds,
+14.2 → 12.8 s and 355 → 266 MB; 13_ludcmp_new, 7 bounds, 0.15 → 0.14 s;
+github_9785_int_base_stores_fail 12.5 → 10.8 s;
+nested_array_row_memcpy_at_cap 7.1 → 6.8 s; 10_bicycle_01 7.7 → 8.7 s;
+github_9785_two_targets_fail 1.4 → 2.2 s. overflow_22_wordplay did not get
+past bound 2 in 290 s with either.
+
+Adopted: no verdict changes, 4.5 % less wall time, the decrement test's
+solve down from 29 to 18 s side by side, and the two slowest walks down by
+a quarter to a third, against single checks that solve slower (github_302
+by 19 s, a few small tests by 1 to 2 s). The ReachSafety tasks were not
+run.
