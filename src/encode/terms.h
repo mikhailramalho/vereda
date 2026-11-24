@@ -14,6 +14,8 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace vereda::encode {
 
@@ -90,6 +92,15 @@ public:
   Ref store(const Ref &array, const Ref &index, const Ref &value);
   // An array holding value at every index of the sort; a read of it folds.
   Ref constArray(const camada::SMTSortRef &index, const Ref &value);
+  // A fresh array named name whose element at i is def(i), which camada has
+  // no term for. A read of it reduces to def(i) as it is built, as ESBMC's
+  // simplifier reduces its lambda. A read through stores or choices above it
+  // stays a select, and the definition at that index becomes a constraint:
+  // the solver sees the array only at the indices it is read at.
+  Ref lambda(const camada::SMTSortRef &sort, const std::string &name,
+             std::function<Ref(const Ref &)> def);
+  // e with the symbol from replaced by to, folded again.
+  Ref substitute(const Ref &e, const Ref &from, const Ref &to);
 
   // Whether guard entails lit by its and/or structure alone: lit is a
   // conjunct of guard, or implied by both sides of a disjunction.
@@ -140,6 +151,10 @@ private:
   Ref lift(const Ref &a, const std::function<Ref(const Ref &)> &f);
   Ref lift(const Ref &a, const Ref &b, const std::function<Ref(const Ref &, const Ref &)> &f);
   Ref build(const Node &n);
+  // n's operation applied to other operands.
+  Ref rebuild(const Node &n, const Ref &a, const Ref &b, const Ref &c);
+  // def(index) of the lambda l, once per index.
+  Ref reduce(const Ref &l, const Ref &index);
 
   camada::SMTSolver &s;
   std::unordered_map<Key, Ref, KeyHash> memo;
@@ -161,6 +176,16 @@ private:
   // Constant arrays built here (kept alive, so the key stays theirs) and
   // the value each holds.
   std::unordered_map<const camada::SMTExpr *, std::pair<Ref, Ref>> filled;
+  std::unordered_map<const camada::SMTExpr *, std::function<Ref(const Ref &)>> lambdas;
+  // Per store or choice of arrays, the lambdas it reads through without
+  // passing another one.
+  std::unordered_map<const camada::SMTExpr *, std::vector<Ref>> under;
+  // Per lambda and index, the index (kept alive) and the definition there.
+  std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>,
+                     std::pair<Ref, Ref>, PairHash>
+      reduced;
+  // Per symbol, the terms found not to contain it.
+  std::unordered_map<const camada::SMTExpr *, std::unordered_set<const camada::SMTExpr *>> freeOf;
 };
 
 } // namespace vereda::encode

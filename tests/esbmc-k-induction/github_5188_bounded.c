@@ -17,3 +17,6 @@ int g(int a, int b)
 // Imported from ESBMC regression/k-induction/github_5188_bounded
 // RUN: --entry g --overflow-check --unwind 4 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

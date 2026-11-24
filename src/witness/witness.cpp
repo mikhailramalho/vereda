@@ -50,17 +50,40 @@ static std::map<std::string, std::unique_ptr<MemoryBuffer>> inputFiles(const Mod
   return files;
 }
 
-// The column of the ')' that closes the call to callee at loc, which is
-// where a function_return waypoint points; 0 when the source there is not
-// that call on one line, as for a call a macro expands to, whose location
-// is the macro's name.
-static unsigned closingParen(const MemoryBuffer &file, const ir::SourceLoc &loc,
+// Whether text holds a call: a name followed by '(' that is not a keyword.
+static bool hasCall(StringRef text) {
+  static const StringSet<> keywords = {"if", "while", "for", "switch", "return", "sizeof"};
+  for (size_t i = 0; i < text.size(); ++i) {
+    if (!isAlpha(text[i]) && text[i] != '_')
+      continue;
+    size_t end = i;
+    while (end < text.size() && (isAlnum(text[end]) || text[end] == '_'))
+      ++end;
+    if (text.drop_front(end).ltrim().starts_with("(") && !keywords.contains(text.slice(i, end)))
+      return true;
+    i = end;
+  }
+  return false;
+}
+
+// The column of a function_return waypoint for the call to callee at loc,
+// or 0 to leave it out. The format puts it at the ')' that closes the call,
+// but UAutomizer 0.3.2 has no call there: it matches the waypoint at the end
+// of the statements around the call, which is that ')' for an assignment
+// or a condition but the ';' of a declaration. Without a column both
+// validators take the line, CPAchecker 4.3 at its first call, so the column
+// is left out unless another call comes before this one on the line. It is
+// left out too when the source there is not that call on one line, as for
+// a call a macro expands to, whose location is the macro's name.
+static unsigned returnColumn(const MemoryBuffer &file, const ir::SourceLoc &loc,
                              StringRef callee) {
   SmallVector<StringRef, 0> lines;
   file.getBuffer().split(lines, '\n');
   if (loc.line > lines.size() || !loc.col)
     return 0;
   StringRef line = lines[loc.line - 1];
+  if (!hasCall(line.take_front(loc.col - 1)))
+    return 0;
   StringRef rest = line.drop_front(loc.col - 1);
   if (!rest.consume_front(callee))
     return 0;
@@ -200,7 +223,7 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
     std::string value = constraint(s, step, m);
     if (file == files.end() || !step.loc.line || value.empty())
       continue;
-    waypoint(os, "function_return", step.loc, closingParen(*file->second, step.loc, step.text),
+    waypoint(os, "function_return", step.loc, returnColumn(*file->second, step.loc, step.text),
              value);
   }
   // The witness states unreach-call, which only a call to reach_error
