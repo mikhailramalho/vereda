@@ -52,6 +52,16 @@ target_link_libraries(libvereda PUBLIC ${llvm_libs} camada::camada)
 
 add_executable(vereda src/driver/main.cpp)
 target_link_libraries(vereda PRIVATE libvereda)
+# ld.bfd's default script gathers the static constructors (.text.startup)
+# in one place; lld leaves each with its object, so the 1,789 of Z3, cvc5
+# and LLVM run from 921 separate 64 KiB windows of .text, and the kernel
+# maps each window whole: 79 MB resident on --version instead of 34 MB
+# (docs/survey/2026-11-24-lld-startup-memory.md). With
+# -z keep-text-section-prefix lld gathers them too. CMake before 3.29 does
+# not say which linker it uses, and the link stays as it was.
+if(CMAKE_CXX_COMPILER_LINKER_ID STREQUAL "LLD")
+  target_link_options(vereda PRIVATE LINKER:-z,keep-text-section-prefix)
+endif()
 
 # mimalloc in place of glibc's malloc and operator new, for all of the
 # binary (LLVM, the solvers): it cuts the walk and solve times by up to a
