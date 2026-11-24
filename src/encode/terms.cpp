@@ -356,6 +356,9 @@ Ref Terms::ult(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return ult(x, y); }))
     return r;
   if (a.get() == b.get()) return boolean(false);
+  // Nothing is below the least value or above the greatest, here and in
+  // ule, slt and sle: x >= g with g a global still zero when loaded is true.
+  if ((cb && cb->isZero()) || (ca && ca->isAllOnes())) return boolean(false);
   return make({Op::Ult, a, b});
 }
 Ref Terms::ule(const Ref &a, const Ref &b) {
@@ -363,6 +366,7 @@ Ref Terms::ule(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return ule(x, y); }))
     return r;
   if (a.get() == b.get()) return boolean(true);
+  if ((ca && ca->isZero()) || (cb && cb->isAllOnes())) return boolean(true);
   return make({Op::Ule, a, b});
 }
 Ref Terms::slt(const Ref &a, const Ref &b) {
@@ -370,6 +374,7 @@ Ref Terms::slt(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return slt(x, y); }))
     return r;
   if (a.get() == b.get()) return boolean(false);
+  if ((cb && cb->isMinSignedValue()) || (ca && ca->isMaxSignedValue())) return boolean(false);
   return make({Op::Slt, a, b});
 }
 Ref Terms::sle(const Ref &a, const Ref &b) {
@@ -377,6 +382,7 @@ Ref Terms::sle(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return sle(x, y); }))
     return r;
   if (a.get() == b.get()) return boolean(true);
+  if ((ca && ca->isMinSignedValue()) || (cb && cb->isMaxSignedValue())) return boolean(true);
   return make({Op::Sle, a, b});
 }
 
