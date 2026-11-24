@@ -13,5 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/havoc_object_pointer_targets
+// Needs: __ESBMC_havoc_object
 // RUN: --incremental-bmc
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -19,6 +19,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/bitwuzla/github_7063
+// Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --multi-property --loop-invariant-check --bitwuzla
 // MODE: FUTURE
@@ -27,4 +28,3 @@ int main()
 // EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 15 +loop invariant base case$
 // EXPECT: ^  UNKNOWN +\[main\.array-bounds-violated\.1\] +line 17 .*loop invariant too weak
 // EXPECT: \A(?![\s\S]*Can't get boolean value)[\s\S]*\Z
-// Vereda: verdict none

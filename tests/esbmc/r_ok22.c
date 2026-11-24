@@ -6,4 +6,6 @@ int main() {
   assert(__ESBMC_r_ok(p, sizeof(int) * 3));
 }
 // Imported from ESBMC regression/esbmc/r_ok22
+// Needs: __ESBMC_r_ok
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -19,9 +19,9 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10853_split_claims
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --claim 2 --claim 3 --witness-output-yaml -
 // RUN: --loop-invariant-check --claim 2 --claim 3 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$
-// Vereda: verdict none

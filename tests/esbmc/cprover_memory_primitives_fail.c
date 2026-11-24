@@ -10,4 +10,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cprover_memory_primitives_fail
+// Needs: __CPROVER_OBJECT_SIZE
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

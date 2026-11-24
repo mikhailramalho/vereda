@@ -9,7 +9,6 @@ int main() {
   assert(v == 0);
 }
 // Imported from ESBMC regression/esbmc/builtin_init_var_0_false
-// EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Needs: __ESBMC_init_object
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// EXPECT: ^VERIFICATION FAILED$

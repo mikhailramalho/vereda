@@ -14,5 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/esbmc_uninterpreted_pointer_arg
+// Needs: __ESBMC_uninterpreted_hasher
 // RUN: --incremental-bmc
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,6 +11,7 @@ int main()
   __VERIFIER_assert(__ESBMC_forall(&x, myabs(x) >= 0)); // fails at INT_MIN
 }
 // Imported from ESBMC regression/z3/github_6100_skolem_fail
+// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

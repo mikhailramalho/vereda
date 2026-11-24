@@ -37,8 +37,8 @@ int main(void)
     assert(array[i] == i);
 }
 // Imported from ESBMC regression/loop-invariants/eureka_05
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

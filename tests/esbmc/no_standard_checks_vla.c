@@ -25,8 +25,8 @@ int main()
   //------------------------------------------------------------
 }
 // Imported from ESBMC regression/esbmc/no_standard_checks_vla
+// Needs: __ESBMC_forall
 // Needs: --show-claims --no-standard-checks
 // RUN: --show-claims --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^Claim 1:
-// Vereda: verdict none

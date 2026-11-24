@@ -17,8 +17,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_ifelse_exists
+// Needs: __ESBMC_exists
 // RUN: --solver z3
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -30,8 +30,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/github_6154_count_exists_size10
+// Needs: __ESBMC_exists
 // Needs: --no-standard-checks
 // RUN: --unwind 12 --no-standard-checks --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

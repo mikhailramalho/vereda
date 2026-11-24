@@ -14,9 +14,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7516_proof
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --k-induction-parallel
 // RUN: --loop-invariant-check --k-induction-parallel
 // MODE: FUTURE
 // EXPECT: ^Solution found by the forward condition
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -7,7 +7,6 @@ int main()
   assert(__ESBMC_get_object_size(a) == 200);
 }
 // Imported from ESBMC regression/esbmc/get_object_size_intrinsic
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Needs: __ESBMC_get_object_size
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

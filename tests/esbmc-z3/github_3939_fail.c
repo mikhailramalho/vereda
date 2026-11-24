@@ -22,8 +22,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_3939_fail
+// Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant --no-standard-checks
 // RUN: --loop-invariant --no-standard-checks --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

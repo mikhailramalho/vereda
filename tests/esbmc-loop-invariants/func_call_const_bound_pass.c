@@ -28,8 +28,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/func_call_const_bound_pass
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -23,9 +23,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/loop_invariant_combined_termination
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant --termination
 // RUN: --loop-invariant --termination
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*cannot be combined with --termination)[\s\S]*\Z
 // EXPECT: ^VERIFICATION UNKNOWN$
-// Vereda: verdict none

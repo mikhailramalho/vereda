@@ -25,8 +25,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/github_6154_count_exists
+// Needs: __ESBMC_exists
 // RUN: --solver bitwuzla
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

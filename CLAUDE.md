@@ -61,7 +61,9 @@ it got worse, is now right (promote it), or just changed (re-mark it). New test 
 translating flags and dropping expectations only ESBMC's output can match (its VCC
 counts, its summary with a passed count, its `assertion <cond>` wording, `__ESBMC_assert`
 messages); tests needing flags Vereda lacks become FUTURE with a `// Needs:` line,
-and `--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
+and so do tests still calling an `__ESBMC_*` or `__CPROVER_*` function after the renames
+(Vereda supports only `__VERIFIER_*` builtins), which `tests/run.py` skips without running;
+`--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
 timeout (`REGRESS_TIMEOUT`); a run that times out is skipped in any mode, and `--mark`
 never changes a mode because of one.
 Every test also runs under a memory limit (`REGRESS_MEMORY_LIMIT`, 4096 MB of address

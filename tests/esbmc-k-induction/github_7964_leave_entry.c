@@ -17,9 +17,9 @@ int main()
   }
 }
 // Imported from ESBMC regression/k-induction/github_7964_leave_entry
+// Needs: __ESBMC_same_object
 // Needs: --k-induction
 // RUN: --k-induction --max-k-step 10
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.1\]\s+line 12\s+dereference failure: array bounds violated$
-// Vereda: verdict none

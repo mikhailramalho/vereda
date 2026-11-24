@@ -14,10 +14,10 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7516_kinduction
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --k-induction
 // RUN: --loop-invariant-check --k-induction --max-k-step 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
 // EXPECT: \A(?![\s\S]*VERIFICATION UNKNOWN[\s\S]*VERIFICATION UNKNOWN)[\s\S]*\Z
-// Vereda: verdict none

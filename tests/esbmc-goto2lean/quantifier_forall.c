@@ -11,9 +11,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/quantifier_forall
+// Needs: __ESBMC_forall
 // Needs: --goto2lean
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^  \(∀ i : BitVec 32, \(\(i ≤ \(i \+ x\)\) ∨ \(\(4294967285#32\) < i\)\)\) ∧ \($
 // EXPECT: ^  all_goals bv_decide$
-// Vereda: verdict none

@@ -9,4 +9,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/same_object_distinct_fold_fail
+// Needs: __ESBMC_same_object
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

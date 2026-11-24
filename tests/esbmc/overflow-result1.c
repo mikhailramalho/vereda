@@ -23,7 +23,6 @@ int main() {
 
 
 // Imported from ESBMC regression/esbmc/overflow-result1
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Needs: __ESBMC_overflow_result_plus
 // MODE: FUTURE
-// Vereda: verdict none
+// EXPECT: ^VERIFICATION SUCCESSFUL$

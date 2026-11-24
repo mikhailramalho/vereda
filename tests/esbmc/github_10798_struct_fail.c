@@ -26,7 +26,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10798_struct_fail
+// Needs: __ESBMC_POINTER_OBJECT, __ESBMC_same_object
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

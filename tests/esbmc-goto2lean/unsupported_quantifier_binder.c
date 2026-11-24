@@ -5,8 +5,8 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/unsupported_quantifier_binder
+// Needs: __ESBMC_forall
 // Needs: --goto2lean
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^ERROR: goto2lean: unsupported quantifier binder constant_int$
-// Vereda: verdict none

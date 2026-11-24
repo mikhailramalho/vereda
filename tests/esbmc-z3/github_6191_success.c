@@ -9,8 +9,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6191_success
+// Needs: __ESBMC_forall
 // Needs: --no-standard-checks
 // RUN: --z3 --unwind 13 --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

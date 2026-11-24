@@ -18,9 +18,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_loop_invariant
+// Needs: __ESBMC_loop_invariant
 // Needs: --scalarize-structs --loop-invariant-check
 // RUN: --scalarize-structs --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

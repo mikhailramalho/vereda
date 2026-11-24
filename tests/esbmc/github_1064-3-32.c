@@ -13,8 +13,8 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1064-3-32
+// Needs: __ESBMC_POINTER_OBJECT
 // Needs: REQUIRES arch32
 // RUN: --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
