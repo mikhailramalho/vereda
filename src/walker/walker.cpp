@@ -14,6 +14,7 @@
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/ScalarEvolutionExpressions.h>
 #include <llvm/Analysis/ValueTracking.h>
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
@@ -23,6 +24,7 @@
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Intrinsics.h>
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 
 using namespace llvm;
@@ -737,6 +739,9 @@ private:
       auto *prev = dyn_cast_or_null<CallBase>(term.getPrevNode());
       if ((!prev || !prev->doesNotReturn()) && counts(false))
         assertion(term, guard, "__builtin_unreachable", "");
+    } else if (isa<InvokeInst>(term)) {
+      throw Unsupported("exception unwinding at " + ir::location(term).str() +
+                        "; compile Rust with -C panic=abort");
     } else {
       throw Unsupported(std::string("terminator ") + term.getOpcodeName());
     }
@@ -803,6 +808,30 @@ private:
     if (opts.property == Property::UnreachCall && name == "reach_error") {
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
+    }
+    // Rust lowers assertions and checked arithmetic and indexing to panic calls.
+    // Recognise Rust symbols only, including when their bodies are linked in.
+    if (name.starts_with("_R") || name.starts_with("_ZN")) {
+      char *raw = llvm::rustDemangle(name.str());
+      std::string demangled = raw ? raw : "";
+      std::free(raw);
+      // Older rustc uses Itanium-style symbols ending in a Rust hash.
+      if (demangled.empty() && name.starts_with("_ZN") && name.size() >= 20 &&
+          name.substr(name.size() - 20, 3) == "17h" && name.ends_with("E") &&
+          name.substr(name.size() - 17, 16).find_first_not_of("0123456789abcdef") == StringRef::npos)
+        demangled = llvm::demangle(name.str());
+      StringRef symbol(demangled);
+      if (symbol.starts_with("core::panicking::panic") ||
+          symbol.starts_with("std::panicking::begin_panic") ||
+          symbol == "std::panicking::panic" || symbol.starts_with("std::panicking::panic::")) {
+        bool overflow = symbol.contains("overflow");
+        const char *message = overflow ? "arithmetic overflow"
+                              : symbol.contains("bounds_check") ? "array bounds violated"
+                                                                 : "Rust panic";
+        if (counts(overflow))
+          assertion(c, guard, message, "");
+        return t.boolean(false);
+      }
     }
     // memcmp, bcmp and memchr from the models (which have no debug info) or
     // bodyless: the walker reads the range whole, which costs no unwinding
