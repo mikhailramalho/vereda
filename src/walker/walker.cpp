@@ -578,7 +578,8 @@ private:
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (SMTExprRef v = traceValue(a->value))
-            trace.push_back({Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned});
+            trace.push_back(
+                {Step::Assignment, guard, std::move(a->loc), std::move(a->name), v, a->isUnsigned});
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())

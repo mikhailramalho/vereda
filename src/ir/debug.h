@@ -1,5 +1,6 @@
 // Stage ir: debug-info helpers. Source locations come from clang's -g output.
 #pragma once
+#include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/BinaryFormat/Dwarf.h>
 #include <llvm/IR/DebugInfoMetadata.h>
@@ -41,22 +42,28 @@ inline std::string joinedPath(llvm::StringRef dir, llvm::StringRef name) {
 // A file's name in locations: the compile unit's own spelling when it is the
 // unit's main file, as the user named it, else its full path. clang may split
 // a path that shares a prefix with its working directory into that prefix
-// and a relative rest (#85), so the names are compared joined.
-inline std::string fileName(llvm::StringRef dir, llvm::StringRef name,
-                            const llvm::DILocalScope *scope) {
-  std::string path = joinedPath(dir, name);
+// and a relative rest (#85), so the names are compared joined. Built once per
+// file and unit, as the walk asks again at every step: the metadata is
+// uniqued and lives as long as the driver's one LLVMContext.
+inline std::string fileName(const llvm::DIFile *file, const llvm::DILocalScope *scope) {
   const llvm::DISubprogram *sp = scope->getSubprogram();
   const llvm::DICompileUnit *cu = sp ? sp->getUnit() : nullptr;
-  if (cu && path == joinedPath(cu->getDirectory(), cu->getFilename()))
-    return cu->getFilename().str();
-  return path;
+  static llvm::DenseMap<std::pair<const llvm::DIFile *, const llvm::DICompileUnit *>, std::string>
+      cache;
+  auto [it, inserted] = cache.try_emplace({file, cu});
+  if (inserted) {
+    std::string path = file ? joinedPath(file->getDirectory(), file->getFilename()) : "";
+    it->second = cu && path == joinedPath(cu->getDirectory(), cu->getFilename())
+                     ? cu->getFilename().str()
+                     : std::move(path);
+  }
+  return it->second;
 }
 
 inline SourceLoc location(const llvm::DebugLoc &loc, llvm::StringRef function) {
   if (!loc)
     return {"<unknown>", 0, 0, function.str()};
-  return {fileName(loc->getDirectory(), loc->getFilename(), loc->getScope()), loc.getLine(),
-          loc.getCol(), function.str()};
+  return {fileName(loc->getFile(), loc->getScope()), loc.getLine(), loc.getCol(), function.str()};
 }
 
 inline SourceLoc location(const llvm::Instruction &inst) {
@@ -95,9 +102,9 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
   llvm::StringRef function = dvr->getFunction()->getName();
   SourceLoc loc = dvr->getDebugLoc() && dvr->getDebugLoc().getLine() != 0
                       ? location(dvr->getDebugLoc(), function)
-                      : SourceLoc{fileName(var->getDirectory(), var->getFilename(), var->getScope()),
-                                  var->getLine(), 0, function.str()};
-  return DbgAssign{var->getName().str(), v, isUnsigned, loc};
+                      : SourceLoc{fileName(var->getFile(), var->getScope()), var->getLine(), 0,
+                                  function.str()};
+  return DbgAssign{var->getName().str(), v, isUnsigned, std::move(loc)};
 }
 
 // A conditional branch clang made for the condition of an if, while or for
