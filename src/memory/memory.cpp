@@ -304,29 +304,34 @@ void Memory::prepare(State &st, SMTExprRef p) {
   SMTExprRef c, x, y;
   if (key(p) || t.split(p, c, x, y))
     return;
-  for (uint64_t o : candidates(object(p)))
+  for (uint64_t o : candidates(p))
     flush(st, o);
 }
 
-std::vector<uint64_t> Memory::candidates(SMTExprRef obj) {
+std::vector<uint64_t> Memory::candidates(SMTExprRef p) {
   std::vector<uint64_t> r;
-  std::vector<SMTExprRef> work{obj};
+  std::vector<SMTExprRef> work{p};
+  bool read = false;
   while (!work.empty()) {
     SMTExprRef e = work.back(), c, x, y;
     work.pop_back();
+    // A choice of pointers whose sides are not constant keeps its object
+    // inside, out of reach of object(): split the pointer first.
+    if (e->getWidth() != ObjBits && !t.choice(e, c, x, y))
+      e = object(e);
     if (const APInt *id = t.constant(e)) {
       r.push_back(id->getZExtValue());
     } else if (t.choice(e, c, x, y)) {
       work.push_back(x);
       work.push_back(y);
-    } else { // read from memory, where only pointers to exposed objects are stored
-      r = {0, Outside};
-      for (uint64_t id = Outside + 1; id < objects.size(); ++id)
-        if (objects[id].exposed)
-          r.push_back(id);
-      return r;
+    } else {
+      read = true;
     }
   }
+  if (read) // from memory, where only pointers to exposed objects are stored
+    for (uint64_t id = 0; id < objects.size(); ++id)
+      if (id <= Outside || objects[id].exposed)
+        r.push_back(id);
   llvm::sort(r);
   r.erase(std::unique(r.begin(), r.end()), r.end());
   return r;
@@ -546,7 +551,7 @@ void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
   }
   const APInt *obj = t.constant(object(p));
   if (!obj) { // each object p may point into, where it does
-    for (uint64_t o : candidates(object(p))) {
+    for (uint64_t o : candidates(p)) {
       State a = st;
       havoc(a, ptr(t.bv(o, ObjBits), offset(p)), n);
       st = ite(t.eq(object(p), t.bv(o, ObjBits)), a, st);

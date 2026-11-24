@@ -149,10 +149,10 @@ private:
   // Moves the known bytes an access at p may alias into the arrays: those
   // of the objects p may point into.
   void prepare(State &st, camada::SMTExprRef p);
-  // The objects a pointer whose object is obj may point into: the constants
-  // obj chooses among, or else (a pointer read from memory) null, the memory
-  // outside the program and every exposed object.
-  std::vector<uint64_t> candidates(camada::SMTExprRef obj);
+  // The objects p may point into: the constants its object chooses among,
+  // and, where that object was read from memory, null, the memory outside
+  // the program and every exposed object.
+  std::vector<uint64_t> candidates(camada::SMTExprRef p);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   State::Cell readByte(const State &st, camada::SMTExprRef at);

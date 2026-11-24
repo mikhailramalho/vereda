@@ -71,9 +71,11 @@ included).
 | timeout, or killed between 38 and 60 s | 26 | 94 |
 | UNKNOWN | 26 | 3 |
 
-No task lost a right verdict. Of the 50 wrong FAILED, 40 now time out and 5
-are killed before 60 s; `intel_vr_nor` (killed at 38 s) and
-`altera_jtaguart` (timeout) are among them. 23 of the 26 UNKNOWN (an asm
+No task lost a right verdict. The other 45 wrong FAILED now time out,
+`intel_vr_nor` and `altera_jtaguart` among them. (A first run, before
+`candidates` kept the constant sides of a choice whose other side is read
+from memory, gave the same verdicts, with 5 of the 45 killed shortly before
+60 s.) 23 of the 26 UNKNOWN (an asm
 through an unknown object, an unknown function pointer target, sprintf) now
 run to the time limit; the other 3 stop at an intrinsic or an asm that may
 write memory, as before. The 5 still FAILED (esd_usb2, cdc_mbim, wlcore_spi,
@@ -83,11 +85,13 @@ neither from pointers from outside nor from #111.
 
 ## pfscan
 
-`tests/esbmc-unix/05_pfscan-1.0_01.c --incremental-bmc` (KNOWNBUG): main
-stops after 2.9 s with UNKNOWN at an fprintf whose stream "may write an
-object chosen at run time"; with this change it gets past every bodyless
-call on argv's and the streams' pointers and stops after 6.7 s at "calloc
-with a symbolic size", the place the first version of #111 reached.
+`tests/esbmc-unix/05_pfscan-1.0_01.c --incremental-bmc` (KNOWNBUG), two runs
+each: main stops after 2.9 to 3.4 s (290 MB) with UNKNOWN at an fprintf
+whose stream "may write an object chosen at run time"; with this change it
+gets past every bodyless call on argv's and the streams' pointers and stops
+after 6.1 to 6.4 s (320 MB) at "calloc with a symbolic size", the place the
+first version of #111 reached (in 39 s, by
+`2026-11-23-bodyless-call-writes.md`).
 
 ## Tests
 
