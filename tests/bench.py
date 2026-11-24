@@ -31,6 +31,7 @@ import contextlib
 import glob
 import json
 import os
+import resource
 import signal
 import subprocess
 import sys
@@ -49,9 +50,10 @@ MAX_CANDIDATES = 40
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TIMEOUT = "TIMEOUT"
-# A run killed by a signal it did not send itself; on Linux that is the
-# kernel's OOM killer, so the run is out of memory, as a timeout is out of
-# time. vereda.py exits with the binary's status, -9 as a byte.
+# A run killed by a signal it did not send itself (on Linux the kernel's OOM
+# killer), or one that printed an allocation failure under --memory-limit,
+# is out of memory, as a timeout is out of time. vereda.py exits with the
+# binary's status, -9 as a byte.
 KILLED = "KILLED"
 KILLED_STATUS = (-signal.SIGKILL, 256 - signal.SIGKILL)
 STOPPED = {TIMEOUT: "head timed out", KILLED: "head was killed, out of memory"}
@@ -72,7 +74,7 @@ def test_files(root, name):
 
 
 @contextlib.contextmanager
-def started(root, binary, clang, test, tmp):
+def started(root, binary, clang, test, tmp, memory_limit):
     """Starts vereda.py from root on test with binary, in directory tmp, and
     yields (process, output file, start time, waiter thread, end times);
     the waiter puts the end time in the list as the process ends, so that
@@ -84,10 +86,17 @@ def started(root, binary, clang, test, tmp):
     os.mkdir(tmp)
     # The output goes to a file: a pipe left unread would stall one run
     # while the other is waited for. A session of its own, so that a
-    # timeout stops the binary too and not only vereda.py.
+    # timeout stops the binary too and not only vereda.py. The suite's limit
+    # on address space, so that two runs side by side cannot take all of the
+    # runner's memory, which gets the whole job killed.
+    def limit_memory():
+        size = memory_limit << 20
+        resource.setrlimit(resource.RLIMIT_AS, (size, size))
+
     with open(os.path.join(tmp, "out"), "w+", encoding="utf-8", errors="replace") as out, \
          subprocess.Popen(cmd, cwd=tmp, stdout=out, stderr=subprocess.STDOUT,
-                          start_new_session=True, env={**os.environ, "TMPDIR": tmp}) as proc:
+                          start_new_session=True, preexec_fn=limit_memory,
+                          env={**os.environ, "TMPDIR": tmp}) as proc:
         start, ended = time.monotonic(), []
 
         def wait():
@@ -128,7 +137,8 @@ def finish(started_run, deadline):
         if verdicts:
             verdict = verdicts[-1]
         else:
-            verdict = KILLED if proc.returncode in KILLED_STATUS else f"ERROR {proc.returncode}"
+            stopped = proc.returncode in KILLED_STATUS or run.NO_MEMORY.search(text)
+            verdict = KILLED if stopped else f"ERROR {proc.returncode}"
     return (wall, *run.numbers(text), verdict)
 
 
@@ -137,8 +147,10 @@ def measure(args, base_test, head_test):
     side by side and returns the base and head results, as finish gives
     them."""
     with tempfile.TemporaryDirectory(prefix="vereda-bench-") as tmp, \
-         started(args.base_root, args.base, args.clang, base_test, tmp + "/base") as base, \
-         started(ROOT, args.head, args.clang, head_test, tmp + "/head") as head:
+         started(args.base_root, args.base, args.clang, base_test, tmp + "/base",
+                 args.memory_limit) as base, \
+         started(ROOT, args.head, args.clang, head_test, tmp + "/head",
+                 args.memory_limit) as head:
         b = finish(base, base[2] + args.timeout)
         limit = args.timeout if b[4] in STOPPED else max(SLOWDOWN * b[0], MIN_LIMIT)
         h = finish(head, head[2] + limit)
@@ -227,6 +239,9 @@ def main():
                         help="pick the tests from two suite runs' $REGRESS_STATS directories")
     parser.add_argument("--timeout", type=float, default=180,
                         help="seconds before a base run is stopped (default %(default)s)")
+    parser.add_argument("--memory-limit", type=int, default=4096,
+                        help="MB of address space for each run, as the suite's "
+                        "REGRESS_MEMORY_LIMIT (default %(default)s)")
     parser.add_argument("--changes", metavar="FILE",
                         help="write a table of only the tests that regressed or improved")
     parser.add_argument("base", help="base vereda binary")
