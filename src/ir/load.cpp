@@ -1,9 +1,11 @@
 #include "ir/load.h"
 
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/InstrTypes.h>
@@ -16,6 +18,7 @@
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
+#include <llvm/Support/Regex.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/SourceMgr.h>
 
@@ -240,6 +243,238 @@ static void libmToIntrinsics(Module &m) {
             c && c->getCalledOperand() == f && c->getFunctionType() == f->getFunctionType())
           c->setCalledFunction(intrinsic);
     }
+}
+
+// The instructions an inline asm runs where it stands, joined by " ; ":
+// without labels, lock prefixes (one thread), or what it puts in other
+// sections, as the kernel does for its bug table, exception table and lock
+// lists. Blanks go but the one after the mnemonic, ${0:q} is $0, and the
+// mnemonics the idioms below use lose their size suffix (incl is inc); bits
+// is the first instruction's operand size as its suffix or a register
+// modifier (${0:k}) gives it, else 0.
+static std::string inlineInstructions(StringRef s, unsigned &bits) {
+  static const Regex modifier("\\$\\{([0-9]+):([a-zA-Z]+)\\}");
+  std::string out;
+  bool away = false;
+  bits = 0;
+  SmallVector<StringRef, 8> stmts;
+  SplitString(s, stmts, "\n;");
+  for (StringRef stmt : stmts) {
+    SmallVector<StringRef, 4> words;
+    SplitString(stmt, words, " \t");
+    ArrayRef<StringRef> w(words);
+    while (!w.empty() && (w[0].ends_with(":") || w[0] == "lock")) // labels and lock prefixes
+      w = w.drop_front();
+    if (w.empty())
+      continue;
+    if (w[0] == ".section" || w[0] == ".pushsection") {
+      away = true;
+    } else if (w[0] == ".previous" || w[0] == ".popsection" || w[0] == ".text") {
+      away = false;
+    } else if (!away) {
+      StringRef mn = w[0];
+      size_t size = StringRef("bwlq").find(mn.back());
+      if (size != StringRef::npos &&
+          is_contained({"inc", "dec", "add", "sub", "xadd", "xchg", "cmpxchg", "bts", "btr",
+                        "sbb", "mov", "bswap"},
+                       mn.drop_back())) {
+        mn = mn.drop_back();
+        if (out.empty())
+          bits = 8 << size;
+      }
+      std::string ops = join(w.drop_front(), "");
+      SmallVector<StringRef, 3> mod;
+      if (out.empty() && !bits && modifier.match(ops, &mod) && mod[2].size() == 1 &&
+          StringRef("bwkq").contains(mod[2][0])) // a register of that size, as a suffix says
+        bits = 8 << StringRef("bwkq").find(mod[2][0]);
+      while (modifier.match(ops))
+        ops = modifier.sub("$\\1", ops);
+      out += (out.empty() ? "" : " ; ") + mn.str() + (ops.empty() ? "" : " " + ops);
+    }
+  }
+  return out;
+}
+
+// Kernel atomics and bit operations (asm/atomic.h, bitops.h, cmpxchg.h) as
+// written there, with each operand's constraint as "=v" (a register output),
+// "v" (a register or constant input), "=*m" and "*m" (memory), or a digit
+// (an input tied to that output). Each reads, changes and writes the memory
+// at its first argument, which in one thread is an atomicrmw; then some set
+// a flag: whether the result is zero (sete, into memory at argument 1), or
+// the old bit (setc, the same; sbb, as the result 0 or -1). value is the
+// argument added, subtracted, swapped in or giving the bit, or -1 for 1.
+struct KernelAtomic {
+  const char *code, *ops;
+  int value;
+  char flag; // 0, 'z' (sete), 'c' (setc), 's' (sbb), or 'o': the old value is the result
+};
+static const KernelAtomic kernelAtomics[] = {
+    {"inc $0", "=*m,*m", -1, 0},
+    {"dec $0", "=*m,*m", -1, 0},
+    {"add $1,$0", "=*m,v,*m", 1, 0},
+    {"sub $1,$0", "=*m,v,*m", 1, 0},
+    {"inc $0 ; sete $1", "=*m,=*m,*m", -1, 'z'},
+    {"dec $0 ; sete $1", "=*m,=*m,*m", -1, 'z'},
+    {"add $2,$0 ; sete $1", "=*m,=*m,v,*m", 2, 'z'},
+    {"sub $2,$0 ; sete $1", "=*m,=*m,v,*m", 2, 'z'},
+    {"bts $1,$0", "=*m,v,*m", 1, 0},
+    {"btr $1,$0", "=*m,v,*m", 1, 0},
+    {"bts $2,$1 ; sbb $0,$0", "=v,=*m,v,*m", 1, 's'},
+    {"btr $2,$1 ; sbb $0,$0", "=v,=*m,v,*m", 1, 's'},
+    {"bts $2,$0 ; setc $1", "=*m,=*m,v,*m", 2, 'c'},
+    {"btr $2,$0 ; setc $1", "=*m,=*m,v,*m", 2, 'c'},
+    {"xchg $0,$1", "=v,=*m,0,*m", 1, 'o'},
+    {"xadd $0,$1", "=v,=*m,0,*m", 1, 'o'},
+};
+
+// Whether the program expects no return to next: it is unreachable, or a
+// branch to an empty endless loop, as CIL writes BUG()'s unreachable().
+static bool noReturn(Instruction *next) {
+  if (isa<UnreachableInst>(next))
+    return true;
+  auto *br = dyn_cast<BranchInst>(next);
+  if (!br || br->isConditional())
+    return false;
+  auto *loop = dyn_cast<BranchInst>(&br->getSuccessor(0)->front());
+  return loop && loop->isUnconditional() && loop->getSuccessor(0) == loop->getParent();
+}
+
+// The IR for an asm in kernelAtomics (code and shape as there, ops its
+// constraints, bits as inlineInstructions gives), before c; null, with
+// nothing emitted, when the types do not fit.
+static Value *lowerKernelAtomic(CallInst *c, StringRef code, StringRef shape, StringRef ops,
+                                unsigned bits) {
+  const KernelAtomic *k = find_if(
+      kernelAtomics, [&](const KernelAtomic &k) { return code == k.code && shape == k.ops; });
+  if (k == std::end(kernelAtomics))
+    return nullptr;
+  StringRef mn = code.take_until([](char ch) { return ch == ' '; });
+  bool bit = mn.starts_with("bt");
+  Type *ty = c->getType(), *t = c->getParamElementType(0);
+  Type *flagTy = k->flag == 'z' || k->flag == 'c' ? c->getParamElementType(1) : nullptr;
+  Value *v = k->value < 0 ? nullptr : c->getArgOperand(k->value);
+  if (!t || (flagTy && !flagTy->isIntegerTy(8)) || (k->flag == 's' && !ty->isIntegerTy()) ||
+      (k->flag == 'o' && ty != t) ||
+      // A constant offset is a register unless it fits "I" (0 to 31), and an
+      // immediate one counts modulo the operand size, so only 32 or 64 bits.
+      (bit ? !v->getType()->isIntegerTy() || !ops.contains(",Ir,") || (bits && bits < 32)
+           : !(t->isIntegerTy() || (mn == "xchg" && t->isPointerTy())) ||
+                 (v && v->getType() != t) ||
+                 (bits && bits != c->getDataLayout().getTypeSizeInBits(t))))
+    return nullptr;
+  IRBuilder<> b(c);
+  auto order = AtomicOrdering::SequentiallyConsistent;
+  Value *flag = nullptr;
+  if (bit) { // the bit at offset v, signed, from the operand's start
+    Value *nr = b.CreateSExtOrTrunc(v, c->getDataLayout().getIntPtrType(c->getContext()));
+    Value *byte = b.CreateGEP(b.getInt8Ty(), c->getArgOperand(0), b.CreateAShr(nr, 3));
+    Value *mask = b.CreateShl(b.getInt8(1), b.CreateTrunc(b.CreateAnd(nr, 7), b.getInt8Ty()));
+    Value *old = mn == "bts" ? b.CreateAtomicRMW(AtomicRMWInst::Or, byte, mask, Align(1), order)
+                             : b.CreateAtomicRMW(AtomicRMWInst::And, byte, b.CreateNot(mask),
+                                                 Align(1), order);
+    flag = b.CreateIsNotNull(b.CreateAnd(old, mask));
+  } else {
+    bool add = mn == "inc" || mn == "add" || mn == "xadd";
+    if (!v)
+      v = ConstantInt::get(t, 1);
+    auto op = mn == "xchg" ? AtomicRMWInst::Xchg : add ? AtomicRMWInst::Add : AtomicRMWInst::Sub;
+    Value *old = b.CreateAtomicRMW(op, c->getArgOperand(0), v, MaybeAlign(), order);
+    if (k->flag == 'o')
+      return old;
+    if (k->flag == 'z')
+      flag = b.CreateIsNull(add ? b.CreateAdd(old, v) : b.CreateSub(old, v));
+  }
+  if (k->flag == 's')
+    return b.CreateSExt(flag, ty);
+  if (flagTy)
+    b.CreateStore(b.CreateZExt(flag, flagTy), c->getArgOperand(1));
+  return PoisonValue::get(ty);
+}
+
+// Inline asm (issue #19). The idioms of the kernel headers in SV-COMP's LDV
+// tasks that are exact in IR become IR: one that runs nothing inline or only
+// a fence or pause (a compiler barrier, nothing in one thread) goes when it
+// has no register output, or when its one output is tied to an input, which
+// the output then is (OPTIMIZER_HIDE_VAR, RELOC_HIDE); ud2 becomes
+// llvm.trap, which ends the path as __builtin_trap does, where the program
+// expects no return (BUG()), but not where a trap handler may resume after
+// it, as newer kernels' WARN() has it; bswap becomes
+// llvm.bswap; the kernel's atomics are above, and its cmpxchg becomes a
+// cmpxchg. Of its MMIO accessors (asm/io.h), a write is a
+// store, and a read, a mov from memory into a register, writes no memory, so
+// it loses its "memory" clobber and the walker gives it a nondet value, as a
+// device register may hold anything (its operand is still loaded, for the
+// checks on the pointer). An asm with alternatives, code the kernel may
+// patch in at boot, or in Intel syntax is none of these. The walker handles
+// the rest.
+static void lowerInlineAsm(Module &m) {
+  SmallVector<CallInst *, 8> asms;
+  for (Function &f : m)
+    for (Instruction &inst : instructions(f))
+      if (auto *c = dyn_cast<CallInst>(&inst); c && c->isInlineAsm())
+        if (auto *ia = cast<InlineAsm>(c->getCalledOperand());
+            ia->getDialect() == InlineAsm::AD_ATT && !ia->getAsmString().contains(".altinstr"))
+          asms.push_back(c);
+  for (CallInst *c : asms) {
+    auto *ia = cast<InlineAsm>(c->getCalledOperand());
+    unsigned bits;
+    std::string code = inlineInstructions(ia->getAsmString(), bits);
+    SmallVector<StringRef, 4> operands;
+    SmallVector<std::string, 4> kinds;
+    for (StringRef k : split(ia->getConstraintString(), ','))
+      if (!k.starts_with("~")) {
+        operands.push_back(k);
+        kinds.push_back(k.starts_with("=*") ? "=*m"
+                        : k.starts_with("*") ? "*m"
+                        : k.starts_with("=") ? "=v"
+                        : isDigit(k[0])      ? k.str()
+                                             : "v");
+      }
+    std::string ops = join(operands, ","), shape = join(kinds, ",");
+    Type *ty = c->getType();
+    auto sized = [&](Type *t) { return !bits || bits == m.getDataLayout().getTypeSizeInBits(t); };
+    IRBuilder<> b(c);
+    Value *r = nullptr;
+    if (is_contained({"", "mfence", "lfence", "sfence", "pause", "nop", "rep ; nop"}, code)) {
+      if (ty->isVoidTy())
+        r = PoisonValue::get(ty);
+      else if (ops == "=r,0" && CastInst::isBitOrNoopPointerCastable(
+                                    c->getArgOperand(0)->getType(), ty, m.getDataLayout()))
+        r = b.CreateBitOrPointerCast(c->getArgOperand(0), ty);
+    } else if (code == "ud2" && ty->isVoidTy() && noReturn(c->getNextNode())) {
+      b.CreateIntrinsic(Intrinsic::trap, {});
+      r = PoisonValue::get(ty);
+    } else if (code == "bswap $0" && ops == "=r,0" && ty == c->getArgOperand(0)->getType() &&
+               (ty->isIntegerTy(32) || ty->isIntegerTy(64)) && sized(ty)) {
+      r = b.CreateUnaryIntrinsic(Intrinsic::bswap, c->getArgOperand(0));
+    } else if (code == "mov $0,$1" && shape == "v,*m" &&
+               c->getArgOperand(0)->getType() == c->getParamElementType(1) &&
+               sized(c->getArgOperand(0)->getType())) {
+      b.CreateStore(c->getArgOperand(0), c->getArgOperand(1), /*isVolatile=*/true);
+      r = PoisonValue::get(ty);
+    } else if (code == "cmpxchg $2,$1" && shape == "=v,=*m,v,0,*m" &&
+               StringRef(ops).starts_with("={ax},") && ty == c->getParamElementType(0) &&
+               ty->isIntegerTy() && sized(ty) && c->getArgOperand(1)->getType() == ty &&
+               c->getArgOperand(2)->getType() == ty) {
+      auto order = AtomicOrdering::SequentiallyConsistent;
+      r = b.CreateExtractValue(b.CreateAtomicCmpXchg(c->getArgOperand(0), c->getArgOperand(2),
+                                                     c->getArgOperand(1), MaybeAlign(), order,
+                                                     order),
+                               0);
+    } else if (code == "mov $1,$0" && shape == "=v,*m" && c->getParamElementType(0)) {
+      b.CreateLoad(c->getParamElementType(0), c->getArgOperand(0), /*isVolatile=*/true);
+      c->setCalledOperand(InlineAsm::get(ia->getFunctionType(), ia->getAsmString(), ops,
+                                         ia->hasSideEffects(), ia->isAlignStack(),
+                                         ia->getDialect(), ia->canThrow()));
+    } else {
+      r = lowerKernelAtomic(c, code, shape, ops, bits);
+    }
+    if (!r)
+      continue;
+    if (!ty->isVoidTy())
+      c->replaceAllUsesWith(r);
+    c->eraseFromParent();
+  }
 }
 
 // An uninitialised local is one nondet value (plan, section 4.5), as in
@@ -652,6 +887,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   lowerCalls(*module); // before InstCombine, which folds tests of constants
   libmToIntrinsics(*module);
+  lowerInlineAsm(*module);
   // Plain instcombine; the plan wants a "careful" one that folds
   // nothing on undefined behaviour. Revisit when a folded check shows up.
   // no-verify-fixpoint, as LLVM's own pipelines run it: a textual pipeline

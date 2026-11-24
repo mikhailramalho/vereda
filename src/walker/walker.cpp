@@ -15,6 +15,7 @@
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/InstIterator.h>
@@ -537,6 +538,20 @@ private:
   // Returns the path condition after the call: unchanged, strengthened by an
   // assume, or false when the callee does not return.
   SMTExprRef call(CallBase &c, SMTExprRef guard, memory::State &st) {
+    // Inline asm that ir did not turn into IR. As GCC's contract for asm
+    // has it, it writes its outputs and no other memory, unless it clobbers
+    // "memory". Its register outputs get nondet values; one that may write
+    // memory is refused when reached, as nothing yet gives memory nondet
+    // contents.
+    if (auto *ia = dyn_cast<InlineAsm>(c.getCalledOperand())) {
+      for (const InlineAsm::ConstraintInfo &ci : ia->ParseConstraints())
+        if ((ci.Type == InlineAsm::isOutput && ci.isIndirect) ||
+            (ci.Type == InlineAsm::isClobber && ci.Codes[0] == "{memory}"))
+          throw Unsupported("inline asm that may write memory at " + ir::location(c).str());
+      if (!c.getType()->isVoidTy())
+        enc.bind(&c, enc.fresh(c.getType(), "asm@" + ir::location(c).str()));
+      return guard;
+    }
     // getCalledFunction() is null for an indirect call, and also for a direct
     // one whose type disagrees with the function (K&R, or across files). A
     // bodyless callee is still handled by name, as SV-COMP tasks often
@@ -668,6 +683,12 @@ private:
       return guard;
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
+    // A struct result stays unsupported: the bodyless functions returning
+    // one are mostly libgcc's complex arithmetic (__muldc3), whose result C
+    // defines, so a nondet one would give wrong FAILEDs.
+    if (c.getType()->isStructTy())
+      throw Unsupported("call to " + name.str() + " returning a struct at " +
+                        ir::location(c).str());
     // An unknown external returns an unconstrained value. Sound
     // while nothing has memory; revisit with the memory model.
     if (warned.insert(callee).second)

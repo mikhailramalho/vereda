@@ -1,7 +1,9 @@
 // Stage encode: LLVM values and instructions to camada terms. i1 values are
-// Bool terms; every other integer is a bitvector of its width. A struct of
-// integers is one bitvector with its fields packed from the low bits up.
-// Pointers are the memory stage's (object, offset) bitvectors. A float in an
+// Bool terms; every other integer is a bitvector of its width. Pointers are
+// the memory stage's (object, offset) bitvectors. A struct of integers,
+// pointers, floats and vectors is one bitvector with its fields' bits packed
+// from the low bits up, so a pointer in a struct clang returns by value
+// ({ptr, i32} on x86-64) keeps its object. A float in an
 // IEEE format is a term of the solver's floating-point theory, which becomes
 // its bits only where bits are needed: memory, bitcasts, vector elements and
 // sign tests; a NaN's bits there are some NaN. With fp2bv a float is the
@@ -49,8 +51,8 @@ public:
   camada::SMTExprRef fromBits(camada::SMTExprRef bits, llvm::Type *ty);
   // A fresh unconstrained term of v's type, named after its origin (nondet calls, arguments).
   camada::SMTExprRef fresh(llvm::Type *ty, const std::string &name);
-  // Encodes arithmetic, comparison, cast, select, freeze, extractvalue and
-  // getelementptr, binding the result.
+  // Encodes arithmetic, comparison, cast, select, freeze, extractvalue,
+  // insertvalue and getelementptr, binding the result.
   void encode(llvm::Instruction &inst);
   // Encodes the arithmetic intrinsics (llvm.*.with.overflow), binding the
   // result. Returns false for any other intrinsic.
@@ -62,6 +64,10 @@ public:
   camada::SMTExprRef resize(camada::SMTExprRef v, unsigned width, bool isSigned);
 
 private:
+  unsigned packedWidth(llvm::Type *ty);
+  camada::SMTExprRef toField(camada::SMTExprRef v, llvm::Type *ty);
+  camada::SMTExprRef fromField(camada::SMTExprRef bits, llvm::Type *ty);
+  camada::SMTExprRef replaceBits(camada::SMTExprRef v, unsigned low, camada::SMTExprRef part);
   camada::SMTExprRef toBool(camada::SMTExprRef bv);
   camada::SMTExprRef fromBool(camada::SMTExprRef b, unsigned width);
   camada::SMTExprRef binary(unsigned opcode, const llvm::Value *lhs, const llvm::Value *rhs);

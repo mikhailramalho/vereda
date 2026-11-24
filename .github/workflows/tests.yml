@@ -50,7 +50,9 @@ jobs:
       # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
       # in /usr/lib/llvm-21 and downloads only camada; its libraries are
       # plain objects, so links need no ThinLTO step.
+      # The step has hung for hours (twice on 2026-11-24); fail it instead.
       - name: Install packages
+        timeout-minutes: 20
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
           echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
