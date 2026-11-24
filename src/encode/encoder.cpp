@@ -524,6 +524,13 @@ bool Encoder::intrinsic(CallBase &c) {
     bind(&c, t.boolean(false));
     return true;
   }
+  if (f->getIntrinsicID() == Intrinsic::bswap) { // the low byte goes highest
+    SMTExprRef a = value(c.getArgOperand(0)), r = t.extract(a, 7, 0);
+    for (unsigned lo = 8; lo < a->getWidth(); lo += 8)
+      r = t.concat(r, t.extract(a, lo + 7, lo));
+    bind(&c, r);
+    return true;
+  }
   SMTExprRef (Terms::*op)(const SMTExprRef &, const SMTExprRef &) = nullptr;
   SMTExprRef (Terms::*less)(const SMTExprRef &, const SMTExprRef &) = &Terms::slt;
   switch (f->getIntrinsicID()) { // InstCombine's min and max
