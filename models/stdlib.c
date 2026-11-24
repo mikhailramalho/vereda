@@ -44,3 +44,39 @@ div_t div(int n, int d) { return (div_t){n / d, n % d}; }
 ldiv_t ldiv(long n, long d) { return (ldiv_t){n / d, n % d}; }
 lldiv_t lldiv(long long n, long long d) { return (lldiv_t){n / d, n % d}; }
 imaxdiv_t imaxdiv(intmax_t n, intmax_t d) { return (imaxdiv_t){n / d, n % d}; }
+
+// atoi, atol and atoll share one reader; it accumulates in unsigned long long,
+// so the model wraps where an out-of-range result is undefined in C.
+static unsigned long long atoi_helper(const char *s) {
+  while (*s == ' ' || (*s >= '\t' && *s <= '\r'))
+    ++s;
+  int neg = *s == '-';
+  if (*s == '-' || *s == '+')
+    ++s;
+  unsigned long long n = 0;
+  for (; *s >= '0' && *s <= '9'; ++s)
+    n = n * 10 + (*s - '0');
+  return neg ? -n : n;
+}
+
+int atoi(const char *s) { return atoi_helper(s); }
+long atol(const char *s) { return atoi_helper(s); }
+long long atoll(const char *s) { return atoi_helper(s); }
+
+// C17 7.22.5.1.
+void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
+              int (*compar)(const void *, const void *)) {
+  size_t lo = 0, hi = nmemb;
+  while (lo < hi) {
+    size_t mid = lo + (hi - lo) / 2;
+    const char *p = (const char *)base + mid * size;
+    int r = compar(key, p);
+    if (!r)
+      return (void *)p;
+    if (r < 0)
+      hi = mid;
+    else
+      lo = mid + 1;
+  }
+  return NULL;
+}
