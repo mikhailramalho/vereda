@@ -8,8 +8,11 @@
 int __VERIFIER_nondet_int(void);
 void *malloc(size_t);
 
-static FILE in, out, err;
-FILE *stdin = &in, *stdout = &out, *stderr = &err;
+// The standard streams are declared, not defined, so their contents are
+// unknown: zeroed ones would put their bytes in memory as stores that a
+// read of a stream pointer has to walk past.
+extern FILE __vereda_stdin, __vereda_stdout, __vereda_stderr;
+FILE *stdin = &__vereda_stdin, *stdout = &__vereda_stdout, *stderr = &__vereda_stderr;
 
 // Each stream opened is a new object, or null when opening fails.
 static FILE *stream(void) { return __VERIFIER_nondet_int() ? malloc(sizeof(FILE)) : NULL; }
