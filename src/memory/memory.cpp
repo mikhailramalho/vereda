@@ -1,6 +1,9 @@
 #include "memory/memory.h"
 
 #include "util/unsupported.h"
+#include <llvm/ADT/DenseSet.h>
+#include <llvm/ADT/MapVector.h>
+#include <llvm/ADT/SetVector.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <set>
 #include <vector>
@@ -99,12 +102,15 @@ void Memory::allocateGlobals(const Module &m,
     uint64_t size = dl.getTypeAllocSize(g.getValueType());
     globals[&g] = allocate(t.bv(size, ptrBits), g.getPointerAlignment(dl).value(),
                            t.boolean(true), exposed(&g));
+    objects.back().constant = g.isConstant();
   }
   // A function whose address is taken is an object of one byte, so that a
   // pointer to it is an ordinary pointer: stored, compared and called.
   for (const Function &f : m)
-    if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true))
+    if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true)) {
       globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f));
+      objects.back().constant = true;
+    }
 }
 
 SMTExprRef Memory::global(const GlobalValue *g) const {
@@ -143,7 +149,12 @@ SMTExprRef Memory::fromAddress(SMTExprRef a) {
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
     off = t.ite(inside, t.sub(a, o.base), off);
   }
-  return ptr(obj, off);
+  // What object() of the result folds to, which concat may have joined
+  // with the offset's choices.
+  SMTExprRef r = ptr(obj, off);
+  if (SMTExprRef o = object(r); !t.constant(o))
+    fromInteger[o.get()] = o;
+  return r;
 }
 
 State Memory::initial() {
@@ -308,13 +319,15 @@ void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, S
                              }),
                     below.prov};
   // An object of elements has no provenance array: it holds no pointer.
-  if (!shift)
+  if (!shift) {
     after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)), "summary_provenance#" + n,
                           [=, this](const SMTExprRef &j) {
                             SMTExprRef old = t.select(below.prov, j);
                             return old.get() == intProv.get() ? old
                                                               : t.ite(at(j).first, intProv, old);
                           });
+    provBelow[after.prov.get()] = {after.prov, below.prov}; // the pointers it may hold
+  }
   if (own)
     st.separate.set({o, 0}, after);
   else
@@ -388,7 +401,7 @@ void Memory::prepare(State &st, SMTExprRef p) {
     flush(st, o);
 }
 
-std::vector<uint64_t> Memory::candidates(SMTExprRef p) {
+std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers) {
   std::vector<uint64_t> r;
   std::vector<SMTExprRef> work{p};
   bool read = false;
@@ -399,6 +412,8 @@ std::vector<uint64_t> Memory::candidates(SMTExprRef p) {
     // inside, out of reach of object(): split the pointer first.
     if (e->getWidth() != ObjBits && !t.choice(e, c, x, y))
       e = object(e);
+    if (!integers && fromInteger.count(e.get()))
+      continue;
     if (const APInt *id = t.constant(e)) {
       r.push_back(id->getZExtValue());
     } else if (t.choice(e, c, x, y)) {
@@ -622,11 +637,80 @@ void Memory::fill(State &st, uint64_t o, SMTExprRef byte) {
 }
 
 void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
+  havocWith(st, p, n, t.bv(IntProvenance, ObjBits));
+}
+
+void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
+                       llvm::ArrayRef<SMTExprRef> read, bool reach) {
+  std::vector<SMTExprRef> ps(written.begin(), written.end());
+  ps.insert(ps.end(), read.begin(), read.end());
+  // For each pointer, the objects it may point into, and each object
+  // reached through stored pointers from where it points, in st as the
+  // call finds it, with the objects of the pointer it is reached from.
+  std::vector<std::vector<uint64_t>> roots(ps.size());
+  std::vector<llvm::MapVector<uint64_t, std::vector<uint64_t>>> from(ps.size());
+  // The objects the call may hold a pointer to: those it gets a pointer
+  // into, exposed (it can store no other: the rest were passed where
+  // LLVM says nothing is captured), and those reached.
+  llvm::SetVector<uint64_t> held;
+  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
+  if (reach)
+    to = pointers(st);
+  for (size_t i = 0; i < ps.size(); ++i) {
+    if (t.isTrue(t.eq(ps[i], null())))
+      continue;
+    roots[i] = candidates(ps[i]);
+    for (uint64_t r : roots[i]) {
+      if (r < objects.size() && objects[r].exposed)
+        held.insert(r);
+      llvm::SmallVector<uint64_t, 8> work{r};
+      llvm::DenseSet<uint64_t> seen;
+      while (!work.empty()) {
+        auto it = to.find(work.pop_back_val());
+        if (it == to.end())
+          continue;
+        for (uint64_t x : it->second)
+          if (seen.insert(x).second) {
+            from[i][x].push_back(r);
+            held.insert(x);
+            work.push_back(x);
+          }
+      }
+    }
+  }
+  // Every object written may then hold a pointer to any of them, so that a
+  // later call reaches them again.
+  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  std::string id = std::to_string(fresh++);
+  for (uint64_t x : held)
+    prov = t.ite(t.symbol("havoc_provenance#" + id + "." + std::to_string(x), s.mkBoolSort()),
+                 t.bv(x, ObjBits), prov);
+  for (size_t i = 0; i < ps.size(); ++i) {
+    if (i < written.size())
+      havocWith(st, ps[i], std::nullopt, prov);
+    for (const auto &[x, rs] : from[i]) {
+      if (objects[x].constant)
+        continue;
+      if (rs.size() == roots[i].size()) {
+        havocObject(st, x, prov);
+        continue;
+      }
+      State a = st;
+      havocObject(a, x, prov);
+      SMTExprRef in = t.boolean(false);
+      for (uint64_t r : rs)
+        in = t.lor(in, t.eq(object(ps[i]), t.bv(r, ObjBits)));
+      st = ite(in, a, st);
+    }
+  }
+}
+
+void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov) {
   SMTExprRef c, x, y;
   if (t.split(p, c, x, y)) {
     State a = st, b = st;
-    havoc(a, x, n);
-    havoc(b, y, n);
+    havocWith(a, x, n, prov);
+    havocWith(b, y, n, prov);
     st = ite(c, a, b);
     return;
   }
@@ -634,7 +718,7 @@ void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
   if (!obj) { // each object p may point into, where it does
     for (uint64_t o : candidates(p)) {
       State a = st;
-      havoc(a, ptr(t.bv(o, ObjBits), offset(p)), n);
+      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov);
       st = ite(t.eq(object(p), t.bv(o, ObjBits)), a, st);
     }
     return;
@@ -655,13 +739,79 @@ void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
                                      t.bv(IntProvenance, ObjBits)});
     return;
   }
+  havocObject(st, o, prov);
+}
+
+void Memory::havocObject(State &st, uint64_t o, SMTExprRef prov) {
   unsigned shift = shifts.lookup(o); // an object of elements, as in fillObject
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
   std::string id = std::to_string(fresh++);
   st.known.eraseObject(o);
-  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  // An object of elements holds no pointer.
   st.separate.set({o, 0}, {t.symbol("havoc#" + id, s.mkArraySort(index, s.mkBVSort(8 << shift))),
-                           shift ? prov : t.constArray(index, prov)});
+                           shift ? t.bv(IntProvenance, ObjBits) : t.constArray(index, prov)});
+}
+
+llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State &st) {
+  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
+  SMTExprRef intProv = t.bv(IntProvenance, ObjBits);
+  // The objects a byte of provenance prov may point to, for each object in.
+  auto add = [&](llvm::ArrayRef<uint64_t> in, const SMTExprRef &prov) {
+    std::vector<uint64_t> xs;
+    for (uint64_t x : candidates(prov, false))
+      if (x && x < objects.size()) // not null, nor an integer's
+        xs.push_back(x);
+    if (!xs.empty())
+      for (uint64_t o : in)
+        to[o].insert(xs.begin(), xs.end());
+  };
+  st.known.forEach([&](Key k, const State::Cell &c) {
+    if (c.prov.get() != intProv.get())
+      add(k.first, c.prov);
+  });
+  // The provenance stored in the arrays: in those indexed by pointer, each
+  // store for the objects its index may be in, which may count a store an
+  // object's own arrays have since replaced; in an object's own indexed by
+  // offset, each for that object. A constant array is an object's own, all
+  // for it. An object's own arrays may choose the shared ones on one side
+  // of a join, which the first walk has seen already.
+  llvm::DenseSet<const camada::SMTExpr *> shared;
+  auto walk = [&](const SMTExprRef &arrays, std::optional<uint64_t> own, bool byOffset) {
+    llvm::DenseSet<const camada::SMTExpr *> local, &seen = own ? local : shared;
+    std::vector<SMTExprRef> work{arrays};
+    while (!work.empty()) {
+      SMTExprRef e = work.back(), a, i, v, c;
+      work.pop_back();
+      if (!seen.insert(e.get()).second || (own && shared.count(e.get())))
+        continue;
+      if (SMTExprRef f = t.filledWith(e)) {
+        if (f.get() == intProv.get())
+          continue;
+        if (!own)
+          throw Unsupported("memory whose provenance is not known");
+        add(*own, f);
+        continue;
+      }
+      if (t.stored(e, a, i, v)) {
+        if (v.get() != intProv.get())
+          add(byOffset ? std::vector<uint64_t>{*own} : candidates(i), v);
+        work.push_back(a);
+      } else if (t.choice(e, c, a, v)) {
+        work.push_back(a);
+        work.push_back(v);
+      } else if (auto it = provBelow.find(e.get()); it != provBelow.end()) {
+        work.push_back(it->second.second);
+      } else {
+        throw Unsupported("memory whose provenance is not known");
+      }
+    }
+  };
+  walk(st.prov, std::nullopt, false);
+  st.separate.forEach([&](Key k, const State::Cell &c) {
+    if (!shifts.count(k.first))
+      walk(c.prov, k.first, owned.count(k.first));
+  });
+  return to;
 }
 
 void Memory::set(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
