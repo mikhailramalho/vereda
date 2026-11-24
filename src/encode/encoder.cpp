@@ -11,7 +11,6 @@
 #include <cmath>
 
 using namespace llvm;
-using camada::SMTExprRef;
 using camada::SMTSortRef;
 
 namespace vereda::encode {
@@ -77,17 +76,17 @@ unsigned Encoder::packedWidth(Type *ty) {
 }
 
 // A field's value as the bits a packed struct holds, and back.
-SMTExprRef Encoder::toField(SMTExprRef v, Type *ty) {
+Term Encoder::toField(Term v, Type *ty) {
   return ty->isIntegerTy(1) ? fromBool(v, 1) : toBits(v, ty);
 }
 
-SMTExprRef Encoder::fromField(SMTExprRef bits, Type *ty) {
+Term Encoder::fromField(Term bits, Type *ty) {
   return ty->isIntegerTy(1) ? toBool(bits) : fromBits(bits, ty);
 }
 
 // v with the bits from low up replaced by part.
-SMTExprRef Encoder::replaceBits(SMTExprRef v, unsigned low, SMTExprRef part) {
-  unsigned high = low + part->getWidth(), all = v->getWidth();
+Term Encoder::replaceBits(Term v, unsigned low, Term part) {
+  unsigned high = low + part.width(), all = v.width();
   if (high < all)
     part = t.concat(t.extract(v, all - 1, high), part);
   return low > 0 ? t.concat(part, t.extract(v, low - 1, 0)) : part;
@@ -107,7 +106,7 @@ SMTSortRef Encoder::sort(Type *ty) {
   throw Unsupported("type " + describe(ty));
 }
 
-SMTExprRef Encoder::fresh(Type *ty, const std::string &name) {
+Term Encoder::fresh(Type *ty, const std::string &name) {
   std::string id = name + "#" + std::to_string(freshCount++);
   // A pointer from outside the program is an address converted to one, so
   // it points to no object the program kept to itself (memory.h, #137).
@@ -116,7 +115,7 @@ SMTExprRef Encoder::fresh(Type *ty, const std::string &name) {
   return t.symbol(id, sort(ty));
 }
 
-SMTExprRef Encoder::value(const Value *v) {
+Term Encoder::value(const Value *v) {
   if (auto it = env.find(v); it != env.end()) {
     const memory::Cell *c = facts.find(key(it->second));
     return c ? c->data : it->second;
@@ -140,7 +139,7 @@ SMTExprRef Encoder::value(const Value *v) {
         throw Unsupported("value " + describe(v));
       return toField(value(e), e->getType());
     };
-    SMTExprRef r = element(n - 1);
+    Term r = element(n - 1);
     for (unsigned i = n - 1; i-- > 0;)
       r = t.concat(r, element(i));
     return r;
@@ -160,23 +159,23 @@ SMTExprRef Encoder::value(const Value *v) {
   throw Unsupported("value " + describe(v));
 }
 
-SMTExprRef Encoder::resize(SMTExprRef v, unsigned width, bool isSigned) {
-  if (v->isBoolSort())
+Term Encoder::resize(Term v, unsigned width, bool isSigned) {
+  if (v.isBool())
     v = fromBool(v, 1);
-  unsigned from = v->getWidth();
+  unsigned from = v.width();
   if (from < width)
     return isSigned ? t.sext(v, width - from) : t.zext(v, width - from);
   return from > width ? t.extract(v, width - 1, 0) : v;
 }
 
-SMTExprRef Encoder::gep(const GEPOperator &g) {
+Term Encoder::gep(const GEPOperator &g) {
   unsigned bits = mem.pointerBits();
   APInt offset(bits, 0);
   SmallMapVector<Value *, APInt, 4> variable;
   if (g.getType()->isVectorTy() ||
       !g.collectOffset(mem.layout(), bits, variable, offset))
     throw Unsupported("getelementptr " + describe(&g));
-  SMTExprRef delta = t.bv(offset);
+  Term delta = t.bv(offset);
   for (auto &[index, scale] : variable)
     delta = t.add(delta, t.mul(resize(value(index), bits, true), t.bv(scale)));
   return mem.advance(value(g.getPointerOperand()), delta);
@@ -191,33 +190,36 @@ SMTSortRef Encoder::fpSort(Type *ty) {
                     fpEncoding);
 }
 
-SMTExprRef Encoder::fp(const Value *v) {
+camada::SMTExprRef Encoder::fp(const Value *v) {
   SMTSortRef sort = fpSort(v->getType()); // throws for x86_fp80, held as bits
-  return native() ? value(v) : s.mkBVToIEEEFP(t.solverTerm(value(v)), sort);
+  camada::SMTExprRef x = t.solverTerm(value(v));
+  return native() ? x : s.mkBVToIEEEFP(x, sort);
 }
 
-SMTExprRef Encoder::bits(const SMTExprRef &f) { return native() ? f : s.mkIEEEFPToBV(f); }
+Term Encoder::bits(const camada::SMTExprRef &f) {
+  return t.fromSolver(native() ? f : s.mkIEEEFPToBV(f));
+}
 
-SMTExprRef Encoder::toBits(SMTExprRef v, Type *ty) {
+Term Encoder::toBits(Term v, Type *ty) {
   if (!native() || !ieee(ty))
     return v;
   // A constant's bits, except a NaN's, which are any NaN's as for every NaN term.
-  if (auto it = floatBits.find(v.get());
+  if (auto it = floatBits.find(v.id());
       it != floatBits.end() && !APFloat(*ieee(ty), it->second).isNaN())
     return t.bv(it->second);
-  return t.fromSolver(s.mkIEEEFPToBV(v));
+  return t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
 }
 
-SMTExprRef Encoder::fromBits(SMTExprRef b, Type *ty) {
+Term Encoder::fromBits(Term b, Type *ty) {
   if (!native() || !ieee(ty))
     return b;
   const APInt *c = t.constant(b);
   if (!c)
-    return s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty));
-  SMTExprRef &f = floatTerms[{ieee(ty), *c}];
+    return t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
+  Term &f = floatTerms[{ieee(ty), *c}];
   if (!f) {
-    f = s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty));
-    floatBits.try_emplace(f.get(), *c);
+    f = t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
+    floatBits.try_emplace(f.id(), *c);
   }
   return f;
 }
@@ -226,109 +228,110 @@ std::optional<APFloat> Encoder::constFloat(const Value *v) {
   const fltSemantics *sem = ieee(v->getType());
   if (!sem || isa<UndefValue>(v)) // undef is a fresh symbol per use
     return std::nullopt;
-  SMTExprRef e = value(v);
+  Term e = value(v);
   const APInt *c = nullptr;
   if (!native())
     c = t.constant(e);
-  else if (auto it = floatBits.find(e.get()); it != floatBits.end())
+  else if (auto it = floatBits.find(e.id()); it != floatBits.end())
     c = &it->second;
   if (!c)
     return std::nullopt;
   return APFloat(*sem, *c);
 }
 
-SMTExprRef Encoder::floatValue(const APFloat &f, Type *ty) {
+Term Encoder::floatValue(const APFloat &f, Type *ty) {
   return fromBits(t.bv(f.bitcastToAPInt()), ty);
 }
 
-SMTExprRef Encoder::folded(const APFloat &r, Type *ty) {
-  return r.isNaN() ? SMTExprRef() : floatValue(r, ty);
+Term Encoder::folded(const APFloat &r, Type *ty) {
+  return r.isNaN() ? Term() : floatValue(r, ty);
 }
 
-SMTExprRef Encoder::signBit(const Value *v) {
-  SMTExprRef b = toBits(value(v), v->getType());
-  unsigned w = b->getWidth();
+Term Encoder::signBit(const Value *v) {
+  Term b = toBits(value(v), v->getType());
+  unsigned w = b.width();
   return t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
 }
 
-SMTExprRef Encoder::rm(camada::RM mode) { return s.mkRM(mode, fpEncoding); }
+camada::SMTExprRef Encoder::rm(camada::RM mode) { return s.mkRM(mode, fpEncoding); }
 
-SMTExprRef Encoder::fpClass(const SMTExprRef &x, Type *ty, unsigned mask) {
+Term Encoder::fpClass(const Term &x, Type *ty, unsigned mask) {
   if (!ieee(ty))
     throw Unsupported("type " + describe(ty));
   if (native()) {
     // The theory has one NaN, so either NaN class means any NaN; the sign
     // of a zero is told by structural equality, which -0 and +0 fail.
     const fltSemantics &sem = *ieee(ty);
-    SMTExprRef zero = fromBits(t.bv(APFloat::getZero(sem).bitcastToAPInt()), ty);
-    SMTExprRef negZero = fromBits(t.bv(APFloat::getZero(sem, true).bitcastToAPInt()), ty);
-    SMTExprRef neg = s.mkFPLt(x, zero), pos = s.mkFPGt(x, zero);
-    SMTExprRef inf = s.mkFPIsInfinite(x), normal = s.mkFPIsNormal(x);
-    SMTExprRef sub = s.mkFPIsSubnormal(x);
-    const std::pair<unsigned, SMTExprRef> classes[] = {
-        {fcNan, s.mkFPIsNaN(x)},           {fcNegInf, t.land(neg, inf)},
+    Term zero = fromBits(t.bv(APFloat::getZero(sem).bitcastToAPInt()), ty);
+    Term negZero = fromBits(t.bv(APFloat::getZero(sem, true).bitcastToAPInt()), ty);
+    camada::SMTExprRef f = t.solverTerm(x), z = t.solverTerm(zero);
+    Term neg = t.fromSolver(s.mkFPLt(f, z)), pos = t.fromSolver(s.mkFPGt(f, z));
+    Term inf = t.fromSolver(s.mkFPIsInfinite(f)), normal = t.fromSolver(s.mkFPIsNormal(f));
+    Term sub = t.fromSolver(s.mkFPIsSubnormal(f));
+    const std::pair<unsigned, Term> classes[] = {
+        {fcNan, t.fromSolver(s.mkFPIsNaN(f))}, {fcNegInf, t.land(neg, inf)},
         {fcNegNormal, t.land(neg, normal)}, {fcNegSubnormal, t.land(neg, sub)},
         {fcNegZero, t.eq(x, negZero)},      {fcPosZero, t.eq(x, zero)},
         {fcPosSubnormal, t.land(pos, sub)}, {fcPosNormal, t.land(pos, normal)},
         {fcPosInf, t.land(pos, inf)}};
-    SMTExprRef r = t.boolean(false);
+    Term r = t.boolean(false);
     for (auto &[bit, in] : classes)
       if (mask & bit)
         r = t.lor(r, in);
     return r;
   }
   const fltSemantics &sem = *ieee(ty);
-  unsigned w = x->getWidth(), sig = APFloat::semanticsPrecision(sem) - 1;
-  SMTExprRef exp = t.extract(x, w - 2, sig), mant = t.extract(x, sig - 1, 0);
-  SMTExprRef neg = t.eq(t.extract(x, w - 1, w - 1), t.bv(1, 1));
-  SMTExprRef top = t.eq(exp, t.bvnot(t.bv(0, w - 1 - sig)));
-  SMTExprRef low = t.eq(exp, t.bv(0, w - 1 - sig));
-  SMTExprRef noMant = t.eq(mant, t.bv(0, sig));
-  SMTExprRef nan = t.land(top, t.lnot(noMant));
-  SMTExprRef quiet = t.eq(t.extract(x, sig - 1, sig - 1), t.bv(1, 1));
-  SMTExprRef inf = t.land(top, noMant), zero = t.land(low, noMant);
-  SMTExprRef sub = t.land(low, t.lnot(noMant));
-  SMTExprRef normal = t.lnot(t.lor(top, low));
-  SMTExprRef pos = t.lnot(neg);
-  const std::pair<unsigned, SMTExprRef> classes[] = {
+  unsigned w = x.width(), sig = APFloat::semanticsPrecision(sem) - 1;
+  Term exp = t.extract(x, w - 2, sig), mant = t.extract(x, sig - 1, 0);
+  Term neg = t.eq(t.extract(x, w - 1, w - 1), t.bv(1, 1));
+  Term top = t.eq(exp, t.bvnot(t.bv(0, w - 1 - sig)));
+  Term low = t.eq(exp, t.bv(0, w - 1 - sig));
+  Term noMant = t.eq(mant, t.bv(0, sig));
+  Term nan = t.land(top, t.lnot(noMant));
+  Term quiet = t.eq(t.extract(x, sig - 1, sig - 1), t.bv(1, 1));
+  Term inf = t.land(top, noMant), zero = t.land(low, noMant);
+  Term sub = t.land(low, t.lnot(noMant));
+  Term normal = t.lnot(t.lor(top, low));
+  Term pos = t.lnot(neg);
+  const std::pair<unsigned, Term> classes[] = {
       {fcSNan, t.land(nan, t.lnot(quiet))}, {fcQNan, t.land(nan, quiet)},
       {fcNegInf, t.land(neg, inf)},         {fcNegNormal, t.land(neg, normal)},
       {fcNegSubnormal, t.land(neg, sub)},   {fcNegZero, t.land(neg, zero)},
       {fcPosZero, t.land(pos, zero)},       {fcPosSubnormal, t.land(pos, sub)},
       {fcPosNormal, t.land(pos, normal)},   {fcPosInf, t.land(pos, inf)}};
-  SMTExprRef r = t.boolean(false);
+  Term r = t.boolean(false);
   for (auto &[bit, in] : classes)
     if (mask & bit)
       r = t.lor(r, in);
   return r;
 }
 
-SMTExprRef Encoder::fcmp(CmpInst::Predicate p, const Value *lhs, const Value *rhs) {
+Term Encoder::fcmp(CmpInst::Predicate p, const Value *lhs, const Value *rhs) {
   if (p == CmpInst::FCMP_FALSE || p == CmpInst::FCMP_TRUE)
     return t.boolean(p == CmpInst::FCMP_TRUE);
   if (auto a = constFloat(lhs), b = constFloat(rhs); a && b)
     return t.boolean(FCmpInst::compare(*a, *b, p));
-  SMTExprRef a = fp(lhs), b = fp(rhs);
-  SMTExprRef unordered = t.lor(s.mkFPIsNaN(a), s.mkFPIsNaN(b));
+  camada::SMTExprRef a = fp(lhs), b = fp(rhs);
+  Term unordered = t.lor(t.fromSolver(s.mkFPIsNaN(a)), t.fromSolver(s.mkFPIsNaN(b)));
   if (p == CmpInst::FCMP_UNO || p == CmpInst::FCMP_ORD)
     return p == CmpInst::FCMP_UNO ? unordered : t.lnot(unordered);
-  SMTExprRef r;
+  Term r;
   switch (CmpInst::getOrderedPredicate(p)) {
-  case CmpInst::FCMP_OEQ: r = s.mkFPEqual(a, b); break;
-  case CmpInst::FCMP_ONE: r = t.lnot(s.mkFPEqual(a, b)); break;
-  case CmpInst::FCMP_OGT: r = s.mkFPGt(a, b); break;
-  case CmpInst::FCMP_OGE: r = s.mkFPGe(a, b); break;
-  case CmpInst::FCMP_OLT: r = s.mkFPLt(a, b); break;
-  case CmpInst::FCMP_OLE: r = s.mkFPLe(a, b); break;
+  case CmpInst::FCMP_OEQ: r = t.fromSolver(s.mkFPEqual(a, b)); break;
+  case CmpInst::FCMP_ONE: r = t.lnot(t.fromSolver(s.mkFPEqual(a, b))); break;
+  case CmpInst::FCMP_OGT: r = t.fromSolver(s.mkFPGt(a, b)); break;
+  case CmpInst::FCMP_OGE: r = t.fromSolver(s.mkFPGe(a, b)); break;
+  case CmpInst::FCMP_OLT: r = t.fromSolver(s.mkFPLt(a, b)); break;
+  case CmpInst::FCMP_OLE: r = t.fromSolver(s.mkFPLe(a, b)); break;
   default: throw Unsupported("predicate " + std::string(CmpInst::getPredicateName(p)));
   }
   // Ordered: false on a NaN; unordered: true on one.
   return CmpInst::isOrdered(p) ? t.land(t.lnot(unordered), r) : t.lor(unordered, r);
 }
 
-SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
+Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
   Type *src = op->getType();
-  SMTExprRef a = value(op);
+  Term a = value(op);
   switch (opcode) {
   case Instruction::FPToSI:
   case Instruction::FPToUI: { // toward zero, as C converts
@@ -343,8 +346,8 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       if (!(c->convertToInteger(r, APFloat::rmTowardZero, &exact) & APFloat::opInvalidOp))
         return to == 1 ? t.boolean(r[0]) : t.bv(r);
     }
-    SMTExprRef r = opcode == Instruction::FPToSI ? s.mkFPToSBV(fp(op), to)
-                                                 : s.mkFPToUBV(fp(op), to);
+    Term r = t.fromSolver(opcode == Instruction::FPToSI ? s.mkFPToSBV(fp(op), to)
+                                                        : s.mkFPToUBV(fp(op), to));
     return to == 1 ? t.eq(r, t.bv(1, 1)) : r;
   }
   case Instruction::SIToFP:
@@ -356,16 +359,16 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       r.convertFromAPInt(*c, opcode == Instruction::SIToFP, APFloat::rmNearestTiesToEven);
       return floatValue(r, dst);
     }
-    a = t.solverTerm(a);
-    return bits(opcode == Instruction::SIToFP ? s.mkSBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN))
-                                              : s.mkUBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
+    camada::SMTExprRef x = t.solverTerm(a);
+    return bits(opcode == Instruction::SIToFP ? s.mkSBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN))
+                                              : s.mkUBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
   }
   case Instruction::FPExt:
   case Instruction::FPTrunc:
     if (auto c = constFloat(op); c && ieee(dst)) {
       bool loses;
       c->convert(*ieee(dst), APFloat::rmNearestTiesToEven, &loses);
-      if (SMTExprRef r = folded(*c, dst))
+      if (Term r = folded(*c, dst))
         return r;
     }
     return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
@@ -402,7 +405,7 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
     return from == 1 ? t.ite(a, t.bvnot(t.bv(0, to)), t.bv(0, to))
                      : t.sext(a, to - from);
   case Instruction::Trunc: {
-    SMTExprRef r = t.extract(a, to - 1, 0);
+    Term r = t.extract(a, to - 1, 0);
     return to == 1 ? t.eq(r, t.bv(1, 1)) : r;
   }
   default:
@@ -410,28 +413,29 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
   }
 }
 
-SMTExprRef Encoder::toBool(SMTExprRef bv) {
-  return t.lnot(t.eq(bv, t.bv(0, bv->getWidth())));
+Term Encoder::toBool(Term bv) {
+  return t.lnot(t.eq(bv, t.bv(0, bv.width())));
 }
 
-SMTExprRef Encoder::fromBool(SMTExprRef b, unsigned width) {
+Term Encoder::fromBool(Term b, unsigned width) {
   return t.ite(b, t.bv(1, width), t.bv(0, width));
 }
 
-SMTExprRef Encoder::isTrue(const Value *v) {
+Term Encoder::isTrue(const Value *v) {
   if (ieee(v->getType())) { // nonzero, as C reads a scalar: NaN is true
     if (auto c = constFloat(v))
       return t.boolean(!c->isZero());
-    SMTExprRef zero = fromBits(t.bv(0, v->getType()->getPrimitiveSizeInBits()), v->getType());
-    return t.lnot(native() ? s.mkFPEqual(fp(v), zero)
-                           : s.mkFPEqual(fp(v), s.mkBVToIEEEFP(t.solverTerm(zero),
-                                                               fpSort(v->getType()))));
+    Term zero = fromBits(t.bv(0, v->getType()->getPrimitiveSizeInBits()), v->getType());
+    camada::SMTExprRef f = fp(v), z = t.solverTerm(zero);
+    if (!native())
+      z = s.mkBVToIEEEFP(z, fpSort(v->getType()));
+    return t.lnot(t.fromSolver(s.mkFPEqual(f, z)));
   }
-  SMTExprRef t = value(v);
+  Term t = value(v);
   return v->getType()->isIntegerTy(1) ? t : toBool(t);
 }
 
-SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
+Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
   if (lhs->getType()->isFloatingPointTy()) {
     if (auto x = constFloat(lhs), y = constFloat(rhs); x && y) {
       auto even = APFloat::rmNearestTiesToEven;
@@ -442,10 +446,10 @@ SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) 
       case Instruction::FDiv: x->divide(*y, even); break;
       case Instruction::FRem: x->mod(*y); break; // exact, truncating as fmod
       }
-      if (SMTExprRef r = folded(*x, lhs->getType()))
+      if (Term r = folded(*x, lhs->getType()))
         return r;
     }
-    SMTExprRef a = fp(lhs), b = fp(rhs), even = rm(camada::RM::ROUND_TO_EVEN);
+    camada::SMTExprRef a = fp(lhs), b = fp(rhs), even = rm(camada::RM::ROUND_TO_EVEN);
     switch (opcode) {
     case Instruction::FAdd: return bits(s.mkFPAdd(a, b, even));
     case Instruction::FSub: return bits(s.mkFPSub(a, b, even));
@@ -456,7 +460,7 @@ SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) 
     }
   }
   bool isBool = lhs->getType()->isIntegerTy(1);
-  SMTExprRef a = value(lhs), b = value(rhs);
+  Term a = value(lhs), b = value(rhs);
   switch (opcode) {
   case Instruction::And: return isBool ? t.land(a, b) : t.bvand(a, b);
   case Instruction::Or:  return isBool ? t.lor(a, b) : t.bvor(a, b);
@@ -467,7 +471,7 @@ SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) 
     a = fromBool(a, 1);
     b = fromBool(b, 1);
   }
-  SMTExprRef r;
+  Term r;
   switch (opcode) {
   case Instruction::Add:  r = t.add(a, b); break;
   case Instruction::Sub:  r = t.sub(a, b); break;
@@ -485,20 +489,20 @@ SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) 
 }
 
 void Encoder::encode(Instruction &inst) {
-  SMTExprRef r;
+  Term r;
   if (isa<BinaryOperator>(inst)) {
     r = binary(inst.getOpcode(), inst.getOperand(0), inst.getOperand(1));
   } else if (inst.getOpcode() == Instruction::FNeg) { // flips the sign bit, NaN or not
-    SMTExprRef a = value(inst.getOperand(0));
+    Term a = value(inst.getOperand(0));
     if (auto c = constFloat(inst.getOperand(0)); c && !c->isNaN())
       r = floatValue(-*c, inst.getType());
     else
-      r = native() && ieee(inst.getType()) ? s.mkFPNeg(a)
-                                           : t.bvxor(a, t.bv(APInt::getSignMask(a->getWidth())));
+      r = native() && ieee(inst.getType()) ? t.fromSolver(s.mkFPNeg(t.solverTerm(a)))
+                                           : t.bvxor(a, t.bv(APInt::getSignMask(a.width())));
   } else if (auto *fc = dyn_cast<FCmpInst>(&inst)) {
     r = fcmp(fc->getPredicate(), fc->getOperand(0), fc->getOperand(1));
   } else if (auto *cmp = dyn_cast<ICmpInst>(&inst)) {
-    SMTExprRef a = value(cmp->getOperand(0)), b = value(cmp->getOperand(1));
+    Term a = value(cmp->getOperand(0)), b = value(cmp->getOperand(1));
     // Pointers are equal as Memory::equal says; ordered comparison
     // compares addresses.
     if (cmp->getOperand(0)->getType()->isPointerTy()) {
@@ -548,7 +552,7 @@ void Encoder::encode(Instruction &inst) {
     if (!w || !index || index->getZExtValue() >= n)
       throw Unsupported("instruction " + describe(&inst));
     unsigned low = w * index->getZExtValue();
-    SMTExprRef v = value(vec);
+    Term v = value(vec);
     Type *elem = cast<FixedVectorType>(vec->getType())->getElementType();
     if (isa<ExtractElementInst>(inst)) {
       r = fromBits(t.extract(v, low + w - 1, low), elem);
@@ -587,11 +591,11 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   auto integral = [&](camada::RM mode) {
     return bits(s.mkFPToIntegral(fp(arg(0)), rm(mode)));
   };
-  SMTExprRef r;
+  Term r;
   switch (id) {
   case Intrinsic::fabs:
   case Intrinsic::copysign: { // operations on the sign, NaN or not
-    SMTExprRef a = value(arg(0));
+    Term a = value(arg(0));
     if (native() && ieee(arg(0)->getType())) { // x86_fp80 stays bits
       if (auto c = constFloat(arg(0)); c && !c->isNaN()) {
         r = floatValue(abs(*c), arg(0)->getType());
@@ -599,12 +603,12 @@ bool Encoder::fpIntrinsic(CallBase &c) {
           r = t.ite(signBit(arg(1)), floatValue(-abs(*c), arg(0)->getType()), r);
         break;
       }
-      r = s.mkFPAbs(a);
+      r = t.fromSolver(s.mkFPAbs(t.solverTerm(a)));
       if (id == Intrinsic::copysign)
-        r = t.ite(signBit(arg(1)), s.mkFPNeg(r), r);
+        r = t.ite(signBit(arg(1)), t.fromSolver(s.mkFPNeg(t.solverTerm(r))), r);
       break;
     }
-    SMTExprRef sign = t.bv(APInt::getSignMask(a->getWidth()));
+    Term sign = t.bv(APInt::getSignMask(a.width()));
     r = t.bvand(a, t.bvnot(sign));
     if (id == Intrinsic::copysign)
       r = t.bvor(r, t.bvand(value(arg(1)), sign));
@@ -648,10 +652,10 @@ bool Encoder::fpIntrinsic(CallBase &c) {
       r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
       break;
     }
-    SMTExprRef a = fp(arg(0)), b = fp(arg(1));
-    SMTExprRef first = id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b);
-    r = t.ite(s.mkFPIsNaN(a), value(arg(1)),
-              t.ite(t.lor(s.mkFPIsNaN(b), first), value(arg(0)), value(arg(1))));
+    camada::SMTExprRef a = fp(arg(0)), b = fp(arg(1));
+    Term first = t.fromSolver(id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b));
+    r = t.ite(t.fromSolver(s.mkFPIsNaN(a)), value(arg(1)),
+              t.ite(t.lor(t.fromSolver(s.mkFPIsNaN(b)), first), value(arg(0)), value(arg(1))));
     break;
   }
   case Intrinsic::is_fpclass:
@@ -690,8 +694,8 @@ bool Encoder::intrinsic(CallBase &c) {
     return true;
   }
   if (f->getIntrinsicID() == Intrinsic::bswap) { // the low byte goes highest
-    SMTExprRef a = value(c.getArgOperand(0)), r = t.extract(a, 7, 0);
-    for (unsigned lo = 8; lo < a->getWidth(); lo += 8)
+    Term a = value(c.getArgOperand(0)), r = t.extract(a, 7, 0);
+    for (unsigned lo = 8; lo < a.width(); lo += 8)
       r = t.concat(r, t.extract(a, lo + 7, lo));
     bind(&c, r);
     return true;
@@ -700,29 +704,29 @@ bool Encoder::intrinsic(CallBase &c) {
   // the amount modulo N and keep the high (fshl) or low (fshr) N bits. The
   // 2N-bit shift never reaches 2N, so an amount of 0 gives a or b unshifted.
   if (f->getIntrinsicID() == Intrinsic::fshl || f->getIntrinsicID() == Intrinsic::fshr) {
-    SMTExprRef a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
-    unsigned n = a->getWidth();
-    SMTExprRef by = t.zext(t.urem(value(c.getArgOperand(2)), t.bv(n, n)), n);
+    Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+    unsigned n = a.width();
+    Term by = t.zext(t.urem(value(c.getArgOperand(2)), t.bv(n, n)), n);
     bind(&c, f->getIntrinsicID() == Intrinsic::fshl
                  ? t.extract(t.shl(t.concat(a, b), by), 2 * n - 1, n)
                  : t.extract(t.lshr(t.concat(a, b), by), n - 1, 0));
     return true;
   }
-  SMTExprRef (Terms::*op)(const SMTExprRef &, const SMTExprRef &) = nullptr;
-  SMTExprRef (Terms::*less)(const SMTExprRef &, const SMTExprRef &) = &Terms::slt;
+  Term (Terms::*op)(const Term &, const Term &) = nullptr;
+  Term (Terms::*less)(const Term &, const Term &) = &Terms::slt;
   switch (f->getIntrinsicID()) { // InstCombine's min and max
   case Intrinsic::umin:
   case Intrinsic::umax: less = &Terms::ult; [[fallthrough]];
   case Intrinsic::smin:
   case Intrinsic::smax: {
-    SMTExprRef a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+    Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
     bool min = f->getIntrinsicID() == Intrinsic::umin || f->getIntrinsicID() == Intrinsic::smin;
     bind(&c, t.ite((t.*less)(a, b), min ? a : b, min ? b : a));
     return true;
   }
   default: break;
   }
-  SMTExprRef (Terms::*overflow)(const SMTExprRef &, const SMTExprRef &) = nullptr;
+  Term (Terms::*overflow)(const Term &, const Term &) = nullptr;
   switch (f->getIntrinsicID()) {
   case Intrinsic::sadd_with_overflow: op = &Terms::add; overflow = &Terms::saddo; break;
   case Intrinsic::uadd_with_overflow: op = &Terms::add; overflow = &Terms::uaddo; break;
@@ -732,7 +736,7 @@ bool Encoder::intrinsic(CallBase &c) {
   case Intrinsic::umul_with_overflow: op = &Terms::mul; overflow = &Terms::umulo; break;
   default: return false;
   }
-  SMTExprRef a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+  Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
   // {result, overflow bit}: the overflow bit packs above the result.
   bind(&c, t.concat(fromBool((t.*overflow)(a, b), 1), (t.*op)(a, b)));
   return true;

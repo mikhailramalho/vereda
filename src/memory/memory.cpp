@@ -9,7 +9,7 @@
 #include <vector>
 
 using namespace llvm;
-using camada::SMTExprRef;
+using vereda::encode::Term;
 using camada::SMTSortRef;
 using vereda::Unsupported;
 
@@ -30,26 +30,26 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
   // Constrained before the object is recorded, as allocate() does: after it,
   // base() of the constant 0 folds to objects[0].base and the constraint to
   // true, which left bases[0] free and a stored null read back non-null.
-  s.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
+  s.addConstraint(t.solverTerm(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits))));
   objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), false});
   end = t.bv(1, ptrBits); // no object at address 0
 }
 
 SMTSortRef Memory::pointerSort() { return s.mkBVSort(ObjBits + ptrBits); }
-SMTExprRef Memory::ptr(SMTExprRef obj, SMTExprRef off) { return t.concat(obj, off); }
-SMTExprRef Memory::null() { return t.bv(0, ObjBits + ptrBits); }
-SMTExprRef Memory::object(SMTExprRef p) {
+Term Memory::ptr(Term obj, Term off) { return t.concat(obj, off); }
+Term Memory::null() { return t.bv(0, ObjBits + ptrBits); }
+Term Memory::object(Term p) {
   return t.extract(p, ObjBits + ptrBits - 1, ptrBits);
 }
-SMTExprRef Memory::offset(SMTExprRef p) { return t.extract(p, ptrBits - 1, 0); }
-SMTExprRef Memory::advance(SMTExprRef p, SMTExprRef delta) {
+Term Memory::offset(Term p) { return t.extract(p, ptrBits - 1, 0); }
+Term Memory::advance(Term p, Term delta) {
   return ptr(object(p), t.add(offset(p), delta));
 }
-SMTExprRef Memory::bytePtr(SMTExprRef p, uint64_t i) {
+Term Memory::bytePtr(Term p, uint64_t i) {
   return i ? advance(p, t.bv(i, ptrBits)) : p;
 }
-SMTExprRef Memory::base(SMTExprRef obj) {
-  SMTExprRef c, x, y;
+Term Memory::base(Term obj) {
+  Term c, x, y;
   if (t.split(obj, c, x, y))
     return t.ite(c, base(x), base(y));
   if (const APInt *id = t.constant(obj); id && id->ult(objects.size()))
@@ -57,40 +57,40 @@ SMTExprRef Memory::base(SMTExprRef obj) {
   return t.select(bases, obj);
 }
 
-SMTExprRef Memory::size(SMTExprRef obj) {
-  SMTExprRef c, x, y;
+Term Memory::size(Term obj) {
+  Term c, x, y;
   if (t.split(obj, c, x, y))
     return t.ite(c, size(x), size(y));
   if (const APInt *id = t.constant(obj); id && id->ult(objects.size()))
     return objects[id->getZExtValue()].size;
-  SMTExprRef r = t.bv(0, ptrBits);
+  Term r = t.bv(0, ptrBits);
   for (unsigned id = 1; id < objects.size(); ++id)
     r = t.ite(t.eq(obj, t.bv(id, ObjBits)), objects[id].size, r);
   return r;
 }
 
-SMTExprRef Memory::fits(SMTExprRef size) {
+Term Memory::fits(Term size) {
   // Several objects near PTRDIFF_MAX on one path cannot all be
   // laid out, which ends that path; a real allocator would return null.
   return t.ule(size, t.lshr(t.bvnot(t.bv(0, ptrBits)),
                                     t.bv(1, ptrBits)));
 }
 
-SMTExprRef Memory::allocate(SMTExprRef size, uint64_t align, SMTExprRef exists, bool exposed) {
+Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   unsigned id = objects.size();
-  SMTExprRef b = t.symbol("base#" + std::to_string(id), s.mkBVSort(ptrBits));
-  SMTExprRef e = t.add(b, size);
+  Term b = t.symbol("base#" + std::to_string(id), s.mkBVSort(ptrBits));
+  Term e = t.add(b, size);
   // Ordered with a gap, aligned, not wrapping: objects never overlap, and a
   // one-past-the-end address belongs to its own object only. These bind
   // only where the object exists, or a size on one path would remove
   // inputs from every path.
-  SMTExprRef layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
+  Term layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
   if (align > 1)
     layout = t.land(layout, t.eq(t.bvand(b, t.bv(align - 1, ptrBits)),
                                        t.bv(0, ptrBits)));
-  s.addConstraint(t.implies(exists, layout));
-  SMTExprRef obj = t.bv(id, ObjBits);
-  s.addConstraint(t.eq(base(obj), b));
+  s.addConstraint(t.solverTerm(t.implies(exists, layout)));
+  Term obj = t.bv(id, ObjBits);
+  s.addConstraint(t.solverTerm(t.eq(base(obj), b)));
   objects.push_back({b, size, exists, exposed});
   end = t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
@@ -114,31 +114,31 @@ void Memory::allocateGlobals(const Module &m,
     }
 }
 
-SMTExprRef Memory::global(const GlobalValue *g) const {
+Term Memory::global(const GlobalValue *g) const {
   auto it = globals.find(g);
   if (it == globals.end())
     throw Unsupported("address of " + g->getName().str());
   return it->second;
 }
 
-SMTExprRef Memory::address(SMTExprRef p) { return t.add(base(object(p)), offset(p)); }
+Term Memory::address(Term p) { return t.add(base(object(p)), offset(p)); }
 
-SMTExprRef Memory::equal(SMTExprRef p, SMTExprRef q) {
+Term Memory::equal(Term p, Term q) {
   // Null is equal by both measures, so only a nonzero offset in object 0
   // needs the addresses; a test against null stays a test on the bits.
-  auto out = [&](SMTExprRef x) {
+  auto out = [&](Term x) {
     return t.land(t.eq(object(x), t.bv(0, ObjBits)), t.lnot(t.eq(offset(x), t.bv(0, ptrBits))));
   };
-  SMTExprRef outside = t.lor(out(p), out(q));
+  Term outside = t.lor(out(p), out(q));
   return t.lor(t.land(outside, t.eq(address(p), address(q))),
                t.land(t.lnot(outside), t.eq(p, q)));
 }
 
-SMTExprRef Memory::fromAddress(SMTExprRef a) {
+Term Memory::fromAddress(Term a) {
   // One comparison per exposed object created so far. The object and the
   // offset are built apart, so that object() of the result is a choice
   // among constants.
-  SMTExprRef obj = t.bv(0, ObjBits), off = a; // null, or outside the program
+  Term obj = t.bv(0, ObjBits), off = a; // null, or outside the program
   for (unsigned id = 1; id < objects.size(); ++id) {
     const Object &o = objects[id];
     if (!o.exposed)
@@ -146,15 +146,15 @@ SMTExprRef Memory::fromAddress(SMTExprRef a) {
     // One past the end still belongs to the object: the gap keeps it unique.
     // Only an object the path allocated holds an address: elsewhere its base
     // is free, and address 0 could land in it as a non-null pointer.
-    SMTExprRef inside = t.land(o.exists, t.land(t.uge(a, o.base), t.ule(a, t.add(o.base, o.size))));
+    Term inside = t.land(o.exists, t.land(t.uge(a, o.base), t.ule(a, t.add(o.base, o.size))));
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
     off = t.ite(inside, t.sub(a, o.base), off);
   }
   // What object() of the result folds to, which concat may have joined
   // with the offset's choices.
-  SMTExprRef r = ptr(obj, off);
-  if (SMTExprRef o = object(r); !t.constant(o))
-    fromInteger[o.get()] = o;
+  Term r = ptr(obj, off);
+  if (Term o = object(r); !t.constant(o))
+    fromInteger[o.id()] = o;
   return r;
 }
 
@@ -168,14 +168,14 @@ State Memory::initial() {
 // Past this many known bytes in a state, all go to the arrays.
 static const size_t MaxKnown = 4096;
 
-std::optional<Memory::Key> Memory::key(SMTExprRef p) const {
+std::optional<Memory::Key> Memory::key(Term p) const {
   const APInt *v = t.constant(p);
   if (!v)
     return std::nullopt;
   return Key{v->extractBitsAsZExtValue(ObjBits, ptrBits), v->extractBitsAsZExtValue(ptrBits, 0)};
 }
 
-SMTExprRef Memory::ptr(const Key &k) {
+Term Memory::ptr(const Key &k) {
   // One constant, not two and a concat: a flush builds one per byte.
   return t.bv((APInt(ObjBits + ptrBits, k.first) << ptrBits) | APInt(ObjBits + ptrBits, k.second));
 }
@@ -195,12 +195,12 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
       return;
     last = e;
     const State::Cell &own = *st.separate.find({e.first, 0});
-    SMTExprRef i = index(e.first, ptr(e)), old, elem;
+    Term i = index(e.first, ptr(e)), old, elem;
     for (unsigned j = 0; j < 1u << shift; ++j) {
       const State::Cell *b = st.known.find({e.first, e.second + j});
       if (!b && !old)
         old = t.select(own.data, i);
-      SMTExprRef byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
+      Term byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
       elem = j ? t.concat(byte, elem) : byte;
     }
     st.separate.set({e.first, 0}, {t.store(own.data, i, elem), own.prov});
@@ -214,11 +214,11 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
   }
 }
 
-SMTExprRef Memory::index(uint64_t object, SMTExprRef at) {
+Term Memory::index(uint64_t object, Term at) {
   return owned.count(object) ? t.extract(offset(at), ptrBits - 1, shifts.lookup(object)) : at;
 }
 
-void Memory::own(State &st, SMTExprRef p, unsigned bits) {
+void Memory::own(State &st, Term p, unsigned bits) {
   std::optional<Key> k = key(p);
   if (!k || k->first == 0)
     return;
@@ -228,7 +228,7 @@ void Memory::own(State &st, SMTExprRef p, unsigned bits) {
     shifts[o] = shift;
   SMTSortRef offsets = s.mkBVSort(ptrBits - shift);
   std::string n = std::to_string(o) + "#" + std::to_string(fresh);
-  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  Term prov = t.bv(IntProvenance, ObjBits);
   State::Cell initial{t.symbol("object#" + n, s.mkArraySort(offsets, s.mkBVSort(bits))),
                       shift ? prov : t.constArray(offsets, prov)};
   owned[o] = initial;
@@ -236,41 +236,41 @@ void Memory::own(State &st, SMTExprRef p, unsigned bits) {
 }
 
 // The bits of byte at within its element: (offset mod bytes) * 8, n bits wide.
-static SMTExprRef byteShift(encode::Terms &t, SMTExprRef off, unsigned shift, unsigned n) {
+static Term byteShift(encode::Terms &t, Term off, unsigned shift, unsigned n) {
   return t.shl(t.zext(t.extract(off, shift - 1, 0), n - shift), t.bv(3, n));
 }
 
-State::Cell Memory::readOwn(uint64_t object, const State::Cell &own, SMTExprRef at) {
-  SMTExprRef i = index(object, at);
+State::Cell Memory::readOwn(uint64_t object, const State::Cell &own, Term at) {
+  Term i = index(object, at);
   unsigned shift = shifts.lookup(object);
   if (!shift)
     return {t.select(own.data, i), t.select(own.prov, i)};
-  SMTExprRef elem = t.select(own.data, i);
+  Term elem = t.select(own.data, i);
   if (const APInt *j = t.constant(t.extract(offset(at), shift - 1, 0))) {
     unsigned lo = 8 * j->getZExtValue();
     return {t.extract(elem, lo + 7, lo), own.prov};
   }
-  unsigned n = elem->getWidth();
+  unsigned n = elem.width();
   return {t.extract(t.lshr(elem, byteShift(t, offset(at), shift, n)), 7, 0), own.prov};
 }
 
-State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, SMTExprRef at,
+State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, Term at,
                              const State::Cell &c) {
-  SMTExprRef i = index(object, at);
+  Term i = index(object, at);
   unsigned shift = shifts.lookup(object);
   if (!shift)
     return {t.store(own.data, i, c.data), t.store(own.prov, i, c.prov)};
   // Read, mask and write the element back. The byte's provenance goes: a
   // pointer stored here through an unknown pointer reads back as one made
   // from an integer.
-  SMTExprRef elem = t.select(own.data, i);
-  unsigned n = elem->getWidth();
-  SMTExprRef sh = byteShift(t, offset(at), shift, n);
-  SMTExprRef kept = t.bvand(elem, t.bvnot(t.shl(t.bv(0xff, n), sh)));
+  Term elem = t.select(own.data, i);
+  unsigned n = elem.width();
+  Term sh = byteShift(t, offset(at), shift, n);
+  Term kept = t.bvand(elem, t.bvnot(t.shl(t.bv(0xff, n), sh)));
   return {t.store(own.data, i, t.bvor(kept, t.shl(t.zext(c.data, n - 8), sh))), own.prov};
 }
 
-void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, SMTExprRef count,
+void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term count,
                        Iteration iteration) {
   uint64_t o = t.constant(object(first))->getZExtValue();
   flush(st, o);
@@ -281,15 +281,15 @@ void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, S
   // of ty, at multiples of their size: an element is a value or none.
   unsigned shift = byOffset ? shifts.lookup(o) : 0, bits = storeBits(dl, ty);
   assert((!shift || bits == 8u << shift) && "the loop's store is an access of an element");
-  SMTExprRef start = offset(first), objectId = t.bv(o, ObjBits), intProv = t.bv(IntProvenance, ObjBits);
+  Term start = offset(first), objectId = t.bv(o, ObjBits), intProv = t.bv(IntProvenance, ObjBits);
   // The element at index j of the arrays: whether the loop wrote it, and
   // what, unless j is in another object.
-  auto at = [=, this](const SMTExprRef &j) -> std::pair<SMTExprRef, SMTExprRef> {
-    SMTExprRef in = byOffset ? t.boolean(true) : t.eq(object(j), objectId);
+  auto at = [=, this](const Term &j) -> std::pair<Term, Term> {
+    Term in = byOffset ? t.boolean(true) : t.eq(object(j), objectId);
     if (t.isFalse(in))
       return {in, {}};
-    SMTExprRef off = !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
-    SMTExprRef d = t.sub(off, start), n, b;
+    Term off = !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
+    Term d = t.sub(off, start), n, b;
     if (isPowerOf2_64(stride)) {
       n = t.lshr(d, t.bv(Log2_64(stride), ptrBits));
       b = t.bvand(d, t.bv(stride - 1, ptrBits));
@@ -301,11 +301,11 @@ void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, S
     in = t.land(in, t.land(t.land(t.ult(n, count), t.ult(b, t.bv(bits / 8, ptrBits))), stored));
     if (ty->isIntegerTy(1))
       v = t.ite(v, t.bv(1, 8), t.bv(0, 8));
-    else if (v->getWidth() < bits)
-      v = t.zext(v, bits - v->getWidth());
+    else if (v.width() < bits)
+      v = t.zext(v, bits - v.width());
     if (shift)
       return {in, v};
-    SMTExprRef r = t.extract(v, 7, 0);
+    Term r = t.extract(v, 7, 0);
     for (unsigned i = 1; i < bits / 8; ++i)
       r = t.ite(t.eq(b, t.bv(i, ptrBits)), t.extract(v, 8 * i + 7, 8 * i), r);
     return {in, r};
@@ -313,21 +313,20 @@ void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, S
   SMTSortRef index = !byOffset ? pointerSort() : s.mkBVSort(ptrBits - shift);
   std::string n = std::to_string(fresh++);
   State::Cell after{t.lambda(s.mkArraySort(index, s.mkBVSort(8u << shift)), "summary#" + n,
-                             [=, this](const SMTExprRef &j) {
+                             [=, this](const Term &j) {
                                auto [in, v] = at(j);
-                               SMTExprRef old = t.select(below.data, j);
+                               Term old = t.select(below.data, j);
                                return t.isFalse(in) ? old : t.ite(in, v, old);
                              }),
                     below.prov};
   // An object of elements has no provenance array: it holds no pointer.
   if (!shift) {
     after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)), "summary_provenance#" + n,
-                          [=, this](const SMTExprRef &j) {
-                            SMTExprRef old = t.select(below.prov, j);
-                            return old.get() == intProv.get() ? old
-                                                              : t.ite(at(j).first, intProv, old);
+                          [=, this](const Term &j) {
+                            Term old = t.select(below.prov, j);
+                            return old == intProv ? old : t.ite(at(j).first, intProv, old);
                           });
-    provBelow[after.prov.get()] = {after.prov, below.prov}; // the pointers it may hold
+    provBelow[after.prov.id()] = {after.prov, below.prov}; // the pointers it may hold
   }
   if (own)
     st.separate.set({o, 0}, after);
@@ -335,7 +334,7 @@ void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, S
     st.data = after.data, st.prov = after.prov;
 }
 
-void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State::Cell &c) {
+void Memory::storeArrays(State &st, uint64_t object, Term at, const State::Cell &c) {
   if (const State::Cell *own = st.separate.find({object, 0})) {
     st.separate.set({object, 0}, storeOwn(object, *own, at, c));
     return;
@@ -344,7 +343,7 @@ void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State:
   st.prov = t.store(st.prov, at, c.prov);
 }
 
-State::Cell Memory::readArrays(const State &st, SMTExprRef at) {
+State::Cell Memory::readArrays(const State &st, Term at) {
   const APInt *obj = t.constant(object(at));
   if (obj)
     if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
@@ -352,15 +351,15 @@ State::Cell Memory::readArrays(const State &st, SMTExprRef at) {
   State::Cell r{t.select(st.data, at), t.select(st.prov, at)};
   if (!obj)
     st.separate.forEach([&](Key k, const State::Cell &own) {
-      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits));
+      Term is = t.eq(object(at), t.bv(k.first, ObjBits));
       State::Cell b = readOwn(k.first, own, at);
       r = {t.ite(is, b.data, r.data), t.ite(is, b.prov, r.prov)};
     });
   return r;
 }
 
-std::optional<uint64_t> Memory::element(SMTExprRef p, Type *ty) {
-  SMTExprRef c, x, y;
+std::optional<uint64_t> Memory::element(Term p, Type *ty) {
+  Term c, x, y;
   const APInt *obj = t.constant(object(p));
   if (!obj || key(p) || t.split(p, c, x, y))
     return std::nullopt;
@@ -370,7 +369,7 @@ std::optional<uint64_t> Memory::element(SMTExprRef p, Type *ty) {
   return obj->getZExtValue();
 }
 
-CellMap Memory::mergeSeparate(SMTExprRef c, const State &a, const State &b) {
+CellMap Memory::mergeSeparate(Term c, const State &a, const State &b) {
   if (a.separate.same(b.separate))
     return a.separate;
   // An object separate on one side only reads the other side's shared
@@ -394,26 +393,26 @@ CellMap Memory::mergeSeparate(SMTExprRef c, const State &a, const State &b) {
   return r;
 }
 
-void Memory::prepare(State &st, SMTExprRef p) {
-  SMTExprRef c, x, y;
+void Memory::prepare(State &st, Term p) {
+  Term c, x, y;
   if (key(p) || t.split(p, c, x, y))
     return;
   for (uint64_t o : candidates(p))
     flush(st, o);
 }
 
-std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers) {
+std::vector<uint64_t> Memory::candidates(Term p, bool integers) {
   std::vector<uint64_t> r;
-  std::vector<SMTExprRef> work{p};
+  std::vector<Term> work{p};
   bool read = false;
   while (!work.empty()) {
-    SMTExprRef e = work.back(), c, x, y;
+    Term e = work.back(), c, x, y;
     work.pop_back();
     // A choice of pointers whose sides are not constant keeps its object
     // inside, out of reach of object(): split the pointer first.
-    if (e->getWidth() != ObjBits && !t.choice(e, c, x, y))
+    if (e.width() != ObjBits && !t.choice(e, c, x, y))
       e = object(e);
-    if (!integers && fromInteger.count(e.get()))
+    if (!integers && fromInteger.count(e.id()))
       continue;
     if (const APInt *id = t.constant(e)) {
       r.push_back(id->getZExtValue());
@@ -433,7 +432,7 @@ std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers) {
   return r;
 }
 
-int Memory::side(const SMTExprRef &c) {
+int Memory::side(const Term &c) {
   if (!context)
     return -1;
   if (t.entails(context, c))
@@ -441,8 +440,8 @@ int Memory::side(const SMTExprRef &c) {
   return t.entails(context, t.lnot(c)) ? 0 : -1;
 }
 
-State::Cell Memory::readByte(const State &st, SMTExprRef at) {
-  SMTExprRef c, x, y;
+State::Cell Memory::readByte(const State &st, Term at) {
+  Term c, x, y;
   if (t.split(at, c, x, y)) { // one of two constant pointers
     if (int pick = side(c); pick >= 0)
       return readByte(st, pick ? x : y);
@@ -455,8 +454,8 @@ State::Cell Memory::readByte(const State &st, SMTExprRef at) {
   return readArrays(st, at);
 }
 
-void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
-  SMTExprRef cond, x, y;
+void Memory::writeByte(State &st, Term at, const State::Cell &c) {
+  Term cond, x, y;
   if (t.split(at, cond, x, y)) { // each side keeps its old byte unless chosen
     if (int pick = side(cond); pick >= 0) {
       writeByte(st, pick ? x : y, c);
@@ -478,7 +477,7 @@ void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
       uint64_t o = k.first;
       if (obj && obj->getZExtValue() != o)
         return;
-      SMTExprRef is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
+      Term is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
       State::Cell stored = storeOwn(o, own, at, c);
       separate.set(k, {t.ite(is, stored.data, own.data), t.ite(is, stored.prov, own.prov)});
       shared = !obj;
@@ -495,7 +494,7 @@ void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
     flush(st);
 }
 
-State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
+State Memory::ite(Term c, const State &a0, const State &b0) {
   if (a0.known.same(b0.known))
     return {t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
             mergeSeparate(c, a0, b0)};
@@ -511,7 +510,7 @@ State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
   std::set<uint64_t> moved;
   CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *x, const State::Cell *y) {
     State::Cell xa = x ? *x : readByte(a, ptr(k)), yb = y ? *y : readByte(b, ptr(k));
-    if (xa.data.get() != yb.data.get() && (t.arithmetic(xa.data) || t.arithmetic(yb.data)))
+    if (xa.data != yb.data && (t.arithmetic(xa.data) || t.arithmetic(yb.data)))
       moved.insert(k.first);
     sides.push_back({k, {xa, yb}});
   });
@@ -532,8 +531,8 @@ State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
 }
 
 // Bits in memory order: byte i of the store is bits [8i+7, 8i].
-void Memory::storeBytes(State &st, SMTExprRef p, SMTExprRef bits, SMTExprRef prov) {
-  unsigned n = bits->getWidth() / 8;
+void Memory::storeBytes(State &st, Term p, Term bits, Term prov) {
+  unsigned n = bits.width() / 8;
   if (std::optional<Key> k = key(p)) {
     // A constant address: the bytes' keys are integers, so no address term
     // is built until a flush needs one. Offsets wrap at the pointer width.
@@ -549,7 +548,7 @@ void Memory::storeBytes(State &st, SMTExprRef p, SMTExprRef bits, SMTExprRef pro
     writeByte(st, bytePtr(p, i), {t.extract(bits, 8 * i + 7, 8 * i), prov});
 }
 
-void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
+void Memory::store(State &st, Term p, Term v, Type *ty) {
   unsigned bits = storeBits(dl, ty);
   if (ty->isPointerTy()) {
     // A pointer with no object but an offset, outside the program, was
@@ -557,8 +556,8 @@ void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
     // again (#75). Null keeps object 0 and is never converted. The test is
     // on the offset, which, unlike the address, folds on each side of
     // ite(ok, p, null).
-    SMTExprRef obj = object(v);
-    SMTExprRef made = t.land(t.eq(obj, t.bv(0, ObjBits)), t.lnot(t.eq(offset(v), t.bv(0, ptrBits))));
+    Term obj = object(v);
+    Term made = t.land(t.eq(obj, t.bv(0, ObjBits)), t.lnot(t.eq(offset(v), t.bv(0, ptrBits))));
     storeBytes(st, p, address(v), t.ite(made, t.bv(IntProvenance, ObjBits), obj));
     return;
   }
@@ -572,12 +571,12 @@ void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
   }
   if (ty->isIntegerTy(1))
     v = t.ite(v, t.bv(1, 8), t.bv(0, 8));
-  else if (v->getWidth() < bits)
-    v = t.zext(v, bits - v->getWidth());
+  else if (v.width() < bits)
+    v = t.zext(v, bits - v.width());
   storeBytes(st, p, v, t.bv(IntProvenance, ObjBits));
 }
 
-SMTExprRef Memory::load(State &st, SMTExprRef p, Type *ty) {
+Term Memory::load(State &st, Term p, Type *ty) {
   if (!ty->isIntegerTy() && !ty->isPointerTy() && !ty->isFloatingPointTy())
     throw Unsupported("load of a non-integer value");
   prepare(st, p);
@@ -585,28 +584,28 @@ SMTExprRef Memory::load(State &st, SMTExprRef p, Type *ty) {
     return t.select(st.separate.find({*o, 0})->data, index(*o, p));
   unsigned n = storeBits(dl, ty) / 8;
   State::Cell first = readByte(st, p);
-  SMTExprRef bits = first.data;
+  Term bits = first.data;
   for (unsigned i = 1; i < n; ++i)
     bits = t.concat(readByte(st, bytePtr(p, i)).data, bits);
   if (ty->isPointerTy()) {
     // The provenance of the first byte stands for the pointer.
-    SMTExprRef obj = first.prov;
+    Term obj = first.prov;
     // Bytes of an integer, among them a pointer made from one (see store),
     // which an object allocated since may now cover: the address is
     // converted now, as a fresh conversion would be (#75).
-    SMTExprRef isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
+    Term isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
     return t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
   }
   if (ty->isIntegerTy(1))
     return t.eq(t.extract(bits, 0, 0), t.bv(1, 1));
   unsigned width = ty->getPrimitiveSizeInBits();
-  return width < bits->getWidth() ? t.extract(bits, width - 1, 0) : bits;
+  return width < bits.width() ? t.extract(bits, width - 1, 0) : bits;
 }
 
 // One array store per byte, so a large zeroed global or memset is
 // a long store chain. A range store or a constant base would fix it.
-bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
-  SMTExprRef c, x, y;
+bool Memory::fillObject(State &st, Term p, Term byte, uint64_t n) {
+  Term c, x, y;
   if (t.split(p, c, x, y)) { // a malloc result: the context may pick a side
     int pick = side(c);
     if (pick < 0)
@@ -623,26 +622,26 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   return true;
 }
 
-void Memory::fill(State &st, SMTExprRef p, SMTExprRef byte) {
+void Memory::fill(State &st, Term p, Term byte) {
   fill(st, key(p)->first, byte);
 }
 
-void Memory::fill(State &st, uint64_t o, SMTExprRef byte) {
+void Memory::fill(State &st, uint64_t o, Term byte) {
   st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
   unsigned shift = shifts.lookup(o);
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
-  SMTExprRef elem = byte, prov = t.bv(IntProvenance, ObjBits);
+  Term elem = byte, prov = t.bv(IntProvenance, ObjBits);
   for (unsigned j = 1; j < 1u << shift; ++j)
     elem = t.concat(byte, elem);
   st.separate.set({o, 0}, {t.constArray(index, elem), shift ? prov : t.constArray(index, prov)});
 }
 
-void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
+void Memory::havoc(State &st, Term p, std::optional<uint64_t> n) {
   havocWith(st, p, n, t.bv(IntProvenance, ObjBits), true);
 }
 
-std::vector<std::pair<const GlobalVariable *, SMTExprRef>> Memory::readOnly(SMTExprRef p) {
-  std::vector<std::pair<const GlobalVariable *, SMTExprRef>> r;
+std::vector<std::pair<const GlobalVariable *, Term>> Memory::readOnly(Term p) {
+  std::vector<std::pair<const GlobalVariable *, Term>> r;
   for (uint64_t o : candidates(p, false))
     if (o < objects.size())
       if (auto *g = dyn_cast_or_null<GlobalVariable>(objects[o].constant))
@@ -650,21 +649,21 @@ std::vector<std::pair<const GlobalVariable *, SMTExprRef>> Memory::readOnly(SMTE
   return r;
 }
 
-SMTExprRef Memory::into(SMTExprRef obj, uint64_t o) {
-  SMTExprRef c, x, y;
+Term Memory::into(Term obj, uint64_t o) {
+  Term c, x, y;
   // As candidates() walks it.
-  if (obj->getWidth() != ObjBits && !t.choice(obj, c, x, y))
+  if (obj.width() != ObjBits && !t.choice(obj, c, x, y))
     obj = object(obj);
-  if (fromInteger.count(obj.get()))
+  if (fromInteger.count(obj.id()))
     return t.boolean(false);
   if (t.choice(obj, c, x, y))
     return t.ite(c, into(x, o), into(y, o));
   return t.eq(obj, t.bv(o, ObjBits));
 }
 
-void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
-                       llvm::ArrayRef<SMTExprRef> read, bool reach) {
-  std::vector<SMTExprRef> ps(written.begin(), written.end());
+void Memory::havocCall(State &st, llvm::ArrayRef<Term> written,
+                       llvm::ArrayRef<Term> read, bool reach) {
+  std::vector<Term> ps(written.begin(), written.end());
   ps.insert(ps.end(), read.begin(), read.end());
   // For each pointer, the objects it may point into, and each object
   // reached through stored pointers from where it points, in st as the
@@ -702,7 +701,7 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
   }
   // Every object written may then hold a pointer to any of them, so that a
   // later call reaches them again.
-  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  Term prov = t.bv(IntProvenance, ObjBits);
   std::string id = std::to_string(fresh++);
   for (uint64_t x : held)
     prov = t.ite(t.symbol("havoc_provenance#" + id + "." + std::to_string(x), s.mkBoolSort()),
@@ -719,7 +718,7 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
       }
       State a = st;
       havocObject(a, x, prov);
-      SMTExprRef in = t.boolean(false);
+      Term in = t.boolean(false);
       for (uint64_t r : rs)
         in = t.lor(in, t.eq(object(ps[i]), t.bv(r, ObjBits)));
       st = ite(in, a, st);
@@ -727,9 +726,9 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
   }
 }
 
-void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov,
+void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
                        bool constants) {
-  SMTExprRef c, x, y;
+  Term c, x, y;
   if (t.split(p, c, x, y)) {
     State a = st, b = st;
     havocWith(a, x, n, prov, constants);
@@ -766,7 +765,7 @@ void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTEx
   havocObject(st, o, prov);
 }
 
-void Memory::havocObject(State &st, uint64_t o, SMTExprRef prov) {
+void Memory::havocObject(State &st, uint64_t o, Term prov) {
   unsigned shift = shifts.lookup(o); // an object of elements, as in fillObject
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
   std::string id = std::to_string(fresh++);
@@ -778,9 +777,9 @@ void Memory::havocObject(State &st, uint64_t o, SMTExprRef prov) {
 
 llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State &st) {
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
-  SMTExprRef intProv = t.bv(IntProvenance, ObjBits);
+  Term intProv = t.bv(IntProvenance, ObjBits);
   // The objects a byte of provenance prov may point to, for each object in.
-  auto add = [&](llvm::ArrayRef<uint64_t> in, const SMTExprRef &prov) {
+  auto add = [&](llvm::ArrayRef<uint64_t> in, const Term &prov) {
     std::vector<uint64_t> xs;
     for (uint64_t x : candidates(prov, false))
       if (x && x < objects.size()) // not null, nor an integer's
@@ -790,7 +789,7 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
         to[o].insert(xs.begin(), xs.end());
   };
   st.known.forEach([&](Key k, const State::Cell &c) {
-    if (c.prov.get() != intProv.get())
+    if (c.prov != intProv)
       add(k.first, c.prov);
   });
   // The provenance stored in the arrays: in those indexed by pointer, each
@@ -799,17 +798,17 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
   // offset, each for that object. A constant array is an object's own, all
   // for it. An object's own arrays may choose the shared ones on one side
   // of a join, which the first walk has seen already.
-  llvm::DenseSet<const camada::SMTExpr *> shared;
-  auto walk = [&](const SMTExprRef &arrays, std::optional<uint64_t> own, bool byOffset) {
-    llvm::DenseSet<const camada::SMTExpr *> local, &seen = own ? local : shared;
-    std::vector<SMTExprRef> work{arrays};
+  llvm::DenseSet<const void *> shared;
+  auto walk = [&](const Term &arrays, std::optional<uint64_t> own, bool byOffset) {
+    llvm::DenseSet<const void *> local, &seen = own ? local : shared;
+    std::vector<Term> work{arrays};
     while (!work.empty()) {
-      SMTExprRef e = work.back(), a, i, v, c;
+      Term e = work.back(), a, i, v, c;
       work.pop_back();
-      if (!seen.insert(e.get()).second || (own && shared.count(e.get())))
+      if (!seen.insert(e.id()).second || (own && shared.count(e.id())))
         continue;
-      if (SMTExprRef f = t.filledWith(e)) {
-        if (f.get() == intProv.get())
+      if (Term f = t.filledWith(e)) {
+        if (f == intProv)
           continue;
         if (!own)
           throw Unsupported("memory whose provenance is not known");
@@ -817,13 +816,13 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
         continue;
       }
       if (t.stored(e, a, i, v)) {
-        if (v.get() != intProv.get())
+        if (v != intProv)
           add(byOffset ? std::vector<uint64_t>{*own} : candidates(i), v);
         work.push_back(a);
       } else if (t.choice(e, c, a, v)) {
         work.push_back(a);
         work.push_back(v);
-      } else if (auto it = provBelow.find(e.get()); it != provBelow.end()) {
+      } else if (auto it = provBelow.find(e.id()); it != provBelow.end()) {
         work.push_back(it->second.second);
       } else {
         throw Unsupported("memory whose provenance is not known");
@@ -838,7 +837,7 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
   return to;
 }
 
-void Memory::set(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
+void Memory::set(State &st, Term p, Term byte, uint64_t n) {
   if (fillObject(st, p, byte, n))
     return;
   if (n > MaxBytes)
@@ -846,14 +845,14 @@ void Memory::set(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   setBytes(st, p, byte, n);
 }
 
-void Memory::setBytes(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
+void Memory::setBytes(State &st, Term p, Term byte, uint64_t n) {
   prepare(st, p);
-  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  Term prov = t.bv(IntProvenance, ObjBits);
   for (uint64_t i = 0; i < n; ++i)
     writeByte(st, bytePtr(p, i), {byte, prov});
 }
 
-void Memory::copy(State &st, SMTExprRef dst, SMTExprRef src, uint64_t n) {
+void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   if (n > MaxBytes)
     throw Unsupported("a copy of " + std::to_string(n) + " bytes");
   // Read everything first, so overlapping ranges copy as memmove does.
@@ -867,7 +866,7 @@ void Memory::copy(State &st, SMTExprRef dst, SMTExprRef src, uint64_t n) {
 }
 
 void Memory::initialise(State &st, const Module &m,
-                        const std::function<SMTExprRef(const Constant *)> &valueOf) {
+                        const std::function<Term(const Constant *)> &valueOf) {
   for (const GlobalVariable &g : m.globals()) {
     if (!g.hasInitializer()) // extern: contents unknown
       continue;
@@ -890,8 +889,8 @@ bool Memory::hasPadding(Type *ty) const {
   return false;
 }
 
-void Memory::storeConstant(State &st, SMTExprRef p, const Constant *c,
-                           const std::function<SMTExprRef(const Constant *)> &valueOf) {
+void Memory::storeConstant(State &st, Term p, const Constant *c,
+                           const std::function<Term(const Constant *)> &valueOf) {
   Type *ty = c->getType();
   if (isa<UndefValue>(c)) // also poison: leave the contents nondet
     return;

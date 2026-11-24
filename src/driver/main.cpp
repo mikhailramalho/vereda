@@ -194,11 +194,11 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   if (dumpSMTOnly || dumpSMTToo) {
     // The checks are assumptions in decide(); here their disjunction is
     // asserted, in a scope of its own, so the script stands alone.
-    camada::SMTExprRef anyViolated = terms.boolean(false);
+    vereda::encode::Term anyViolated = terms.boolean(false);
     for (const vereda::checks::Check &c : checks)
       anyViolated = terms.lor(anyViolated, c.violated);
     solver.push();
-    solver.addConstraint(anyViolated);
+    solver.addConstraint(terms.solverTerm(anyViolated));
     std::string formula;
     solver.dump(formula);
     solver.pop();
@@ -225,7 +225,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     progress(msg);
   };
   vereda::solver::Verdict verdict =
-      vereda::solver::decide(solver, checks, multiProperty, [&](const vereda::checks::Check &c) {
+      vereda::solver::decide(terms, checks, multiProperty, [&](const vereda::checks::Check &c) {
         // Under --incremental-bmc an unwound loop asks for a larger bound;
         // it is not a bug to show.
         if (incrementalBMC && !isAssertion(c))

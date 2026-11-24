@@ -16,19 +16,20 @@ namespace vereda::solver {
 class Model {
 public:
   // The solver must hold the model while this is used.
-  Model(camada::SMTSolver &s, const encode::Terms &terms) : s(s), terms(terms) {}
+  Model(camada::SMTSolver &s, encode::Terms &terms) : s(s), terms(terms) {}
 
   // e's value, width 1 for a Bool and the IEEE bits for a float, or null
   // when the model has none.
-  const llvm::APInt *value(const camada::SMTExprRef &e) {
+  const llvm::APInt *value(const encode::Term &e) {
     if (const llvm::APInt *c = terms.constant(e))
       return c;
-    auto [it, fresh] = values.try_emplace(e.get());
+    auto [it, fresh] = values.try_emplace(e.id());
     if (fresh) {
-      if (e->isBoolSort()) {
-        if (auto b = s.getBool(e))
+      camada::SMTExprRef x = terms.solverTerm(e);
+      if (x->isBoolSort()) {
+        if (auto b = s.getBool(x))
           it->second = llvm::APInt(1, b.value());
-      } else if (auto bits = e->isFPSort() ? s.getFPInBin(e) : s.getBVInBin(e)) {
+      } else if (auto bits = x->isFPSort() ? s.getFPInBin(x) : s.getBVInBin(x)) {
         it->second = llvm::APInt(bits.value().size(), bits.value(), 2);
       }
     }
@@ -36,15 +37,15 @@ public:
   }
 
   // Whether the model reaches a step with this guard.
-  bool reaches(const camada::SMTExprRef &guard) {
+  bool reaches(const encode::Term &guard) {
     const llvm::APInt *v = value(guard);
     return v && v->isOne();
   }
 
 private:
   camada::SMTSolver &s;
-  const encode::Terms &terms;
-  std::unordered_map<const camada::SMTExpr *, std::optional<llvm::APInt>> values;
+  encode::Terms &terms;
+  std::unordered_map<const void *, std::optional<llvm::APInt>> values; // by Term id
 };
 
 } // namespace vereda::solver
