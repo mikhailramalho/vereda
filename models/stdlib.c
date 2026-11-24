@@ -112,9 +112,14 @@ static int digit(int c) {
 // Reads an integer as strtol and its kin do (C17 7.22.1.4), for a type whose
 // largest value is max, signed or not. Past the type's range it sets errno to
 // ERANGE and gives the nearest limit; an unsigned type negates in its own
-// arithmetic, so "-1" gives its largest value.
+// arithmetic, so "-1" gives its largest value. A base C does not define
+// sets errno to EINVAL, as glibc does.
 static unsigned long long strto(const char *nptr, char **endptr, int base,
                                 unsigned long long max, int sign) {
+  if (base < 0 || base == 1 || base > 36) {
+    errno = EINVAL;
+    return 0;
+  }
   const char *s = nptr;
   while (*s == ' ' || (*s >= '\t' && *s <= '\r'))
     ++s;
