@@ -217,4 +217,22 @@ int strncasecmp(const char *a, const char *b, size_t n) {
     if (tolower(*x) != tolower(*y) || !*x)
       return tolower(*x) - tolower(*y);
   return 0;
+
+// From C17 7.24.4.3 and 7.24.4.5: strcoll returns strcmp(a, b) in the "C" locale
+int strcoll(const char *a, const char *b) {
+  return strcmp(a, b);
+}
+
+// From C17 7.24.4.5: strxfrm returns strlen(src) and copies src to dst with its terminator,
+// only when that length is less than n; when n is 0, dst may be NULL
+size_t strxfrm(char *dst, const char *src, size_t n) {
+  size_t len = strlen(src);
+  if (n != 0 && len < n) {
+    size_t i = 0;
+    while (i <= len) { // copy including null terminator
+      dst[i] = src[i];
+      ++i;
+    }
+  }
+  return len;
 }
