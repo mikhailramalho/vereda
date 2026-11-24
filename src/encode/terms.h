@@ -1,7 +1,8 @@
 // Stage encode: the term builder every stage uses in place of camada's
 // constructors. It folds as terms are built (plan, section 4.2): constants,
-// identities, an ite with a constant guard, extract over concat, and a
-// select at a constant index over stores at other constant indices. It also
+// identities, an ite with a constant guard, extract over concat, a
+// comparison against the least or greatest value, and a select at a
+// constant index over stores at other constant indices. It also
 // shares terms: building the same term twice returns the same reference,
 // so pointer equality is structural equality for terms built here.
 #pragma once
