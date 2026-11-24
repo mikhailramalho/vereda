@@ -8,6 +8,8 @@
 #include <stddef.h>
 
 void *memset(void *, int, size_t);
+void *malloc(size_t);
+void *memcpy(void *, const void *, size_t);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -117,4 +119,27 @@ char *strstr(const char *haystack, const char *needle) {
       return (char *)haystack;
   }
   return NULL;
+}
+
+char *strdup(const char *s) {
+  size_t n = strlen(s);
+  char *d = malloc(n + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i <= n; ++i)
+    d[i] = s[i];
+  return d;
+}
+
+char *strndup(const char *s, size_t n) {
+  size_t m = strnlen(s, n);
+  char *d = malloc(m + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i < m; ++i)
+    d[i] = s[i];
+  d[m] = 0;
+  return d;
 }
