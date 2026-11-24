@@ -341,7 +341,7 @@ private:
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
           // Every path runs l past the bound: until its last iteration, a
           // larger bound only adds iterations of l.
-          if (auto c = claims.find(l); c != claims.end() && t.isTrue(reached))
+          if (auto c = claims.find({l, nullptr}); c != claims.end() && t.isTrue(reached))
             if (auto *n = dyn_cast<SCEVConstant>(fi.loops.scev().getBackedgeTakenCount(l)))
               checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
           it->second.clear();
@@ -564,7 +564,7 @@ private:
     std::string comment = isLoop ? "unwinding assertion loop " + std::to_string(number)
                                  : "recursion unwinding assertion";
     claim(isLoop ? checks::Property::Unwinding : checks::Property::Recursion, loc, comment, "",
-          number, reached, key);
+          number, reached, {key, nullptr});
   }
 
   static ir::SourceLoc loopLocation(Loop *l) {
@@ -832,7 +832,11 @@ private:
     // Bodyless verifier functions, as ESBMC treats them by default: a defined
     // one is an ordinary call, except reach_error under unreach-call, above.
     if (name == "__VERIFIER_nondet_memory") {
-      mem.havoc(st, enc.value(c.getArgOperand(0)), constantSize(c.getArgOperand(1), guard, name));
+      SMTExprRef p = enc.value(c.getArgOperand(0));
+      uint64_t n = constantSize(c.getArgOperand(1), guard, name);
+      if (n)
+        writes(c, guard, p);
+      mem.havoc(st, p, n);
       return guard;
     }
     if (name.starts_with("__VERIFIER_nondet_")) {
@@ -887,6 +891,7 @@ private:
     if (name == "__vereda_uninitialised") // keeps LLVM from folding reads of the local
       return guard;
     if (name == "__vereda_havoc") { // for the models: the object p points into is unknown
+      writes(c, guard, enc.value(c.getArgOperand(0)));
       mem.havoc(st, enc.value(c.getArgOperand(0)));
       return guard;
     }
@@ -993,6 +998,7 @@ private:
         n = (cv.width + 1) * wide;
       else if (cv.conv == 's' || cv.conv == '[')
         n = single(t.sub(mem.size(mem.object(enc.value(a))), mem.offset(enc.value(a))), guard);
+      writes(c, t.land(guard, done), enc.value(a));
       memory::State written = st;
       mem.havoc(written, enc.value(a), n);
       st = mem.ite(done, written, st);
@@ -1187,20 +1193,52 @@ private:
     return opts.property == Property::All || (opts.property == Property::NoOverflow && sanitizer);
   }
 
-  // A check at inst, violated when violated holds; comment names it.
+  // A check at inst, violated when violated holds; comment names it. An
+  // instruction with several checks tells them apart by what.
   void assertion(const Instruction &inst, SMTExprRef violated, std::string comment,
-                 std::string expr) {
-    unsigned &index = assertionNumber[&inst];
+                 std::string expr, const void *what = nullptr) {
+    unsigned &index = assertionNumber[{&inst, what}];
     if (!index)
       index = ++assertionsIn[inst.getFunction()];
     claim(checks::Property::Assertion, ir::location(inst), std::move(comment), std::move(expr),
-          index, violated, &inst);
+          index, violated, {&inst, what});
   }
 
-  // One claim per source construct, keyed by its instruction or loop:
-  // reaching it again, in another iteration or context, ORs into the check.
+  // A write at inst through p where guard holds, which fails where p points
+  // into a string literal or an object defined const: one assertion for
+  // the literals and one per such object, worded as ESBMC's pointer check.
+  void writes(const Instruction &inst, SMTExprRef guard, SMTExprRef p) {
+    if (!opts.pointerCheck)
+      return;
+    for (auto &[g, into] : mem.readOnly(p)) {
+      SMTExprRef violated = t.land(guard, into);
+      if (t.isFalse(violated))
+        continue;
+      if (!counts(false)) {
+        s.addConstraint(t.lnot(violated));
+        continue;
+      }
+      // Clang makes a string literal, and __func__, an unnamed_addr global.
+      if (g->hasGlobalUnnamedAddr()) {
+        assertion(inst, violated, "dereference failure: write access to string constant", "",
+                  &literals);
+        continue;
+      }
+      SmallVector<DIGlobalVariableExpression *, 1> vars;
+      g->getDebugInfo(vars);
+      StringRef name = vars.empty() ? g->getName() : vars[0]->getVariable()->getName();
+      assertion(inst, violated,
+                "dereference failure: write access to const object `" + name.str() + "'", "", g);
+    }
+  }
+
+  using ClaimKey = std::pair<const void *, const void *>;
+
+  // One claim per source construct, keyed by its instruction or loop and
+  // what it checks there: reaching it again, in another iteration or
+  // context, ORs into the check.
   void claim(checks::Property property, const ir::SourceLoc &loc, std::string comment,
-             std::string expr, unsigned index, SMTExprRef violated, const void *key) {
+             std::string expr, unsigned index, SMTExprRef violated, ClaimKey key) {
     auto [it, inserted] = claims.try_emplace(key, checks.size());
     bool viaReachError = reachError || comment == "reach_error";
     trace.push_back({Step::Check, violated, reachError ? ir::location(*reachError) : loc,
@@ -1281,6 +1319,7 @@ private:
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
       Value *v = w->getValueOperand();
       SMTExprRef p = enc.value(w->getPointerOperand());
+      writes(*w, guard, p);
       mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
       if (summary && w == summary->store)
         summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
@@ -1294,6 +1333,7 @@ private:
       return true;
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {
+      writes(inst, guard, enc.value(rmw->getPointerOperand()));
       atomicRMW(*rmw, st);
       return true;
     }
@@ -1306,6 +1346,7 @@ private:
       SMTExprRef ok = t.eq(old, enc.value(cx->getCompareOperand()));
       if (cx->isWeak()) // may fail even when equal
         ok = t.land(ok, enc.fresh(Type::getInt1Ty(inst.getContext()), "cmpxchg_weak"));
+      writes(inst, t.land(guard, ok), p);
       mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()), old), ty);
       // {old, success}: a struct of integers packs field 0 into the low bits.
       enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), old));
@@ -1374,14 +1415,17 @@ private:
   // memcpy, memmove and memset, as intrinsics or library calls, and free.
   // Returns false for any other function.
   bool memoryFunction(CallBase &c, StringRef name, SMTExprRef guard, memory::State &st) {
-    if (name.starts_with("llvm.memcpy") || name.starts_with("llvm.memmove") ||
-        name == "memcpy" || name == "memmove") {
-      mem.copy(st, enc.value(c.getArgOperand(0)), enc.value(c.getArgOperand(1)),
-               constantSize(c.getArgOperand(2), guard, name));
-    } else if (name.starts_with("llvm.memset") || name == "memset") {
-      mem.set(st, enc.value(c.getArgOperand(0)),
-              enc.resize(enc.value(c.getArgOperand(1)), 8, false),
-              constantSize(c.getArgOperand(2), guard, name));
+    bool copy = name.starts_with("llvm.memcpy") || name.starts_with("llvm.memmove") ||
+                name == "memcpy" || name == "memmove";
+    if (copy || name.starts_with("llvm.memset") || name == "memset") {
+      SMTExprRef dst = enc.value(c.getArgOperand(0)), v = enc.value(c.getArgOperand(1));
+      uint64_t n = constantSize(c.getArgOperand(2), guard, name);
+      if (n)
+        writes(c, guard, dst);
+      if (copy)
+        mem.copy(st, dst, v, n);
+      else
+        mem.set(st, dst, enc.resize(v, 8, false), n);
     } else if (name == "free" || name.starts_with("llvm.stackrestore")) {
       // Free changes nothing until memory safety tracks liveness.
     } else if (name.starts_with("llvm.stacksave")) {
@@ -1502,8 +1546,9 @@ private:
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.
   const CallBase *reachError = nullptr;
-  DenseMap<const void *, unsigned> claims; // source construct -> index in checks
-  DenseMap<const Instruction *, unsigned> assertionNumber;
+  DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
+  DenseMap<ClaimKey, unsigned> assertionNumber;
+  const char literals = 0; // what the checks of writes into string literals check
   DenseMap<const Function *, unsigned> assertionsIn;
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;

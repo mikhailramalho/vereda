@@ -50,4 +50,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_int_base_stores_fail
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION FAILED$

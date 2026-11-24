@@ -13,6 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_9784_nondet_memory_whole_object_fail
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Symex completed in: [0-9.]+s \([0-9]{1,3} assignments\)$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
