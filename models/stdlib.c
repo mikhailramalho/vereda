@@ -85,4 +85,37 @@ long atol(const char *s) {
 
 long long atoll(const char *s) {
   return (long long)atoi_helper(s);
+
+// Binary search (C17 7.22.5.1): searches the sorted array base of nmemb elements
+// of size bytes for an element equal to *key and returns a pointer to it, or NULL.
+void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
+              int (*compar)(const void *, const void *)) {
+  size_t lo = 0;
+  size_t hi = nmemb;
+
+  while (lo < hi) {
+    size_t mid = lo + (hi - lo) / 2;
+    const char *p = (const char *)base + mid * size;
+    int r = compar(key, p);
+
+    if (r == 0)
+      return (void *)p;
+    else if (r < 0)
+      hi = mid;
+    else
+      lo = mid + 1;
+  }
+
+  return NULL;
+}
+
+// Helper function to avoid llvm.scmp.i32.i32 intrinsic - replace the inline comparison logic with explicit comparisons
+int __vereda_bsearch_cmp(const void *a, const void *b) {
+    int x = *(const int *)a, y = *(const int *)b;
+    if (x > y)
+        return 1;
+    else if (x < y)
+        return -1;
+    else
+        return 0;
 }
