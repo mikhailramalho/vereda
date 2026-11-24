@@ -57,18 +57,23 @@ target_link_libraries(vereda PRIVATE libvereda)
 # third (docs/survey/2026-11-23-mimalloc.md). Linked as ESBMC links it: its
 # object file, since with MI_USE_CXX the archive fails to link, and
 # MI_USE_CXX so that operator new throws std::bad_alloc instead of aborting.
-# mimalloc reserves address space 1 GiB at a time; under a cap on address
-# space (RLIMIT_AS, as the regression tests run) that runs out well before
-# resident memory does, so it starts at 64 MiB. That is built in: LLVM's
-# static constructors allocate before main() could set it. Without a
-# MIMALLOC_SOURCE_DIR (DOWNLOAD_DEPENDENCIES sets one), glibc's malloc stays.
+# The tests cap address space (RLIMIT_AS), and mimalloc keeps the address
+# space of what it frees, so two defaults change, both built in because
+# LLVM's static constructors allocate before main() could set them. Arenas
+# start at 64 MiB instead of 1 GiB, as in ESBMC. Objects over 32 MiB get
+# their own mapping, unmapped when freed, as glibc does, instead of an arena
+# of their own that outlives them: on esbmc-cstd/scanf-false-3, CaDiCaL
+# growing a vector to 512 MiB ran out of address space at 2.4 GB resident.
+# Without a MIMALLOC_SOURCE_DIR (DOWNLOAD_DEPENDENCIES sets one), glibc's
+# malloc stays.
 if(MIMALLOC_SOURCE_DIR)
   set(MI_BUILD_SHARED OFF CACHE BOOL "" FORCE)
   set(MI_BUILD_STATIC OFF CACHE BOOL "" FORCE)
   set(MI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(MI_USE_CXX ON CACHE STRING "" FORCE)
   add_subdirectory("${MIMALLOC_SOURCE_DIR}" mimalloc EXCLUDE_FROM_ALL)
-  target_compile_definitions(mimalloc-obj PRIVATE MI_DEFAULT_ARENA_RESERVE=65536) # KiB
+  target_compile_definitions(mimalloc-obj PRIVATE # KiB
+    MI_DEFAULT_ARENA_RESERVE=65536 MI_DEFAULT_ARENA_MAX_OBJECT_SIZE=32768)
   target_sources(vereda PRIVATE $<TARGET_OBJECTS:mimalloc-obj>)
 endif()
 
