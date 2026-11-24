@@ -81,6 +81,41 @@ char *strrchr(const char *s, int c) {
   return (char *)last;
 }
 
+size_t strspn(const char *s, const char *accept) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *a;
+    for (a = accept; *a && *a != s[n]; ++a)
+      ;
+    if (!*a)
+      break;
+  }
+  return n;
+}
+
+size_t strcspn(const char *s, const char *reject) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *r;
+    for (r = reject; *r && *r != s[n]; ++r)
+      ;
+    if (*r)
+      break;
+  }
+  return n;
+}
+
+char *strpbrk(const char *s, const char *accept) {
+  for (; *s; ++s) {
+    const char *a;
+    for (a = accept; *a && *a != *s; ++a)
+      ;
+    if (*a)
+      return (char *)s;
+  }
+  return NULL;
+}
+
 // Returns from inside the loop, so that comparing n equal bytes takes n
 // iterations and no extra visit to test the count.
 int memcmp(const void *a, const void *b, size_t n) {
