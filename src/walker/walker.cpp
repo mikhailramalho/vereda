@@ -822,14 +822,19 @@ private:
         demangled = llvm::demangle(name.str());
       StringRef symbol(demangled);
       if (symbol.starts_with("core::panicking::panic") ||
+          symbol.starts_with("core::panicking::assert_failed") ||
           symbol.starts_with("std::panicking::begin_panic") ||
+          symbol.starts_with("std::panicking::rust_panic_with_hook") ||
           symbol == "std::panicking::panic" || symbol.starts_with("std::panicking::panic::")) {
         bool overflow = symbol.contains("overflow");
+        bool bounds = symbol.contains("bounds_check");
         const char *message = overflow ? "arithmetic overflow"
-                              : symbol.contains("bounds_check") ? "array bounds violated"
-                                                                 : "Rust panic";
+                              : bounds ? "array bounds violated" : "Rust panic";
+        checks::Property kind = overflow ? checks::Property::ArithmeticOverflow
+                                : bounds ? checks::Property::ArrayBounds
+                                         : checks::Property::Assertion;
         if (counts(overflow))
-          assertion(c, guard, message, "");
+          assertion(c, guard, message, "", nullptr, kind);
         return t.boolean(false);
       }
     }
@@ -1244,11 +1249,12 @@ private:
   // A check at inst, violated when violated holds; comment names it. An
   // instruction with several checks tells them apart by what.
   void assertion(const Instruction &inst, Term violated, std::string comment,
-                 std::string expr, const void *what = nullptr) {
+                 std::string expr, const void *what = nullptr,
+                 checks::Property kind = checks::Property::Assertion) {
     unsigned &index = assertionNumber[{&inst, what}];
     if (!index)
-      index = ++assertionsIn[inst.getFunction()];
-    claim(checks::Property::Assertion, ir::location(inst), std::move(comment), std::move(expr),
+      index = ++assertionsIn[{inst.getFunction(), unsigned(kind)}];
+    claim(kind, ir::location(inst), std::move(comment), std::move(expr),
           index, violated, {&inst, what});
   }
 
@@ -1598,7 +1604,7 @@ private:
   DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
   DenseMap<ClaimKey, unsigned> assertionNumber;
   const char literals = 0; // what the checks of writes into string literals check
-  DenseMap<const Function *, unsigned> assertionsIn;
+  DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;

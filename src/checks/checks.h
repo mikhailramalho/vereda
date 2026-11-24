@@ -9,7 +9,7 @@
 
 namespace vereda::checks {
 
-enum class Property { Assertion, Unwinding, Recursion };
+enum class Property { Assertion, ArithmeticOverflow, ArrayBounds, Unwinding, Recursion };
 
 struct Check {
   Property property;
@@ -22,9 +22,15 @@ struct Check {
   // SCEV knows: the smallest bound that unwinds it; 0 otherwise.
   unsigned unwindsAt = 0;
 
+  bool isUnwinding() const {
+    return property == Property::Unwinding || property == Property::Recursion;
+  }
+
   // ESBMC's property id, e.g. "main.assertion.1" or "main.unwind.0".
   std::string id() const {
     const char *kind = property == Property::Assertion ? "assertion"
+                       : property == Property::ArithmeticOverflow ? "arithmetic-overflow"
+                       : property == Property::ArrayBounds ? "array-bounds-violated"
                        : property == Property::Unwinding ? "unwind"
                                                           : "recursion";
     return loc.function + "." + kind + "." + std::to_string(index);

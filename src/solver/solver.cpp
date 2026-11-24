@@ -58,7 +58,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
   for (bool unwinding : {false, true})
     for (size_t i = 0; i < checks.size(); ++i) {
       const checks::Check &check = checks[i];
-      if ((check.property != checks::Property::Assertion) != unwinding)
+      if (check.isUnwinding() != unwinding)
         continue;
       switch (s.checkSatAssuming({t.solverTerm(check.violated)})) {
       case camada::CheckResult::SAT:
