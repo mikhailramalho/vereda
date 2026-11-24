@@ -288,13 +288,32 @@ void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term co
   unsigned shift = byOffset ? shifts.lookup(o) : 0, bits = storeBits(dl, ty);
   assert((!shift || bits == 8u << shift) && "the loop's store is an access of an element");
   Term start = offset(first), objectId = t.bv(o, ObjBits), intProv = t.bv(IntProvenance, ObjBits);
+  auto offsetOf = [=, this](const Term &j) {
+    return !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
+  };
+  // Whether the loop wrote none of the elements at the offsets j may take,
+  // as Terms::range gives them: below the first, past the last, or between
+  // two, the same distance from an element each time.
+  const APInt *from = t.constant(start), *iterations = t.constant(count);
+  auto misses = [=, this](const Term &j) {
+    using U = unsigned __int128;
+    std::optional<encode::Terms::Range> v;
+    if (!byOffset && t.isFalse(t.eq(object(j), objectId)))
+      return true;
+    if (!from || !iterations || iterations->isZero() || !(v = t.range(offsetOf(j))))
+      return false;
+    U lo = from->getZExtValue(), end = lo + U(stride) * (iterations->getZExtValue() - 1) + bits / 8;
+    return end <= U(1) << ptrBits &&
+           (v->hi < lo || v->lo >= end ||
+            (v->stride % stride == 0 && (v->lo + U(stride) - lo % stride) % stride >= bits / 8));
+  };
   // The element at index j of the arrays: whether the loop wrote it, and
   // what, unless j is in another object.
   auto at = [=, this](const Term &j) -> std::pair<Term, Term> {
     Term in = byOffset ? t.boolean(true) : t.eq(object(j), objectId);
     if (t.isFalse(in))
       return {in, {}};
-    Term off = !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
+    Term off = offsetOf(j);
     Term d = t.sub(off, start), n, b;
     if (isPowerOf2_64(stride)) {
       n = t.lshr(d, t.bv(Log2_64(stride), ptrBits));
@@ -323,7 +342,8 @@ void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term co
                                auto [in, v] = at(j);
                                Term old = t.select(below.data, j);
                                return t.isFalse(in) ? old : t.ite(in, v, old);
-                             }),
+                             },
+                             below.data, misses),
                     below.prov};
   // An object of elements has no provenance array: it holds no pointer.
   if (!shift) {
@@ -331,7 +351,8 @@ void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term co
                           [=, this](const Term &j) {
                             Term old = t.select(below.prov, j);
                             return old == intProv ? old : t.ite(at(j).first, intProv, old);
-                          });
+                          },
+                          below.prov, misses);
     provBelow[after.prov.id()] = {after.prov, below.prov}; // the pointers it may hold
   }
   if (own)

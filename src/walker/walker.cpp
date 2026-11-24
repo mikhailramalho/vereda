@@ -76,6 +76,8 @@ struct Return {
 struct Frame {
   DenseMap<const BasicBlock *, SmallVector<Arrival, 2>> arrivals;
   SmallVector<Return, 2> returns;
+  // The iteration being walked of each loop being unrolled.
+  DenseMap<const Loop *, unsigned> iteration;
 };
 
 // A conversion of a scanf format (C17 7.21.6.2), as glibc reads it: S and
@@ -256,8 +258,10 @@ private:
       SmallMapVector<Value *, APInt, 4> scales;
       APInt constant(dl.getIndexTypeSizeInBits(g->getType()), 0);
       if (!g->collectOffset(dl, constant.getBitWidth(), scales, constant) ||
-          constant.countr_zero() < shift ||
-          any_of(scales, [&](const auto &s) { return s.second.countr_zero() < shift; }))
+          constant.countr_zero() < shift || any_of(scales, [&](const auto &s) {
+            return s.second.countr_zero() + computeKnownBits(s.first, dl).countMinTrailingZeros() <
+                   shift;
+          }))
         return 8;
     }
     return bits;
@@ -357,7 +361,9 @@ private:
           outs() << "Unwinding loop " << number << " iteration " << i << "   "
                  << loopLocation(l).str() << "\n";
       }
+      frame.iteration[l] = i;
       region(frame, fi, l);
+      frame.iteration.erase(l);
     }
   }
 
@@ -394,7 +400,7 @@ private:
             if (const SCEV *e = se.getSCEV(i); !isa<SCEVConstant>(e))
               if (Term v = enc.bound(i))
                 inputs.try_emplace(e, v);
-    Term trips = evaluate(fi, sum.trips, l, {});
+    Term trips = evaluate(frame, fi, sum.trips, l, {});
     if (!trips)
       return false;
     // A loop that only checks or counts, a few times, unrolls into reads at
@@ -409,7 +415,7 @@ private:
     SmallVector<Term, 2> first;
     SmallVector<std::pair<Value *, Term>, 4> last;
     auto at = [&](Value *v, const Term &n) {
-      return se.isSCEVable(v->getType()) ? evaluate(fi, se.getSCEV(v), l, n) : Term();
+      return se.isSCEVable(v->getType()) ? evaluate(frame, fi, se.getSCEV(v), l, n) : Term();
     };
     for (PHINode &phi : header->phis()) {
       first.push_back(at(&phi, k));
@@ -420,7 +426,7 @@ private:
         last.push_back({v, at(v, trips)});
     Term start;
     if (sum.store) {
-      start = evaluate(fi, sum.address->getStart(), l, {});
+      start = evaluate(frame, fi, sum.address->getStart(), l, {});
       const APInt *object = start ? t.constant(mem.object(start)) : nullptr;
       if (!object || object->isZero())
         return false;
@@ -436,6 +442,11 @@ private:
     // The iteration's facts hold only in it, and the loop may not run.
     encode::Encoder::Facts facts = common(arrivals);
     Term body = t.land(guard, t.ult(k, trips));
+    // Built after body, which keeps k < trips: every term with k counts only
+    // under body, or as an element the loop wrote, n < trips, once
+    // substitute puts n for k; there, terms fold as if it held.
+    if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
+      t.bound(k, n->getZExtValue());
     if (!t.isFalse(body)) {
       frame.arrivals[header].push_back({body, first, st, facts});
       summary = Summarising{l, k, sum.store, {}, 0};
@@ -476,7 +487,8 @@ private:
   // The SCEV e in iteration k of l, counted from 0 as the header is
   // reached, or null for a form not handled here, a value of another loop
   // that is not one of l's inputs, or an AddRec of l when k is null.
-  Term evaluate(FunctionInfo &fi, const SCEV *e, const Loop *l, const Term &k) {
+  Term evaluate(const Frame &frame, FunctionInfo &fi, const SCEV *e, const Loop *l,
+                      const Term &k) {
     ScalarEvolution &se = fi.loops.scev();
     unsigned w = se.getTypeSizeInBits(e->getType()), ptrBits = mem.pointerBits();
     bool pointer = e->getType()->isPointerTy();
@@ -486,7 +498,7 @@ private:
       return v;
     SmallVector<Term, 4> ops;
     for (const SCEV *op : e->operands()) {
-      ops.push_back(evaluate(fi, op, l, k));
+      ops.push_back(evaluate(frame, fi, op, l, k));
       if (!ops.back())
         return {};
     }
@@ -540,12 +552,18 @@ private:
       return pointer ? Term() : fold([&](auto a, auto b) { return t.ite(t.ult(a, b), a, b); });
     case scAddRecExpr: {
       auto *ar = cast<SCEVAddRecExpr>(e);
-      if (ar->getLoop() != l || !ar->isAffine() || !k)
+      // An enclosing loop's AddRec takes the iteration of it being walked.
+      Term n = k;
+      if (ar->getLoop() != l) {
+        auto it = frame.iteration.find(ar->getLoop());
+        n = it == frame.iteration.end() ? Term() : t.bv(APInt(64, it->second));
+      }
+      if (!ar->isAffine() || !n)
         return {};
       Term start = ops[0], step = ops[1];
       if (pointer)
-        return mem.advance(start, t.mul(enc.resize(step, ptrBits, true), enc.resize(k, ptrBits, false)));
-      return t.add(start, t.mul(step, enc.resize(k, w, false)));
+        return mem.advance(start, t.mul(enc.resize(step, ptrBits, true), enc.resize(n, ptrBits, false)));
+      return t.add(start, t.mul(step, enc.resize(n, w, false)));
     }
     default:
       return {};
