@@ -313,6 +313,11 @@ private:
         SMTExprRef reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
+          // Every path runs l past the bound: until its last iteration, a
+          // larger bound only adds iterations of l.
+          if (auto c = claims.find(l); c != claims.end() && t.isTrue(reached))
+            if (auto *n = dyn_cast<SCEVConstant>(fi.loops.scev().getBackedgeTakenCount(l)))
+              checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
           it->second.clear();
           return;
         }
