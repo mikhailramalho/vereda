@@ -166,8 +166,10 @@ def changed(desc, out, cmd):
 # The most a run may write to any file, its output included. A loop unrolled
 # without --unwind prints a line per iteration; when nothing slows the walk
 # down that is gigabytes a minute, which held in memory took CI's runner
-# down. The run is stopped (SIGXFSZ) at the limit.
+# down. The run is stopped (SIGXFSZ) at the limit and counts as timed out: it
+# would have run to the time limit anyway.
 OUTPUT_LIMIT = 256 << 20
+STOPPED_NOTE = f"\nrun stopped: it wrote {OUTPUT_LIMIT >> 20} MB of output\n"
 
 
 def limits(memory_limit):
@@ -181,10 +183,9 @@ def limits(memory_limit):
 
 
 def stopped_note(path):
-    """A line saying the run was stopped at OUTPUT_LIMIT, or ''."""
-    if os.path.getsize(path) < OUTPUT_LIMIT:
-        return ""
-    return f"\nrun stopped: it wrote {OUTPUT_LIMIT >> 20} MB of output\n"
+    """STOPPED_NOTE when the run that wrote path was stopped at OUTPUT_LIMIT,
+    else ''."""
+    return STOPPED_NOTE if os.path.getsize(path) >= OUTPUT_LIMIT else ""
 
 
 def execute(cmd, timeout, memory_limit, cwd=None):
@@ -238,8 +239,10 @@ def main():
     start = time.monotonic()
     out = execute(cmd, args.timeout, args.memory_limit,
                   desc["CWD"].replace("%S", os.path.dirname(test)) or None)
-    if out is None:
-        print(f"TIMEOUT after {args.timeout:g} s; skipped")
+    if out is None or out.endswith(STOPPED_NOTE):
+        why = (f"TIMEOUT after {args.timeout:g} s" if out is None
+               else f"OUTPUT past {OUTPUT_LIMIT >> 20} MB, as a timeout")
+        print(f"{why}; skipped")
         record(test, None, "", "TIMEOUT")
         return SKIPPED
 

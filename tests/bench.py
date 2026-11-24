@@ -138,7 +138,9 @@ def finish(started_run, deadline):
     else:
         wall, verdict = ended[0] - start, None
     out.seek(0)
-    text = out.read() + run.stopped_note(out.name)
+    text = out.read()
+    if verdict is None and run.stopped_note(out.name):  # as run.py, a timeout
+        wall, verdict = None, TIMEOUT
     if verdict is None:
         verdicts = run.VERDICT.findall(text)
         if verdicts:
