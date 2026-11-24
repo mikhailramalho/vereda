@@ -3,7 +3,8 @@
 // Ranges at the limits of their types fold as well (#120): the greatest
 // unsigned values of 8, 32 and 64 bits, signed values near the least and
 // greatest, a negative int read as unsigned (all of it at or above
-// 0x80000000), and an unsigned one below 0x80000000 read as signed.
+// 0x80000000), an unsigned one below 0x80000000 read as signed, and a
+// negative range carried through a sign extension.
 extern int __VERIFIER_nondet_int(void);
 extern unsigned __VERIFIER_nondet_uint(void);
 extern long long __VERIFIER_nondet_longlong(void);
@@ -45,6 +46,11 @@ int main(void) {
   unsigned p = __VERIFIER_nondet_uint();
   __VERIFIER_assume(p < 0x80000000u);
   if ((int)p < 0)
+    reach_error();
+  int y = __VERIFIER_nondet_int();
+  __VERIFIER_assume(y < -5 && y > -100);
+  long long z = y;
+  if (z >= -5)
     reach_error();
   return 0;
 }

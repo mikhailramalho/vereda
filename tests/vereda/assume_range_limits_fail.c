@@ -1,12 +1,13 @@
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT-NOT: SUCCESS +\[main\.assertion
-// EXPECT: ^  FAILED +\[main\.assertion\.9\]
+// EXPECT: ^  FAILED +\[main\.assertion\.10\]
 // assume_range_limits with each check reachable at a type's limit, where
 // a range that wraps or crosses the sign bit must say nothing (#120): u at
 // the greatest unsigned, u + 0x20 wrapping past it, signed values at the
 // greatest and least, a signed bound read as unsigned (n <= 5 has negative
-// n, the greatest unsigned values), and n - 1 for unsigned n >= 1.
+// n, the greatest unsigned values), n - 1 for unsigned n >= 1, and the
+// greatest of a negative range after a sign extension.
 extern int __VERIFIER_nondet_int(void);
 extern unsigned __VERIFIER_nondet_uint(void);
 extern long long __VERIFIER_nondet_longlong(void);
@@ -39,5 +40,9 @@ int main(void) {
   unsigned m = __VERIFIER_nondet_uint();
   __VERIFIER_assume(m >= 1);
   __VERIFIER_assert(m - 1 < 0xFFFFFFFEu);
+  int y = __VERIFIER_nondet_int();
+  __VERIFIER_assume(y < -5 && y > -100);
+  long long z = y;
+  __VERIFIER_assert(z < -6);
   return 0;
 }

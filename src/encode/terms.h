@@ -5,7 +5,9 @@
 // sides settle, and a select at a constant index over stores at other
 // constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
-// so pointer equality is structural equality for terms built here.
+// so pointer equality is structural equality for terms built here. What
+// holds only on one path (the bounds a path's conditions give its terms)
+// never folds a term here: decide answers for that path alone.
 //
 // The terms it hands out are its own type, Term, which camada does not take:
 // a bit-vector constant stays Terms' own value until the solver needs it,

@@ -49,9 +49,9 @@ public:
   // branches: a bitvector constant it equals (Terms::equalities), which
   // value() returns in its place so that what is built from it folds, and
   // bounds (Terms::narrow), by which a comparison of it folds as it is
-  // encoded. The term is kept, so its address, the key, is not reused.
+  // encoded. Keyed by the term's id; terms live as long as the solver.
   struct Fact {
-    Term constant, term;
+    Term constant;
     std::optional<Terms::Bounds> bounds;
     bool operator==(const Fact &o) const = default;
   };
