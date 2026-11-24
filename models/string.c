@@ -235,4 +235,12 @@ size_t strxfrm(char *dst, const char *src, size_t n) {
     }
   }
   return len;
+
+char *strerror(int errnum) {
+  // C17 7.24.6.2: returns pointer to message string that program must not modify
+  // Return "Success" for 0 and "Unknown error" for anything else (string literals)
+  if (errnum == 0)
+    return (char *)"Success";
+  else
+    return (char *)"Unknown error";
 }
