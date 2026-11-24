@@ -48,8 +48,9 @@ Expected<camada::SMTSolverRef> create(camada::SolverKind kind) {
   }
 }
 
-Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
                function_ref<void(const checks::Check &)> violated) {
+  camada::SMTSolver &s = t.solver();
   // Assertions first, then unwinding assertions, as ESBMC's incremental BMC:
   // a bug within the bound is reported even where a loop is not unwound.
   Verdict v;
@@ -59,7 +60,7 @@ Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
       const checks::Check &check = checks[i];
       if ((check.property != checks::Property::Assertion) != unwinding)
         continue;
-      switch (s.checkSatAssuming({check.violated})) {
+      switch (s.checkSatAssuming({t.solverTerm(check.violated)})) {
       case camada::CheckResult::SAT:
         v.status[i] = Status::Fails;
         if (!v.check) {
