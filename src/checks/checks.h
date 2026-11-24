@@ -18,6 +18,9 @@ struct Check {
   std::string expr;    // the asserted expression's source text, if any
   unsigned index;      // assertions per function from 1; loops by number
   camada::SMTExprRef violated;
+  // An unwinding assertion every path fails, of a loop whose trip count
+  // SCEV knows: the smallest bound that unwinds it; 0 otherwise.
+  unsigned unwindsAt = 0;
 
   // ESBMC's property id, e.g. "main.assertion.1" or "main.unwind.0".
   std::string id() const {

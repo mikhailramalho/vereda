@@ -154,9 +154,9 @@ static const int BoundTooSmall = -1;
 
 // Walks fn with the given bound, solves and prints the verdict; returns the
 // exit code. Under --incremental-bmc, a failed unwinding or recursion
-// assertion is not a verdict but BoundTooSmall; an unknown from the solver
-// still ends the run, as in ESBMC.
-static int bmc(Function &fn, unsigned bound) {
+// assertion is not a verdict but BoundTooSmall, with unwindsAt set to its
+// (checks.h); an unknown from the solver still ends the run, as in ESBMC.
+static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
@@ -262,6 +262,7 @@ static int bmc(Function &fn, unsigned bound) {
     bug |= verdict.status[i] == Status::Fails && isAssertion(checks[i]);
   if (incrementalBMC && verdict.check && !bug) {
     outs() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
+    *unwindsAt = verdict.check->unwindsAt;
     return BoundTooSmall;
   }
 
@@ -369,13 +370,23 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }
+  // While every path runs a loop of known trip count past bound k, the
+  // bounds below the one that unwinds it only add iterations of that loop,
+  // and a bug one of them finds, every larger bound finds too. Those bounds
+  // are skipped, but the bound at most doubles, so that a bug in an early
+  // iteration of a long loop does not wait for a walk of all of it. The
+  // largest bound is never skipped.
+  unsigned unwindsAt = 0, walked = 0;
   for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k += kStep) {
+    if ((unlimitedKSteps || k + kStep <= maxKStep) && k < std::min(unwindsAt, 2 * walked))
+      continue;
+    walked = k;
     // A new walk and solver per bound, as ESBMC: the walk merges the paths
     // leaving a loop, so a larger bound changes everything after it. (One
     // solver with a scope per bound was measured and not kept; see
     // docs/survey/2026-11-22-incremental-bmc.md.)
     progress("Checking bound k = " + std::to_string(k));
-    if (int r = bmc(*fn, k); r != BoundTooSmall)
+    if (int r = bmc(*fn, k, &unwindsAt); r != BoundTooSmall)
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
