@@ -1,6 +1,6 @@
 // Under --incremental-bmc, --multi-property moves to the next bound while
 // only loops fail, then shows a counterexample for each failed assertion.
-// RUN: --incremental-bmc --multi-property
+// RUN: --no-summarize-array-loops --incremental-bmc --multi-property
 // EXPECT: Bound 2 too small
 // EXPECT: (\[Counterexample\][\s\S]*){2}
 // EXPECT-NOT: (\[Counterexample\][\s\S]*){3}|Bound 3 too small

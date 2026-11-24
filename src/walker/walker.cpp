@@ -219,7 +219,7 @@ private:
   }
 
   void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
-    if (opts.summaries != Options::Summaries::None && summarise(frame, fi, l))
+    if (opts.summarise && summarise(frame, fi, l))
       return;
     BasicBlock *header = l->getHeader();
     unsigned number = fi.loopNumber.lookup(l);
@@ -260,7 +260,6 @@ private:
     const analysis::Summary *found = fi.loops.summary(l);
     // One summary at a time: a loop in a function the iteration calls is unrolled.
     if (summary || !found || in == frame.arrivals.end() || in->second.empty() ||
-        (!found->store && opts.summaries != Options::Summaries::All) ||
         (found->nondet && opts.witness))
       return false;
     analysis::Summary sum = *found;

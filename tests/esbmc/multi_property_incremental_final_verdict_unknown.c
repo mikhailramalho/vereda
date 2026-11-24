@@ -18,4 +18,4 @@ int main()
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z
 // Vereda: unmet EXPECT: ^Unable to prove or falsify the program, giving up\.$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED

@@ -39,11 +39,12 @@ static cl::opt<bool> noUnwindingAssertions(
     "no-unwinding-assertions", cl::desc("Assume the unwinding bound instead of checking it"));
 static cl::opt<bool> noSummarizeArrayLoops(
     "no-summarize-array-loops",
-    cl::desc("Unroll the counting loops that write only a[i], instead of replacing them by "
-             "their effect"));
-static cl::opt<bool> summarizeArrayLoops(
-    "summarize-array-loops",
-    cl::desc("Also replace counting loops that write no array, but only check or count"));
+    cl::desc("Unroll the counting loops that only write a[i], check or count, instead of "
+             "replacing them by their effect"));
+// ESBMC's flag for summaries of the loops that write no array, which Vereda
+// makes by default; accepted so that ESBMC's command lines run.
+static cl::opt<bool> summarizeArrayLoops("summarize-array-loops",
+                                         cl::desc("The default; accepted for ESBMC"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> incrementalBMC(
@@ -69,7 +70,6 @@ static cl::opt<std::string> witnessFile(
     cl::value_desc("file"));
 
 using vereda::walker::Property;
-using Summaries = vereda::walker::Options::Summaries;
 static cl::opt<Property> property(
     "property", cl::desc("Count only the failures of one SV-COMP property, and print its verdict"),
     cl::values(clEnumValN(Property::All, "all", "every check (default)"),
@@ -150,9 +150,7 @@ static int bmc(Function &fn, unsigned bound) {
   vereda::walker::Trace trace;
   vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
                                    !incrementalBMC,
-                                   noSummarizeArrayLoops ? Summaries::None
-                                   : summarizeArrayLoops ? Summaries::All
-                                                         : Summaries::Stores,
+                                   !noSummarizeArrayLoops,
                                    !witnessFile.empty()};
   if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
     return unknown(toString(std::move(e)));
