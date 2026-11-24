@@ -1,5 +1,7 @@
 // Models of <stdlib.h> functions, written from the C standard (C17 7.22).
+#include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 
 void *malloc(size_t);
@@ -97,4 +99,56 @@ void qsort(void *base, size_t nmemb, size_t size,
         q[k] = t;
       }
     }
+}
+
+// The value of digit c in bases up to 36, or 36 if c is no digit.
+static int digit(int c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  c |= 32;
+  return c >= 'a' && c <= 'z' ? c - 'a' + 10 : 36;
+}
+
+// Reads an integer as strtol and its kin do (C17 7.22.1.4), for a type whose
+// largest value is max, signed or not. Past the type's range it sets errno to
+// ERANGE and gives the nearest limit; an unsigned type negates in its own
+// arithmetic, so "-1" gives its largest value.
+static unsigned long long strto(const char *nptr, char **endptr, int base,
+                                unsigned long long max, int sign) {
+  const char *s = nptr;
+  while (*s == ' ' || (*s >= '\t' && *s <= '\r'))
+    ++s;
+  int neg = *s == '-';
+  if (*s == '-' || *s == '+')
+    ++s;
+  if ((base == 0 || base == 16) && s[0] == '0' && (s[1] | 32) == 'x' && digit(s[2]) < 16) {
+    s += 2;
+    base = 16;
+  } else if (!base)
+    base = *s == '0' ? 8 : 10;
+  unsigned long long limit = max + (sign && neg), n = 0;
+  int over = 0;
+  const char *start = s;
+  for (int d; (d = digit(*s)) < base; ++s) {
+    if (n > (limit - d) / base)
+      over = 1;
+    else
+      n = n * base + d;
+  }
+  if (endptr)
+    *endptr = (char *)(s == start ? nptr : s);
+  if (over) {
+    errno = ERANGE;
+    return sign && neg ? -limit : max;
+  }
+  return neg ? -n : n;
+}
+
+long strtol(const char *s, char **end, int base) { return strto(s, end, base, LONG_MAX, 1); }
+unsigned long strtoul(const char *s, char **end, int base) {
+  return strto(s, end, base, ULONG_MAX, 0);
+}
+long long strtoll(const char *s, char **end, int base) { return strto(s, end, base, LLONG_MAX, 1); }
+unsigned long long strtoull(const char *s, char **end, int base) {
+  return strto(s, end, base, ULLONG_MAX, 0);
 }
