@@ -13,5 +13,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_store_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: out of memory, over 16 GB
-// MODE: KNOWNBUG

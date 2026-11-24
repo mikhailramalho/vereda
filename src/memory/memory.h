@@ -33,6 +33,10 @@
 // iN at a symbolic offset is one select or store. Its known bytes move to the
 // array an element at a time, and an access through an unknown pointer that
 // may hit it reads or writes one byte of an element.
+//
+// A summarised loop (issue #36) leaves the object it wrote with arrays that
+// are lambdas over the ones before (terms.h): a read of an element the loop
+// wrote reduces to the value its iteration stored there.
 #pragma once
 #include "encode/terms.h"
 #include "memory/cellmap.h"
@@ -110,11 +114,22 @@ public:
   // MinSeparate bytes is one constant array; anything else goes byte by
   // byte, which past MaxBytes is unsupported.
   void set(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  // Writes byte to every byte of the object p starts, whatever its size,
+  // as one constant array: calloc with a size that is not constant.
+  void fill(State &st, camada::SMTExprRef p, camada::SMTExprRef byte);
   void copy(State &st, camada::SMTExprRef dst, camada::SMTExprRef src, uint64_t n);
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
   void own(State &st, camada::SMTExprRef p, unsigned bits = 8);
+  // Iteration n, a pointer-width term: whether it stored, and the value.
+  using Iteration = std::function<std::pair<camada::SMTExprRef, camada::SMTExprRef>(
+      const camada::SMTExprRef &n)>;
+  // The effect of a loop whose iterations n < count stored a value of type
+  // ty at first + n * stride, as iteration(n) says, where first's object is
+  // a constant and the stride at least the value's size.
+  void summarise(State &st, camada::SMTExprRef first, uint64_t stride, llvm::Type *ty,
+                 camada::SMTExprRef count, Iteration iteration);
   // Gives the n bytes at p nondet contents (__VERIFIER_nondet_memory), or
   // without n the whole object at p, as a call to a function without a body
   // may write any of it. False, with st unchanged, when the object is
@@ -156,6 +171,7 @@ private:
   camada::SMTExprRef index(uint64_t object, camada::SMTExprRef at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  void fill(State &st, uint64_t object, camada::SMTExprRef byte);
   void setBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   // set for initialisers: no limit, as they were written byte by byte before.
   void fillOrSet(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n) {

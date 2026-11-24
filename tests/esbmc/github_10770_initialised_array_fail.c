@@ -13,7 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10770_initialised_array_fail
-// Needs: --witness-output-yaml - --no-summarize-array-loops
+// Needs: --witness-output-yaml -
 // RUN: --unwind 4 --witness-output-yaml - --no-summarize-array-loops
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -19,7 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7597-chain-dropped
-// Needs: --no-standard-checks --no-summarize-array-loops
+// Needs: --no-standard-checks
 // RUN: --no-standard-checks --no-summarize-array-loops
 // MODE: FUTURE
 // EXPECT: ^WARNING: constant propagation gave up on a `with` chain past 1024 symbolic updates
