@@ -1,5 +1,6 @@
 // Stage memory: a persistent map from (object, offset) to a byte's data and
-// provenance terms, for the known bytes of a memory state.
+// provenance terms, for the known bytes of a memory state; the encoder keeps
+// its path facts in one too (Trie of another cell type).
 //
 // Copying a map copies one pointer, and a change rebuilds only the path to
 // its key, so the walker can keep a state per arrival at a block without
@@ -8,7 +9,7 @@
 // from one share whole subtrees, which diff() skips. In-order iteration is in
 // key order, and an object's keys are one subtree.
 #pragma once
-#include <camada/camada.h>
+#include "encode/terms.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -17,20 +18,18 @@
 namespace vereda::memory {
 
 struct Cell {
-  camada::SMTExprRef data, prov;
-  bool operator==(const Cell &o) const {
-    return data.get() == o.data.get() && prov.get() == o.prov.get();
-  }
+  encode::Term data, prov;
+  bool operator==(const Cell &o) const { return data == o.data && prov == o.prov; }
 };
 
-class CellMap {
+template <class C> class Trie {
 public:
   using Key = std::pair<uint64_t, uint64_t>;
 
   size_t size() const { return root ? root->size : 0; }
-  bool same(const CellMap &o) const { return root == o.root; }
+  bool same(const Trie &o) const { return root == o.root; }
 
-  const Cell *find(Key k) const {
+  const C *find(Key k) const {
     U u = pack(k);
     const Node *n = root.get();
     while (n && n->bit) {
@@ -40,7 +39,7 @@ public:
     }
     return n && n->prefix == u ? &n->cell : nullptr;
   }
-  void set(Key k, const Cell &c) { root = insert(root, pack(k), c); }
+  void set(Key k, const C &c) { root = insert(root, pack(k), c); }
   void eraseObject(uint64_t o) { root = erase(root, pack({o, 0}), pack({o, ~uint64_t(0)})); }
   void clear() { root.reset(); }
 
@@ -51,7 +50,7 @@ public:
   }
   // f(key, a's cell or null, b's cell or null) once for each key whose cells
   // differ, skipping subtrees a and b share.
-  template <class F> static void diff(const CellMap &a, const CellMap &b, F &&f) {
+  template <class F> static void diff(const Trie &a, const Trie &b, F &&f) {
     diffNodes(a.root.get(), b.root.get(), f);
   }
 
@@ -65,7 +64,7 @@ private:
     U prefix, bit;
     size_t size;
     Ptr left, right;
-    Cell cell;
+    C cell;
   };
   Ptr root;
 
@@ -79,7 +78,7 @@ private:
     return hi ? U(1) << (127 - __builtin_clzll(hi)) : U(1) << (63 - __builtin_clzll(uint64_t(x)));
   }
 
-  static Ptr leaf(U k, const Cell &c) { return std::make_shared<const Node>(Node{k, 0, 1, {}, {}, c}); }
+  static Ptr leaf(U k, const C &c) { return std::make_shared<const Node>(Node{k, 0, 1, {}, {}, c}); }
   static Ptr branch(U prefix, U bit, Ptr l, Ptr r) {
     size_t n = l->size + r->size;
     return std::make_shared<const Node>(Node{prefix, bit, n, std::move(l), std::move(r), {}});
@@ -91,7 +90,7 @@ private:
                     : branch(above(p0, m), m, std::move(t0), std::move(t1));
   }
 
-  static Ptr insert(const Ptr &t, U k, const Cell &c) {
+  static Ptr insert(const Ptr &t, U k, const C &c) {
     if (!t)
       return leaf(k, c);
     if (!t->bit) {
@@ -148,10 +147,10 @@ private:
     if (a == b)
       return;
     auto onlyA = [&](const Node *n) {
-      each(n, [&](Key k, const Cell &c) { f(k, &c, nullptr); });
+      each(n, [&](Key k, const C &c) { f(k, &c, nullptr); });
     };
     auto onlyB = [&](const Node *n) {
-      each(n, [&](Key k, const Cell &c) { f(k, nullptr, &c); });
+      each(n, [&](Key k, const C &c) { f(k, nullptr, &c); });
     };
     if (!a || !b) {
       a ? onlyA(a) : onlyB(b);
@@ -161,8 +160,8 @@ private:
     if (!a->bit || !b->bit) {
       const Node *l = a->bit ? b : a, *t = a->bit ? a : b;
       Key k = unpack(l->prefix);
-      const Cell *other = nullptr;
-      each(t, [&](Key kt, const Cell &c) {
+      const C *other = nullptr;
+      each(t, [&](Key kt, const C &c) {
         if (kt == k)
           other = &c;
         else if (t == a)
@@ -203,5 +202,7 @@ private:
     }
   }
 };
+
+using CellMap = Trie<Cell>;
 
 } // namespace vereda::memory

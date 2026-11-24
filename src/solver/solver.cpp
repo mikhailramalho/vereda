@@ -48,9 +48,10 @@ Expected<camada::SMTSolverRef> create(camada::SolverKind kind) {
   }
 }
 
-Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
                function_ref<void(const checks::Check &)> violated,
                std::chrono::milliseconds limit) {
+  camada::SMTSolver &s = t.solver();
   using Clock = std::chrono::steady_clock;
   Clock::time_point deadline = Clock::now() + limit;
   // Assertions first, then unwinding assertions, as ESBMC's incremental BMC:
@@ -67,7 +68,7 @@ Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
         auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - Clock::now());
         s.setTimeout(v.check ? 0 : std::max<int64_t>(left.count(), 1));
       }
-      switch (s.checkSatAssuming({check.violated})) {
+      switch (s.checkSatAssuming({t.solverTerm(check.violated)})) {
       case camada::CheckResult::SAT:
         v.status[i] = Status::Fails;
         if (!v.check) {

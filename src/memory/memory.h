@@ -26,7 +26,9 @@
 // scalar globals and locals at a fixed address then never touch the arrays.
 // At a join, an object whose two sides hold different values that multiply,
 // divide or take a remainder goes to the arrays, so that the solver works on
-// that arithmetic only where a read needs it.
+// that arithmetic only where a read needs it; so does one whose two sides
+// differ in many bytes, which one choice of arrays joins more cheaply than a
+// choice per byte.
 //
 // A fill that covers a whole object of at least MinSeparate bytes (memset,
 // calloc, a zeroed global) gives the object arrays of its own, constant
@@ -66,8 +68,8 @@
 namespace vereda::memory {
 
 struct State {
-  camada::SMTExprRef data; // pointer -> byte
-  camada::SMTExprRef prov; // pointer -> object id of a stored pointer's byte
+  encode::Term data; // pointer -> byte
+  encode::Term prov; // pointer -> object id of a stored pointer's byte
   using Cell = memory::Cell;
   // Bytes at constant (object, offset), newer than data and prov. Copies of
   // the state share it (cellmap.h).
@@ -86,156 +88,173 @@ public:
   unsigned pointerBits() const { return ptrBits; }
   const llvm::DataLayout &layout() const { return dl; }
   camada::SMTSortRef pointerSort();
-  camada::SMTExprRef null();
-  camada::SMTExprRef object(camada::SMTExprRef p);
-  camada::SMTExprRef offset(camada::SMTExprRef p);
-  camada::SMTExprRef ptr(camada::SMTExprRef obj, camada::SMTExprRef off);
+  encode::Term null();
+  encode::Term object(encode::Term p);
+  encode::Term offset(encode::Term p);
+  encode::Term ptr(encode::Term obj, encode::Term off);
   // p moved by delta bytes, a pointer-width bitvector.
-  camada::SMTExprRef advance(camada::SMTExprRef p, camada::SMTExprRef delta);
+  encode::Term advance(encode::Term p, encode::Term delta);
 
   // Whether an allocator accepts an object of size bytes: at most
   // PTRDIFF_MAX, as glibc's malloc. It depends on the size alone, so the
   // solver cannot make a small allocation fail by placing earlier objects.
-  camada::SMTExprRef fits(camada::SMTExprRef size);
+  encode::Term fits(encode::Term size);
   // A new object of size bytes (pointer-width term) that exists when exists
   // holds; its layout constraints bind only then. Returns its start. An
   // address converted to a pointer may land in it only if exposed.
-  camada::SMTExprRef allocate(camada::SMTExprRef size, uint64_t align,
-                              camada::SMTExprRef exists, bool exposed = true);
+  encode::Term allocate(encode::Term size, uint64_t align,
+                              encode::Term exists, bool exposed = true);
   // Allocates every global of m, and every function whose address is taken,
   // exposed as the predicate says; the globals' initialisers go in with
   // initialise().
   void allocateGlobals(const llvm::Module &m,
                        const std::function<bool(const llvm::GlobalValue *)> &exposed);
-  camada::SMTExprRef global(const llvm::GlobalValue *g) const;
+  encode::Term global(const llvm::GlobalValue *g) const;
   // Writes every global's initialiser into st; valueOf encodes constants
   // that are pointers into other globals.
   void initialise(State &st, const llvm::Module &m,
-                  const std::function<camada::SMTExprRef(const llvm::Constant *)> &valueOf);
+                  const std::function<encode::Term(const llvm::Constant *)> &valueOf);
 
   // The size in bytes of the object with id obj, a pointer-width term.
-  camada::SMTExprRef size(camada::SMTExprRef obj);
-  camada::SMTExprRef address(camada::SMTExprRef p);   // ptrtoint
+  encode::Term size(encode::Term obj);
+  encode::Term address(encode::Term p);   // ptrtoint
   // p == q: object and offset equal, or, when one is outside the program,
   // the addresses: it may hold the address of an object allocated since it
   // was converted.
-  camada::SMTExprRef equal(camada::SMTExprRef p, camada::SMTExprRef q);
+  encode::Term equal(encode::Term p, encode::Term q);
   // inttoptr: the exposed object that holds a, else object 0 at offset a
   // (null, or the memory outside the program).
-  camada::SMTExprRef fromAddress(camada::SMTExprRef a);
+  encode::Term fromAddress(encode::Term a);
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
   // or not c it implies goes to one side only.
-  void setContext(camada::SMTExprRef guard) { context = std::move(guard); }
+  void setContext(encode::Term guard) { context = std::move(guard); }
 
   State initial(); // nondet contents
-  State ite(camada::SMTExprRef c, const State &a, const State &b);
+  State ite(encode::Term c, const State &a, const State &b);
   // Loads and stores of integers (i1 as a byte) and pointers.
-  camada::SMTExprRef load(State &st, camada::SMTExprRef p, llvm::Type *ty);
-  void store(State &st, camada::SMTExprRef p, camada::SMTExprRef v, llvm::Type *ty);
+  encode::Term load(State &st, encode::Term p, llvm::Type *ty);
+  void store(State &st, encode::Term p, encode::Term v, llvm::Type *ty);
   // Writes byte to the n bytes at p. A fill of a whole object of at least
   // MinSeparate bytes is one constant array; anything else goes byte by
   // byte, which past MaxBytes is unsupported.
-  void set(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  void set(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // Writes byte to every byte of the object p starts, whatever its size,
   // as one constant array: calloc with a size that is not constant.
-  void fill(State &st, camada::SMTExprRef p, camada::SMTExprRef byte);
-  void copy(State &st, camada::SMTExprRef dst, camada::SMTExprRef src, uint64_t n);
+  void fill(State &st, encode::Term p, encode::Term byte);
+  void copy(State &st, encode::Term dst, encode::Term src, uint64_t n);
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
-  void own(State &st, camada::SMTExprRef p, unsigned bits = 8);
+  void own(State &st, encode::Term p, unsigned bits = 8);
   // Iteration n, a pointer-width term: whether it stored, and the value.
-  using Iteration = std::function<std::pair<camada::SMTExprRef, camada::SMTExprRef>(
-      const camada::SMTExprRef &n)>;
+  using Iteration = std::function<std::pair<encode::Term, encode::Term>(
+      const encode::Term &n)>;
   // The effect of a loop whose iterations n < count stored a value of type
   // ty at first + n * stride, as iteration(n) says, where first's object is
   // a constant and the stride at least the value's size.
-  void summarise(State &st, camada::SMTExprRef first, uint64_t stride, llvm::Type *ty,
-                 camada::SMTExprRef count, Iteration iteration);
+  void summarise(State &st, encode::Term first, uint64_t stride, llvm::Type *ty,
+                 encode::Term count, Iteration iteration);
   // Gives the n bytes at p nondet contents (__VERIFIER_nondet_memory), or
   // without n the whole object at p, as a call to a function without a body
   // may write any of it; for p into one of several objects, each where p
   // points into it.
-  void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
+  void havoc(State &st, encode::Term p, std::optional<uint64_t> n = std::nullopt);
+  // The constant globals p may point into, each with where it does: a write
+  // there modifies a string literal or an object defined const, which C11
+  // leaves undefined (6.4.5p7, 6.7.3p6). A pointer made from an integer is
+  // not counted, as it points into an object only by the addresses the
+  // solver picks.
+  std::vector<std::pair<const llvm::GlobalVariable *, encode::Term>>
+  readOnly(encode::Term p);
   // What a call without a body writes, given the pointers it may write
   // through and those it only reads through: the whole object at each of
-  // written, as havoc. With reach, as such a call may follow the pointers
+  // written, as havoc, but a constant global or a function, which the call
+  // may not write. With reach, as such a call may follow the pointers
   // it finds (#114), also each object but a constant that a pointer stored
   // where any of them points may point to, transitively, where that pointer
   // points into an object that reaches it; a pointer made from an integer
   // (an address, or bytes nothing wrote) is not followed. Each object
   // written may then hold a pointer to any exposed object it got a pointer
   // into and to any object reached.
-  void havocCall(State &st, llvm::ArrayRef<camada::SMTExprRef> written,
-                 llvm::ArrayRef<camada::SMTExprRef> read, bool reach);
+  void havocCall(State &st, llvm::ArrayRef<encode::Term> written,
+                 llvm::ArrayRef<encode::Term> read, bool reach);
   // A pointer into the memory outside the program, for havoc.
-  camada::SMTExprRef outside() { return advance(null(), t.bv(1, ptrBits)); }
+  encode::Term outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 
 private:
-  camada::SMTExprRef bytePtr(camada::SMTExprRef p, uint64_t i);
-  camada::SMTExprRef base(camada::SMTExprRef obj);
+  encode::Term bytePtr(encode::Term p, uint64_t i);
+  encode::Term base(encode::Term obj);
   bool hasPadding(llvm::Type *ty) const;
   using Key = std::pair<uint64_t, uint64_t>;
-  std::optional<Key> key(camada::SMTExprRef p) const;
-  camada::SMTExprRef ptr(const Key &k);
+  std::optional<Key> key(encode::Term p) const;
+  encode::Term ptr(const Key &k);
   // Moves the known bytes an access at p may alias into the arrays: those
   // of the objects p may point into.
-  void prepare(State &st, camada::SMTExprRef p);
+  void prepare(State &st, encode::Term p);
   // The objects p may point into: the constants its object chooses among,
   // and, where that object was read from memory, object 0 and every exposed
-  // object. Without integers, none for an object fromAddress made.
-  std::vector<uint64_t> candidates(camada::SMTExprRef p, bool integers = true);
-  // havoc, with prov the provenance of the bytes of a whole object written.
-  void havocWith(State &st, camada::SMTExprRef p, std::optional<uint64_t> n,
-                 camada::SMTExprRef prov);
-  void havocObject(State &st, uint64_t o, camada::SMTExprRef prov);
+  // object. Without integers, none for an object fromAddress made. With
+  // read, it leaves out object 0 and the exposed objects and sets *read to
+  // whether p's object was read from memory.
+  std::vector<uint64_t> candidates(encode::Term p, bool integers = true,
+                                   bool *read = nullptr);
+  // havoc, with prov the provenance of the bytes of a whole object written;
+  // a constant object is left as it is unless constants.
+  void havocWith(State &st, encode::Term p, std::optional<uint64_t> n,
+                 encode::Term prov, bool constants);
+  // Where obj, an object id or a pointer, is object o, but by an address
+  // converted to a pointer.
+  encode::Term into(encode::Term obj, uint64_t o);
+  void havocObject(State &st, uint64_t o, encode::Term prov);
   // For each object of st that may hold a pointer, the objects other than
   // null it may point to: from its known bytes' provenance and the stores in
   // the arrays that hold its bytes.
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> pointers(const State &st);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
-  State::Cell readByte(const State &st, camada::SMTExprRef at);
+  State::Cell readByte(const State &st, encode::Term at);
   // The byte at at from object's own arrays own, and those arrays with c
   // stored at at.
-  State::Cell readOwn(uint64_t object, const State::Cell &own, camada::SMTExprRef at);
-  State::Cell storeOwn(uint64_t object, const State::Cell &own, camada::SMTExprRef at,
+  State::Cell readOwn(uint64_t object, const State::Cell &own, encode::Term at);
+  State::Cell storeOwn(uint64_t object, const State::Cell &own, encode::Term at,
                        const State::Cell &c);
   // The object of p when its elements are of type ty and p is at a symbolic
   // offset, where an access is one select or store once prepare(st, p) ran.
-  std::optional<uint64_t> element(camada::SMTExprRef p, llvm::Type *ty);
+  std::optional<uint64_t> element(encode::Term p, llvm::Type *ty);
   // The arrays' bytes at a pointer that is not a known byte.
-  State::Cell readArrays(const State &st, camada::SMTExprRef at);
+  State::Cell readArrays(const State &st, encode::Term at);
   // Stores c at at in the arrays that hold object's bytes in st: its own or
   // the shared ones.
-  void storeArrays(State &st, uint64_t object, camada::SMTExprRef at, const State::Cell &c);
-  CellMap mergeSeparate(camada::SMTExprRef c, const State &a, const State &b);
+  void storeArrays(State &st, uint64_t object, encode::Term at, const State::Cell &c);
+  CellMap mergeSeparate(encode::Term c, const State &a, const State &b);
   // Where object's own arrays index the pointer at: by offset for an object
   // given them by own(), divided by the element's bytes for one of
   // elements, by the whole pointer otherwise.
-  camada::SMTExprRef index(uint64_t object, camada::SMTExprRef at);
+  encode::Term index(uint64_t object, encode::Term at);
   // A fill of the whole object at p, if p is one: true when done.
-  bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
-  void fill(State &st, uint64_t object, camada::SMTExprRef byte);
-  void setBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  bool fillObject(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  void fill(State &st, uint64_t object, encode::Term byte);
+  void setBytes(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // set for initialisers: no limit, as they were written byte by byte before.
-  void fillOrSet(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n) {
+  void fillOrSet(State &st, encode::Term p, encode::Term byte, uint64_t n) {
     if (!fillObject(st, p, byte, n))
       setBytes(st, p, byte, n);
   }
-  void writeByte(State &st, camada::SMTExprRef at, const State::Cell &c);
-  void storeBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef bits,
-                  camada::SMTExprRef prov);
-  void storeConstant(State &st, camada::SMTExprRef p, const llvm::Constant *c,
-                     const std::function<camada::SMTExprRef(const llvm::Constant *)> &valueOf);
+  void writeByte(State &st, encode::Term at, const State::Cell &c);
+  void storeBytes(State &st, encode::Term p, encode::Term bits,
+                  encode::Term prov);
+  void storeConstant(State &st, encode::Term p, const llvm::Constant *c,
+                     const std::function<encode::Term(const llvm::Constant *)> &valueOf);
 
   struct Object {
-    camada::SMTExprRef base, size, exists;
+    encode::Term base, size, exists;
     bool exposed;
-    bool constant = false; // a constant global or a function: never written
+    // The constant global or the function the object is, if either, which
+    // the program may not write.
+    const llvm::GlobalValue *constant = nullptr;
   };
 
   encode::Terms &t;
@@ -243,22 +262,21 @@ private:
   const llvm::DataLayout &dl;
   unsigned ptrBits;
   std::vector<Object> objects; // index = object id; 0 is null
-  camada::SMTExprRef bases;    // object id -> base address, as an uninterpreted array
-  camada::SMTExprRef end;      // first address after the last object
-  llvm::DenseMap<const llvm::GlobalValue *, camada::SMTExprRef> globals;
+  encode::Term bases;    // object id -> base address, as an uninterpreted array
+  encode::Term end;      // first address after the last object
+  llvm::DenseMap<const llvm::GlobalValue *, encode::Term> globals;
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
   llvm::DenseMap<uint64_t, unsigned> shifts;
   // A summarised loop's provenance array (kept alive) -> the one it reads
   // below, which holds every pointer it does.
-  llvm::DenseMap<const camada::SMTExpr *, std::pair<camada::SMTExprRef, camada::SMTExprRef>>
-      provBelow;
+  llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> provBelow;
   // The objects of the pointers fromAddress made, kept alive.
-  llvm::DenseMap<const camada::SMTExpr *, camada::SMTExprRef> fromInteger;
+  llvm::DenseMap<const void *, encode::Term> fromInteger;
   unsigned fresh = 0;
-  camada::SMTExprRef context;
+  encode::Term context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
-  int side(const camada::SMTExprRef &c);
+  int side(const encode::Term &c);
 };
 
 } // namespace vereda::memory

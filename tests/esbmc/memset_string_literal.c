@@ -14,6 +14,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memset_string_literal
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

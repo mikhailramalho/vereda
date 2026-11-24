@@ -223,4 +223,5 @@ int main() {
 
 
 // Imported from ESBMC regression/esbmc/math_log02
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION FAILED$

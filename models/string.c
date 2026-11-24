@@ -8,6 +8,15 @@
 #include <stddef.h>
 
 void *memset(void *, int, size_t);
+void *malloc(size_t);
+void *memcpy(void *, const void *, size_t);
+void *memmove(void *, const void *, size_t);
+int tolower(int);
+void *__VERIFIER_nondet_pointer(void);
+int __VERIFIER_nondet_int(void);
+unsigned long __VERIFIER_nondet_ulong(void);
+// Gives the whole object p points into nondet contents (the walker does).
+void __vereda_havoc(void *p);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -60,6 +69,16 @@ char *strcat(char *dst, const char *src) {
   return dst;
 }
 
+char *strncat(char *dst, const char *src, size_t n) {
+  size_t i = strlen(dst);
+  size_t j = 0;
+  while (j < n && src[j]) {
+    dst[i++] = src[j++];
+  }
+  dst[i] = 0;
+  return dst;
+}
+
 char *strchr(const char *s, int c) {
   for (;; ++s) {
     if (*s == (char)c)
@@ -77,6 +96,41 @@ char *strrchr(const char *s, int c) {
   for (const char *p; (p = strchr(s, c)); s = p + 1)
     last = p;
   return (char *)last;
+}
+
+size_t strspn(const char *s, const char *accept) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *a;
+    for (a = accept; *a && *a != s[n]; ++a)
+      ;
+    if (!*a)
+      break;
+  }
+  return n;
+}
+
+size_t strcspn(const char *s, const char *reject) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *r;
+    for (r = reject; *r && *r != s[n]; ++r)
+      ;
+    if (*r)
+      break;
+  }
+  return n;
+}
+
+char *strpbrk(const char *s, const char *accept) {
+  for (; *s; ++s) {
+    const char *a;
+    for (a = accept; *a && *a != *s; ++a)
+      ;
+    if (*a)
+      return (char *)s;
+  }
+  return NULL;
 }
 
 // Returns from inside the loop, so that comparing n equal bytes takes n
@@ -102,4 +156,146 @@ void *memchr(const void *s, int c, size_t n) {
     if (*p == (unsigned char)c)
       return (void *)p;
   return NULL;
+}
+
+char *strstr(const char *haystack, const char *needle) {
+  if (!*needle)
+    return (char *)haystack;
+  for (; *haystack; ++haystack) {
+    const char *h = haystack, *n = needle;
+    while (*n && *h == *n) {
+      ++h;
+      ++n;
+    }
+    if (!*n)
+      return (char *)haystack;
+  }
+  return NULL;
+}
+
+char *strdup(const char *s) {
+  size_t n = strlen(s);
+  char *d = malloc(n + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i <= n; ++i)
+    d[i] = s[i];
+  return d;
+}
+
+char *strndup(const char *s, size_t n) {
+  size_t m = strnlen(s, n);
+  char *d = malloc(m + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i < m; ++i)
+    d[i] = s[i];
+  d[m] = 0;
+  return d;
+}
+
+char *index(const char *s, int c) { return strchr(s, c); }
+
+char *rindex(const char *s, int c) { return strrchr(s, c); }
+
+void bzero(void *p, size_t n) { memset(p, 0, n); }
+
+void bcopy(const void *src, void *dst, size_t n) { memmove(dst, src, n); }
+
+void *memccpy(void *dst, const void *src, int c, size_t n) {
+  unsigned char *d = dst;
+  const unsigned char *s = src;
+  for (; n; --n) {
+    *d = *s++;
+    if (*d++ == (unsigned char)c)
+      return d;
+  }
+  return NULL;
+}
+
+int strcasecmp(const char *a, const char *b) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  while (*x && tolower(*x) == tolower(*y)) {
+    ++x;
+    ++y;
+  }
+  return tolower(*x) - tolower(*y);
+}
+
+int strncasecmp(const char *a, const char *b, size_t n) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  for (; n; --n, ++x, ++y)
+    if (tolower(*x) != tolower(*y) || !*x)
+      return tolower(*x) - tolower(*y);
+  return 0;
+}
+
+// Collation is strcmp's order in the "C" locale, where a program starts
+// (C17 7.11.1.1p4). Once setlocale has been given a locale, strcoll and
+// strxfrm give any result; setlocale returns any pointer, as it would
+// without a body.
+static int c_collation = 1;
+
+char *setlocale(int category, const char *locale) {
+  if (locale)
+    c_collation = 0;
+  return __VERIFIER_nondet_pointer();
+}
+
+int strcoll(const char *a, const char *b) {
+  return c_collation ? strcmp(a, b) : __VERIFIER_nondet_int();
+}
+
+size_t strxfrm(char *dst, const char *src, size_t n) {
+  if (!c_collation) {
+    if (n)
+      __vereda_havoc(dst);
+    return __VERIFIER_nondet_ulong();
+  }
+  size_t len = strlen(src);
+  if (len < n)
+    for (size_t i = 0; i <= len; ++i)
+      dst[i] = src[i];
+  return len;
+}
+
+char *strerror(int errnum) { return (char *)(errnum ? "Unknown error" : "Success"); }
+
+// POSIX strtok_r: skips the leading delimiters, then ends the token at the
+// next one, if any, and saves where the next call starts.
+char *strtok_r(char *str, const char *delim, char **save) {
+  if (!str)
+    str = *save;
+  str += strspn(str, delim);
+  if (!*str) {
+    *save = str;
+    return NULL;
+  }
+  char *end = str + strcspn(str, delim);
+  if (*end)
+    *end++ = 0;
+  *save = end;
+  return str;
+}
+
+char *strtok(char *str, const char *delim) {
+  static char *save;
+  return strtok_r(str, delim, &save);
+}
+
+// BSD strsep: unlike strtok, it does not skip leading delimiters, so a
+// token can be empty.
+char *strsep(char **sp, const char *delim) {
+  char *tok = *sp;
+  if (!tok)
+    return NULL;
+  char *end = tok + strcspn(tok, delim);
+  if (*end)
+    *end++ = 0;
+  else
+    end = NULL;
+  *sp = end;
+  return tok;
 }

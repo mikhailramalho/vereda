@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 2.3//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<!-- ESBMC on the tasks and with the limits of vereda.xml, for
+     .github/workflows/benchexec.yml: incremental BMC through its SV-COMP
+     wrapper (esbmc-wrapper.py -s incr), as its SV-COMP entry runs. The tool
+     directory holds the wrapper and the esbmc binary; BenchExec's own esbmc
+     tool-info module adds the property file and the data model. The tasks
+     are those of the set file contrib/benchexec/ci.py wrote for the shard,
+     whose name is the benchmark's after "esbmc.". -->
+<benchmark tool="esbmc" timelimit="60 s" memlimit="6 GB" cpuCores="2">
+  <option name="-s">incr</option>
+  <rundefinition name="unreach-call">
+    <tasks>
+      <includesfile>../../sv-benchmarks/c/${benchmark_name}.set</includesfile>
+      <propertyfile>../../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    </tasks>
+  </rundefinition>
+</benchmark>

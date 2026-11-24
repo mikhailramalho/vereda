@@ -15,6 +15,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7548_strsep_c
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

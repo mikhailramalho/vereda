@@ -35,6 +35,9 @@ struct Options {
   // which a summarised iteration gives for one index only, so loops that
   // call nondet are unrolled.
   bool witness = false;
+  // A write into a string literal or an object defined const is a
+  // violation, as ESBMC's pointer check has it (off with --no-pointer-check).
+  bool pointerCheck = true;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

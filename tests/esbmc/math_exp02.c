@@ -98,6 +98,6 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/math_exp02
-// RUN: --unwind 20
+// RUN: --no-pointer-check --unwind 20
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

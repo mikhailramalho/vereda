@@ -27,7 +27,7 @@ struct Verdict {
 // its model is available, and stops there unless all is set. A nonzero limit
 // bounds the time of the checks until one fails; past it the verdict is
 // Unknown, with timedOut set.
-Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
                llvm::function_ref<void(const checks::Check &)> violated,
                std::chrono::milliseconds limit = {});
 

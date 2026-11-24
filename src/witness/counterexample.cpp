@@ -13,13 +13,13 @@ namespace vereda::witness {
 // Booleans. A value C has no constant for (none in the model, or wider than
 // 64 bits) makes the statement a comment.
 static std::pair<std::string, std::string> assignment(solver::Model &model,
-                                                      const camada::SMTExprRef &value,
+                                                      const encode::Term &value,
                                                       const std::string &text, bool isUnsigned) {
   std::string lhs = text + " = ";
   const APInt *v = model.value(value);
   if (!v)
     return {"// " + lhs + "?", ""};
-  if (value->isBoolSort())
+  if (value.isBool())
     return {lhs + (v->isOne() ? "true;" : "false;"), ""};
   std::string bits; // by hand: APInt::toString in base 2 cost more than the rest
   for (unsigned i = v->getBitWidth(); i-- > 0;)
@@ -73,7 +73,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       const APInt *off = model.value(step.offset);
       std::optional<std::string> path;
       if (off)
-        path = ir::memberPath(step.type, off->getZExtValue(), step.value->getWidth() / 8,
+        path = ir::memberPath(step.type, off->getZExtValue(), step.value.width() / 8,
                               isUnsigned);
       if (!path) // no single scalar to name (a bitfield's unit, a partial write)
         continue;
