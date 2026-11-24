@@ -88,7 +88,7 @@ and two FixIrreducible loops), so a bound k unrolls k³ bodies around
 Vereda answers in 7 s, where ESBMC times out after 120 s.
 
 Suite tests that gave the irreducible UNKNOWN on main, found by running
-every test with `--unwind 1`:
+every test with `--unwind 1`, and those whose IR now has an `irr.guard`:
 
 | test | now |
 |------|-----|
@@ -99,6 +99,10 @@ every test with `--unwind 1`:
 | esbmc-k-induction(-parallel)/pc_sfifo_2_BUG | need `--k-induction`; `--unwind 10` FAILED at line 346, as ESBMC |
 | esbmc-k-induction/pointer_write_heap_root_callee_cond_entry_fail | needs `--k-induction`; FAILED at line 35, as ESBMC |
 | esbmc-goto2lean/unsupported_loop_leaves_branch | needs `--goto2lean`; SUCCESSFUL with `--no-unwinding-assertions`, as ESBMC |
+| esbmc-unix/04_bzip2smp_01 | FAILED in 1.9 s, as on main (1.7 s): the walk never reaches the irreducible function |
+| esbmc-unix/03_bzip2smp_comb_01(_new), 04_bzip2smp_03 | need flags Vereda lacks; past 100 s with `--unwind 1`, as on main |
 
-IR preparation of `ntdrivers/floppy2.i.cil.c` (732 KB, no irreducible
-cycle) takes the same 0.15 s as before.
+Under ctest, the 500 tests that contain a goto or a setjmp and end within
+60 s pass or skip as marked (85 and 415). IR preparation of
+`ntdrivers/floppy2.i.cil.c` (732 KB, no irreducible cycle) takes the same
+0.15 s as before.
