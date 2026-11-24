@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
 option(DOWNLOAD_DEPENDENCIES
-       "Use an installed LLVM 21-23 under /usr/lib/llvm-*, else download the pinned LLVM; download camada"
+       "Use an installed LLVM 23 in /usr/lib/llvm-23, else download the pinned LLVM; download camada"
        OFF)
-# Before project(): it chooses the compiler and linker (LLVM's own clang, and
-# lld for the downloaded LLVM, an LTO build).
+# Before project(): it chooses the compiler and linker (LLVM's own clang and
+# lld).
 include(cmake/Dependencies.cmake)
 
 project(vereda VERSION 0.1.0 LANGUAGES C CXX)
@@ -18,8 +18,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 find_package(LLVM CONFIG REQUIRED)
-if(LLVM_VERSION_MAJOR LESS 21 OR LLVM_VERSION_MAJOR GREATER 23)
-  message(FATAL_ERROR "LLVM ${LLVM_PACKAGE_VERSION} found at ${LLVM_DIR}; 21 to 23 is supported")
+# A build directory configured for an older LLVM keeps it in its cache, and
+# its compiler with it: such a directory has to be configured afresh.
+if(NOT LLVM_VERSION_MAJOR EQUAL 23)
+  message(FATAL_ERROR "LLVM ${LLVM_PACKAGE_VERSION} found at ${LLVM_DIR}; Vereda needs LLVM 23. "
+                      "Set LLVM_DIR to an LLVM 23, or configure a new build directory.")
 endif()
 message(STATUS "Using LLVM ${LLVM_PACKAGE_VERSION} from ${LLVM_DIR}")
 find_package(camada CONFIG REQUIRED)

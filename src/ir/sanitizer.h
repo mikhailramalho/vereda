@@ -1,7 +1,7 @@
 // Stage ir: what a sanitizer check that clang compiled to
 // llvm.ubsantrap(i8 code) was checking. The code is clang's SanitizerHandler
-// index (clang/lib/CodeGen/SanitizerHandler.h), identical in LLVM 21, 22
-// and 23; recheck the list when a new LLVM version is supported.
+// index (clang/lib/CodeGen/SanitizerHandler.h) as of LLVM 23; recheck the
+// list when moving to a new LLVM version.
 #pragma once
 #include <string>
 

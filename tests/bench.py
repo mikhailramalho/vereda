@@ -157,7 +157,7 @@ def measure(args, base_test, head_test, b=None):
     them. Given b, the base's result from elsewhere, runs head alone."""
     with tempfile.TemporaryDirectory(prefix="vereda-bench-") as tmp, \
          (contextlib.nullcontext() if b else
-          started(args.base_root, args.base, args.clang, base_test, tmp + "/base",
+          started(args.base_root, args.base, args.base_clang, base_test, tmp + "/base",
                   args.memory_limit)) as base, \
          started(ROOT, args.head, args.clang, head_test, tmp + "/head",
                  args.memory_limit) as head:
@@ -245,6 +245,9 @@ def main():  # pylint: disable=too-many-locals
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--clang", required=True, help="path to clang")
+    parser.add_argument("--base-clang",
+                        help="clang for the base binary, when it needs another LLVM's "
+                        "(default: --clang)")
     parser.add_argument("--base-root", default=ROOT,
                         help="source tree whose vereda.py and tests the base binary runs "
                         "(default: this one); a test missing there is skipped")
@@ -264,8 +267,9 @@ def main():  # pylint: disable=too-many-locals
     if not args.list and not args.stats:
         parser.error("give --list or --stats")
     # vereda.py runs in a temporary directory.
-    args.base_root, args.base, args.head, args.clang = map(
-        os.path.abspath, (args.base_root, args.base, args.head, args.clang))
+    args.base_root, args.base, args.head, args.clang, args.base_clang = map(
+        os.path.abspath, (args.base_root, args.base, args.head, args.clang,
+                          args.base_clang or args.clang))
     suite = {}
     if args.stats:
         # A base that ran out of time or memory in its suite run would only

@@ -42,27 +42,30 @@ ninja -C build
 ctest --test-dir build
 ```
 
-`DOWNLOAD_DEPENDENCIES=ON` uses an installed LLVM 21 (22, 23) under
-`/usr/lib/llvm-*`, as Ubuntu's or apt.llvm.org's `llvm-21-dev` and `clang-21`
-packages install it, and builds with its clang. Without one, it fetches the
-pinned LLVM 21 release and builds with that LLVM's clang and lld, since its
-libraries are LTO bitcode. It fetches the camada release either way (Linux
+Vereda needs LLVM 23. `DOWNLOAD_DEPENDENCIES=ON` uses an installed LLVM 23 in
+`/usr/lib/llvm-23`, as apt.llvm.org's `llvm-23-dev` and `clang-23` packages
+install it. Without one, it fetches the pinned LLVM 23 release. It builds with
+the LLVM's own clang, and its lld when there is one, unless you name a
+compiler: the release's libraries are LTO bitcode, and the models' bitcode
+must match the LLVM version. It fetches the camada release either way (Linux
 x86_64 only), and mimalloc's sources, built into the binary in place of
 glibc's malloc. Downloads go to `build/deps`, or to `$VEREDA_DEPS_DIR` when
 set, which lets build directories and worktrees share one copy. A `LLVM_DIR`,
 `camada_DIR` or `MIMALLOC_SOURCE_DIR` given on the command line is used
 instead of a download; an empty `MIMALLOC_SOURCE_DIR` keeps glibc's malloc.
-With it off, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR` to installed
+With it off, set `LLVM_DIR` (LLVM 23) and `camada_DIR` to installed
 copies, and `MIMALLOC_SOURCE_DIR` to use mimalloc.
 
 CMake keeps a build directory's first compiler. If you switch
 `DOWNLOAD_DEPENDENCIES` on in an existing build directory, reconfigure with
-`cmake --fresh` or the link fails with "file format not recognized".
+`cmake --fresh` or the link fails with "file format not recognized". The same
+goes for a build directory configured with an older LLVM, which now fails to
+configure.
 
 ## Run
 
 ```sh
-./vereda.py --clang build/deps/llvm/LLVM-21.1.8-Linux-X64/bin/clang file.c --unwind 5
+./vereda.py --clang build/deps/llvm/LLVM-23.1.6-Linux-X64/bin/clang file.c --unwind 5
 ```
 
 `vereda.py` takes C (`.c`, `.i`) or IR (`.ll`, `.bc`) inputs and its own

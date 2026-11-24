@@ -1,16 +1,17 @@
 # DOWNLOAD_DEPENDENCIES=ON finds or fetches LLVM, camada and mimalloc and
-# points the build at them. LLVM: a LLVM_DIR given on the command line, else
-# an installed /usr/lib/llvm-21 (22, 23), as apt.llvm.org's packages install
-# it, else the pinned release, downloaded. camada: a camada_DIR given, else
-# the pinned release. mimalloc: a MIMALLOC_SOURCE_DIR given (empty for
-# glibc's malloc), else the pinned release's sources, which CMakeLists.txt
-# builds into the binary. Downloads go to $VEREDA_DEPS_DIR when it is set, so
-# that build directories can share them, else to <build>/deps, once each. The
-# official LLVM release is an LTO build (its .a files hold bitcode), so its
-# own clang and lld become the compiler and linker; an installed LLVM's clang
-# is the compiler too, since the models' bitcode must match its version. OFF
-# leaves LLVM_DIR, camada_DIR, MIMALLOC_SOURCE_DIR (unset: glibc's malloc) and
-# the compiler to the user. Included before project().
+# points the build at them. LLVM, which must be LLVM 23: a LLVM_DIR given on
+# the command line, else an installed /usr/lib/llvm-23, as apt.llvm.org's
+# packages install it, else the pinned release, downloaded. camada: a
+# camada_DIR given, else the pinned release. mimalloc: a MIMALLOC_SOURCE_DIR
+# given (empty for glibc's malloc), else the pinned release's sources, which
+# CMakeLists.txt builds into the binary. Downloads go to $VEREDA_DEPS_DIR when
+# it is set, so that build directories can share them, else to <build>/deps,
+# once each. Whichever LLVM it is, its own clang and lld become the compiler
+# and linker unless the command line names a compiler: the official release
+# is an LTO build (its .a files hold bitcode) that only they can link, and
+# the models' bitcode must match the LLVM version anyway. OFF leaves
+# LLVM_DIR, camada_DIR, MIMALLOC_SOURCE_DIR (unset: glibc's malloc) and the
+# compiler to the user. Included before project().
 if(NOT DOWNLOAD_DEPENDENCIES)
   return()
 endif()
@@ -24,9 +25,9 @@ if(NOT host_os STREQUAL "Linux" OR NOT host_cpu STREQUAL "x86_64")
     "DOWNLOAD_DEPENDENCIES only pins Linux x86_64 archives; install LLVM and camada and set LLVM_DIR and camada_DIR")
 endif()
 
-set(LLVM_RELEASE_NAME "LLVM-21.1.8-Linux-X64")
-set(LLVM_URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/${LLVM_RELEASE_NAME}.tar.xz")
-set(LLVM_SHA256 "b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b")
+set(LLVM_RELEASE_NAME "LLVM-23.1.6-Linux-X64")
+set(LLVM_URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.6/${LLVM_RELEASE_NAME}.tar.xz")
+set(LLVM_SHA256 "bd4d1c434ff69ef06d19e7934c04708da677e5f2eb51f5bcf052ab91818f0094")
 set(CAMADA_URL "https://github.com/mikhailramalho/camada/releases/download/v0.24/camada-linux-x64.tar.gz")
 set(CAMADA_SHA256 "1640bf1dc576d0bd7106943a428de7bd667dd24d7db96f53be8b86207d3ed395")
 set(MIMALLOC_VERSION "3.7.0")
@@ -72,40 +73,33 @@ function(download_dep name url sha256 marker)
   file(WRITE "${stamp}" "${sha256}")
 endfunction()
 
-if(NOT LLVM_DIR)
-  foreach(major 21 22 23)
-    if(EXISTS "/usr/lib/llvm-${major}/lib/cmake/llvm/LLVMConfig.cmake"
-       AND EXISTS "/usr/lib/llvm-${major}/bin/clang")
-      set(installed_llvm "/usr/lib/llvm-${major}")
-      break()
-    endif()
-  endforeach()
-endif()
+set(installed_llvm "/usr/lib/llvm-23")
 if(LLVM_DIR)
   message(STATUS "LLVM_DIR given: no LLVM to download")
-elseif(installed_llvm)
+  get_filename_component(llvm_prefix "${LLVM_DIR}/../../.." ABSOLUTE)
+elseif(EXISTS "${installed_llvm}/lib/cmake/llvm/LLVMConfig.cmake"
+       AND EXISTS "${installed_llvm}/bin/clang")
   message(STATUS "Using the installed LLVM in ${installed_llvm}")
-  set(LLVM_DIR "${installed_llvm}/lib/cmake/llvm" CACHE PATH "LLVM package directory" FORCE)
-  set(CMAKE_C_COMPILER "${installed_llvm}/bin/clang")
-  set(CMAKE_CXX_COMPILER "${installed_llvm}/bin/clang++")
-  # Its libraries are plain objects: any linker works, and lld links fastest.
-  find_program(ld_lld NAMES ld.lld PATHS "${installed_llvm}/bin")
-  if(ld_lld)
-    set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=lld")
-  endif()
+  set(llvm_prefix "${installed_llvm}")
+  set(LLVM_DIR "${llvm_prefix}/lib/cmake/llvm" CACHE PATH "LLVM package directory" FORCE)
 else()
   download_dep(llvm "${LLVM_URL}" "${LLVM_SHA256}"
                "${LLVM_RELEASE_NAME}/lib/cmake/llvm/LLVMConfig.cmake")
   set(llvm_prefix "${DEPS_DIR}/llvm/${LLVM_RELEASE_NAME}")
   set(LLVM_DIR "${llvm_prefix}/lib/cmake/llvm" CACHE PATH "LLVM package directory" FORCE)
+endif()
+if(NOT CMAKE_CXX_COMPILER AND EXISTS "${llvm_prefix}/bin/clang++")
   set(CMAKE_C_COMPILER "${llvm_prefix}/bin/clang")
   set(CMAKE_CXX_COMPILER "${llvm_prefix}/bin/clang++")
-  # Each link runs ThinLTO's code generation over every LLVM module the
-  # binary uses; the cache keeps those objects between links, so a relink
-  # after a change to Vereda regenerates only what changed (55 s to 10 s per
-  # link on an 80-core machine, for a 63 MB cache).
-  set(CMAKE_EXE_LINKER_FLAGS_INIT
-      "-fuse-ld=lld -Wl,--thinlto-cache-dir=${CMAKE_BINARY_DIR}/thinlto-cache")
+  # An LTO build's link runs ThinLTO's code generation over every LLVM
+  # module the binary uses; the cache keeps those objects between links, so
+  # a relink after a change to Vereda regenerates only what changed (55 s to
+  # 10 s per link on an 80-core machine, for a 63 MB cache). With plain
+  # objects, as apt.llvm.org's, lld just links fastest.
+  if(EXISTS "${llvm_prefix}/bin/ld.lld")
+    set(CMAKE_EXE_LINKER_FLAGS_INIT
+        "-fuse-ld=lld -Wl,--thinlto-cache-dir=${CMAKE_BINARY_DIR}/thinlto-cache")
+  endif()
 endif()
 
 if(camada_DIR)
