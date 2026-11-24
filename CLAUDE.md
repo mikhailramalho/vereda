@@ -35,8 +35,8 @@ several files) and forwards every flag it does not know to the binary:
 
 The binary (`build/vereda`) takes only `.bc`/`.ll`; its flags are `cl::opt`s in
 `src/driver/main.cpp`. Useful for debugging: `--dump-ir-only`, `--dump-smt-only`,
-`--dump-dir <dir>`, `--keep-ir` (front end). Exit codes: 0 SUCCESSFUL, 1 FAILED or error,
-2 UNKNOWN.
+`--dump-dir <dir>`, `--keep-ir` (front end). Exit codes: 0 SUCCESSFUL, 1 FAILED, 2 UNKNOWN,
+6 error (as ESBMC).
 
 ## Regression tests
 
