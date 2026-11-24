@@ -115,10 +115,43 @@ Term Encoder::fresh(Type *ty, const std::string &name) {
   return t.symbol(id, sort(ty));
 }
 
+// The bounds facts gives x, if any.
+static std::optional<Terms::Bounds> boundsOf(const Encoder::Facts &facts, const Term &x) {
+  const Encoder::Fact *f = facts.find(Encoder::key(x));
+  return f ? f->bounds : std::nullopt;
+}
+
+void Encoder::learn(const Term &cond, Facts &into) {
+  t.equalities(cond, true, [&](const Term &x, const Term &c) {
+    const APInt &v = *t.constant(c);
+    std::optional<Terms::Bounds> b;
+    if (v.getBitWidth() <= 64)
+      b = Terms::Bounds{v.getZExtValue(), v.getZExtValue(), v.getSExtValue(), v.getSExtValue()};
+    into.set(key(x), {c, b});
+  });
+  t.narrow(cond, true, [&](const Term &x) { return boundsOf(into, x); },
+           [&](const Term &x, const Terms::Bounds &b) {
+             const Fact *f = into.find(key(x));
+             into.set(key(x), {f ? f->constant : Term(), b});
+           });
+}
+
+std::optional<Encoder::Fact> Encoder::join(const Fact &a, const Fact &b) {
+  Fact r{a.constant == b.constant ? a.constant : Term(), std::nullopt};
+  if (a.bounds && b.bounds)
+    r.bounds = Terms::Bounds{std::min(a.bounds->ulo, b.bounds->ulo),
+                             std::max(a.bounds->uhi, b.bounds->uhi),
+                             std::min(a.bounds->slo, b.bounds->slo),
+                             std::max(a.bounds->shi, b.bounds->shi)};
+  if (!r.constant && !r.bounds)
+    return std::nullopt;
+  return r;
+}
+
 Term Encoder::value(const Value *v) {
   if (auto it = env.find(v); it != env.end()) {
-    const memory::Cell *c = facts.find(key(it->second));
-    return c ? c->data : it->second;
+    const Fact *f = facts.find(key(it->second));
+    return f && f->constant ? f->constant : it->second;
   }
   if (auto *ci = dyn_cast<ConstantInt>(v))
     return ci->getBitWidth() == 1 ? t.boolean(ci->isOne()) : t.bv(ci->getValue());
@@ -535,6 +568,11 @@ void Encoder::encode(Instruction &inst) {
     case CmpInst::ICMP_SLE: r = t.sle(a, b); break;
     default: throw Unsupported("predicate " + std::string(cmp->getPredicateName(cmp->getPredicate())));
     }
+    // The path's bounds settle it here; the term itself stays as it is
+    // for other paths.
+    if (facts.size() && !t.constant(r))
+      if (int d = t.decide(r, [&](const Term &x) { return boundsOf(facts, x); }); d >= 0)
+        r = t.boolean(d);
   } else if (auto *sel = dyn_cast<SelectInst>(&inst)) {
     r = t.ite(value(sel->getCondition()), value(sel->getTrueValue()),
                 value(sel->getFalseValue()));

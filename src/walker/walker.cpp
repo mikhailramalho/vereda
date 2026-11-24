@@ -440,15 +440,16 @@ private:
     Term guard = anyGuard(arrivals);
     memory::State st = merged(arrivals);
     // The iteration's facts hold only in it, and the loop may not run.
-    encode::Encoder::Facts facts = common(arrivals);
-    Term body = t.land(guard, t.ult(k, trips));
+    encode::Encoder::Facts facts = common(arrivals), inside = facts;
+    Term inRange = t.ult(k, trips), body = t.land(guard, inRange);
+    enc.learn(inRange, inside); // k < trips holds in the iteration
     // Built after body, which keeps k < trips: every term with k counts only
     // under body, or as an element the loop wrote, n < trips, once
     // substitute puts n for k; there, terms fold as if it held.
     if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
       t.bound(k, n->getZExtValue());
     if (!t.isFalse(body)) {
-      frame.arrivals[header].push_back({body, first, st, facts});
+      frame.arrivals[header].push_back({body, first, st, inside});
       summary = Summarising{l, k, sum.store, {}, 0};
       region(frame, fi, l);
       // Drop the back edge and the iteration's own exit.
@@ -666,21 +667,20 @@ private:
 
   // The facts (encoder.h) that hold on every one of paths: what a join keeps.
   template <typename Paths> static encode::Encoder::Facts common(const Paths &paths) {
-    encode::Encoder::Facts f = paths[0].facts;
-    for (const auto &p : drop_begin(paths))
-      encode::Encoder::Facts::diff(paths[0].facts, p.facts,
-                                   [&](auto k, const memory::Cell *first, const memory::Cell *) {
-                                     if (first)
-                                       f.eraseObject(k.first);
-                                   });
+    using encode::Encoder;
+    Encoder::Facts f = paths[0].facts;
+    for (const auto &p : drop_begin(paths)) {
+      Encoder::Facts was = f; // keeps the nodes diff walks while f changes
+      Encoder::Facts::diff(was, p.facts, [&](auto k, const Encoder::Fact *a, const Encoder::Fact *b) {
+        if (!a)
+          return;
+        if (std::optional<Encoder::Fact> both = b ? Encoder::join(*a, *b) : std::nullopt)
+          f.set(k, *both);
+        else
+          f.eraseObject(k.first);
+      });
+    }
     return f;
-  }
-
-  // Adds to facts what cond, which holds on the path, makes equal to a constant.
-  void learn(Term cond, encode::Encoder::Facts &facts) {
-    t.equalities(cond, true, [&](const Term &x, const Term &c) {
-      facts.set(encode::Encoder::key(x), {c, x});
-    });
   }
 
   // Takes the edge from pred to succ, on which edge holds when it is given.
@@ -690,7 +690,7 @@ private:
       return;
     Arrival a{guard, {}, st, enc.facts};
     if (edge)
-      learn(edge, a.facts);
+      enc.learn(edge, a.facts);
     std::swap(enc.facts, a.facts); // the phis take their values on the edge
     for (PHINode &phi : succ->phis())
       a.phiValues.push_back(enc.value(phi.getIncomingValueForBlock(pred)));
@@ -885,7 +885,7 @@ private:
     if (name == "__VERIFIER_assume") {
       trace.push_back({Step::Assumption, guard, ir::location(c), ir::callArgumentText(c), {}});
       Term holds = enc.isTrue(c.getArgOperand(0));
-      learn(holds, enc.facts);
+      enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
     if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
@@ -898,7 +898,7 @@ private:
       // front end treats it as the assertion it was meant to be.
       Term holds = enc.isTrue(c.getArgOperand(0));
       if (!counts(false)) {
-        learn(holds, enc.facts);
+        enc.learn(holds, enc.facts);
         return t.land(guard, holds);
       }
       assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
