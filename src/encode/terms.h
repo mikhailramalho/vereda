@@ -1,8 +1,9 @@
 // Stage encode: the term builder every stage uses in place of camada's
 // constructors. It folds as terms are built (plan, section 4.2): constants,
 // identities, an ite with a constant guard, extract over concat, a
-// comparison against the least or greatest value, and a select at a
-// constant index over stores at other constant indices and joins. It also
+// comparison against the least or greatest value or that the ranges of its
+// sides settle, and a select at a constant index over stores at other
+// constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
 // so pointer equality is structural equality for terms built here.
 #pragma once
@@ -13,6 +14,7 @@
 #include <llvm/ADT/Twine.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -97,9 +99,13 @@ public:
   // no term for. A read of it reduces to def(i) as it is built, as ESBMC's
   // simplifier reduces its lambda. A read through stores or choices above it
   // stays a select, and the definition at that index becomes a constraint:
-  // the solver sees the array only at the indices it is read at.
-  Ref lambda(const camada::SMTSortRef &sort, const std::string &name,
-             std::function<Ref(const Ref &)> def);
+  // the solver sees the array only at the indices it is read at. A read at
+  // an index i where misses(i) holds, at which def(i) is below's element,
+  // goes to below without a term: of a chain of lambdas, one per row of a
+  // 2-D array, a read reaches only those of the rows it may be in.
+  using Def = std::function<Ref(const Ref &)>;
+  Ref lambda(const camada::SMTSortRef &sort, const std::string &name, Def def,
+             const Ref &below = {}, std::function<bool(const Ref &)> misses = {});
   // e with the symbol from replaced by to, folded again.
   Ref substitute(const Ref &e, const Ref &from, const Ref &to);
 
@@ -123,6 +129,21 @@ public:
   Ref filledWith(const Ref &e) const;
   // Whether e multiplies, divides or takes a remainder, outside of arrays.
   bool arithmetic(const Ref &e);
+
+  // The values a term of at most 64 bits may take: lo + stride * i for
+  // i = 0, 1, ... up to hi, with no wrap past its width (a strided
+  // interval, as in value-set analysis). Known for constants, symbols given
+  // a bound, and add, sub, mul, logical shift right, extension, extract and
+  // concat of those, as offsets are built; null for anything else.
+  // Comparisons fold by them.
+  struct Range {
+    uint64_t lo, hi, stride;
+  };
+  std::optional<Range> range(const Ref &e, unsigned depth = 0);
+  // Symbol x is below limit, at least 1, wherever a term holding it is
+  // read: the index of a summarised loop's iteration, whose terms count only
+  // under its guard.
+  void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.get(), x, limit); }
 
 private:
   // equalities over at most budget nodes of cond.
@@ -195,7 +216,12 @@ private:
   // Constant arrays built here (kept alive, so the key stays theirs) and
   // the value each holds.
   std::unordered_map<const camada::SMTExpr *, std::pair<Ref, Ref>> filled;
-  std::unordered_map<const camada::SMTExpr *, std::function<Ref(const Ref &)>> lambdas;
+  struct Lambda {
+    Def def;
+    Ref below;
+    std::function<bool(const Ref &)> misses;
+  };
+  std::unordered_map<const camada::SMTExpr *, Lambda> lambdas;
   // Per store or choice of arrays, the lambdas it reads through without
   // passing another one.
   std::unordered_map<const camada::SMTExpr *, std::vector<Ref>> under;
@@ -207,6 +233,13 @@ private:
   // stores, and a load of an element reads it once per byte.
   std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>, Ref, PairHash>
       selects;
+  // Whether a < b, or a <= b, holds for every value range gives them (1),
+  // for none (0), or neither (-1); signed only below the sign bit.
+  int order(const Ref &a, const Ref &b, bool orEqual, bool sign);
+  // How many low bits of e, a sum or product, are known to be zero.
+  unsigned zeros(const Ref &e, unsigned depth = 0);
+  std::unordered_map<const camada::SMTExpr *, std::pair<Ref, uint64_t>> bounds;
+  std::unordered_map<const camada::SMTExpr *, std::optional<Range>> ranges;
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const camada::SMTExpr *, std::unordered_set<const camada::SMTExpr *>> freeOf;
 };
