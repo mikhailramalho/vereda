@@ -54,8 +54,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
 
-      # LLVM and camada as head's configure found them, for base's build
-      # and for the benchmark.
+      # LLVM, camada and mimalloc as head's configure found them, for base's
+      # build and for the benchmark.
       - name: Build head
         run: |
           cmake -S head -B head/build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
@@ -63,13 +63,15 @@ jobs:
           llvm_dir=$(sed -n 's/^LLVM_DIR:PATH=//p' head/build/CMakeCache.txt)
           echo "LLVM=${llvm_dir%/lib/cmake/llvm}" >> "$GITHUB_ENV"
           sed -n 's/^camada_DIR:PATH=/CAMADA_DIR=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
+          sed -n 's/^MIMALLOC_SOURCE_DIR:PATH=/MIMALLOC=/p' head/build/CMakeCache.txt >> "$GITHUB_ENV"
 
-      # The same LLVM, camada, clang and lld as head, given explicitly, so a
-      # base from before configure found an installed LLVM builds the same.
+      # The same LLVM, camada, mimalloc, clang and lld as head, given
+      # explicitly, so a base from before configure found an installed LLVM
+      # builds the same; a base from before mimalloc ignores it.
       - name: Build base
         run: |
           cmake -S base -B base/build -G Ninja \
-            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR \
+            -DLLVM_DIR=$LLVM/lib/cmake/llvm -Dcamada_DIR=$CAMADA_DIR -DMIMALLOC_SOURCE_DIR=$MIMALLOC \
             -DCMAKE_C_COMPILER=$LLVM/bin/clang -DCMAKE_CXX_COMPILER=$LLVM/bin/clang++ \
             -DCMAKE_LINKER_TYPE=LLD -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=$LLVM/bin/ld.lld
           ninja -C base/build

@@ -1,14 +1,16 @@
-# DOWNLOAD_DEPENDENCIES=ON finds or fetches LLVM and camada and points
-# find_package at them. LLVM: a LLVM_DIR given on the command line, else an
-# installed /usr/lib/llvm-21 (22, 23), as apt.llvm.org's packages install it,
-# else the pinned release, downloaded. camada: a camada_DIR given, else the
-# pinned release. Downloads go to $VEREDA_DEPS_DIR when it is set, so that
-# build directories can share them, else to <build>/deps, once each. The
+# DOWNLOAD_DEPENDENCIES=ON finds or fetches LLVM, camada and mimalloc and
+# points the build at them. LLVM: a LLVM_DIR given on the command line, else
+# an installed /usr/lib/llvm-21 (22, 23), as apt.llvm.org's packages install
+# it, else the pinned release, downloaded. camada: a camada_DIR given, else
+# the pinned release. mimalloc: a MIMALLOC_SOURCE_DIR given (empty for
+# glibc's malloc), else the pinned release's sources, which CMakeLists.txt
+# builds into the binary. Downloads go to $VEREDA_DEPS_DIR when it is set, so
+# that build directories can share them, else to <build>/deps, once each. The
 # official LLVM release is an LTO build (its .a files hold bitcode), so its
 # own clang and lld become the compiler and linker; an installed LLVM's clang
 # is the compiler too, since the models' bitcode must match its version. OFF
-# leaves LLVM_DIR, camada_DIR and the compiler to the user. Included before
-# project().
+# leaves LLVM_DIR, camada_DIR, MIMALLOC_SOURCE_DIR (unset: glibc's malloc) and
+# the compiler to the user. Included before project().
 if(NOT DOWNLOAD_DEPENDENCIES)
   return()
 endif()
@@ -27,6 +29,9 @@ set(LLVM_URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.
 set(LLVM_SHA256 "b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b")
 set(CAMADA_URL "https://github.com/mikhailramalho/camada/releases/download/v0.24/camada-linux-x64.tar.gz")
 set(CAMADA_SHA256 "1640bf1dc576d0bd7106943a428de7bd667dd24d7db96f53be8b86207d3ed395")
+set(MIMALLOC_VERSION "3.7.0")
+set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v${MIMALLOC_VERSION}.tar.gz")
+set(MIMALLOC_SHA256 "1b8653b9ff9b841a97f2c50fd996e89e1a0cb712c3c5b0980ef16a027eb7acf8")
 
 if(DEFINED ENV{VEREDA_DEPS_DIR})
   set(DEPS_DIR "$ENV{VEREDA_DEPS_DIR}")
@@ -110,4 +115,13 @@ else()
                "lib/cmake/camada/camadaConfig.cmake")
   set(camada_DIR "${DEPS_DIR}/camada/lib/cmake/camada"
       CACHE PATH "camada package directory" FORCE)
+endif()
+
+if(DEFINED MIMALLOC_SOURCE_DIR)
+  message(STATUS "MIMALLOC_SOURCE_DIR given: no mimalloc to download")
+else()
+  download_dep(mimalloc "${MIMALLOC_URL}" "${MIMALLOC_SHA256}"
+               "mimalloc-${MIMALLOC_VERSION}/CMakeLists.txt")
+  set(MIMALLOC_SOURCE_DIR "${DEPS_DIR}/mimalloc/mimalloc-${MIMALLOC_VERSION}"
+      CACHE PATH "mimalloc source directory" FORCE)
 endif()

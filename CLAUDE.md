@@ -20,7 +20,8 @@ ctest --test-dir build -R 'vereda/loop_nested$' --output-on-failure   # one test
 
 With `DOWNLOAD_DEPENDENCIES`, an LLVM 21-23 under `/usr/lib/llvm-*` is used with its clang;
 otherwise the pinned release is downloaded, an LTO build whose own clang/lld become the
-compiler and linker. camada is downloaded unless `camada_DIR` is given. Set
+compiler and linker. camada is downloaded unless `camada_DIR` is given, and mimalloc's
+sources (built in place of glibc's malloc) unless `MIMALLOC_SOURCE_DIR` is. Set
 `VEREDA_DEPS_DIR` to share downloads between build directories and worktrees. Without
 `DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR`.
 
