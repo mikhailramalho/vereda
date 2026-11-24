@@ -1,3 +1,5 @@
+// strdup and strndup copy a string whose first character is nondet into a new
+// block: the copies match, and writing one leaves the source alone.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdlib.h>
@@ -14,7 +16,7 @@ int main(void) {
     __VERIFIER_assert(strlen(d) == strlen(s));
     char c = s[0];
     d[0] = 'x';
-    __VERIFIER_assert(s[0] == c); // the copy is a separate block
+    __VERIFIER_assert(s[0] == c);
     free(d);
   }
 

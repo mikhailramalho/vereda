@@ -1,3 +1,4 @@
+// strndup(s, 2) is empty, not two characters long, when s[0] is 0.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <stdlib.h>
@@ -9,6 +10,6 @@ int main(void) {
   char s[4] = {__VERIFIER_nondet_char(), 'b', 'c', 0};
   char *e = strndup(s, 2);
   if (e)
-    __VERIFIER_assert(strlen(e) == 2); // This is wrong when s[0] is 0
+    __VERIFIER_assert(strlen(e) == 2);
   return 0;
 }
