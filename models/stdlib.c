@@ -44,3 +44,45 @@ div_t div(int n, int d) { return (div_t){n / d, n % d}; }
 ldiv_t ldiv(long n, long d) { return (ldiv_t){n / d, n % d}; }
 lldiv_t lldiv(long long n, long long d) { return (lldiv_t){n / d, n % d}; }
 imaxdiv_t imaxdiv(intmax_t n, intmax_t d) { return (imaxdiv_t){n / d, n % d}; }
+
+// Helper function to convert string to integer
+static unsigned long long atoi_helper(const char *s) {
+  // Skip leading whitespace (isspace)
+  while (*s == ' ' || (*s >= '\t' && *s <= '\r'))
+    s++;
+
+  // Check for sign
+  int neg = 0;
+  if (*s == '-') {
+    neg = 1;
+    s++;
+  } else if (*s == '+') {
+    s++;
+  }
+
+  // Convert digits
+  unsigned long long result = 0;
+  while (*s >= '0' && *s <= '9') {
+    result = result * 10 + (*s - '0');
+    s++;
+  }
+
+  // Apply sign if needed
+  if (neg)
+    return -result;
+
+  return result;
+}
+
+// Convert string to integer (C17 7.22.1.2)
+int atoi(const char *s) {
+  return (int)atoi_helper(s);
+}
+
+long atol(const char *s) {
+  return (long)atoi_helper(s);
+}
+
+long long atoll(const char *s) {
+  return (long long)atoi_helper(s);
+}
