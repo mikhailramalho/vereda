@@ -283,9 +283,9 @@ private:
           it->second.clear();
           return;
         }
-        // One solver call per iteration without --unwind; term
-        // folding will settle most of these without the solver.
-        if (!opts.unwind && s.checkSatAssuming({reached}) == camada::CheckResult::UNSAT) {
+        // Without --unwind, whether another iteration is reachable; term
+        // folding settles most of these without the solver.
+        if (!opts.unwind && unreachable(reached)) {
           it->second.clear();
           return;
         }
@@ -483,6 +483,15 @@ private:
   static ir::SourceLoc loopLocation(Loop *l) {
     DebugLoc loc = l->getStartLoc();
     return ir::location(loc, l->getHeader()->getParent()->getName());
+  }
+
+  // Whether no path satisfies guard. A constant needs no solver call; a
+  // counting loop whose condition folds would otherwise ask one per
+  // iteration.
+  bool unreachable(SMTExprRef guard) {
+    if (t.isTrue(guard))
+      return false;
+    return t.isFalse(guard) || s.checkSatAssuming({guard}) == camada::CheckResult::UNSAT;
   }
 
   SMTExprRef anyGuard(const SmallVectorImpl<Arrival> &arrivals) {
@@ -903,7 +912,7 @@ private:
           number = ++recursionsIn[c.getFunction()];
         unwound(Unwound::Recursion, number, ir::location(c), guard, &c);
         cut = true;
-      } else if (!opts.unwind && s.checkSatAssuming({guard}) == camada::CheckResult::UNSAT) {
+      } else if (!opts.unwind && unreachable(guard)) {
         cut = true;
       }
       if (cut) { // no path continues; the result only has to be bound
