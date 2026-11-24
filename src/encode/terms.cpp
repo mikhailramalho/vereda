@@ -1,5 +1,6 @@
 #include "encode/terms.h"
 
+#include <algorithm>
 #include <llvm/ADT/Hashing.h>
 #include <llvm/ADT/SmallString.h>
 
@@ -146,6 +147,24 @@ Ref Terms::make(Node n) {
   auto [it, fresh] = memo.try_emplace(k);
   if (fresh) {
     it->second = build(n);
+    std::vector<Ref> reads;
+    auto add = [&](const Ref &l) {
+      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &r) { return r.get() == l.get(); }))
+        reads.push_back(l);
+    };
+    auto through = [&](const Ref &array) {
+      if (lambdas.count(array.get()))
+        add(array);
+      else if (auto u = under.find(array.get()); u != under.end())
+        for (const Ref &l : u->second)
+          add(l);
+    };
+    if (n.op == Op::Store)
+      through(n.a);
+    else if (n.op == Op::Ite)
+      through(n.b), through(n.c);
+    if (!reads.empty())
+      under.emplace(it->second.get(), std::move(reads));
     nodes.try_emplace(it->second.get(), std::move(n));
   }
   return it->second;
@@ -567,7 +586,112 @@ Ref Terms::select(const Ref &array, const Ref &index) {
       return v;
   if (auto it = filled.find(arr.get()); it != filled.end())
     return it->second.second;
-  return make({Op::Select, arr, index});
+  if (lambdas.count(arr.get()))
+    return reduce(arr, index);
+  bool fresh = !memo.count({Op::Select, arr.get(), index.get(), nullptr, 0, 0});
+  Ref r = make({Op::Select, arr, index});
+  if (auto u = under.find(arr.get()); fresh && u != under.end())
+    for (const Ref &l : std::vector<Ref>(u->second))
+      if (!memo.count({Op::Select, l.get(), index.get(), nullptr, 0, 0}))
+        s.addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
+  return r;
+}
+
+Ref Terms::lambda(const camada::SMTSortRef &sort, const std::string &name,
+                  std::function<Ref(const Ref &)> def) {
+  Ref r = s.mkSymbol(name, sort);
+  lambdas.emplace(r.get(), std::move(def));
+  return r;
+}
+
+Ref Terms::reduce(const Ref &l, const Ref &index) {
+  if (auto it = reduced.find({l.get(), index.get()}); it != reduced.end())
+    return it->second.second;
+  Ref r = lambdas.at(l.get())(index);
+  reduced.try_emplace({l.get(), index.get()}, index, r);
+  return r;
+}
+
+Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
+  std::unordered_set<const camada::SMTExpr *> &same = freeOf[from.get()];
+  std::unordered_map<const camada::SMTExpr *, Ref> done;
+  // What x becomes, or null while its operands are pending.
+  auto known = [&](const Ref &x) -> Ref {
+    if (x.get() == from.get())
+      return to;
+    if (!node(x) || same.count(x.get()))
+      return x;
+    auto it = done.find(x.get());
+    return it == done.end() ? Ref() : it->second;
+  };
+  // Iterative, as a guard can be deeper than the stack.
+  std::vector<Ref> stack{e};
+  while (!stack.empty()) {
+    Ref x = stack.back();
+    if (known(x)) {
+      stack.pop_back();
+      continue;
+    }
+    const Node &n = *node(x);
+    Ref kids[3] = {n.a, n.b, n.c}, now[3];
+    bool ready = true;
+    for (unsigned i = 0; i < 3; ++i)
+      if (kids[i] && !(now[i] = known(kids[i]))) {
+        stack.push_back(kids[i]);
+        ready = false;
+      }
+    if (!ready)
+      continue;
+    stack.pop_back();
+    auto raw = [](const Ref &r) { return r ? r.get() : nullptr; };
+    if (raw(now[0]) == raw(kids[0]) && raw(now[1]) == raw(kids[1]) && raw(now[2]) == raw(kids[2]))
+      same.insert(x.get());
+    else
+      done[x.get()] = rebuild(n, now[0], now[1], now[2]);
+  }
+  return known(e);
+}
+
+Ref Terms::rebuild(const Node &n, const Ref &a, const Ref &b, const Ref &c) {
+  switch (n.op) {
+  case Op::Add: return add(a, b);
+  case Op::Sub: return sub(a, b);
+  case Op::Mul: return mul(a, b);
+  case Op::UDiv: return udiv(a, b);
+  case Op::SDiv: return sdiv(a, b);
+  case Op::URem: return urem(a, b);
+  case Op::SRem: return srem(a, b);
+  case Op::Shl: return shl(a, b);
+  case Op::LShr: return lshr(a, b);
+  case Op::AShr: return ashr(a, b);
+  case Op::BVAnd: return bvand(a, b);
+  case Op::BVOr: return bvor(a, b);
+  case Op::BVXor: return bvxor(a, b);
+  case Op::BVNot: return bvnot(a);
+  case Op::Concat: return concat(a, b);
+  case Op::Extract: return extract(a, n.x, n.y);
+  case Op::ZExt: return zext(a, n.x);
+  case Op::SExt: return sext(a, n.x);
+  case Op::Eq: return eq(a, b);
+  case Op::Ult: return ult(a, b);
+  case Op::Ule: return ule(a, b);
+  case Op::Slt: return slt(a, b);
+  case Op::Sle: return sle(a, b);
+  case Op::And: return land(a, b);
+  case Op::Or: return lor(a, b);
+  case Op::Xor: return lxor(a, b);
+  case Op::Not: return lnot(a);
+  case Op::Ite: return ite(a, b, c);
+  case Op::UAddO: return uaddo(a, b);
+  case Op::SAddO: return saddo(a, b);
+  case Op::USubO: return usubo(a, b);
+  case Op::SSubO: return ssubo(a, b);
+  case Op::UMulO: return umulo(a, b);
+  case Op::SMulO: return smulo(a, b);
+  case Op::Select: return select(a, b);
+  case Op::Store: return store(a, b, c);
+  }
+  llvm_unreachable("operation");
 }
 
 Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {

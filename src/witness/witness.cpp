@@ -50,17 +50,40 @@ static std::map<std::string, std::unique_ptr<MemoryBuffer>> inputFiles(const Mod
   return files;
 }
 
-// The column of the ')' that closes the call to callee at loc, which is
-// where a function_return waypoint points; 0 when the source there is not
-// that call on one line, as for a call a macro expands to, whose location
-// is the macro's name.
-static unsigned closingParen(const MemoryBuffer &file, const ir::SourceLoc &loc,
+// Whether text holds a call: a name followed by '(' that is not a keyword.
+static bool hasCall(StringRef text) {
+  static const StringSet<> keywords = {"if", "while", "for", "switch", "return", "sizeof"};
+  for (size_t i = 0; i < text.size(); ++i) {
+    if (!isAlpha(text[i]) && text[i] != '_')
+      continue;
+    size_t end = i;
+    while (end < text.size() && (isAlnum(text[end]) || text[end] == '_'))
+      ++end;
+    if (text.drop_front(end).ltrim().starts_with("(") && !keywords.contains(text.slice(i, end)))
+      return true;
+    i = end;
+  }
+  return false;
+}
+
+// The column of a function_return waypoint for the call to callee at loc,
+// or 0 to leave it out. The format puts it at the ')' that closes the call,
+// but UAutomizer 0.3.2 has no call there: it matches the waypoint at the end
+// of the statements around the call, which is that ')' for an assignment
+// or a condition but the ';' of a declaration. Without a column both
+// validators take the line, CPAchecker 4.3 at its first call, so the column
+// is left out unless another call comes before this one on the line. It is
+// left out too when the source there is not that call on one line, as for
+// a call a macro expands to, whose location is the macro's name.
+static unsigned returnColumn(const MemoryBuffer &file, const ir::SourceLoc &loc,
                              StringRef callee) {
   SmallVector<StringRef, 0> lines;
   file.getBuffer().split(lines, '\n');
   if (loc.line > lines.size() || !loc.col)
     return 0;
   StringRef line = lines[loc.line - 1];
+  if (!hasCall(line.take_front(loc.col - 1)))
+    return 0;
   StringRef rest = line.drop_front(loc.col - 1);
   if (!rest.consume_front(callee))
     return 0;
@@ -75,6 +98,39 @@ static unsigned closingParen(const MemoryBuffer &file, const ir::SourceLoc &loc,
       return i + 1;
   }
   return 0;
+}
+
+// Where format 2.0 puts the branching waypoint of a branch step: at the
+// keyword of its statement. A loop's step is there already; an if's is at
+// the start of its condition, after "if (". None when the text is not that,
+// as for a statement a macro expands to.
+static std::optional<ir::SourceLoc> keyword(const MemoryBuffer &file, ir::SourceLoc loc) {
+  StringRef text = file.getBuffer();
+  size_t pos = 0;
+  for (unsigned line = 1; line < loc.line; ++line) {
+    pos = text.find('\n', pos);
+    if (pos == StringRef::npos)
+      return std::nullopt;
+    ++pos;
+  }
+  pos += loc.col - 1;
+  if (!loc.col || pos >= text.size())
+    return std::nullopt;
+  auto isIdent = [](char c) { return isAlnum(c) || c == '_'; };
+  StringRef word = text.drop_front(pos).take_while(isIdent);
+  if (word == "while" || word == "for")
+    return loc;
+  StringRef before = text.take_front(pos).rtrim();
+  if (!before.consume_back("("))
+    return std::nullopt;
+  before = before.rtrim();
+  if (!before.ends_with("if") || (before.size() > 2 && isIdent(before[before.size() - 3])))
+    return std::nullopt;
+  size_t start = before.size() - 2;
+  size_t lineStart = text.rfind('\n', start) + 1; // npos + 1 is 0: the first line
+  loc.line = 1 + text.take_front(start).count('\n');
+  loc.col = start - lineStart + 1;
+  return loc;
 }
 
 // The SV-COMP nondet functions whose sign C fixes; pthread_t, sector_t and
@@ -164,10 +220,12 @@ static void waypoint(raw_ostream &os, StringRef type, const ir::SourceLoc &loc, 
      << "    - waypoint:\n"
      << "        type: " << quote(type) << "\n"
      << "        action: \"follow\"\n";
-  if (!constraint.empty())
+  if (!constraint.empty()) {
     os << "        constraint:\n"
-       << "          value: " << quote(constraint) << "\n"
-       << "          format: \"acsl_expression\"\n";
+       << "          value: " << quote(constraint) << "\n";
+    if (type != "branching") // whose constraint is a value, not an expression
+      os << "          format: \"acsl_expression\"\n";
+  }
   os << "        location:\n"
      << "          file_name: " << quote(loc.file) << "\n"
      << "          line: " << loc.line << "\n";
@@ -185,9 +243,11 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
   std::string content;
   raw_string_ostream os(content);
   const walker::Step *target = nullptr;
+  size_t lastBranching = std::string::npos; // where the last waypoint starts, if branching
   for (const walker::Step &step : trace) {
     bool isCheck = step.kind == walker::Step::Check;
-    if ((isCheck && step.check != violated) || (!isCheck && step.kind != walker::Step::Call))
+    if ((isCheck && step.check != violated) || step.kind == walker::Step::Assignment ||
+        step.kind == walker::Step::Assumption)
       continue;
     auto reached = s.getBool(step.guard);
     if (!reached || !reached.value())
@@ -197,11 +257,21 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
       break;
     }
     auto file = files.find(step.loc.file);
-    std::string value = constraint(s, step, m);
-    if (file == files.end() || !step.loc.line || value.empty())
+    if (file == files.end() || !step.loc.line)
       continue;
-    waypoint(os, "function_return", step.loc, closingParen(*file->second, step.loc, step.text),
-             value);
+    if (step.kind == walker::Step::Branch) {
+      if (std::optional<ir::SourceLoc> loc = keyword(*file->second, step.loc)) {
+        lastBranching = content.size();
+        waypoint(os, "branching", *loc, loc->col, step.text);
+      }
+      continue;
+    }
+    std::string value = constraint(s, step, m);
+    if (!value.empty()) {
+      lastBranching = std::string::npos;
+      waypoint(os, "function_return", step.loc,
+               returnColumn(*file->second, step.loc, step.text), value);
+    }
   }
   // The witness states unreach-call, which only a call to reach_error
   // violates.
@@ -211,6 +281,12 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
   if (!files.count(target->loc.file))
     return createStringError("the call to reach_error is in " + target->loc.file +
                              ", not in an input file");
+  // A branching waypoint right before the target says little the target
+  // does not: mostly it is the if around the call to reach_error. With it,
+  // CPAchecker 4.3's refinement fails on some tasks it confirms without it
+  // (MathSAT cannot interpolate).
+  if (lastBranching != std::string::npos)
+    content.resize(lastBranching);
   waypoint(os, "target", target->loc, target->loc.col, "");
 
   char now[32];

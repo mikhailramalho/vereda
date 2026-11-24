@@ -23,6 +23,10 @@ CLANG_FLAGS = [
     # C11 lets the compiler assume loops without side effects terminate;
     # clang would mark them mustprogress and the binary rejects that.
     "-fno-finite-loops",
+    # The names clang gives blocks (if.then, while.end) tell which source
+    # condition a branch decides and which way, for the witness's branching
+    # waypoints.
+    "-fno-discard-value-names",
     # Old C, as SV-COMP's CIL and kernel sources are: clang 15 and later make
     # these hard errors. ESBMC relaxes the same set (clang_c_language.cpp).
     "-Wno-error=implicit-function-declaration",

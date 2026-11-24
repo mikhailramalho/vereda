@@ -8,8 +8,4 @@ int main() {
   __VERIFIER_assert(x == N);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_stride_bound_fail
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

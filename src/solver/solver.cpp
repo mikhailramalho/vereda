@@ -28,21 +28,24 @@ struct Bitwuzla : camada::BitwuzlaSolver {
 } // namespace
 #endif
 
-Expected<camada::SMTSolverRef> create(const std::string &name) {
+Expected<camada::SMTSolverRef> create(camada::SolverKind kind) {
+  switch (kind) {
 #if CAMADA_HAVE_BITWUZLA
-  if (name == "bitwuzla")
+  case camada::SolverKind::Bitwuzla:
     return camada::SMTSolverRef(new Bitwuzla());
 #endif
 #if CAMADA_HAVE_Z3
-  if (name == "z3")
+  case camada::SolverKind::Z3:
     return camada::createZ3Solver();
 #endif
 #if CAMADA_HAVE_CVC5
-  if (name == "cvc5")
+  case camada::SolverKind::CVC5:
     return camada::createCVC5Solver();
 #endif
-  return createStringError(inconvertibleErrorCode(), "solver %s is not available",
-                           name.c_str());
+  default:
+    return createStringError(inconvertibleErrorCode(),
+                             "this camada was built without that solver");
+  }
 }
 
 Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,

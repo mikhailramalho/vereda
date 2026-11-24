@@ -16,8 +16,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_threads_fail
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

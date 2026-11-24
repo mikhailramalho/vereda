@@ -1,6 +1,6 @@
 // --multi-property decides every check and prints a counterexample for each
 // one that fails, the unwound loop included.
-// RUN: --unwind 2 --multi-property
+// RUN: --no-summarize-array-loops --unwind 2 --multi-property
 // EXPECT: (\[Counterexample\][\s\S]*){3}
 // EXPECT: FAILED +\[main\.unwind\.0\]
 // EXPECT: FAILED +\[main\.assertion\.1\]

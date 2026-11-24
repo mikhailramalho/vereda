@@ -1,5 +1,6 @@
 #include "walker/walker.h"
 
+#include "analysis/loops.h"
 #include "ir/debug.h"
 #include "ir/load.h"
 #include "ir/sanitizer.h"
@@ -12,6 +13,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CaptureTracking.h>
 #include <llvm/Analysis/LoopInfo.h>
+#include <llvm/Analysis/ScalarEvolutionExpressions.h>
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
@@ -34,7 +36,7 @@ namespace {
 
 // Per-function CFG facts, computed once.
 struct FunctionInfo {
-  explicit FunctionInfo(Function &f) : dt(f), li(dt) {
+  FunctionInfo(Function &f, analysis::Counted counted) : dt(f), li(dt), loops(f, dt, li, counted) {
     for (BasicBlock *bb : ReversePostOrderTraversal<Function *>(&f))
       rpo.push_back(bb);
     DenseMap<const BasicBlock *, unsigned> index;
@@ -52,6 +54,7 @@ struct FunctionInfo {
 
   DominatorTree dt;
   LoopInfo li;
+  analysis::Loops loops;
   std::vector<BasicBlock *> rpo;
   DenseMap<const Loop *, unsigned> loopNumber; // ESBMC's "loop N", per function
 };
@@ -133,14 +136,24 @@ public:
   void entry(Function &f) {
     for (Argument &arg : f.args())
       enc.bind(&arg, enc.fresh(arg.getType(), "arg_" + arg.getName().str()));
-    const Module &m = *f.getParent();
+    Module &m = *f.getParent();
     mem.allocateGlobals(m);
     memory::State st = mem.initial();
     for (const GlobalVariable &g : m.globals())
       if (unsigned bits = ownsArrays(&g, m.getDataLayout()))
         mem.own(st, mem.global(&g), bits);
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
+    errnoObject = m.getNamedGlobal("__vereda_errno");
+    for (GlobalVariable &g : m.globals())
+      if (g.isDeclaration() && !g.isConstant() && !g.getName().starts_with("__vereda_"))
+        externs.push_back(&g);
     function(f, t.boolean(true), st);
+  }
+
+  // The number of loops summarised, as ESBMC prints it.
+  void report() const {
+    if (!summarised.empty())
+      outs() << "Summarised " << summarised.size() << " array loop(s)\n";
   }
 
 private:
@@ -220,7 +233,8 @@ private:
   FunctionInfo &info(Function &f) {
     std::unique_ptr<FunctionInfo> &fi = infos[&f];
     if (!fi)
-      fi = std::make_unique<FunctionInfo>(f);
+      fi = std::make_unique<FunctionInfo>(
+          f, analysis::Counted{counts(false), counts(true), opts.property == Property::UnreachCall});
     return *fi;
   }
 
@@ -254,6 +268,8 @@ private:
   }
 
   void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
+    if (opts.summarise && summarise(frame, fi, l))
+      return;
     BasicBlock *header = l->getHeader();
     unsigned number = fi.loopNumber.lookup(l);
     for (unsigned i = 0;; ++i) {
@@ -278,6 +294,174 @@ private:
                  << loopLocation(l).str() << "\n";
       }
       region(frame, fi, l);
+    }
+  }
+
+  // Walks loop l as one iteration at a nondet index k below its trip count,
+  // which keeps every check of its body (ESBMC's array loop summaries), and
+  // leaves it with the values its header has after the last iteration and
+  // its store's elements written at once (memory.h). False, with nothing
+  // walked, when l does not have the shape analysis/loops.h describes or a
+  // value the summary needs has no term here: l is then unrolled.
+  // Iterations up to which a loop with no store is unrolled when its count
+  // is a constant.
+  static constexpr uint64_t UnrolledChecks = 256;
+
+  bool summarise(Frame &frame, FunctionInfo &fi, Loop *l) {
+    BasicBlock *header = l->getHeader();
+    auto in = frame.arrivals.find(header);
+    const analysis::Summary *found = fi.loops.summary(l);
+    // One summary at a time: a loop in a function the iteration calls is unrolled.
+    if (summary || !found || in == frame.arrivals.end() || in->second.empty() ||
+        (found->nondet && opts.witness))
+      return false;
+    analysis::Summary sum = *found;
+    ScalarEvolution &se = fi.loops.scev();
+    SMTExprRef trips = evaluate(se, sum.trips, l, {});
+    if (!trips)
+      return false;
+    // A loop that only checks or counts, a few times, unrolls into reads at
+    // constant indices that fold, where a summary leaves the solver a read
+    // at a nondet index (survey 2026-11-23-array-loop-summaries).
+    if (const APInt *n = t.constant(trips); !sum.store && n && n->ule(UnrolledChecks))
+      return false;
+    SMTExprRef k = t.symbol("loop_index#" + std::to_string(summaryCount),
+                            s.mkBVSort(trips->getWidth()));
+    // The header's phis in iteration k and after the last one, and the
+    // values the exit takes from the header.
+    SmallVector<SMTExprRef, 2> first;
+    SmallVector<std::pair<Value *, SMTExprRef>, 4> last;
+    auto at = [&](Value *v, const SMTExprRef &n) {
+      return se.isSCEVable(v->getType()) ? evaluate(se, se.getSCEV(v), l, n) : SMTExprRef();
+    };
+    for (PHINode &phi : header->phis()) {
+      first.push_back(at(&phi, k));
+      last.push_back({&phi, at(&phi, trips)});
+    }
+    for (PHINode &phi : sum.exit->phis())
+      if (auto *v = dyn_cast<Instruction>(phi.getIncomingValueForBlock(header)); v && l->contains(v))
+        last.push_back({v, at(v, trips)});
+    SMTExprRef start;
+    if (sum.store) {
+      start = evaluate(se, sum.address->getStart(), l, {});
+      const APInt *object = start ? t.constant(mem.object(start)) : nullptr;
+      if (!object || object->isZero())
+        return false;
+    }
+    if (llvm::any_of(first, [](const SMTExprRef &v) { return !v; }) ||
+        llvm::any_of(last, [](const auto &v) { return !v.second; }))
+      return false;
+
+    SmallVector<Arrival, 2> arrivals = std::move(in->second);
+    frame.arrivals.erase(header);
+    SMTExprRef guard = anyGuard(arrivals);
+    memory::State st = merged(arrivals);
+    // The iteration's facts hold only in it, and the loop may not run.
+    encode::Encoder::Facts facts = common(arrivals);
+    SMTExprRef body = t.land(guard, t.ult(k, trips));
+    if (!t.isFalse(body)) {
+      frame.arrivals[header].push_back({body, first, st, facts});
+      summary = Summarising{l, k, sum.store, {}, 0};
+      region(frame, fi, l);
+      // Drop the back edge and the iteration's own exit.
+      frame.arrivals.erase(header);
+      frame.arrivals.erase(sum.exit);
+      auto [stored, bits] = summary->stored;
+      summary.reset();
+      if (stored) {
+        unsigned width = k->getWidth(), ptrBits = mem.pointerBits();
+        mem.summarise(st, start, sum.stride, sum.store->getValueOperand()->getType(),
+                      enc.resize(trips, ptrBits, false),
+                      [&t = t, k, width, ptrBits, stored, bits](const SMTExprRef &n) {
+                        SMTExprRef i = width < ptrBits   ? t.extract(n, width - 1, 0)
+                                       : width > ptrBits ? t.zext(n, width - ptrBits)
+                                                         : n;
+                        return std::make_pair(t.substitute(stored, k, i), t.substitute(bits, k, i));
+                      });
+      }
+    }
+    for (auto &[v, term] : last)
+      enc.bind(v, term);
+    enc.facts = facts;
+    arrive(frame, header, sum.exit, guard, st);
+    ++summaryCount;
+    summarised.insert(l);
+    return true;
+  }
+
+  // The SCEV e in iteration k of l, counted from 0 as the header is
+  // reached, or null for a form not handled here, an AddRec of another loop,
+  // or one of l when k is null.
+  SMTExprRef evaluate(ScalarEvolution &se, const SCEV *e, const Loop *l, const SMTExprRef &k) {
+    unsigned w = se.getTypeSizeInBits(e->getType()), ptrBits = mem.pointerBits();
+    bool pointer = e->getType()->isPointerTy();
+    if (w == 1) // an i1 is a Bool term
+      return {};
+    SmallVector<SMTExprRef, 4> ops;
+    for (const SCEV *op : e->operands()) {
+      ops.push_back(evaluate(se, op, l, k));
+      if (!ops.back())
+        return {};
+    }
+    auto fold = [&](auto f) {
+      SMTExprRef r = ops[0];
+      for (unsigned i = 1; i < ops.size(); ++i)
+        r = f(r, ops[i]);
+      return r;
+    };
+    switch (e->getSCEVType()) {
+    case scConstant:
+      return t.bv(cast<SCEVConstant>(e)->getAPInt());
+    case scUnknown: {
+      Value *v = cast<SCEVUnknown>(e)->getValue();
+      if (isa<UndefValue>(v))
+        return {};
+      if (auto *i = dyn_cast<Instruction>(v); i && l->contains(i))
+        return {};
+      return isa<Instruction>(v) || isa<Argument>(v) ? enc.bound(v) : enc.value(v);
+    }
+    case scPtrToInt:
+      return enc.resize(mem.address(ops[0]), w, false);
+    case scTruncate:
+    case scZeroExtend:
+      return enc.resize(ops[0], w, false);
+    case scSignExtend:
+      return enc.resize(ops[0], w, true);
+    case scAddExpr: {
+      if (!pointer)
+        return fold([&](auto a, auto b) { return t.add(a, b); });
+      SMTExprRef p, delta = t.bv(0, ptrBits);
+      for (unsigned i = 0; i < ops.size(); ++i)
+        if (e->operands()[i]->getType()->isPointerTy())
+          p = ops[i];
+        else
+          delta = t.add(delta, enc.resize(ops[i], ptrBits, true));
+      return mem.advance(p, delta);
+    }
+    case scMulExpr:
+      return fold([&](auto a, auto b) { return t.mul(a, b); });
+    case scUDivExpr:
+      return t.udiv(ops[0], ops[1]);
+    case scSMaxExpr:
+      return pointer ? SMTExprRef() : fold([&](auto a, auto b) { return t.ite(t.sgt(a, b), a, b); });
+    case scUMaxExpr:
+      return pointer ? SMTExprRef() : fold([&](auto a, auto b) { return t.ite(t.ugt(a, b), a, b); });
+    case scSMinExpr:
+      return pointer ? SMTExprRef() : fold([&](auto a, auto b) { return t.ite(t.slt(a, b), a, b); });
+    case scUMinExpr:
+    case scSequentialUMinExpr:
+      return pointer ? SMTExprRef() : fold([&](auto a, auto b) { return t.ite(t.ult(a, b), a, b); });
+    case scAddRecExpr: {
+      auto *ar = cast<SCEVAddRecExpr>(e);
+      if (ar->getLoop() != l || !ar->isAffine() || !k)
+        return {};
+      SMTExprRef start = ops[0], step = ops[1];
+      if (pointer)
+        return mem.advance(start, t.mul(enc.resize(step, ptrBits, true), enc.resize(k, ptrBits, false)));
+      return t.add(start, t.mul(step, enc.resize(k, w, false)));
+    }
+    default:
+      return {};
     }
   }
 
@@ -308,6 +492,13 @@ private:
     return g;
   }
 
+  memory::State merged(const SmallVectorImpl<Arrival> &arrivals) {
+    memory::State st = arrivals[0].mem;
+    for (unsigned i = 1; i < arrivals.size(); ++i)
+      st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
+    return st;
+  }
+
   void block(Frame &frame, BasicBlock &bb) {
     SmallVector<Arrival, 2> arrivals = std::move(frame.arrivals[&bb]);
     frame.arrivals.erase(&bb);
@@ -315,9 +506,7 @@ private:
       return;
     SMTExprRef guard = anyGuard(arrivals);
     enc.facts = common(arrivals);
-    memory::State st = arrivals[0].mem;
-    for (unsigned i = 1; i < arrivals.size(); ++i)
-      st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
+    memory::State st = merged(arrivals);
 
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
@@ -400,8 +589,14 @@ private:
         return;
       }
       SMTExprRef c = enc.value(br->getCondition());
-      arrive(frame, bb, br->getSuccessor(0), t.land(guard, c), st, c);
-      arrive(frame, bb, br->getSuccessor(1), t.land(guard, t.lnot(c)), st, t.lnot(c));
+      SMTExprRef taken[2] = {t.land(guard, c), t.land(guard, t.lnot(c))};
+      if (std::optional<ir::BranchSite> site = ir::branchSite(*br))
+        for (unsigned i = 0; i < 2; ++i)
+          if (site->taken[i] && !t.isFalse(taken[i]))
+            trace.push_back(
+                {Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false"});
+      arrive(frame, bb, br->getSuccessor(0), taken[0], st, c);
+      arrive(frame, bb, br->getSuccessor(1), taken[1], st, t.lnot(c));
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       SMTExprRef cond = enc.value(sw->getCondition());
       SMTExprRef anyCase = t.boolean(false);
@@ -545,11 +740,23 @@ private:
       return guard;
     }
     if (name.starts_with("__VERIFIER_nondet_")) {
-      SMTExprRef v = enc.fresh(c.getType(), tag);
+      // In a summarised iteration, element k of values fresh per iteration,
+      // an array per call: camada gives two symbols of one name one term, and
+      // two calls can share a location (a macro, IR without debug info).
+      SMTExprRef v =
+          summary && summary->loop->contains(&c)
+              ? t.select(t.symbol(tag + "#" + std::to_string(summaryCount) + "." +
+                                      std::to_string(summary->nondets++),
+                                  s.mkArraySort(s.mkBVSort(summary->index->getWidth()),
+                                                enc.sort(c.getType()))),
+                         summary->index)
+              : enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
       // For the witness, which reads the value's type from the callee: not
-      // for a call through a mismatched signature.
-      if (c.getCalledFunction())
+      // for a call whose result type differs from it. One declared without
+      // a prototype, as in many SV-COMP tasks, is variadic and called
+      // without the "...", but returns the same type.
+      if (c.getType() == callee->getReturnType())
         trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
       return guard;
     }
@@ -596,11 +803,14 @@ private:
     // constant and what its attributes, which LLVM infers for the C library,
     // say it only reads. With a constant format without positional
     // arguments, scanf writes its variadic arguments as scan says, and
-    // printf none unless the format has a %n. It may also write through
-    // pointers stored in those objects, or to globals, which this does not
-    // cover. The mutex and condition-variable calls write only the lock or
-    // condition they get, which the program does not read, so they write
-    // nothing here and keep the rest of an object holding one.
+    // printf none unless the format has a %n. Unless its attributes say it
+    // writes only its arguments' memory, it may also write errno and every
+    // global the program declares without defining (optind, environ, a
+    // variable of a file not given), as they belong to code Vereda does not
+    // see. It may also write through pointers stored in those objects, which
+    // this does not cover. The mutex and condition-variable calls write only
+    // the lock or condition they get, which the program does not read, so
+    // they write nothing here and keep the rest of an object holding one.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -611,13 +821,20 @@ private:
     if (scanf || (format && name.ends_with("printf") &&
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
-    if (!c.onlyReadsMemory() && !writesOnlyLock(name))
+    if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
           havoc(st, name, c, a, std::nullopt, guard);
       }
+      MemoryEffects effects = c.getMemoryEffects();
+      if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
+        havoc(st, name, c, errnoObject, std::nullopt, guard);
+      if (isModSet(effects.getModRef(IRMemLocation::Other)))
+        for (GlobalVariable *g : externs)
+          havoc(st, name, c, g, std::nullopt, guard);
+    }
     if (scanf)
       return scan(c, f, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
@@ -972,6 +1189,8 @@ private:
       SMTExprRef p = enc.value(w->getPointerOperand());
       asmTarget(inst, p);
       mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
+      if (summary && w == summary->store)
+        summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
       // A source store into a named variable kept in memory (a global, an
       // array, a local whose address is taken) is an assignment to show.
       Type *ty = v->getType();
@@ -1180,12 +1399,14 @@ private:
       ok = t.land(ok, enc.fresh(Type::getInt1Ty(c.getContext()), "malloc_succeeds"));
     SMTExprRef p = mem.allocate(size, 16, t.land(guard, ok));
     if (isCalloc) {
-      // A product beyond the largest object makes ok false: nothing to zero.
-      uint64_t n;
-      if (!__builtin_mul_overflow(constantSize(c.getArgOperand(0), guard, "calloc"),
-                                  constantSize(c.getArgOperand(1), guard, "calloc"), &n) &&
-          isUIntN(bits - 1, n))
-        mem.set(st, p, t.bv(0, 8), n);
+      // A size that is not constant gets a constant array of zeros, whatever
+      // it is on the path. A product beyond the largest object makes ok
+      // false: nothing to zero.
+      const APInt *n = t.constant(size);
+      if (!n)
+        mem.fill(st, p, t.bv(0, 8));
+      else if (!t.isFalse(ok))
+        mem.set(st, p, t.bv(0, 8), n->getZExtValue());
     }
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
@@ -1210,6 +1431,24 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
+  // The iteration of a summarised loop being walked: its index, its store,
+  // and once walked, the store's guard and bits.
+  struct Summarising {
+    const Loop *loop;
+    SMTExprRef index;
+    const StoreInst *store;
+    std::pair<SMTExprRef, SMTExprRef> stored;
+    unsigned nondets = 0; // nondet calls walked, which names their arrays
+  };
+  std::optional<Summarising> summary;
+  unsigned summaryCount = 0; // names each summary's fresh symbols
+  SmallPtrSet<const Loop *, 8> summarised;
+  // What a call without a body may write besides its arguments' objects:
+  // errno, and the writable globals the program declares without defining,
+  // except the models' stdin, stdout and stderr objects, whose contents no
+  // program reads and which a call that gets the stream writes anyway.
+  GlobalVariable *errnoObject = nullptr;
+  SmallVector<GlobalVariable *, 4> externs;
 };
 
 } // namespace
@@ -1217,7 +1456,9 @@ private:
 Error walk(Function &entry, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
            checks::Checks &checks, Trace &trace) {
   try {
-    Walk(opts, enc, mem, checks, trace).entry(entry);
+    Walk w(opts, enc, mem, checks, trace);
+    w.entry(entry);
+    w.report();
   } catch (const Unsupported &e) {
     return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
   }

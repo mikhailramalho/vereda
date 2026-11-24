@@ -9,8 +9,4 @@ int main()
     __VERIFIER_assert(a[x] == x); // a[x] == x
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_no_slice
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops --no-slice
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
