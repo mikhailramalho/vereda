@@ -15,6 +15,10 @@
 #include <llvm/Support/WithColor.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <cstdio>
+#include <cstdlib>
+#include <new>
+
 using namespace llvm;
 using vereda::util::progress;
 
@@ -270,6 +274,14 @@ static int bmc(Function &fn, unsigned bound) {
 }
 
 int main(int argc, char **argv) {
+  // Out of memory ends the run. A std::bad_alloc thrown in the solver would
+  // not: camada turns it into an unknown answer, and the next query runs on a
+  // solver left half updated and crashes.
+  std::set_new_handler([] {
+    outs().flush();
+    std::fputs("vereda: out of memory\n", stderr);
+    std::_Exit(1);
+  });
   cl::SetVersionPrinter(printVersion);
   cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n");
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {

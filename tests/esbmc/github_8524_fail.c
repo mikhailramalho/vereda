@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8524_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+r = 5 \(
+// EXPECT: ^\s+r = 5; //
 // Vereda: unmet EXPECT: ^\s+r = 5 \(
 // MODE: FUTURE
 // Vereda: verdict FAILED

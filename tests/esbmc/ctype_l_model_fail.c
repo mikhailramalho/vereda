@@ -15,3 +15,6 @@ int main()
 // Imported from ESBMC regression/esbmc/ctype_l_model_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

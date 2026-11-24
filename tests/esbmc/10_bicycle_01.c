@@ -1306,3 +1306,6 @@ static void _ZN6Thread5startEv(struct l_class_OC_Thread *this) {
 // Imported from ESBMC regression/esbmc/10_bicycle_01
 // RUN: --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

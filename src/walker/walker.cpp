@@ -2,6 +2,7 @@
 
 #include "analysis/loops.h"
 #include "ir/debug.h"
+#include "ir/load.h"
 #include "ir/sanitizer.h"
 #include "ir/source.h"
 #include "util/log.h"
@@ -9,9 +10,11 @@
 #include <llvm/ADT/MapVector.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CaptureTracking.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/ScalarEvolutionExpressions.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
@@ -73,6 +76,46 @@ struct Frame {
   DenseMap<const BasicBlock *, SmallVector<Arrival, 2>> arrivals;
   SmallVector<Return, 2> returns;
 };
+
+// A conversion of a scanf format (C17 7.21.6.2), as glibc reads it: S and
+// C are ls and lc, and m (POSIX) has the argument point to a pointer that
+// the call sets to a buffer it allocates.
+struct Conversion {
+  char conv;
+  StringRef length;
+  uint64_t width = 0;
+  bool suppressed = false, alloc = false;
+};
+
+// The conversions of format f in order. A printf format's flags and
+// precision read as unknown conversions, which still finds each %n.
+static SmallVector<Conversion, 4> conversions(StringRef f) {
+  SmallVector<Conversion, 4> out;
+  for (size_t i = 0; i < f.size(); ++i) {
+    if (f[i] != '%' || ++i == f.size() || f[i] == '%')
+      continue;
+    Conversion cv;
+    cv.suppressed = f[i] == '*';
+    i += cv.suppressed;
+    for (; i < f.size() && isDigit(f[i]); ++i)
+      cv.width = cv.width * 10 + (f[i] - '0');
+    size_t from = i;
+    for (; i < f.size() && StringRef("hljztLqm").contains(f[i]); ++i)
+      cv.alloc |= f[i] == 'm';
+    if (i == f.size())
+      break;
+    cv.length = f.slice(from, i);
+    cv.conv = f[i];
+    if (cv.conv == 'S' || cv.conv == 'C') {
+      cv.conv = toLower(cv.conv);
+      cv.length = "l";
+    }
+    if (cv.conv == '[') // the set may start with ] or ^]
+      i = std::min(f.find(']', i + (f.substr(i + 1).starts_with("^") ? 3 : 2)), f.size());
+    out.push_back(cv);
+  }
+  return out;
+}
 
 // Where a call to a variadic function left its arguments, for va_start.
 struct VarArgs {
@@ -637,6 +680,11 @@ private:
 
     // Bodyless verifier functions, as ESBMC treats them by default: a defined
     // one is an ordinary call, except reach_error under unreach-call, above.
+    if (name == "__VERIFIER_nondet_memory") {
+      havoc(st, name, c, c.getArgOperand(0), constantSize(c.getArgOperand(1), guard, name),
+            guard);
+      return guard;
+    }
     if (name.starts_with("__VERIFIER_nondet_")) {
       // In a summarised iteration, element k of values fresh per iteration,
       // an array per call: camada gives two symbols of one name one term, and
@@ -650,7 +698,9 @@ private:
                          summary->index)
               : enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
-      if (c.getType()->isIntegerTy()) // for the witness
+      // For the witness, which reads the value's type from the callee: not
+      // for a call through a mismatched signature.
+      if (c.getCalledFunction())
         trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
       return guard;
     }
@@ -688,13 +738,87 @@ private:
     if (c.getType()->isStructTy())
       throw Unsupported("call to " + name.str() + " returning a struct at " +
                         ir::location(c).str());
-    // An unknown external returns an unconstrained value. Sound
-    // while nothing has memory; revisit with the memory model.
+    // An unknown external returns an unconstrained value and may write all
+    // of each object it gets a pointer to (read, fgets, ioctl), except a
+    // constant and what its attributes, which LLVM infers for the C library,
+    // say it only reads. With a constant format without positional
+    // arguments, scanf writes its variadic arguments as scan says, and
+    // printf none unless the format has a %n. It may also write through
+    // pointers stored in those objects, or to globals, which this does not
+    // cover. The pthread functions write nothing here, as threads are not
+    // modelled yet.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
+    unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
+    StringRef f;
+    bool format = c.getFunctionType()->isVarArg() && params &&
+                  getConstantStringInfo(c.getArgOperand(params - 1), f) && !f.contains('$');
+    bool scanf = format && name.ends_with("scanf");
+    if (scanf || (format && name.ends_with("printf") &&
+                  none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
+      end = params;
+    if (!c.onlyReadsMemory() && !name.starts_with("pthread_"))
+      for (unsigned i = 0; i < end; ++i) {
+        Value *a = c.getArgOperand(i);
+        auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
+        if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
+          havoc(st, name, c, a, std::nullopt, guard);
+      }
+    if (scanf)
+      return scan(c, f, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
       enc.bind(&c, enc.fresh(c.getType(), tag));
     return guard;
+  }
+
+  // The variadic arguments of scanf, fscanf and sscanf for a constant format
+  // f (C17 7.21.6.2): each conversion writes the bytes its type takes, a
+  // string up to its width or the end of the object, an unknown conversion
+  // the whole object, and the result r says how many were assigned: the
+  // first r, or none for EOF. A %n is written only when the conversions
+  // before it were, if any.
+  SMTExprRef scan(CallBase &c, StringRef f, StringRef name, const std::string &tag,
+                  SMTExprRef guard, memory::State &st) {
+    unsigned arg = c.getFunctionType()->getNumParams();
+    SMTExprRef r = enc.fresh(c.getType(), tag);
+    enc.bind(&c, r);
+    const DataLayout &dl = c.getDataLayout();
+    unsigned bits = r->getWidth(), ptr = dl.getPointerSize(), assigned = 0;
+    for (const Conversion &cv : conversions(f)) {
+      if (arg == c.arg_size())
+        break;
+      if (cv.suppressed)
+        continue;
+      Value *a = c.getArgOperand(arg++);
+      SMTExprRef done = cv.conv == 'n' ? t.sge(r, t.bv(assigned ? int64_t(assigned) : -1, bits))
+                                       : t.sgt(r, t.bv(assigned++, bits));
+      if (!a->getType()->isPointerTy()) // undefined behaviour, not checked
+        continue;
+      StringRef l = cv.length;
+      bool big = l == "ll" || l == "L" || l == "q"; // glibc: long long, or long double
+      unsigned wide = l == "l" ? 4 : 1;
+      std::optional<uint64_t> n; // none: the whole object
+      if (cv.alloc)
+        n = ptr;
+      else if (StringRef("diouxXn").contains(cv.conv))
+        n = l == "hh" ? 1 : l == "h" ? 2 : big || l == "j" ? 8
+          : l.empty() ? 4 : ptr; // l, z and t: the pointer width on Linux
+      else if (StringRef("aAeEfFgG").contains(cv.conv))
+        n = big ? dl.getTypeAllocSize(Type::getX86_FP80Ty(c.getContext())) : l == "l" ? 8 : 4;
+      else if (cv.conv == 'p')
+        n = ptr;
+      else if (cv.conv == 'c')
+        n = (cv.width ? cv.width : 1) * wide;
+      else if ((cv.conv == 's' || cv.conv == '[') && cv.width) // the characters and a null
+        n = (cv.width + 1) * wide;
+      else if (cv.conv == 's' || cv.conv == '[')
+        n = single(t.sub(mem.size(mem.object(enc.value(a))), mem.offset(enc.value(a))), guard);
+      memory::State written = st;
+      havoc(written, name, c, a, n, guard);
+      st = mem.ite(done, written, st);
+    }
+    SMTExprRef range = t.land(t.sge(r, t.bv(-1, bits)), t.sle(r, t.bv(assigned, bits)));
+    return t.land(guard, range);
   }
 
   // Walks a defined callee in a new frame.
@@ -898,27 +1022,51 @@ private:
     checks.push_back({property, loc, std::move(comment), std::move(expr), index, violated});
   }
 
+  // The one value v takes where guard holds (0 if it holds nowhere), which
+  // the solver checks; folding terms as they are built settles most
+  // without it. None when v may take several.
+  std::optional<uint64_t> single(SMTExprRef v, SMTExprRef guard) {
+    if (const APInt *c = t.constant(v))
+      return c->getLimitedValue();
+    camada::CheckResult feasible = s.checkSatAssuming({guard});
+    if (feasible == camada::CheckResult::UNSAT)
+      return 0; // the path is infeasible
+    if (feasible != camada::CheckResult::SAT)
+      return std::nullopt;
+    auto model = s.getBVUnsigned(v);
+    if (!model)
+      return std::nullopt;
+    SMTExprRef other = t.lnot(t.eq(v, t.bv(model.value(), v->getWidth())));
+    if (s.checkSatAssuming({guard, other}) != camada::CheckResult::UNSAT)
+      return std::nullopt;
+    return model.value();
+  }
+
   // Size operand of a memory function. A symbolic size is accepted when it
-  // has one value on the path, which the solver checks; folding terms as
-  // they are built will settle most of these without it.
-  // A size with several values needs a loop or a quantifier. Memory
-  // limits how many bytes go one at a time.
+  // has one value on the path; one with several needs a loop or a
+  // quantifier. Memory limits how many bytes go one at a time.
   uint64_t constantSize(const Value *v, SMTExprRef guard, StringRef what) {
     if (auto *ci = dyn_cast<ConstantInt>(v))
       return ci->getLimitedValue();
-    SMTExprRef size = enc.value(v);
-    if (const APInt *c = t.constant(size))
-      return c->getLimitedValue();
-    if (s.checkSatAssuming({guard}) != camada::CheckResult::SAT)
-      return 0; // the path is infeasible: no bytes to write
-    auto model = s.getBVUnsigned(size);
-    if (!model)
+    std::optional<uint64_t> n = single(enc.value(v), guard);
+    if (!n)
       throw Unsupported(what.str() + " with a symbolic size");
-    uint64_t value = model.value();
-    SMTExprRef other = t.lnot(t.eq(size, t.bv(value, size->getWidth())));
-    if (s.checkSatAssuming({guard, other}) != camada::CheckResult::UNSAT)
-      throw Unsupported(what.str() + " with a symbolic size");
-    return value;
+    return *n;
+  }
+
+  // Gives the n bytes at a, or its whole object, nondet contents (see
+  // Memory::havoc), for a call to name. A pointer whose object the terms
+  // leave open, as after a store at a symbolic address, is accepted when
+  // the object has one value on the path.
+  void havoc(memory::State &st, StringRef name, CallBase &c, Value *a,
+             std::optional<uint64_t> n, SMTExprRef guard) {
+    SMTExprRef p = enc.value(a);
+    if (mem.havoc(st, p, n))
+      return;
+    std::optional<uint64_t> o = single(mem.object(p), guard);
+    if (!o || !mem.havoc(st, mem.ptr(t.bv(*o, mem.object(p)->getWidth()), mem.offset(p)), n))
+      throw Unsupported("call to " + name.str() + " without a body, which may write an "
+                        "object chosen at run time, at " + ir::location(c).str());
   }
 
   // alloca, load and store, and the atomics. Returns false for any other
@@ -958,6 +1106,7 @@ private:
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
       Value *v = w->getValueOperand();
       SMTExprRef p = enc.value(w->getPointerOperand());
+      asmTarget(inst, p);
       mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
       if (summary && w == summary->store)
         summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
@@ -979,6 +1128,7 @@ private:
       if (!ty->isIntegerTy() || ty->isIntegerTy(1))
         throw Unsupported("instruction " + encode::describe(&inst));
       SMTExprRef p = enc.value(cx->getPointerOperand());
+      asmTarget(inst, p);
       SMTExprRef old = mem.load(st, p, ty);
       SMTExprRef ok = t.eq(old, enc.value(cx->getCompareOperand()));
       if (cx->isWeak()) // may fail even when equal
@@ -989,6 +1139,21 @@ private:
       return true;
     }
     return isa<FenceInst>(inst);
+  }
+
+  // A write an inline asm became (ir marks it with AsmMD) goes only through
+  // a pointer to a known object, or one of two: any other pointer, such as
+  // one the program read but never set, may point to any object, and a
+  // write there could reach state the asm never touches.
+  void asmTarget(Instruction &inst, const SMTExprRef &p) {
+    MDNode *md = inst.getMetadata(ir::AsmMD);
+    if (!md)
+      return;
+    SMTExprRef obj = mem.object(p), c, x, y;
+    if (!t.constant(obj) && !t.split(obj, c, x, y))
+      throw Unsupported("inline asm `" + cast<MDString>(md->getOperand(0))->getString().str() +
+                        "` through a pointer to an unknown object at " +
+                        ir::location(inst).str());
   }
 
   // The source variable whose memory p points into, when it is a global or
@@ -1020,6 +1185,7 @@ private:
         !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
       throw Unsupported("instruction " + encode::describe(&rmw));
     SMTExprRef p = enc.value(rmw.getPointerOperand());
+    asmTarget(rmw, p);
     SMTExprRef old = mem.load(st, p, ty), v = enc.value(rmw.getValOperand());
     unsigned w = ty->isIntegerTy() ? ty->getIntegerBitWidth() : 0;
     auto one = [&] { return t.bv(1, w); };

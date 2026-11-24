@@ -47,10 +47,13 @@ ctest --test-dir build
 packages install it, and builds with its clang. Without one, it fetches the
 pinned LLVM 21 release and builds with that LLVM's clang and lld, since its
 libraries are LTO bitcode. It fetches the camada release either way (Linux
-x86_64 only). Downloads go to `build/deps`, or to `$VEREDA_DEPS_DIR` when set,
-which lets build directories and worktrees share one copy. A `LLVM_DIR` or
-`camada_DIR` given on the command line is used instead of a download. With it
-off, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR` to installed copies.
+x86_64 only), and mimalloc's sources, built into the binary in place of
+glibc's malloc. Downloads go to `build/deps`, or to `$VEREDA_DEPS_DIR` when
+set, which lets build directories and worktrees share one copy. A `LLVM_DIR`,
+`camada_DIR` or `MIMALLOC_SOURCE_DIR` given on the command line is used
+instead of a download; an empty `MIMALLOC_SOURCE_DIR` keeps glibc's malloc.
+With it off, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR` to installed
+copies, and `MIMALLOC_SOURCE_DIR` to use mimalloc.
 
 CMake keeps a build directory's first compiler. If you switch
 `DOWNLOAD_DEPENDENCIES` on in an existing build directory, reconfigure with

@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/trace_data_pointer_array_element
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  p = &c$
+// EXPECT: ^  p = &c;$
 // Vereda: unmet EXPECT: ^  p = &c$
 // MODE: FUTURE
 // Vereda: verdict FAILED

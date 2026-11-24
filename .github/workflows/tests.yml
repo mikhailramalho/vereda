@@ -9,13 +9,24 @@ on:
     branches: [main]
     paths-ignore: ['docs/**', '**.md']
   pull_request:
+    types: [opened, synchronize, reopened, closed]
 
 permissions:
   contents: read
   pull-requests: read
 
+# A new push to a pull request cancels the runs its earlier pushes still
+# have going, and so does landing or closing it: the closed event starts a
+# run in the same group whose jobs are skipped. Runs on main are never
+# cancelled (each commit is its own group): every main commit's Tests run
+# gives the numbers perf.yml compares pull requests against.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   changes:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.files.outputs.code }}
@@ -42,7 +53,7 @@ jobs:
 
   regression:
     needs: changes
-    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    if: ${{ !cancelled() && github.event.action != 'closed' && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

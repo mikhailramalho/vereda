@@ -53,6 +53,31 @@ target_link_libraries(libvereda PUBLIC ${llvm_libs} camada::camada)
 add_executable(vereda src/driver/main.cpp)
 target_link_libraries(vereda PRIVATE libvereda)
 
+# mimalloc in place of glibc's malloc and operator new, for all of the
+# binary (LLVM, the solvers): it cuts the walk and solve times by up to a
+# third (docs/survey/2026-11-23-mimalloc.md). Linked as ESBMC links it: its
+# object file, since with MI_USE_CXX the archive fails to link, and
+# MI_USE_CXX so that operator new throws std::bad_alloc instead of aborting.
+# The tests cap address space (RLIMIT_AS), and mimalloc keeps the address
+# space of what it frees, so two defaults change, both built in because
+# LLVM's static constructors allocate before main() could set them. Arenas
+# start at 64 MiB instead of 1 GiB, as in ESBMC. Objects over 32 MiB get
+# their own mapping, unmapped when freed, as glibc does, instead of an arena
+# of their own that outlives them: on esbmc-cstd/scanf-false-3, CaDiCaL
+# growing a vector to 512 MiB ran out of address space at 2.4 GB resident.
+# Without a MIMALLOC_SOURCE_DIR (DOWNLOAD_DEPENDENCIES sets one), glibc's
+# malloc stays.
+if(MIMALLOC_SOURCE_DIR)
+  set(MI_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+  set(MI_BUILD_STATIC OFF CACHE BOOL "" FORCE)
+  set(MI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(MI_USE_CXX ON CACHE STRING "" FORCE)
+  add_subdirectory("${MIMALLOC_SOURCE_DIR}" mimalloc EXCLUDE_FROM_ALL)
+  target_compile_definitions(mimalloc-obj PRIVATE # KiB
+    MI_DEFAULT_ARENA_RESERVE=65536 MI_DEFAULT_ARENA_MAX_OBJECT_SIZE=32768)
+  target_sources(vereda PRIVATE $<TARGET_OBJECTS:mimalloc-obj>)
+endif()
+
 # The C library models (models/*.c) as one bitcode file per pointer width,
 # next to the binary, already through the pass list ir runs; ir links in
 # the functions a program still calls after its own passes. -fno-builtin

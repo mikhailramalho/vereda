@@ -32,7 +32,8 @@ and SEED_FILE lines make a test FUTURE the same way, as run.py has none
 of them. Vereda supports only the __VERIFIER_ builtins, so a test whose
 code still calls an __ESBMC_ or __CPROVER_ function after the renames
 becomes FUTURE too, with those functions in a "// Needs:" line of their
-own, and run.py skips it without running Vereda.
+own, and run.py skips it without running Vereda. Expectations on ESBMC's
+counterexample are rewritten for Vereda's, which prints it as C.
 
 Tests that read files outside their own directory are skipped, and so is
 ESBMC's "disabled" suite unless named. So are tests of features only
@@ -170,11 +171,32 @@ def assert_messages(src):
     return messages
 
 
+def as_c(regex):
+    """An expectation on ESBMC's counterexample made one on Vereda's, which
+    prints it as C: the separator line goes, a State header becomes a
+    comment, an assignment 'x = 7 (bits)' becomes 'x = 7; // bits' and
+    bits alone '(bits)' become '// bits'
+    ('x = &y' becomes 'x = &y;'; an aggregate value stays as it is). The
+    Assumption and Violated property blocks, now inside a block comment,
+    keep their lines."""
+    regex = regex.replace(r"\n-+\n", r"\n")
+    regex = re.sub(r"\\n(Assumption:|Violated property:)", r"\\n/\\*\\n\1", regex)
+    regex = re.sub(r"(^\^?|\\n)State ", r"\1// State ", regex)
+    value = r"( = (?:\\.|[^\s\\])+)"
+    regex = re.sub(value + r" \\\(([^\\]*)(?:\\\))?",
+                   lambda m: f"{m[1]}; //" + (f" {m[2]}" if m[2] else ""), regex)
+    # The bits alone, '(01100011)': the comment after the statement.
+    regex = re.sub(r"\\\(((?:[01]{8} )*[01]{8})\\\)", r"// \1", regex)
+    if "\\{" not in regex:
+        regex = re.sub(r"^(\^(?:  |\\s\+)\S+)" + value + r"\$$", r"\1\2;$", regex)
+    return regex
+
+
 def expectations(lines, src):
     """The output regexes of a test.desc, without the ones only ESBMC's
-    output matches."""
+    output matches, made to match Vereda's counterexample (as_c)."""
     messages = assert_messages(src)
-    return [r.strip() for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
+    return [as_c(r.strip()) for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
 
 
 def outside(test_dir, path):
