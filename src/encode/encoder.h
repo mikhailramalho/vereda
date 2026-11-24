@@ -9,7 +9,10 @@
 // sign tests; a NaN's bits there are some NaN. With fp2bv a float is the
 // bitvector of its bits everywhere, and an operation views it as camada's
 // bit-vector encoded float, which propagates NaN payloads as hardware does.
-// Operations round to nearest, ties to even, as C does by default. A vector of integers or
+// Operations round to nearest, ties to even, as C does by default, and on
+// constant operands fold with APFloat under the same rounding, so a value
+// computed from constants alone is a constant; a NaN result does not fold,
+// since its bits are the encoding's. A vector of integers or
 // floats is one bitvector with element 0 in the low bits, as memory lays it
 // out; the scalarizer leaves vectors only where they cross calls.
 #pragma once
@@ -17,6 +20,7 @@
 #include "memory/memory.h"
 #include "util/unsupported.h"
 #include <camada/camada.h>
+#include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/IR/InstrTypes.h>
@@ -24,6 +28,7 @@
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
+#include <optional>
 #include <string>
 
 namespace vereda::encode {
@@ -85,12 +90,24 @@ private:
   // llvm.is.fpclass takes it.
   camada::SMTExprRef fpClass(const camada::SMTExprRef &x, llvm::Type *ty, unsigned mask);
   bool fpIntrinsic(llvm::CallBase &c);
+  // v's value when its term is a constant float of an IEEE format.
+  std::optional<llvm::APFloat> constFloat(const llvm::Value *v);
+  // The constant float f as a value of type ty, and the same for the result
+  // of an operation on constants, except null for a NaN, whose bits are the
+  // encoding's (any NaN natively, the hardware's with fp2bv).
+  camada::SMTExprRef floatValue(const llvm::APFloat &f, llvm::Type *ty);
+  camada::SMTExprRef folded(const llvm::APFloat &r, llvm::Type *ty);
 
   Terms &t;
   camada::SMTSolver &s;
   memory::Memory &mem;
   camada::FPEncoding fpEncoding;
   llvm::DenseMap<const llvm::Value *, camada::SMTExprRef> env;
+  // In the solver's theory, one term per constant float, keyed by its bits
+  // (so -0 and +0 stay apart), and the bits of each such term.
+  llvm::DenseMap<std::pair<const llvm::fltSemantics *, llvm::APInt>, camada::SMTExprRef>
+      floatTerms;
+  llvm::DenseMap<const camada::SMTExpr *, llvm::APInt> floatBits;
   unsigned freshCount = 0;
 };
 

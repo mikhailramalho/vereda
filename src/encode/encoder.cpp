@@ -1,5 +1,6 @@
 #include "encode/encoder.h"
 
+#include <llvm/ADT/APSInt.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Module.h>
@@ -7,6 +8,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/Support/raw_ostream.h>
+#include <cmath>
 
 using namespace llvm;
 using camada::SMTExprRef;
@@ -119,7 +121,7 @@ SMTExprRef Encoder::value(const Value *v) {
   if (isa<ConstantPointerNull>(v))
     return mem.null();
   if (auto *cf = dyn_cast<ConstantFP>(v); cf && ieee(cf->getType()))
-    return fromBits(t.bv(cf->getValueAPF().bitcastToAPInt()), cf->getType());
+    return floatValue(cf->getValueAPF(), cf->getType());
   Type *ty = v->getType();
   if ((vectorElementWidth(ty) || (ty->isStructTy() && packedWidth(ty))) && isa<Constant>(v)) {
     auto *c = cast<Constant>(v);
@@ -190,11 +192,50 @@ SMTExprRef Encoder::fp(const Value *v) {
 SMTExprRef Encoder::bits(const SMTExprRef &f) { return native() ? f : s.mkIEEEFPToBV(f); }
 
 SMTExprRef Encoder::toBits(SMTExprRef v, Type *ty) {
-  return native() && ieee(ty) ? s.mkIEEEFPToBV(v) : v;
+  if (!native() || !ieee(ty))
+    return v;
+  // A constant's bits, except a NaN's, which are any NaN's as for every NaN term.
+  if (auto it = floatBits.find(v.get());
+      it != floatBits.end() && !APFloat(*ieee(ty), it->second).isNaN())
+    return t.bv(it->second);
+  return s.mkIEEEFPToBV(v);
 }
 
 SMTExprRef Encoder::fromBits(SMTExprRef b, Type *ty) {
-  return native() && ieee(ty) ? s.mkBVToIEEEFP(b, fpSort(ty)) : b;
+  if (!native() || !ieee(ty))
+    return b;
+  const APInt *c = t.constant(b);
+  if (!c)
+    return s.mkBVToIEEEFP(b, fpSort(ty));
+  SMTExprRef &f = floatTerms[{ieee(ty), *c}];
+  if (!f) {
+    f = s.mkBVToIEEEFP(b, fpSort(ty));
+    floatBits.try_emplace(f.get(), *c);
+  }
+  return f;
+}
+
+std::optional<APFloat> Encoder::constFloat(const Value *v) {
+  const fltSemantics *sem = ieee(v->getType());
+  if (!sem || isa<UndefValue>(v)) // undef is a fresh symbol per use
+    return std::nullopt;
+  SMTExprRef e = value(v);
+  const APInt *c = nullptr;
+  if (!native())
+    c = t.constant(e);
+  else if (auto it = floatBits.find(e.get()); it != floatBits.end())
+    c = &it->second;
+  if (!c)
+    return std::nullopt;
+  return APFloat(*sem, *c);
+}
+
+SMTExprRef Encoder::floatValue(const APFloat &f, Type *ty) {
+  return fromBits(t.bv(f.bitcastToAPInt()), ty);
+}
+
+SMTExprRef Encoder::folded(const APFloat &r, Type *ty) {
+  return r.isNaN() ? SMTExprRef() : floatValue(r, ty);
 }
 
 SMTExprRef Encoder::signBit(const Value *v) {
@@ -258,6 +299,8 @@ SMTExprRef Encoder::fpClass(const SMTExprRef &x, Type *ty, unsigned mask) {
 SMTExprRef Encoder::fcmp(CmpInst::Predicate p, const Value *lhs, const Value *rhs) {
   if (p == CmpInst::FCMP_FALSE || p == CmpInst::FCMP_TRUE)
     return t.boolean(p == CmpInst::FCMP_TRUE);
+  if (auto a = constFloat(lhs), b = constFloat(rhs); a && b)
+    return t.boolean(FCmpInst::compare(*a, *b, p));
   SMTExprRef a = fp(lhs), b = fp(rhs);
   SMTExprRef unordered = t.lor(s.mkFPIsNaN(a), s.mkFPIsNaN(b));
   if (p == CmpInst::FCMP_UNO || p == CmpInst::FCMP_ORD)
@@ -285,6 +328,14 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
     if (!dst->isIntegerTy())
       throw Unsupported("cast " + describe(dst));
     unsigned to = dst->getIntegerBitWidth();
+    // In range only: out of it (or NaN, infinite) the encoding gives the
+    // solver's value, not APFloat's.
+    if (auto c = constFloat(op)) {
+      APSInt r(to, opcode == Instruction::FPToUI);
+      bool exact;
+      if (!(c->convertToInteger(r, APFloat::rmTowardZero, &exact) & APFloat::opInvalidOp))
+        return to == 1 ? t.boolean(r[0]) : t.bv(r);
+    }
     SMTExprRef r = opcode == Instruction::FPToSI ? s.mkFPToSBV(fp(op), to)
                                                  : s.mkFPToUBV(fp(op), to);
     return to == 1 ? t.eq(r, t.bv(1, 1)) : r;
@@ -293,11 +344,22 @@ SMTExprRef Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
   case Instruction::UIToFP: {
     if (src->isIntegerTy(1))
       a = opcode == Instruction::SIToFP ? t.ite(a, t.bv(-1, 1), t.bv(0, 1)) : fromBool(a, 1);
+    if (const APInt *c = t.constant(a); c && ieee(dst)) {
+      APFloat r(*ieee(dst));
+      r.convertFromAPInt(*c, opcode == Instruction::SIToFP, APFloat::rmNearestTiesToEven);
+      return floatValue(r, dst);
+    }
     return bits(opcode == Instruction::SIToFP ? s.mkSBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN))
                                               : s.mkUBVToFP(a, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
   }
   case Instruction::FPExt:
   case Instruction::FPTrunc:
+    if (auto c = constFloat(op); c && ieee(dst)) {
+      bool loses;
+      c->convert(*ieee(dst), APFloat::rmNearestTiesToEven, &loses);
+      if (SMTExprRef r = folded(*c, dst))
+        return r;
+    }
     return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
   default:
     break;
@@ -350,6 +412,8 @@ SMTExprRef Encoder::fromBool(SMTExprRef b, unsigned width) {
 
 SMTExprRef Encoder::isTrue(const Value *v) {
   if (ieee(v->getType())) { // nonzero, as C reads a scalar: NaN is true
+    if (auto c = constFloat(v))
+      return t.boolean(!c->isZero());
     SMTExprRef zero = fromBits(t.bv(0, v->getType()->getPrimitiveSizeInBits()), v->getType());
     return t.lnot(native() ? s.mkFPEqual(fp(v), zero)
                            : s.mkFPEqual(fp(v), s.mkBVToIEEEFP(zero, fpSort(v->getType()))));
@@ -360,6 +424,18 @@ SMTExprRef Encoder::isTrue(const Value *v) {
 
 SMTExprRef Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
   if (lhs->getType()->isFloatingPointTy()) {
+    if (auto x = constFloat(lhs), y = constFloat(rhs); x && y) {
+      auto even = APFloat::rmNearestTiesToEven;
+      switch (opcode) {
+      case Instruction::FAdd: x->add(*y, even); break;
+      case Instruction::FSub: x->subtract(*y, even); break;
+      case Instruction::FMul: x->multiply(*y, even); break;
+      case Instruction::FDiv: x->divide(*y, even); break;
+      case Instruction::FRem: x->mod(*y); break; // exact, truncating as fmod
+      }
+      if (SMTExprRef r = folded(*x, lhs->getType()))
+        return r;
+    }
     SMTExprRef a = fp(lhs), b = fp(rhs), even = rm(camada::RM::ROUND_TO_EVEN);
     switch (opcode) {
     case Instruction::FAdd: return bits(s.mkFPAdd(a, b, even));
@@ -405,8 +481,11 @@ void Encoder::encode(Instruction &inst) {
     r = binary(inst.getOpcode(), inst.getOperand(0), inst.getOperand(1));
   } else if (inst.getOpcode() == Instruction::FNeg) { // flips the sign bit, NaN or not
     SMTExprRef a = value(inst.getOperand(0));
-    r = native() && ieee(inst.getType()) ? s.mkFPNeg(a)
-                                         : t.bvxor(a, t.bv(APInt::getSignMask(a->getWidth())));
+    if (auto c = constFloat(inst.getOperand(0)); c && !c->isNaN())
+      r = floatValue(-*c, inst.getType());
+    else
+      r = native() && ieee(inst.getType()) ? s.mkFPNeg(a)
+                                           : t.bvxor(a, t.bv(APInt::getSignMask(a->getWidth())));
   } else if (auto *fc = dyn_cast<FCmpInst>(&inst)) {
     r = fcmp(fc->getPredicate(), fc->getOperand(0), fc->getOperand(1));
   } else if (auto *cmp = dyn_cast<ICmpInst>(&inst)) {
@@ -498,6 +577,12 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::copysign: { // operations on the sign, NaN or not
     SMTExprRef a = value(arg(0));
     if (native() && ieee(arg(0)->getType())) { // x86_fp80 stays bits
+      if (auto c = constFloat(arg(0)); c && !c->isNaN()) {
+        r = floatValue(abs(*c), arg(0)->getType());
+        if (id == Intrinsic::copysign) // a constant sign folds the ite
+          r = t.ite(signBit(arg(1)), floatValue(-abs(*c), arg(0)->getType()), r);
+        break;
+      }
       r = s.mkFPAbs(a);
       if (id == Intrinsic::copysign)
         r = t.ite(signBit(arg(1)), s.mkFPNeg(r), r);
@@ -509,9 +594,26 @@ bool Encoder::fpIntrinsic(CallBase &c) {
       r = t.bvor(r, t.bvand(value(arg(1)), sign));
     break;
   }
-  case Intrinsic::sqrt: r = bits(s.mkFPSqrt(fp(arg(0)), rm(camada::RM::ROUND_TO_EVEN))); break;
+  case Intrinsic::sqrt: {
+    // APFloat has no square root; the host's is correctly rounded, for
+    // float and double.
+    Type *ty = arg(0)->getType();
+    auto c = constFloat(arg(0));
+    if (c && ty->isFloatTy())
+      r = folded(APFloat(std::sqrt(c->convertToFloat())), ty);
+    else if (c && ty->isDoubleTy())
+      r = folded(APFloat(std::sqrt(c->convertToDouble())), ty);
+    if (!r)
+      r = bits(s.mkFPSqrt(fp(arg(0)), rm(camada::RM::ROUND_TO_EVEN)));
+    break;
+  }
   case Intrinsic::fma:
   case Intrinsic::fmuladd: // fused: one rounding, which fmuladd allows
+    if (auto x = constFloat(arg(0)), y = constFloat(arg(1)), z = constFloat(arg(2)); x && y && z) {
+      x->fusedMultiplyAdd(*y, *z, APFloat::rmNearestTiesToEven);
+      if ((r = folded(*x, arg(0)->getType())))
+        break;
+    }
     r = bits(s.mkFPFMA(fp(arg(0)), fp(arg(1)), fp(arg(2)), rm(camada::RM::ROUND_TO_EVEN)));
     break;
   case Intrinsic::floor: r = integral(camada::RM::ROUND_TO_MINUS_INF); break;
@@ -523,6 +625,13 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::roundeven: r = integral(camada::RM::ROUND_TO_EVEN); break;
   case Intrinsic::minnum:
   case Intrinsic::maxnum: { // a NaN operand gives the other; a signed zero either
+    if (auto x = constFloat(arg(0)), y = constFloat(arg(1)); x && y) {
+      APFloat::cmpResult cmp = x->compare(*y);
+      bool first = cmp == APFloat::cmpEqual ||
+                   cmp == (id == Intrinsic::minnum ? APFloat::cmpLessThan : APFloat::cmpGreaterThan);
+      r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
+      break;
+    }
     SMTExprRef a = fp(arg(0)), b = fp(arg(1));
     SMTExprRef first = id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b);
     r = t.ite(s.mkFPIsNaN(a), value(arg(1)),
@@ -530,6 +639,13 @@ bool Encoder::fpIntrinsic(CallBase &c) {
     break;
   }
   case Intrinsic::is_fpclass:
+    // Natively either NaN class is any NaN, as fpClass has it; with fp2bv
+    // fpClass reads the constant's bits and folds.
+    if (auto c = constFloat(arg(0)); c && native()) {
+      unsigned mask = cast<ConstantInt>(arg(1))->getZExtValue();
+      r = t.boolean(mask & (c->isNaN() ? fcNan : c->classify()));
+      break;
+    }
     r = fpClass(value(arg(0)), arg(0)->getType(),
                 cast<ConstantInt>(arg(1))->getZExtValue());
     break;
