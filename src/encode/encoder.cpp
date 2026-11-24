@@ -106,7 +106,12 @@ SMTSortRef Encoder::sort(Type *ty) {
 }
 
 SMTExprRef Encoder::fresh(Type *ty, const std::string &name) {
-  return t.symbol(name + "#" + std::to_string(freshCount++), sort(ty));
+  std::string id = name + "#" + std::to_string(freshCount++);
+  // A pointer from outside the program is an address converted to one, so
+  // it points to no object the program kept to itself (memory.h, #137).
+  if (ty->isPointerTy())
+    return mem.fromAddress(t.symbol(id, s.mkBVSort(mem.pointerBits())));
+  return t.symbol(id, sort(ty));
 }
 
 SMTExprRef Encoder::value(const Value *v) {

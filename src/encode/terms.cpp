@@ -73,8 +73,12 @@ bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth) {
 }
 
 bool Terms::split(const Ref &e, Ref &c, Ref &x, Ref &y) const {
+  return choice(e, c, x, y) && constant(x) && constant(y);
+}
+
+bool Terms::choice(const Ref &e, Ref &c, Ref &x, Ref &y) const {
   const Node *n = node(e);
-  if (!n || n->op != Op::Ite || !constant(n->b) || !constant(n->c))
+  if (!n || n->op != Op::Ite)
     return false;
   c = n->a;
   x = n->b;

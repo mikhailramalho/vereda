@@ -96,6 +96,8 @@ public:
   bool entails(const Ref &guard, const Ref &lit);
   // e as ite(c, x, y) with constant x and y.
   bool split(const Ref &e, Ref &c, Ref &x, Ref &y) const;
+  // e as ite(c, x, y), whatever x and y are.
+  bool choice(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // Whether e multiplies, divides or takes a remainder, outside of arrays.
   bool arithmetic(const Ref &e);
 

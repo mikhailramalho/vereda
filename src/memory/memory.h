@@ -7,6 +7,17 @@
 // only for ptrtoint, inttoptr and ordered pointer comparison. Layout
 // constraints hold only on paths where the object exists.
 //
+// Object 1 is the memory outside the program (issue #137): at base 0, as
+// large as the address space and outside the layout, so its offset is the
+// address. A pointer the program did not make (a call without a body
+// returns one, main gets argv, a nondet or undef pointer) is an integer
+// address converted to a pointer, and fromAddress gives an object only if
+// the program exposed its address (stored it, passed it on, converted it to
+// an integer: the walker decides); any other address is in object 1. So a
+// store through such a pointer cannot reach an object the program kept to
+// itself. Bytes nothing wrote (uninitialised or havocked memory) hold
+// integers, so a pointer read from them is converted the same way.
+//
 // A byte written at a constant pointer stays in the state's map of known
 // bytes and reaches the arrays only when an access at a pointer that may
 // alias it needs them (plan, section 4.2: a load from a known store). Most
@@ -80,12 +91,15 @@ public:
   // solver cannot make a small allocation fail by placing earlier objects.
   camada::SMTExprRef fits(camada::SMTExprRef size);
   // A new object of size bytes (pointer-width term) that exists when exists
-  // holds; its layout constraints bind only then. Returns its start.
+  // holds; its layout constraints bind only then. Returns its start. An
+  // address converted to a pointer may land in it only if exposed.
   camada::SMTExprRef allocate(camada::SMTExprRef size, uint64_t align,
-                              camada::SMTExprRef exists);
-  // Allocates every global of m, and every function whose address is taken;
-  // the globals' initialisers go in with initialise().
-  void allocateGlobals(const llvm::Module &m);
+                              camada::SMTExprRef exists, bool exposed = true);
+  // Allocates every global of m, and every function whose address is taken,
+  // exposed as the predicate says; the globals' initialisers go in with
+  // initialise().
+  void allocateGlobals(const llvm::Module &m,
+                       const std::function<bool(const llvm::GlobalValue *)> &exposed);
   camada::SMTExprRef global(const llvm::GlobalValue *g) const;
   // Writes every global's initialiser into st; valueOf encodes constants
   // that are pointers into other globals.
@@ -95,7 +109,9 @@ public:
   // The size in bytes of the object with id obj, a pointer-width term.
   camada::SMTExprRef size(camada::SMTExprRef obj);
   camada::SMTExprRef address(camada::SMTExprRef p);   // ptrtoint
-  camada::SMTExprRef fromAddress(camada::SMTExprRef a); // inttoptr
+  // inttoptr: the exposed object that holds a, else null for 0 and the
+  // memory outside the program for any other address.
+  camada::SMTExprRef fromAddress(camada::SMTExprRef a);
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
   // or not c it implies goes to one side only.
@@ -117,9 +133,9 @@ public:
   void own(State &st, camada::SMTExprRef p, unsigned bits = 8);
   // Gives the n bytes at p nondet contents (__VERIFIER_nondet_memory), or
   // without n the whole object at p, as a call to a function without a body
-  // may write any of it. False, with st unchanged, when the object is
-  // chosen at run time.
-  bool havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
+  // may write any of it; for p into one of several objects, each where p
+  // points into it.
+  void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 
@@ -131,8 +147,12 @@ private:
   std::optional<Key> key(camada::SMTExprRef p) const;
   camada::SMTExprRef ptr(const Key &k);
   // Moves the known bytes an access at p may alias into the arrays: those
-  // of p's object, or all when the object is not constant.
+  // of the objects p may point into.
   void prepare(State &st, camada::SMTExprRef p);
+  // The objects a pointer whose object is obj may point into: the constants
+  // obj chooses among, or else (a pointer read from memory) null, the memory
+  // outside the program and every exposed object.
+  std::vector<uint64_t> candidates(camada::SMTExprRef obj);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   State::Cell readByte(const State &st, camada::SMTExprRef at);
@@ -170,6 +190,7 @@ private:
 
   struct Object {
     camada::SMTExprRef base, size;
+    bool exposed;
   };
 
   encode::Terms &t;

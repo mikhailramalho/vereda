@@ -1,7 +1,7 @@
-// A byte written through a pointer made from a nondet integer may land in
-// an element of an array of int elements (#107).
-// EXPECT: ^VERIFICATION FAILED$
-// EXPECT: line 18
+// A byte written through a pointer made from a nondet integer cannot land in
+// an array of int elements (#107), as the program never gives its address
+// out (#137).
+// EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern void __VERIFIER_assume(int);
 extern unsigned __VERIFIER_nondet_uint(void);

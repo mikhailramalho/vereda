@@ -1,7 +1,7 @@
-// A pointer made from a nondet integer may point into an array of int
-// elements (#107) that the walker found read and written only whole: a byte,
-// or an int across two elements, written through it changes only the bytes
-// it covers, and reads back through it.
+// A pointer made from a nondet integer does not point into an array of int
+// elements (#107) that the walker found read and written only whole, whose
+// address the program keeps (#137): a byte, or an int across two elements,
+// written through it leaves the array as it was, and reads back through it.
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern void __VERIFIER_assume(int);
