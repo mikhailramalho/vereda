@@ -29,7 +29,4 @@ int main() {
 // Imported from ESBMC regression/esbmc/github_151-2
 // Needs: REQUIRES signed_char_host
 // RUN: 
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

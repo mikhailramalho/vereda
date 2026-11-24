@@ -40,7 +40,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vasprintf_valist_vacopy_launder_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

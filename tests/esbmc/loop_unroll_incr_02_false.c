@@ -16,7 +16,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/loop_unroll_incr_02_false
 // RUN: --incremental-bmc --no-summarize-array-loops
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: unmet EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE

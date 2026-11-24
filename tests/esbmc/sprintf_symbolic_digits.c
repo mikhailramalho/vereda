@@ -16,7 +16,3 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/sprintf_symbolic_digits
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

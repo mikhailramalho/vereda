@@ -33,7 +33,6 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix2/11_spin2003-tid
 // RUN: --unwind 3
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

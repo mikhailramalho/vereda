@@ -8,7 +8,4 @@ int main(void)
 // Imported from ESBMC regression/esbmc/migrate_level0_symbol_quiet
 // Needs: --goto-functions-only
 // RUN: --goto-functions-only
-// MODE: FUTURE
 // EXPECT: (?s)\A(?!.*missing renaming delimiters)
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

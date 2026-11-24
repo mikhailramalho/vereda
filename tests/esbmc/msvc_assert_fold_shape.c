@@ -12,6 +12,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/msvc_assert_fold_shape
 // Needs: --goto-functions-only
 // RUN: --goto-functions-only
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -11,7 +11,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/scanf_array_elem_store_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

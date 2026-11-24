@@ -730,7 +730,3 @@ static void _GLOBAL__I_a(void) {
 // Imported from ESBMC regression/esbmc/34_llvm_01
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

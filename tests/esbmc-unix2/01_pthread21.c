@@ -26,7 +26,6 @@ int main()
   pthread_create(&id3, NULL, t3, NULL);
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread21
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

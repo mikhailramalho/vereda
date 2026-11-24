@@ -38,7 +38,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/va_copy_callee_va_list
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

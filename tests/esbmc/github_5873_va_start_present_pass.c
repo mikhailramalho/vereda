@@ -93,7 +93,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_5873_va_start_present_pass
 // RUN: --entry main
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

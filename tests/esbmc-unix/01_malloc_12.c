@@ -35,7 +35,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_12
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

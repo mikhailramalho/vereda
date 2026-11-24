@@ -25,7 +25,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/stack-access
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

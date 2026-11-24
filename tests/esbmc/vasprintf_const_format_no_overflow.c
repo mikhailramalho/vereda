@@ -35,7 +35,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/vasprintf_const_format_no_overflow
 // RUN: --overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

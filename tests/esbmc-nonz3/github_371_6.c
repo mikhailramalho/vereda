@@ -91,7 +91,3 @@ int main()
 // Imported from ESBMC regression/nonz3/github_371_6
 // RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

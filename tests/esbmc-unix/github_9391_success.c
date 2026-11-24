@@ -24,7 +24,3 @@ int main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc-unix/github_9391_success
 // RUN: --unwind 3 --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -21,6 +21,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8083_precision
 // Needs: --interval-analysis --goto-functions-only
 // RUN: --interval-analysis --goto-functions-only
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

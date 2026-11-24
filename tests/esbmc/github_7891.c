@@ -8,7 +8,4 @@ int main()
 // Imported from ESBMC regression/esbmc/github_7891
 // Needs: REQUIRES arch_x86
 // RUN: 
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

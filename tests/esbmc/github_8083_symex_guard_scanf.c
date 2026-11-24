@@ -16,7 +16,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8083_symex_guard_scanf
 // RUN: --unwind 4
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

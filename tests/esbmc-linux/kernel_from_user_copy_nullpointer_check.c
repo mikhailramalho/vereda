@@ -31,7 +31,6 @@ int main()
 }
 // Imported from ESBMC regression/linux/kernel_from_user_copy_nullpointer_check
 // RUN: --unwind 200
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

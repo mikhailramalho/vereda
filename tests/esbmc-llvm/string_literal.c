@@ -44,7 +44,6 @@ int main ()
     assert(wcslen(s5) == 3); // without null terminator
 }
 // Imported from ESBMC regression/llvm/string_literal
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

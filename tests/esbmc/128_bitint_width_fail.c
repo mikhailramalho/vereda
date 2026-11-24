@@ -14,8 +14,5 @@ int main()
 // Imported from ESBMC regression/esbmc/128_bitint_width_fail
 // Needs: REQUIRES bitint
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*arithmetic overflow on add$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

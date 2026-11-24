@@ -15,7 +15,4 @@ _start:
 }
 // Imported from ESBMC regression/esbmc/github_7903_address_taken
 // RUN: --unwind 8
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

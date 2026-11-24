@@ -58,7 +58,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/getenv3
 // RUN: --unwind 30 --no-unwinding-assertions
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
