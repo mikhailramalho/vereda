@@ -5310,5 +5310,3 @@ signed long int wrap(signed long int kX, signed long int kLowerBound, signed lon
 }
 // Imported from ESBMC regression/esbmc/github_123
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: over 300 s in CI
-// MODE: KNOWNBUG

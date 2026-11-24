@@ -165,8 +165,14 @@ State Memory::initial() {
           t.constArray(index, t.bv(IntProvenance, ObjBits))};
 }
 
-// Past this many known bytes in a state, all go to the arrays.
-static const size_t MaxKnown = 4096;
+// Past this many known bytes in a state, all go to the arrays. 1 MiB keeps
+// known the bytes a loop writes at constant indices into a large array, so
+// that a read at a constant index finds its byte instead of walking a chain
+// of stores.
+static const size_t MaxKnown = 1 << 20;
+// Past this many bytes of an object that differ at a join, it goes to the
+// arrays on both sides.
+static const size_t MaxChoices = 1024;
 
 std::optional<Memory::Key> Memory::key(Term p) const {
   const APInt *v = t.constant(p);
@@ -401,10 +407,10 @@ void Memory::prepare(State &st, Term p) {
     flush(st, o);
 }
 
-std::vector<uint64_t> Memory::candidates(Term p, bool integers) {
+std::vector<uint64_t> Memory::candidates(Term p, bool integers, bool *read) {
   std::vector<uint64_t> r;
   std::vector<Term> work{p};
-  bool read = false;
+  bool fromMemory = false;
   while (!work.empty()) {
     Term e = work.back(), c, x, y;
     work.pop_back();
@@ -420,10 +426,12 @@ std::vector<uint64_t> Memory::candidates(Term p, bool integers) {
       work.push_back(x);
       work.push_back(y);
     } else {
-      read = true;
+      fromMemory = true;
     }
   }
-  if (read) // from memory, where only pointers to exposed objects are stored
+  if (read)
+    *read = fromMemory;
+  else if (fromMemory) // where only pointers to exposed objects are stored
     for (uint64_t id = 0; id < objects.size(); ++id)
       if (id == 0 || objects[id].exposed)
         r.push_back(id);
@@ -501,14 +509,25 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
   // An object whose bytes would become a choice between two values that
   // multiply or divide goes to the arrays on both sides instead. There the
   // solver bit-blasts a stored value only where a read needs it; as a choice,
-  // all of them up front (RERS Problem14 ran out of memory).
+  // all of them up front (RERS Problem14 ran out of memory). So does one
+  // with more than MaxChoices bytes that differ, counted before any byte is
+  // read: reading many bytes from a side that flushed the object walks the
+  // flush's stores for each, and a choice per byte of a large object copied
+  // on both sides solved slower than a choice of arrays.
   State a = a0, b = b0;
+  std::set<uint64_t> moved;
+  llvm::DenseMap<uint64_t, size_t> differ;
+  CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *, const State::Cell *) {
+    if (++differ[k.first] == MaxChoices + 1)
+      moved.insert(k.first);
+  });
   // Only the bytes whose cells differ need a choice; the rest stay as a has
   // them. A byte known on one side only reads the other side's arrays, which
   // the flushes below change only at other objects.
   std::vector<std::pair<Key, std::pair<State::Cell, State::Cell>>> sides;
-  std::set<uint64_t> moved;
   CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *x, const State::Cell *y) {
+    if (moved.count(k.first))
+      return;
     State::Cell xa = x ? *x : readByte(a, ptr(k)), yb = y ? *y : readByte(b, ptr(k));
     if (xa.data != yb.data && (t.arithmetic(xa.data) || t.arithmetic(yb.data)))
       moved.insert(k.first);
@@ -778,18 +797,35 @@ void Memory::havocObject(State &st, uint64_t o, Term prov) {
 llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State &st) {
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
   Term intProv = t.bv(IntProvenance, ObjBits);
-  // The objects a byte of provenance prov may point to, for each object in.
+  // A pointer read from memory may point to every exposed object, which
+  // goes to an object once: each byte of a pointer copied may have a
+  // provenance of its own.
+  std::vector<uint64_t> exposed;
+  for (uint64_t id = 1; id < objects.size(); ++id)
+    if (objects[id].exposed)
+      exposed.push_back(id);
+  llvm::DenseSet<uint64_t> holdsRead;
+  // The objects a byte of provenance prov may point to, for each object in,
+  // with each provenance looked up once.
+  llvm::DenseMap<const void *, std::pair<std::vector<uint64_t>, bool>> targets;
   auto add = [&](llvm::ArrayRef<uint64_t> in, const Term &prov) {
-    std::vector<uint64_t> xs;
-    for (uint64_t x : candidates(prov, false))
-      if (x && x < objects.size()) // not null, nor an integer's
-        xs.push_back(x);
-    if (!xs.empty())
-      for (uint64_t o : in)
+    auto [it, inserted] = targets.try_emplace(prov.id());
+    auto &[xs, read] = it->second;
+    if (inserted)
+      for (uint64_t x : candidates(prov, false, &read))
+        if (x && x < objects.size()) // not null, nor an integer's
+          xs.push_back(x);
+    for (uint64_t o : in) {
+      if (!xs.empty())
         to[o].insert(xs.begin(), xs.end());
+      if (read && !exposed.empty() && holdsRead.insert(o).second)
+        to[o].insert(exposed.begin(), exposed.end());
+    }
   };
+  // A pointer's bytes share one provenance: add each once per object.
+  llvm::DenseSet<std::pair<uint64_t, const void *>> added;
   st.known.forEach([&](Key k, const State::Cell &c) {
-    if (c.prov != intProv)
+    if (c.prov != intProv && added.insert({k.first, c.prov.id()}).second)
       add(k.first, c.prov);
   });
   // The provenance stored in the arrays: in those indexed by pointer, each
