@@ -97,7 +97,7 @@ bool Loops::sideEffectFree(const Instruction &inst, unsigned depth, bool reads) 
     return counted.assertions || (prev && prev->doesNotReturn());
   }
   if (inst.isTerminator())
-    return isa<BranchInst>(inst) || isa<SwitchInst>(inst) || isa<ReturnInst>(inst);
+    return isa<UncondBrInst, CondBrInst, SwitchInst, ReturnInst>(inst);
   return !isa<AllocaInst>(inst) && !inst.mayHaveSideEffects() && !inst.mayReadFromMemory();
 }
 
@@ -113,9 +113,9 @@ const Value *Loops::base(const Value *p, const Loop *l) {
 
 std::optional<Summary> Loops::match(const Loop *l) {
   BasicBlock *header = l->getHeader();
-  auto *br = dyn_cast<BranchInst>(header->getTerminator());
+  auto *br = dyn_cast<CondBrInst>(header->getTerminator());
   if (threads || !l->isInnermost() || !l->getLoopPreheader() || !l->getLoopLatch() || !br ||
-      !br->isConditional() || l->contains(br->getSuccessor(0)) == l->contains(br->getSuccessor(1)))
+      l->contains(br->getSuccessor(0)) == l->contains(br->getSuccessor(1)))
     return std::nullopt;
   Summary sum;
   sum.exit = br->getSuccessor(l->contains(br->getSuccessor(0)) ? 1 : 0);

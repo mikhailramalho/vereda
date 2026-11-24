@@ -416,6 +416,7 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
     return fromBits(toBits(a, src), dst);
   switch (opcode) {
   case Instruction::PtrToInt:
+  case Instruction::PtrToAddr: // a ptrtoint that does not expose the pointer
     return dst->isIntegerTy(1) ? toBool(resize(mem.address(a), 1, false))
                                : resize(mem.address(a), dst->getIntegerBitWidth(), false);
   case Instruction::IntToPtr:

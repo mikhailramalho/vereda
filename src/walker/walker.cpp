@@ -201,8 +201,8 @@ private:
   // elements (elementBits), or 0 for none.
   unsigned ownsArrays(const Value *v, const DataLayout &dl) {
     auto [it, inserted] = owns.try_emplace(v, 0);
-    if (!inserted || capturesAnything(PointerMayBeCaptured(v, /*ReturnCaptures=*/true,
-                                                           CaptureComponents::Provenance)))
+    if (!inserted ||
+        capturesAnything(PointerMayBeCaptured(v, CaptureComponents::Provenance).WithRet))
       return it->second;
     SmallVector<const Value *, 8> work{v};
     SmallPtrSet<const Value *, 8> seen;
@@ -312,8 +312,8 @@ private:
   // `while (1);`, into assume(0).
   static bool endless(const Loop *l) {
     for (BasicBlock *bb : l->blocks()) {
-      auto *br = dyn_cast<BranchInst>(bb->getTerminator());
-      auto *c = br && br->isConditional() ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
+      auto *br = dyn_cast<CondBrInst>(bb->getTerminator());
+      auto *c = br ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
       for (BasicBlock *succ : successors(bb))
         if (!l->contains(succ) && (!c || br->getSuccessor(c->isZero()) == succ))
           return false;
@@ -521,6 +521,7 @@ private:
       return isa<Instruction>(v) || isa<Argument>(v) ? enc.bound(v) : enc.value(v);
     }
     case scPtrToInt:
+    case scPtrToAddr:
       return enc.resize(mem.address(ops[0]), w, false);
     case scTruncate:
     case scZeroExtend:
@@ -699,8 +700,10 @@ private:
 
   void terminator(Frame &frame, Instruction &term, Term guard, const memory::State &st) {
     BasicBlock *bb = term.getParent();
-    if (auto *br = dyn_cast<BranchInst>(&term)) {
-      if (br->isUnconditional() || br->getSuccessor(0) == br->getSuccessor(1)) {
+    if (auto *br = dyn_cast<UncondBrInst>(&term)) {
+      arrive(frame, bb, br->getSuccessor(), guard, st);
+    } else if (auto *br = dyn_cast<CondBrInst>(&term)) {
+      if (br->getSuccessor(0) == br->getSuccessor(1)) {
         arrive(frame, bb, br->getSuccessor(0), guard, st);
         return;
       }
@@ -1362,16 +1365,17 @@ private:
     }
     if (auto *cx = dyn_cast<AtomicCmpXchgInst>(&inst)) {
       Type *ty = cx->getNewValOperand()->getType();
-      if (!ty->isIntegerTy() || ty->isIntegerTy(1))
+      if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) && !ty->isPointerTy())
         throw Unsupported("instruction " + encode::describe(&inst));
       Term p = enc.value(cx->getPointerOperand());
-      Term old = mem.load(st, p, ty);
-      Term ok = t.eq(old, enc.value(cx->getCompareOperand()));
+      Term old = mem.load(st, p, ty), expected = enc.value(cx->getCompareOperand());
+      // Pointers compare as icmp eq compares them.
+      Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(old, expected);
       if (cx->isWeak()) // may fail even when equal
         ok = t.land(ok, enc.fresh(Type::getInt1Ty(inst.getContext()), "cmpxchg_weak"));
       writes(inst, t.land(guard, ok), p);
       mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()), old), ty);
-      // {old, success}: a struct of integers packs field 0 into the low bits.
+      // {old, success}: a packed struct holds field 0 in the low bits.
       enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), old));
       return true;
     }

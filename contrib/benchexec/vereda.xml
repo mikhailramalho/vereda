@@ -7,7 +7,7 @@
      the shard, whose name is the benchmark's after "vereda.", into an
      sv-benchmarks checkout at the top of this repository's. -->
 <benchmark tool="vereda" timelimit="60 s" memlimit="6 GB" cpuCores="2">
-  <option name="--clang">/usr/lib/llvm-21/bin/clang</option>
+  <option name="--clang">/usr/lib/llvm-23/bin/clang</option>
   <option name="--incremental-bmc"/>
   <rundefinition name="unreach-call">
     <tasks>

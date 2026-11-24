@@ -129,7 +129,7 @@ struct BranchSite {
   std::optional<bool> taken[2];
 };
 
-inline std::optional<BranchSite> branchSite(const llvm::BranchInst &br) {
+inline std::optional<BranchSite> branchSite(const llvm::CondBrInst &br) {
   static const std::pair<llvm::StringRef, bool> blocks[] = {
       {"if.then", true},    {"if.else", false}, {"if.end", false}, {"while.body", true},
       {"while.end", false}, {"for.body", true}, {"for.end", false}};
