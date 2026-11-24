@@ -43,6 +43,18 @@ is cheap enough not to cache; the plan job fetches it once and hands it to
 the run jobs as an artifact. GitLab serves a commit by its hash as well as
 a branch or tag.
 
+The whole Loops category (764 tasks, 60 s, svcomp27-freeze, Vereda at
+d8a8b4f9) ran as two shards of 382 tasks, whose jobs took 89 and 93
+minutes; the run took 1 h 34 min from start to report
+(https://github.com/mikhailramalho/vereda/actions/runs/45389719355). It
+used 357 minutes of CPU time: 418 correct, none wrong, 340 timeouts, 5
+UNKNOWN and one out of memory at 6 GB (`loops/n.c24`). On the 758 tasks it
+shares with the baseline rerun of 2026-11-23 (f53bf26d, bound 50, our
+machine), it loses none of that run's correct answers and gains 73. By
+the same measure the others should take about 3 hours for Arrays, where
+that rerun answered 99 of 440, an hour for Heap and half an hour for
+ControlFlow, each in one shard; these are estimates, not runs.
+
 BenchExec joins a relative path in a run definition to the definition's
 directory before it expands variables, so `$SV_BENCHMARKS/c/...` in an
 `includesfile` matched nothing when the definition was not in the working
