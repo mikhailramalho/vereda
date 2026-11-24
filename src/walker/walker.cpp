@@ -71,6 +71,46 @@ struct Frame {
   SmallVector<Return, 2> returns;
 };
 
+// A conversion of a scanf format (C17 7.21.6.2), as glibc reads it: S and
+// C are ls and lc, and m (POSIX) has the argument point to a pointer that
+// the call sets to a buffer it allocates.
+struct Conversion {
+  char conv;
+  StringRef length;
+  uint64_t width = 0;
+  bool suppressed = false, alloc = false;
+};
+
+// The conversions of format f in order. A printf format's flags and
+// precision read as unknown conversions, which still finds each %n.
+static SmallVector<Conversion, 4> conversions(StringRef f) {
+  SmallVector<Conversion, 4> out;
+  for (size_t i = 0; i < f.size(); ++i) {
+    if (f[i] != '%' || ++i == f.size() || f[i] == '%')
+      continue;
+    Conversion cv;
+    cv.suppressed = f[i] == '*';
+    i += cv.suppressed;
+    for (; i < f.size() && isDigit(f[i]); ++i)
+      cv.width = cv.width * 10 + (f[i] - '0');
+    size_t from = i;
+    for (; i < f.size() && StringRef("hljztLqm").contains(f[i]); ++i)
+      cv.alloc |= f[i] == 'm';
+    if (i == f.size())
+      break;
+    cv.length = f.slice(from, i);
+    cv.conv = f[i];
+    if (cv.conv == 'S' || cv.conv == 'C') {
+      cv.conv = toLower(cv.conv);
+      cv.length = "l";
+    }
+    if (cv.conv == '[') // the set may start with ] or ^]
+      i = std::min(f.find(']', i + (f.substr(i + 1).starts_with("^") ? 3 : 2)), f.size());
+    out.push_back(cv);
+  }
+  return out;
+}
+
 class Walk {
 public:
   Walk(const Options &opts, encode::Encoder &enc, memory::Memory &mem, checks::Checks &checks,
@@ -420,88 +460,80 @@ private:
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
     // An unknown external returns an unconstrained value and may write all
-    // of each object it gets a pointer to (read, fgets), except a constant
-    // and what its attributes, which LLVM infers for the C library, say it
-    // only reads. Of the variadic arguments only scanf's are written
-    // (printf's %n is not modelled). It may also write through pointers
-    // stored in those objects, or to globals, which this does not cover.
-    // Uninterpreted functions (__CPROVER_uninterpreted_*) write nothing, nor
-    // do the pthread functions here, as threads are not modelled yet.
+    // of each object it gets a pointer to (read, fgets, ioctl), except a
+    // constant and what its attributes, which LLVM infers for the C library,
+    // say it only reads. With a constant format without positional
+    // arguments, scanf writes its variadic arguments as scan says, and
+    // printf none unless the format has a %n. It may also write through
+    // pointers stored in those objects, or to globals, which this does not
+    // cover. The pthread functions write nothing here, as threads are not
+    // modelled yet.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
-    if (!c.onlyReadsMemory() && !name.starts_with("pthread_") &&
-        !name.contains("_uninterpreted_"))
-      for (unsigned i = 0; i < c.getFunctionType()->getNumParams(); ++i) {
+    unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
+    StringRef f;
+    bool format = c.getFunctionType()->isVarArg() && params &&
+                  getConstantStringInfo(c.getArgOperand(params - 1), f) && !f.contains('$');
+    bool scanf = format && name.ends_with("scanf");
+    if (scanf || (format && name.ends_with("printf") &&
+                  none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
+      end = params;
+    if (!c.onlyReadsMemory() && !name.starts_with("pthread_"))
+      for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
           havoc(st, name, c, a, std::nullopt, guard);
       }
-    if (name.ends_with("scanf") && c.getFunctionType()->isVarArg())
-      return scan(c, name, tag, guard, st);
+    if (scanf)
+      return scan(c, f, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
       enc.bind(&c, enc.fresh(c.getType(), tag));
     return guard;
   }
 
-  // The variadic arguments of scanf, fscanf and sscanf (C17 7.21.6.2): with
-  // a constant format, each conversion writes the bytes its type takes, a
-  // string up to its width or the end of the object, and the result r says
-  // how many were assigned: the first r, or none for EOF. A %n is written
-  // only when the conversions before it were, if any. With another format,
-  // every argument's whole object may be written.
-  SMTExprRef scan(CallBase &c, StringRef name, const std::string &tag, SMTExprRef guard,
-                  memory::State &st) {
+  // The variadic arguments of scanf, fscanf and sscanf for a constant format
+  // f (C17 7.21.6.2): each conversion writes the bytes its type takes, a
+  // string up to its width or the end of the object, an unknown conversion
+  // the whole object, and the result r says how many were assigned: the
+  // first r, or none for EOF. A %n is written only when the conversions
+  // before it were, if any.
+  SMTExprRef scan(CallBase &c, StringRef f, StringRef name, const std::string &tag,
+                  SMTExprRef guard, memory::State &st) {
     unsigned arg = c.getFunctionType()->getNumParams();
     SMTExprRef r = enc.fresh(c.getType(), tag);
     enc.bind(&c, r);
-    StringRef f;
-    if (!getConstantStringInfo(c.getArgOperand(arg - 1), f)) {
-      for (; arg < c.arg_size(); ++arg)
-        havoc(st, name, c, c.getArgOperand(arg), std::nullopt, guard);
-      return guard;
-    }
     const DataLayout &dl = c.getDataLayout();
     unsigned bits = r->getWidth(), ptr = dl.getPointerSize(), assigned = 0;
-    for (size_t i = 0; i < f.size() && arg < c.arg_size(); ++i) {
-      if (f[i] != '%' || ++i == f.size() || f[i] == '%')
-        continue;
-      bool suppressed = f[i] == '*';
-      i += suppressed;
-      uint64_t width = 0;
-      for (; i < f.size() && isDigit(f[i]); ++i)
-        width = width * 10 + (f[i] - '0');
-      size_t from = i;
-      while (i < f.size() && StringRef("hljztL").contains(f[i]))
-        ++i;
-      StringRef length = f.slice(from, i);
-      if (i == f.size())
+    for (const Conversion &cv : conversions(f)) {
+      if (arg == c.arg_size())
         break;
-      char conv = f[i];
-      if (conv == '[') // the set may start with ] or ^]
-        i = std::min(f.find(']', i + (f.substr(i + 1).starts_with("^") ? 3 : 2)), f.size());
-      if (suppressed)
+      if (cv.suppressed)
         continue;
       Value *a = c.getArgOperand(arg++);
-      SMTExprRef p = enc.value(a);
-      std::optional<uint64_t> n;
-      if (StringRef("diouxXn").contains(conv))
-        n = length == "hh" ? 1 : length == "h" ? 2
-          : length == "ll" || length == "L" || length == "j" ? 8 // glibc's %Ld is long long
-          : length.empty() ? 4 : ptr; // l, z and t: the pointer width on Linux
-      else if (StringRef("aAeEfFgG").contains(conv))
-        n = length == "L" ? dl.getTypeAllocSize(Type::getX86_FP80Ty(c.getContext()))
-          : length == "l" ? 8 : 4;
-      else if (conv == 'p')
+      SMTExprRef done = cv.conv == 'n' ? t.sge(r, t.bv(assigned ? int64_t(assigned) : -1, bits))
+                                       : t.sgt(r, t.bv(assigned++, bits));
+      if (!a->getType()->isPointerTy()) // undefined behaviour, not checked
+        continue;
+      StringRef l = cv.length;
+      bool big = l == "ll" || l == "L" || l == "q"; // glibc: long long, or long double
+      unsigned wide = l == "l" ? 4 : 1;
+      std::optional<uint64_t> n; // none: the whole object
+      if (cv.alloc)
         n = ptr;
-      else if (conv == 'c')
-        n = (width ? width : 1) * (length == "l" ? 4 : 1);
-      else if (width) // s or [: the characters and a null
-        n = (width + 1) * (length == "l" ? 4 : 1);
-      else
-        n = single(t.sub(mem.size(mem.object(p)), mem.offset(p)), guard);
-      SMTExprRef done = conv == 'n' ? t.sge(r, t.bv(assigned ? int64_t(assigned) : -1, bits))
-                                    : t.sgt(r, t.bv(assigned++, bits));
+      else if (StringRef("diouxXn").contains(cv.conv))
+        n = l == "hh" ? 1 : l == "h" ? 2 : big || l == "j" ? 8
+          : l.empty() ? 4 : ptr; // l, z and t: the pointer width on Linux
+      else if (StringRef("aAeEfFgG").contains(cv.conv))
+        n = big ? dl.getTypeAllocSize(Type::getX86_FP80Ty(c.getContext())) : l == "l" ? 8 : 4;
+      else if (cv.conv == 'p')
+        n = ptr;
+      else if (cv.conv == 'c')
+        n = (cv.width ? cv.width : 1) * wide;
+      else if ((cv.conv == 's' || cv.conv == '[') && cv.width) // the characters and a null
+        n = (cv.width + 1) * wide;
+      else if (cv.conv == 's' || cv.conv == '[')
+        n = single(t.sub(mem.size(mem.object(enc.value(a))), mem.offset(enc.value(a))), guard);
       memory::State written = st;
       havoc(written, name, c, a, n, guard);
       st = mem.ite(done, written, st);
