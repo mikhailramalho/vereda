@@ -28,23 +28,6 @@ static std::string describe(const Type *ty) {
   return str;
 }
 
-// Width of an integer, or of a struct of integers packed into one bitvector;
-// 0 for anything else.
-static unsigned packedWidth(Type *ty) {
-  if (ty->isIntegerTy())
-    return ty->getIntegerBitWidth();
-  auto *st = dyn_cast<StructType>(ty);
-  if (!st)
-    return 0;
-  unsigned width = 0;
-  for (Type *field : st->elements()) {
-    if (!field->isIntegerTy())
-      return 0;
-    width += field->getIntegerBitWidth();
-  }
-  return width;
-}
-
 // The format of a floating-point type that is an IEEE interchange format;
 // null for x86_fp80 and ppc_fp128, which are not.
 static const fltSemantics *ieee(Type *ty) {
@@ -63,6 +46,49 @@ static unsigned vectorElementWidth(Type *ty) {
   if ((e->isIntegerTy() && !e->isIntegerTy(1)) || ieee(e))
     return e->getPrimitiveSizeInBits();
   return 0;
+}
+
+// The width of ty's bits as a field of a packed struct: an integer (i1 as
+// one bit), a pointer, an IEEE float, a vector of these, or a struct of all
+// of these, as clang returns small structs on x86-64 ({ptr, i32}); 0 for
+// anything else.
+unsigned Encoder::packedWidth(Type *ty) {
+  if (ty->isIntegerTy())
+    return ty->getIntegerBitWidth();
+  if (ty->isPointerTy())
+    return mem.pointerSort()->getWidth();
+  if (ieee(ty))
+    return ty->getPrimitiveSizeInBits();
+  if (unsigned w = vectorElementWidth(ty))
+    return w * cast<FixedVectorType>(ty)->getNumElements();
+  auto *st = dyn_cast<StructType>(ty);
+  if (!st)
+    return 0;
+  unsigned width = 0;
+  for (Type *field : st->elements()) {
+    unsigned w = packedWidth(field);
+    if (!w)
+      return 0;
+    width += w;
+  }
+  return width;
+}
+
+// A field's value as the bits a packed struct holds, and back.
+SMTExprRef Encoder::toField(SMTExprRef v, Type *ty) {
+  return ty->isIntegerTy(1) ? fromBool(v, 1) : toBits(v, ty);
+}
+
+SMTExprRef Encoder::fromField(SMTExprRef bits, Type *ty) {
+  return ty->isIntegerTy(1) ? toBool(bits) : fromBits(bits, ty);
+}
+
+// v with the bits from low up replaced by part.
+SMTExprRef Encoder::replaceBits(SMTExprRef v, unsigned low, SMTExprRef part) {
+  unsigned high = low + part->getWidth(), all = v->getWidth();
+  if (high < all)
+    part = t.concat(t.extract(v, all - 1, high), part);
+  return low > 0 ? t.concat(part, t.extract(v, low - 1, 0)) : part;
 }
 
 SMTSortRef Encoder::sort(Type *ty) {
@@ -94,14 +120,16 @@ SMTExprRef Encoder::value(const Value *v) {
     return mem.null();
   if (auto *cf = dyn_cast<ConstantFP>(v); cf && ieee(cf->getType()))
     return fromBits(t.bv(cf->getValueAPF().bitcastToAPInt()), cf->getType());
-  if (vectorElementWidth(v->getType()) && isa<Constant>(v)) {
+  Type *ty = v->getType();
+  if ((vectorElementWidth(ty) || (ty->isStructTy() && packedWidth(ty))) && isa<Constant>(v)) {
     auto *c = cast<Constant>(v);
-    unsigned n = cast<FixedVectorType>(v->getType())->getNumElements();
+    unsigned n = ty->isStructTy() ? ty->getStructNumElements()
+                                  : cast<FixedVectorType>(ty)->getNumElements();
     auto element = [&](unsigned i) {
       Constant *e = c->getAggregateElement(i); // null for some constant expressions
       if (!e)
         throw Unsupported("value " + describe(v));
-      return toBits(value(e), e->getType());
+      return toField(value(e), e->getType());
     };
     SMTExprRef r = element(n - 1);
     for (unsigned i = n - 1; i-- > 0;)
@@ -424,29 +452,34 @@ void Encoder::encode(Instruction &inst) {
     unsigned n = w ? cast<FixedVectorType>(vec->getType())->getNumElements() : 0;
     if (!w || !index || index->getZExtValue() >= n)
       throw Unsupported("instruction " + describe(&inst));
-    unsigned low = w * index->getZExtValue(), all = w * n;
+    unsigned low = w * index->getZExtValue();
     SMTExprRef v = value(vec);
     Type *elem = cast<FixedVectorType>(vec->getType())->getElementType();
     if (isa<ExtractElementInst>(inst)) {
       r = fromBits(t.extract(v, low + w - 1, low), elem);
     } else {
-      r = toBits(value(inst.getOperand(1)), elem);
-      if (low + w < all)
-        r = t.concat(t.extract(v, all - 1, low + w), r);
-      if (low > 0)
-        r = t.concat(r, t.extract(v, low - 1, 0));
+      r = replaceBits(v, low, toBits(value(inst.getOperand(1)), elem));
     }
-  } else if (auto *ev = dyn_cast<ExtractValueInst>(&inst)) {
-    auto *st = dyn_cast<StructType>(ev->getAggregateOperand()->getType());
-    if (!st || !packedWidth(st) || ev->getNumIndices() != 1)
-      throw Unsupported("extractvalue " + describe(&inst));
-    unsigned field = ev->getIndices()[0], low = 0;
-    for (unsigned i = 0; i < field; ++i)
-      low += st->getElementType(i)->getIntegerBitWidth();
-    unsigned width = st->getElementType(field)->getIntegerBitWidth();
-    r = t.extract(value(ev->getAggregateOperand()), low + width - 1, low);
-    if (width == 1)
-      r = t.eq(r, t.bv(1, 1));
+  } else if (isa<ExtractValueInst>(inst) || isa<InsertValueInst>(inst)) {
+    // The field's bits within the packed struct, at its indices.
+    Value *agg = inst.getOperand(0);
+    if (!agg->getType()->isStructTy() || !packedWidth(agg->getType()))
+      throw Unsupported("instruction " + describe(&inst));
+    auto *ev = dyn_cast<ExtractValueInst>(&inst);
+    ArrayRef<unsigned> indices =
+        ev ? ev->getIndices() : cast<InsertValueInst>(inst).getIndices();
+    Type *field = agg->getType();
+    unsigned low = 0;
+    for (unsigned i : indices) { // a packed type holds no arrays
+      auto *st = cast<StructType>(field);
+      for (unsigned j = 0; j < i; ++j)
+        low += packedWidth(st->getElementType(j));
+      field = st->getElementType(i);
+    }
+    if (ev)
+      r = fromField(t.extract(value(agg), low + packedWidth(field) - 1, low), field);
+    else
+      r = replaceBits(value(agg), low, toField(value(inst.getOperand(1)), field));
   } else {
     throw Unsupported(std::string("instruction ") + inst.getOpcodeName());
   }

@@ -462,6 +462,12 @@ private:
       return guard;
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
+    // A struct result stays unsupported: the bodyless functions returning
+    // one are mostly libgcc's complex arithmetic (__muldc3), whose result C
+    // defines, so a nondet one would give wrong FAILEDs.
+    if (c.getType()->isStructTy())
+      throw Unsupported("call to " + name.str() + " returning a struct at " +
+                        ir::location(c).str());
     // An unknown external returns an unconstrained value. Sound
     // while nothing has memory; revisit with the memory model.
     if (warned.insert(callee).second)
