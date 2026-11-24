@@ -141,6 +141,21 @@ void *memchr(const void *s, int c, size_t n) {
   return NULL;
 }
 
+char *strstr(const char *haystack, const char *needle) {
+  if (!*needle)
+    return (char *)haystack;
+  for (; *haystack; ++haystack) {
+    const char *h = haystack, *n = needle;
+    while (*n && *h == *n) {
+      ++h;
+      ++n;
+    }
+    if (!*n)
+      return (char *)haystack;
+  }
+  return NULL;
+}
+
 char *strdup(const char *s) {
   size_t n = strlen(s);
   char *d = malloc(n + 1);
