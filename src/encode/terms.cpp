@@ -421,6 +421,13 @@ Ref Terms::ite(const Ref &c, const Ref &a, const Ref &b) {
     if (isTrue(a) && isFalse(b)) return c;
     if (isFalse(a) && isTrue(b)) return lnot(c);
   }
+  // An arm that is an ite sharing the other arm merges into one condition,
+  // so that a choice of constants (a phi of malloc's result and null) stays
+  // one ite that split sees.
+  const Node *n = node(a);
+  if (n && n->op == Op::Ite && n->c.get() == b.get()) return ite(land(c, n->a), n->b, b);
+  n = node(b);
+  if (n && n->op == Op::Ite && n->c.get() == a.get()) return ite(land(lnot(c), n->a), n->b, a);
   return make({Op::Ite, c, a, b});
 }
 

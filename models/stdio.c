@@ -6,14 +6,16 @@
 #include <stdio.h>
 
 int __VERIFIER_nondet_int(void);
+void *malloc(size_t);
 
-static FILE in, out, err, file;
+static FILE in, out, err;
 FILE *stdin = &in, *stdout = &out, *stderr = &err;
 
-// Every stream opened is the same object, or null when opening fails.
-FILE *fopen(const char *path, const char *mode) { return __VERIFIER_nondet_int() ? &file : NULL; }
-FILE *fdopen(int fd, const char *mode) { return __VERIFIER_nondet_int() ? &file : NULL; }
-FILE *tmpfile(void) { return __VERIFIER_nondet_int() ? &file : NULL; }
+// Each stream opened is a new object, or null when opening fails.
+static FILE *stream(void) { return __VERIFIER_nondet_int() ? malloc(sizeof(FILE)) : NULL; }
+FILE *fopen(const char *path, const char *mode) { return stream(); }
+FILE *fdopen(int fd, const char *mode) { return stream(); }
+FILE *tmpfile(void) { return stream(); }
 FILE *freopen(const char *path, const char *mode, FILE *s) {
   return __VERIFIER_nondet_int() ? s : NULL;
 }
