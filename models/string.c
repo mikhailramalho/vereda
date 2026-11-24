@@ -284,3 +284,18 @@ char *strtok(char *str, const char *delim) {
   static char *save;
   return strtok_r(str, delim, &save);
 }
+
+// BSD strsep: unlike strtok, it does not skip leading delimiters, so a
+// token can be empty.
+char *strsep(char **sp, const char *delim) {
+  char *tok = *sp;
+  if (!tok)
+    return NULL;
+  char *end = tok + strcspn(tok, delim);
+  if (*end)
+    *end++ = 0;
+  else
+    end = NULL;
+  *sp = end;
+  return tok;
+}
