@@ -22,6 +22,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
+import yaml
+
 # SV-COMP's ReachSafety categories made of several set files, as ESBMC's
 # scripts/competitions/svcomp/esbmc.xml defines them; any other category is
 # the set file of its name.
@@ -30,8 +32,9 @@ CATEGORIES = {
     "Loops": ["Loops", "VerifyThis-Loops"],
     "Recursive": ["Recursive", "VerifyThis-Recursive"],
 }
-# Two tasks at a time on a runner's 4 cores, and at most 4.5 hours a shard
-# even if every task runs to its time limit, within a job's 6.
+# Two tasks at a time on a runner's 4 cores (benchexec.yml's -N 2 and
+# vereda.xml's cpuCores), and at most 4.5 hours a shard even if every task
+# runs to its time limit, within a job's 6.
 PARALLEL = 2
 BUDGET = 4.5 * 3600
 
@@ -46,24 +49,27 @@ def patterns(svb, category):
 
 
 def dirs(svb, categories):
-    print(" ".join(sorted({f"/c/{p.split('/')[0]}/" for c in categories for p in patterns(svb, c)})))
+    names = {p.split("/")[0] for c in categories for p in patterns(svb, c)}
+    print(" ".join(f"/c/{name}/" for name in sorted(names)))
 
 
-def reach_tasks(c, category, task_filter):
-    for pattern in patterns(os.path.dirname(c), category):
+def reach_tasks(svb, category, task_filter):
+    c = os.path.join(svb, "c")
+    for pattern in patterns(svb, category):
         for path in glob.glob(os.path.join(c, pattern)):
             task = os.path.relpath(path, c)
             if re.search(task_filter, task):
                 with open(path, encoding="utf-8") as f:
-                    if "unreach-call.prp" in f.read():
-                        yield task
+                    properties = yaml.safe_load(f).get("properties", [])
+                if any(p["property_file"].endswith("/unreach-call.prp") for p in properties):
+                    yield task
 
 
 def plan(svb, timeout, task_filter, categories):
     c = os.path.join(svb, "c")
     shards = []
     for category in categories:
-        tasks = sorted(set(reach_tasks(c, category, task_filter)))
+        tasks = sorted(set(reach_tasks(svb, category, task_filter)))
         n = math.ceil(len(tasks) * timeout / PARALLEL / BUDGET)
         print(f"{category}: {len(tasks)} tasks, {n} shards", file=sys.stderr)
         for i in range(n):
@@ -84,12 +90,12 @@ def load(directory):
     under sv-benchmarks' c/, its set the category of the shard it ran in."""
     runs = {}
     for path in glob.glob(os.path.join(directory, "**", "*.results.*.xml.bz2"), recursive=True):
-        category = os.path.basename(path).split(".")[1]
+        name = os.path.basename(path).split(".")[1]
         with bz2.open(path) as f:
             for run in ET.parse(f).getroot().iter("run"):
                 columns = {c.get("title"): c.get("value") for c in run.iter("column")}
                 task = re.sub(r"^.*?/c/", "", run.get("name"))
-                runs[task] = Run(category, columns.get("category"), columns.get("status"),
+                runs[task] = Run(name, columns.get("category"), columns.get("status"),
                                  run.get("expectedVerdict"),
                                  float(columns.get("cputime", "0s").rstrip("s")))
     return runs
@@ -98,7 +104,8 @@ def load(directory):
 def kind(run):
     if run.category in ("correct", "wrong", "unknown"):
         return run.category
-    return "timeout" if run.status == "TIMEOUT" else "other"
+    # TIMEOUT, or TIMEOUT (true) when the tool printed a verdict too late.
+    return "timeout" if (run.status or "").startswith("TIMEOUT") else "other"
 
 
 def summary(new_dir, old_dir=None):
@@ -120,16 +127,19 @@ def summary(new_dir, old_dir=None):
         print(f"- `{t}`: expected {new[t].expected}, got {new[t].status}")
 
     if old_dir:
-        old = load(old_dir)
-        common = new.keys() & old.keys()
-        print(f"\n### Against the earlier run ({len(common)} tasks in both)")
-        now = {t for t in common if new[t].category == "correct"}
-        before = {t for t in common if old[t].category == "correct"}
-        for title, changed in (("Gained", now - before), ("Lost", before - now)):
-            print(f"\n{title}: {len(changed)}\n")
-            for t in sorted(changed):
-                print(f"- `{t}`: {old[t].status} → {new[t].status}")
+        compare(new, load(old_dir))
     return 1 if wrong else 0
+
+
+def compare(new, old):
+    common = new.keys() & old.keys()
+    print(f"\n### Against the earlier run ({len(common)} tasks in both)")
+    now = {t for t in common if new[t].category == "correct"}
+    before = {t for t in common if old[t].category == "correct"}
+    for title, changed in (("Gained", now - before), ("Lost", before - now)):
+        print(f"\n{title}: {len(changed)}\n")
+        for t in sorted(changed):
+            print(f"- `{t}`: {old[t].status} → {new[t].status}")
 
 
 def main():
