@@ -14,7 +14,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitcast_pointer_to_pointer_fold
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Needs: __ESBMC_same_object
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

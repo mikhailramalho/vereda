@@ -17,9 +17,7 @@ int main()
   __VERIFIER_assert(__ESBMC_forall(&x, h() == 21)); // h returns 21 on first call
 }
 // Imported from ESBMC regression/z3/github_6100_seq
+// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: THOROUGH
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

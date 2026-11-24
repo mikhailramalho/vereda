@@ -26,6 +26,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_nestedinv
+// Needs: __ESBMC_loop_invariant
 // Needs: --synthesise-loop-invariants
 // RUN: --synthesise-loop-invariants --unwind 6
 // MODE: FUTURE
@@ -33,4 +34,3 @@ int main(void)
 // EXPECT: ^WARNING: --synthesise-loop-invariants added no invariant: no loop matched the affine counter/accumulator shape, or every match was declined; the run proceeds unchanged$
 // EXPECT: ^  PASSED       \[main\.assertion\.\d\]  line 12  loop invariant base case$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

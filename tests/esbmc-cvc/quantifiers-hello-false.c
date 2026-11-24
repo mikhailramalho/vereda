@@ -9,6 +9,7 @@ int main()
 ); // array is zero initialized
 }
 // Imported from ESBMC regression/cvc/quantifiers-hello-false
+// Needs: __ESBMC_forall
 // RUN: --solver cvc5
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

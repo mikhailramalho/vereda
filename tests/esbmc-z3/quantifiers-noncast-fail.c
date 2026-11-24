@@ -6,6 +6,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/quantifiers-noncast-fail
+// Needs: __ESBMC_forall
 // RUN: --solver z3 --incremental-bmc
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -16,8 +16,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/4-assertion_inside_loop
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

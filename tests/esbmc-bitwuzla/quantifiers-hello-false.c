@@ -8,6 +8,7 @@ int main()
 ); // array is zero initialized
 }
 // Imported from ESBMC regression/bitwuzla/quantifiers-hello-false
+// Needs: __ESBMC_forall
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

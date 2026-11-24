@@ -10,8 +10,7 @@ int main()
 ); // nested exists eq
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_nested
+// Needs: __ESBMC_exists, __ESBMC_forall
 // RUN: --solver bitwuzla
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -23,8 +23,7 @@ int main()
   __VERIFIER_assert(!__ESBMC_exists(&i, i == 0 && i == 1)); // contradiction
 }
 // Imported from ESBMC regression/cvc/quantifiers-bug
+// Needs: __ESBMC_exists, __ESBMC_forall
 // RUN: --solver cvc5
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

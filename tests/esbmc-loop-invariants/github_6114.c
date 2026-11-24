@@ -18,8 +18,8 @@ int main()
   }
 }
 // Imported from ESBMC regression/loop-invariants/github_6114
+// Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --result-only --loop-invariant --no-standard-checks
 // RUN: --multi-property --result-only --loop-invariant --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

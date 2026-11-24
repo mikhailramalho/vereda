@@ -162,8 +162,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/byte_add_bug
+// Needs: __ESBMC_loop_invariant
 // Needs: --k-induction
 // RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

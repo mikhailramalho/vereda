@@ -20,8 +20,8 @@ int main() {
 
 
 // Imported from ESBMC regression/esbmc/overflow-result3
+// Needs: __ESBMC_overflow_result_plus
 // Needs: REQUIRES signed_char_host
 // RUN: 
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

@@ -22,9 +22,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_5327_user_assertion
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --unwind 5
 // MODE: FUTURE
 // EXPECT: ^WARNING: Vacuous discharge: claim 'assertion
 // EXPECT: ^VERIFICATION UNKNOWN$
-// Vereda: verdict none

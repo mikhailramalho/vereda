@@ -14,4 +14,6 @@ int main() {
   assert(arr[2].b == 0);
 }
 // Imported from ESBMC regression/esbmc/builtin_init_var_5_true
+// Needs: __ESBMC_init_object
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

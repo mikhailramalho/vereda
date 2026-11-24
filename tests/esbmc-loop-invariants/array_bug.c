@@ -22,8 +22,8 @@ int main()
   assert(array[0] > menor);
 }
 // Imported from ESBMC regression/loop-invariants/array_bug
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

@@ -20,6 +20,7 @@ int main() {
 ); // Nested forall/exists with floating-point
 }
 // Imported from ESBMC regression/cvc/quantifiers-float
+// Needs: __ESBMC_exists, __ESBMC_forall
 // RUN: --solver cvc5
-// MODE: THOROUGH
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

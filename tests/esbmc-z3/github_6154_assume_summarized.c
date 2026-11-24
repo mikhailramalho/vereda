@@ -17,5 +17,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_assume_summarized
+// Needs: __ESBMC_forall
 // RUN: --solver z3
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -11,8 +11,7 @@ int main()
   __VERIFIER_assert(a[3] == 0); // assumed forall constrains a[3]
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_assume
+// Needs: __ESBMC_forall
 // RUN: --solver bitwuzla
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

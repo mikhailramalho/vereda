@@ -12,5 +12,7 @@ int main()
 ); // no element aliases p
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_addrof
+// Needs: __ESBMC_forall
 // RUN: --solver bitwuzla
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

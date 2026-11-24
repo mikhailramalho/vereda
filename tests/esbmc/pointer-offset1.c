@@ -155,7 +155,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer-offset1
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// Needs: __ESBMC_POINTER_OFFSET
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -104,8 +104,7 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer-object1
+// Needs: __ESBMC_POINTER_OBJECT
 // RUN: --force-malloc-success
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$

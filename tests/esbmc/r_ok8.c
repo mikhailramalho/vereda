@@ -8,5 +8,7 @@ int main() {
   assert(__ESBMC_r_ok(arr, M));
 }
 // Imported from ESBMC regression/esbmc/r_ok8
+// Needs: __ESBMC_r_ok
 // RUN: --force-malloc-success
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

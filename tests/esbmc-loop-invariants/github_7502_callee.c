@@ -20,8 +20,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7502_callee
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

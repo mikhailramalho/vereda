@@ -18,9 +18,9 @@ int main()
   return x;
 }
 // Imported from ESBMC regression/loop-invariants/github_10641_loop_not_entered_fail
+// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  FAILED .*line 17  arithmetic overflow on add$
-// Vereda: verdict none

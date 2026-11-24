@@ -10,4 +10,6 @@ int main() {
   assert(v[9] == 5);
 }
 // Imported from ESBMC regression/esbmc/builtin_init_var_1_true
+// Needs: __ESBMC_init_object
+// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

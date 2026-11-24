@@ -11,8 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/havoc_object_pointer_targets_fail
+// Needs: __ESBMC_havoc_object
 // RUN: --incremental-bmc
-// EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// EXPECT: ^VERIFICATION FAILED$

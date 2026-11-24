@@ -18,8 +18,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2457-assume
+// Needs: __CPROVER_DYNAMIC_OBJECT, __CPROVER_OBJECT_SIZE, __CPROVER_r_ok, __CPROVER_same_object, __CPROVER_w_ok
 // RUN: --force-malloc-success
-// EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// EXPECT: ^VERIFICATION SUCCESSFUL$
