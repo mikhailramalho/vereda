@@ -297,6 +297,10 @@ private:
   // its store's elements written at once (memory.h). False, with nothing
   // walked, when l does not have the shape analysis/loops.h describes or a
   // value the summary needs has no term here: l is then unrolled.
+  // Iterations up to which a loop with no store is unrolled when its count
+  // is a constant.
+  static constexpr uint64_t UnrolledChecks = 256;
+
   bool summarise(Frame &frame, FunctionInfo &fi, Loop *l) {
     BasicBlock *header = l->getHeader();
     auto in = frame.arrivals.find(header);
@@ -309,6 +313,11 @@ private:
     ScalarEvolution &se = fi.loops.scev();
     SMTExprRef trips = evaluate(se, sum.trips, l, {});
     if (!trips)
+      return false;
+    // A loop that only checks or counts, a few times, unrolls into reads at
+    // constant indices that fold, where a summary leaves the solver a read
+    // at a nondet index (survey 2026-11-23-array-loop-summaries).
+    if (const APInt *n = t.constant(trips); !sum.store && n && n->ule(UnrolledChecks))
       return false;
     SMTExprRef k = t.symbol("loop_index#" + std::to_string(summaryCount),
                             s.mkBVSort(trips->getWidth()));

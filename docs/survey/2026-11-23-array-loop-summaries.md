@@ -88,15 +88,46 @@ that only check or count, which ESBMC summarises only under
 importer drops it), and `--no-summarize-array-loops` summarises none.
 Vereda's own tests of unwinding (loop_const, loop_unwind_false,
 multi_property*, incremental_bmc_false and _unlimited) use such counting
-loops and pass `--no-summarize-array-loops` to keep testing unwinding. Three
-imported tests that bound such a loop now find the bug past the bound, which
-ESBMC's default unrolling cuts off: github_5188_bounded (CORE, now FUTURE),
-unwind_truncation_warning and multi_property_incremental_final_verdict_unknown
-(FUTURE) record FAILED. The FUTURE tests that needed
+loops and pass `--no-summarize-array-loops` to keep testing unwinding. An
+imported test that bounds such a loop, github_5188_bounded (CORE, now
+FUTURE), now finds the bug past the bound, which ESBMC's default unrolling
+cuts off, and records FAILED. unwind_truncation_warning and
+multi_property_incremental_final_verdict_unknown did too until the rule
+below unrolled their short loops again. The FUTURE tests that needed
 `--summarize-array-loops` run. With `--witness`,
 loops that call nondet are unrolled: a witness needs a waypoint per nondet
 value, and the summarised iteration gives one, for index k only (ESBMC
 drops all waypoints instead).
+
+A loop with no store whose trip count is a constant of at most 256 when the
+walker reaches it is unrolled instead. Unrolled, its reads are at constant
+indices into bytes the walker knows, and they fold; summarised, it leaves
+the solver a read at a nondet index, which costs seconds when the loop runs
+many times. The first bench of the store-free default found that in five
+imported tests, measured here with `tests/run.py` (60 s limit, a machine
+at load 45) for each threshold:
+
+| Test | 0 | 8 | 16 | 32 | 64 | 256 | 1024 |
+|---|---|---|---|---|---|---|---|
+| esbmc-cstd/intrinsic_memset_array | 39.7 | 13.9 | 2.15 | 0.27 | 0.29 | 0.30 | 0.30 |
+| esbmc-cstd/intrinsic_memset_array_union | 39.2 | 13.4 | 1.75 | 0.28 | 0.29 | 0.25 | 0.31 |
+| esbmc-cstd/intrinsic_memset_array_struct_malloc | 53.0 | 34.5 | 16.3 | 0.45 | 0.38 | 0.41 | 0.42 |
+| esbmc-cstd/intrinsic_memset_array_struct | timeout | timeout | timeout | timeout | 0.96 | 0.94 | 0.88 |
+| esbmc-field-sensitivity/repro7521_w2048_fail | 6.40 | 5.30 | 0.32 | 0.31 | 0.31 | 0.32 | 0.33 |
+
+The memset tests check up to `sizeof(struct) * array_size` bytes in a loop
+called for every prefix; repro7521 checks 10 times in a loop called 2000
+times. None of the tests that gain from summarising a loop with no store
+(the array_loop_summary tests that needed `--summarize-array-loops`,
+summary_checks and summary_checks_fail) changes up to 1024: their counts
+are 100000 or symbolic. Unrolling costs about 0.1 ms an iteration (a
+check loop over a written array: 0.21 s summarised against 0.31 s
+unrolled at 1024 iterations, 1.6 s at 16384), so 256, four times the
+smallest threshold that fixes all five, costs at most some 25 ms a loop.
+A loop with a store keeps its summary at any count: unrolling store loops
+of up to 16, 64 or 256 iterations changed none of these tests, nor the
+array_loop_summary or summary tests, and made update and no_slice slower
+at 256.
 
 ## Numbers
 
