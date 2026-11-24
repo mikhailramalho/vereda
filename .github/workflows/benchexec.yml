@@ -164,16 +164,20 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" /sys/fs/cgroup/benchexec
 
       # The tool sees the file system read-only, which it needs no more than,
-      # and a /tmp of its own.
+      # with a /tmp of its own and an overlay on /home, where BenchExec makes
+      # the container's home directory.
       - name: Run BenchExec
         env:
-          SV_BENCHMARKS: ${{ github.workspace }}/sv-benchmarks
           SHARD: ${{ matrix.shard }}
           TIMEOUT: ${{ inputs.timeout }}
         run: |
           echo $$ | sudo tee /sys/fs/cgroup/benchexec/cgroup.procs > /dev/null
           exec benchexec contrib/benchexec/vereda.xml --name "$SHARD" --tool-directory tool \
-            -o results/ -N 2 -T "${TIMEOUT}s" --read-only-dir /
+            -o results/ -N 2 -T "${TIMEOUT}s" --read-only-dir / --overlay-dir /home
+
+      # BenchExec exits 0 even when it ran nothing.
+      - name: Check for results
+        run: ls results/*.results.*.xml.bz2
 
       - uses: actions/upload-artifact@v4
         if: always()
