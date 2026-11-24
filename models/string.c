@@ -62,6 +62,16 @@ char *strcat(char *dst, const char *src) {
   return dst;
 }
 
+char *strncat(char *dst, const char *src, size_t n) {
+  size_t i = strlen(dst);
+  size_t j = 0;
+  while (j < n && src[j]) {
+    dst[i++] = src[j++];
+  }
+  dst[i] = 0;
+  return dst;
+}
+
 char *strchr(const char *s, int c) {
   for (;; ++s) {
     if (*s == (char)c)
