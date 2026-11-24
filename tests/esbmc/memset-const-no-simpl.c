@@ -12,6 +12,3 @@ int main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc/memset-const-no-simpl
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

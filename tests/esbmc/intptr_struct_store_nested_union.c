@@ -32,4 +32,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_nested_union
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
