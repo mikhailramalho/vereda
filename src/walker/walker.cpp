@@ -317,7 +317,20 @@ private:
       return false;
     analysis::Summary sum = *found;
     ScalarEvolution &se = fi.loops.scev();
-    SMTExprRef trips = evaluate(se, sum.trips, l, {});
+    // SCEV sees through the LCSSA phi that carries a value out of an
+    // earlier loop, to an AddRec of that loop or a value in it: the phi's
+    // term is what either holds as l is entered. A constant keeps its own
+    // term, which folds.
+    inputs.clear();
+    for (BasicBlock *bb : l->blocks())
+      for (Instruction &inst : *bb)
+        for (Value *op : inst.operands())
+          if (auto *i = dyn_cast<Instruction>(op);
+              i && current(fi.li, i, l) && se.isSCEVable(i->getType()))
+            if (const SCEV *e = se.getSCEV(i); !isa<SCEVConstant>(e))
+              if (SMTExprRef v = enc.bound(i))
+                inputs.try_emplace(e, v);
+    SMTExprRef trips = evaluate(fi, sum.trips, l, {});
     if (!trips)
       return false;
     // A loop that only checks or counts, a few times, unrolls into reads at
@@ -332,7 +345,7 @@ private:
     SmallVector<SMTExprRef, 2> first;
     SmallVector<std::pair<Value *, SMTExprRef>, 4> last;
     auto at = [&](Value *v, const SMTExprRef &n) {
-      return se.isSCEVable(v->getType()) ? evaluate(se, se.getSCEV(v), l, n) : SMTExprRef();
+      return se.isSCEVable(v->getType()) ? evaluate(fi, se.getSCEV(v), l, n) : SMTExprRef();
     };
     for (PHINode &phi : header->phis()) {
       first.push_back(at(&phi, k));
@@ -343,7 +356,7 @@ private:
         last.push_back({v, at(v, trips)});
     SMTExprRef start;
     if (sum.store) {
-      start = evaluate(se, sum.address->getStart(), l, {});
+      start = evaluate(fi, sum.address->getStart(), l, {});
       const APInt *object = start ? t.constant(mem.object(start)) : nullptr;
       if (!object || object->isZero())
         return false;
@@ -389,17 +402,27 @@ private:
     return true;
   }
 
+  // Whether the term bound to i is its value as l is entered: i is outside
+  // l and in no loop l is not in, whose iterations rebind it.
+  static bool current(const LoopInfo &li, const Instruction *i, const Loop *l) {
+    const Loop *in = li.getLoopFor(i->getParent());
+    return !l->contains(i) && (!in || in->contains(l));
+  }
+
   // The SCEV e in iteration k of l, counted from 0 as the header is
-  // reached, or null for a form not handled here, an AddRec of another loop,
-  // or one of l when k is null.
-  SMTExprRef evaluate(ScalarEvolution &se, const SCEV *e, const Loop *l, const SMTExprRef &k) {
+  // reached, or null for a form not handled here, a value of another loop
+  // that is not one of l's inputs, or an AddRec of l when k is null.
+  SMTExprRef evaluate(FunctionInfo &fi, const SCEV *e, const Loop *l, const SMTExprRef &k) {
+    ScalarEvolution &se = fi.loops.scev();
     unsigned w = se.getTypeSizeInBits(e->getType()), ptrBits = mem.pointerBits();
     bool pointer = e->getType()->isPointerTy();
     if (w == 1) // an i1 is a Bool term
       return {};
+    if (SMTExprRef v = inputs.lookup(e))
+      return v;
     SmallVector<SMTExprRef, 4> ops;
     for (const SCEV *op : e->operands()) {
-      ops.push_back(evaluate(se, op, l, k));
+      ops.push_back(evaluate(fi, op, l, k));
       if (!ops.back())
         return {};
     }
@@ -416,7 +439,7 @@ private:
       Value *v = cast<SCEVUnknown>(e)->getValue();
       if (isa<UndefValue>(v))
         return {};
-      if (auto *i = dyn_cast<Instruction>(v); i && l->contains(i))
+      if (auto *i = dyn_cast<Instruction>(v); i && !current(fi.li, i, l))
         return {};
       return isa<Instruction>(v) || isa<Argument>(v) ? enc.bound(v) : enc.value(v);
     }
@@ -1441,6 +1464,9 @@ private:
     unsigned nondets = 0; // nondet calls walked, which names their arrays
   };
   std::optional<Summarising> summary;
+  // The terms of the values the loop being summarised takes from outside
+  // it, by their SCEVs.
+  DenseMap<const SCEV *, SMTExprRef> inputs;
   unsigned summaryCount = 0; // names each summary's fresh symbols
   SmallPtrSet<const Loop *, 8> summarised;
   // What a call without a body may write besides its arguments' objects:
