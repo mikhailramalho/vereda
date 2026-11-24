@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_uninit_fail
 // Needs: --uninitialised-vars-check
-// RUN: --summarize-array-loops --uninitialised-vars-check
+// RUN: --uninitialised-vars-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

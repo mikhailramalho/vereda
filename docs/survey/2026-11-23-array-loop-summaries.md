@@ -84,16 +84,16 @@ in ESBMC.
 
 Every loop analysis/loops.h accepts is summarised by default, also those
 that only check or count, which ESBMC summarises only under
-`--summarize-array-loops` (decided 2026-11-24); Vereda accepts that flag and
-does nothing more with it, and `--no-summarize-array-loops` summarises none.
+`--summarize-array-loops` (decided 2026-11-24); Vereda has no such flag (the
+importer drops it), and `--no-summarize-array-loops` summarises none.
 Vereda's own tests of unwinding (loop_const, loop_unwind_false,
 multi_property*, incremental_bmc_false and _unlimited) use such counting
 loops and pass `--no-summarize-array-loops` to keep testing unwinding. Three
 imported tests that bound such a loop now find the bug past the bound, which
 ESBMC's default unrolling cuts off: github_5188_bounded (CORE, now FUTURE),
 unwind_truncation_warning and multi_property_incremental_final_verdict_unknown
-(FUTURE) record FAILED. The importer maps both flags, so the FUTURE tests
-that needed `--summarize-array-loops` run. With `--witness`,
+(FUTURE) record FAILED. The FUTURE tests that needed
+`--summarize-array-loops` run. With `--witness`,
 loops that call nondet are unrolled: a witness needs a waypoint per nondet
 value, and the summarised iteration gives one, for index k only (ESBMC
 drops all waypoints instead).

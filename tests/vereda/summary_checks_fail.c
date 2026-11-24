@@ -1,6 +1,5 @@
-// --summarize-array-loops also replaces a loop that only checks; the
+// A loop that only checks is summarised too (ESBMC: --summarize-array-loops); the
 // element written between the loops fails its check.
-// RUN: --summarize-array-loops
 // EXPECT: ^Summarised 2 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);

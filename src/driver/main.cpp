@@ -41,10 +41,6 @@ static cl::opt<bool> noSummarizeArrayLoops(
     "no-summarize-array-loops",
     cl::desc("Unroll the counting loops that only write a[i], check or count, instead of "
              "replacing them by their effect"));
-// ESBMC's flag for summaries of the loops that write no array, which Vereda
-// makes by default; accepted so that ESBMC's command lines run.
-static cl::opt<bool> summarizeArrayLoops("summarize-array-loops",
-                                         cl::desc("The default; accepted for ESBMC"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> incrementalBMC(

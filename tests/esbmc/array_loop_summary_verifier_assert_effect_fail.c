@@ -20,7 +20,6 @@ int main()
   __VERIFIER_assert(cnt != 10);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_verifier_assert_effect_fail
-// RUN: --summarize-array-loops
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

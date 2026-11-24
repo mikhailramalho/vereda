@@ -62,8 +62,7 @@ import run  # pylint: disable=wrong-import-position
 # ESBMC flag -> Vereda flags; a value, if the flag takes one, follows.
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--overflow-check", "--unsigned-overflow-check",
-        "--ub-shift-check", "--unlimited-k-steps", "--summarize-array-loops",
-        "--no-summarize-array-loops"}
+        "--ub-shift-check", "--unlimited-k-steps", "--no-summarize-array-loops"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step"}
 RENAMED = {
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
@@ -72,9 +71,10 @@ RENAMED = {
     "--cvc": ["--solver", "cvc5"], "--cvc5": ["--solver", "cvc5"],
 }
 RENAMED_WITH_VALUE = {"--function": "--entry"}
-# Checks and tuning Vereda does not have, so turning them off changes nothing.
-DROPPED = {"--no-pointer-check", "--no-bounds-check", "--no-div-by-zero-check",
-           "--no-align-check", "--no-vla-size-check", "--no-pointer-relation-check",
+# Checks and tuning Vereda does not have, so turning them off changes nothing,
+# and --summarize-array-loops, which Vereda does by default.
+DROPPED = {"--summarize-array-loops", "--no-pointer-check", "--no-bounds-check",
+           "--no-div-by-zero-check", "--no-align-check", "--no-vla-size-check", "--no-pointer-relation-check",
            "--no-simplify", "--no-slice", "--floatbv"}
 
 

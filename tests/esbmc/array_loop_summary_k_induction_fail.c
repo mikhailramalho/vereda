@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_k_induction_fail
 // Needs: --k-induction
-// RUN: --summarize-array-loops --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none
