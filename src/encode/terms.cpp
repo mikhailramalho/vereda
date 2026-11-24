@@ -471,6 +471,13 @@ Ref Terms::ite(const Ref &c, const Ref &a, const Ref &b) {
     if (isTrue(a) && isFalse(b)) return c;
     if (isFalse(a) && isTrue(b)) return lnot(c);
   }
+  // An arm that is an ite sharing the other arm merges into one condition,
+  // so that a choice of constants (a phi of malloc's result and null) stays
+  // one ite that split sees.
+  const Node *n = node(a);
+  if (n && n->op == Op::Ite && n->c.get() == b.get()) return ite(land(c, n->a), n->b, b);
+  n = node(b);
+  if (n && n->op == Op::Ite && n->c.get() == a.get()) return ite(land(lnot(c), n->a), n->b, a);
   return make({Op::Ite, c, a, b});
 }
 
@@ -507,26 +514,36 @@ Ref Terms::smulo(const Ref &a, const Ref &b) {
 #undef FOLD2
 
 Ref Terms::select(const Ref &array, const Ref &index) {
-  // Skip stores at other constant indices; stop at anything else.
-  // The walk is capped, so a read past many stores stays a select.
   // A read of a constant array is its value, at any index.
   Ref arr = array;
-  if (const APInt *ci = constant(index)) {
-    for (unsigned steps = 0; steps < 64; ++steps) {
-      const Node *n = node(arr);
-      if (!n || n->op != Op::Store)
-        break;
-      const APInt *cs = constant(n->b);
-      if (!cs)
-        break;
-      if (*cs == *ci)
-        return n->c;
-      arr = n->a;
-    }
-  }
+  unsigned steps = 256;
+  if (const APInt *ci = constant(index))
+    if (Ref v = read(arr, *ci, steps))
+      return v;
   if (auto it = filled.find(arr.get()); it != filled.end())
     return it->second.second;
   return make({Op::Select, arr, index});
+}
+
+Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
+  for (; steps > 0; --steps) {
+    const Node *n = node(arr);
+    if (n && n->op == Op::Ite) { // a join: both sides must hold the same value
+      --steps;
+      Ref a = n->b, b = n->c, x = read(a, i, steps), y = x ? read(b, i, steps) : Ref();
+      return y && x.get() == y.get() ? x : Ref();
+    }
+    if (!n || n->op != Op::Store)
+      break;
+    const APInt *cs = constant(n->b);
+    if (!cs)
+      break;
+    if (*cs == i)
+      return n->c;
+    arr = n->a;
+  }
+  auto it = filled.find(arr.get());
+  return it != filled.end() ? it->second.second : Ref();
 }
 
 bool Terms::arithmetic(const Ref &e) {

@@ -135,3 +135,6 @@ void dummy_function(void *arg) {
 // Imported from ESBMC regression/esbmc-unix/github_1353
 // RUN: --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

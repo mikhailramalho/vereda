@@ -149,11 +149,12 @@ def main():
         # -ffp-contract=on lets a * b + c fuse into one rounding. An explicit
         # fma() still fuses.
         flags.append("-ffp-contract=off")
-        # As ESBMC's SV-COMP runs, no largest bound: the time limit ends the
-        # run. A step of 8 answered the most ReachSafety tasks that stopped
-        # at bound 50 (docs/survey/2026-11-23-no-largest-bound-under-incremental-bmc.md).
+        # As ESBMC's SV-COMP runs (esbmc-wrapper.py): no largest bound, so the
+        # time limit ends the run, and a step of 2. A step of 8 answered more
+        # of the tasks that stopped at bound 50 but skipped the small bounds
+        # where others fail (docs/survey/2026-11-24-k-step-2.md).
         if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
-            rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "8"])
+            rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "2"])
     if args.sanitize:
         flags += [f + ",".join(sorted(set(args.sanitize)))
                   for f in ("-fsanitize=", "-fsanitize-trap=")]

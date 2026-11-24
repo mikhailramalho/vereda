@@ -501,6 +501,43 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   return true;
 }
 
+bool Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
+  SMTExprRef c, x, y;
+  if (t.split(p, c, x, y)) {
+    State a = st, b = st;
+    if (!havoc(a, x, n) || !havoc(b, y, n))
+      return false;
+    st = ite(c, a, b);
+    return true;
+  }
+  const APInt *obj = t.constant(object(p));
+  if (!obj)
+    return false;
+  uint64_t o = obj->getZExtValue();
+  if (o == 0 || o >= objects.size())
+    return true;
+  std::optional<Key> k = key(p);
+  const APInt *size = t.constant(objects[o].size);
+  if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object
+    if (*n > MaxBytes)
+      throw Unsupported("nondet contents for " + std::to_string(*n) + " bytes");
+    prepare(st, p);
+    for (uint64_t i = 0; i < *n; ++i)
+      writeByte(st, bytePtr(p, i), {t.symbol("havoc#" + std::to_string(fresh++), s.mkBVSort(8)),
+                                     t.bv(IntProvenance, ObjBits)});
+    return true;
+  }
+  unsigned shift = shifts.lookup(o); // an object of elements, as in fillObject
+  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
+  std::string id = std::to_string(fresh++);
+  st.known.eraseObject(o);
+  st.separate.set({o, 0}, {t.symbol("havoc#" + id, s.mkArraySort(index, s.mkBVSort(8 << shift))),
+                           shift ? t.bv(IntProvenance, ObjBits)
+                                 : t.symbol("havoc_provenance#" + id,
+                                            s.mkArraySort(index, s.mkBVSort(ObjBits)))});
+  return true;
+}
+
 void Memory::set(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   if (fillObject(st, p, byte, n))
     return;

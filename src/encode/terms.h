@@ -2,7 +2,7 @@
 // constructors. It folds as terms are built (plan, section 4.2): constants,
 // identities, an ite with a constant guard, extract over concat, a
 // comparison against the least or greatest value, and a select at a
-// constant index over stores at other constant indices. It also
+// constant index over stores at other constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
 // so pointer equality is structural equality for terms built here.
 #pragma once
@@ -100,6 +100,12 @@ public:
   bool arithmetic(const Ref &e);
 
 private:
+  // The value at constant index i of arr, past stores at other constant
+  // indices, which arr moves over, and through joins whose two sides hold
+  // the same value there (as a stream pointer does after a branch that
+  // stored elsewhere). Null when it is not found within steps nodes, a cap
+  // so that a read past many stores stays a select.
+  Ref read(Ref &arr, const llvm::APInt &i, unsigned &steps);
   enum class Op : uint8_t {
     Add, Sub, Mul, UDiv, SDiv, URem, SRem, Shl, LShr, AShr, BVAnd, BVOr, BVXor,
     BVNot, Concat, Extract, ZExt, SExt, Eq, Ult, Ule, Slt, Sle, And, Or, Xor,

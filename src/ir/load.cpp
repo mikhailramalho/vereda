@@ -28,11 +28,13 @@ namespace vereda::ir {
 
 // Poison-generating flags, attributes and metadata let LLVM assume no
 // undefined behaviour; the walker must not. Strip them before InstCombine
-// (which would fold checks with them) and after (which may infer them back).
+// (which would fold checks with them) and after (which may infer them back,
+// as inferattrs infers mustprogress).
 static void stripUBAssumptions(Module &m) {
   AttributeMask ubAttrs;
   for (auto k : {Attribute::NoUndef, Attribute::NonNull, Attribute::Dereferenceable,
-                 Attribute::DereferenceableOrNull, Attribute::Range, Attribute::OptimizeNone})
+                 Attribute::DereferenceableOrNull, Attribute::Range, Attribute::OptimizeNone,
+                 Attribute::MustProgress})
     ubAttrs.addAttribute(k);
   for (Function &f : m) {
     f.removeFnAttrs(ubAttrs);
@@ -896,9 +898,12 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   // nothing on undefined behaviour. Revisit when a folded check shows up.
   // no-verify-fixpoint, as LLVM's own pipelines run it: a textual pipeline
   // otherwise aborts when InstCombine needs more than one iteration.
+  // inferattrs, last, gives C library declarations the attributes that tell
+  // the walker which arguments a bodyless call only reads.
   if (Error e = runPipeline(*module,
                             "function(instcombine<no-verify-fixpoint>,"
-                            "scalarizer<load-store;variable-insert-extract>,loop-simplify,lcssa)"))
+                            "scalarizer<load-store;variable-insert-extract>,loop-simplify,lcssa),"
+                            "inferattrs"))
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);

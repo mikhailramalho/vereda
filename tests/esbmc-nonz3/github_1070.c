@@ -70,3 +70,6 @@ int main(int argc, char* argv[]) {
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \b(dereference failure:|unwinding assertion loop|VLA array dimension must be greater than zero)\b
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN
