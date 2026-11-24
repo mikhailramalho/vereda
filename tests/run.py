@@ -163,31 +163,56 @@ def changed(desc, out, cmd):
     return True
 
 
+# The most a run may write to any file, its output included. A loop unrolled
+# without --unwind prints a line per iteration; when nothing slows the walk
+# down that is gigabytes a minute, which held in memory took CI's runner
+# down. The run is stopped (SIGXFSZ) at the limit.
+OUTPUT_LIMIT = 256 << 20
+
+
+def limits(memory_limit):
+    """The resource limits a run gets, set in the child before it starts."""
+    def apply():
+        if memory_limit:
+            size = memory_limit << 20
+            resource.setrlimit(resource.RLIMIT_AS, (size, size))
+        resource.setrlimit(resource.RLIMIT_FSIZE, (OUTPUT_LIMIT, OUTPUT_LIMIT))
+    return apply
+
+
+def stopped_note(path):
+    """A line saying the run was stopped at OUTPUT_LIMIT, or ''."""
+    if os.path.getsize(path) < OUTPUT_LIMIT:
+        return ""
+    return f"\nrun stopped: it wrote {OUTPUT_LIMIT >> 20} MB of output\n"
+
+
 def execute(cmd, timeout, memory_limit, cwd=None):
     """Runs cmd in cwd, else in a fresh temporary directory, under timeout seconds and
     memory_limit MB of address space, and returns its output, or None when
     it timed out."""
-    def limit_memory():
-        if memory_limit:
-            size = memory_limit << 20
-            resource.setrlimit(resource.RLIMIT_AS, (size, size))
-
     with tempfile.TemporaryDirectory(prefix="vereda-regress-") as tmp:
-        # A session of its own, so that a timeout stops the binary too and
-        # not only vereda.py; TMPDIR, so that what a killed vereda.py leaves
-        # goes with tmp.
-        with subprocess.Popen(cmd, cwd=cwd or tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, start_new_session=True, preexec_fn=limit_memory,
+        path = os.path.join(tmp, "vereda-regress-output")
+        # The output goes to a file, which OUTPUT_LIMIT bounds. A session of
+        # its own, so that a timeout stops the binary too and not only
+        # vereda.py; TMPDIR, so that what a killed vereda.py leaves goes
+        # with tmp. run.py starts no threads, so preexec_fn is safe.
+        # pylint: disable=subprocess-popen-preexec-fn
+        with open(path, "w+", encoding="utf-8", errors="replace") as out, \
+             subprocess.Popen(cmd, cwd=cwd or tmp, stdout=out, stderr=subprocess.STDOUT,
+                              start_new_session=True, preexec_fn=limits(memory_limit),
                               env={**os.environ, "TMPDIR": tmp}) as proc:
             try:
-                return proc.communicate(timeout=timeout)[0]
+                proc.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
                 os.killpg(proc.pid, signal.SIGKILL)
-                proc.communicate()
+                proc.wait()
                 return None
             except BaseException:  # Ctrl-C does not reach the session
                 os.killpg(proc.pid, signal.SIGKILL)
                 raise
+            out.seek(0)
+            return out.read() + stopped_note(path)
 
 
 def main():
