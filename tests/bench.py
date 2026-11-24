@@ -25,7 +25,10 @@ numbers run.py records under $REGRESS_STATS for a whole suite run, and the
 tests whose numbers regress or improve between the two by the margins above
 are measured again here, side by side, at most MAX_CANDIDATES of them,
 largest change first. Two suite runs on different machines and loads are
-too noisy to report on their own; the side-by-side run decides."""
+too noisy to report on their own; the side-by-side run decides. When the
+base's suite run timed out or ran out of memory, head runs alone, with the
+base's time limit, and the base's result is the suite run's, marked so in
+the table."""
 import argparse
 import contextlib
 import glob
@@ -93,6 +96,9 @@ def started(root, binary, clang, test, tmp, memory_limit):
         size = memory_limit << 20
         resource.setrlimit(resource.RLIMIT_AS, (size, size))
 
+    # The other threads only wait for processes, so the child, which calls
+    # nothing but setrlimit before exec, cannot block on a lock they hold.
+    # pylint: disable=subprocess-popen-preexec-fn
     with open(os.path.join(tmp, "out"), "w+", encoding="utf-8", errors="replace") as out, \
          subprocess.Popen(cmd, cwd=tmp, stdout=out, stderr=subprocess.STDOUT,
                           start_new_session=True, preexec_fn=limit_memory,
@@ -142,16 +148,17 @@ def finish(started_run, deadline):
     return (wall, *run.numbers(text), verdict)
 
 
-def measure(args, base_test, head_test):
+def measure(args, base_test, head_test, b=None):
     """Runs a test, as test_files gives it for each tree, with both binaries
     side by side and returns the base and head results, as finish gives
-    them."""
+    them. Given b, the base's result from elsewhere, runs head alone."""
     with tempfile.TemporaryDirectory(prefix="vereda-bench-") as tmp, \
-         started(args.base_root, args.base, args.clang, base_test, tmp + "/base",
-                 args.memory_limit) as base, \
+         (contextlib.nullcontext() if b else
+          started(args.base_root, args.base, args.clang, base_test, tmp + "/base",
+                  args.memory_limit)) as base, \
          started(ROOT, args.head, args.clang, head_test, tmp + "/head",
                  args.memory_limit) as head:
-        b = finish(base, base[2] + args.timeout)
+        b = b or finish(base, base[2] + args.timeout)
         limit = args.timeout if b[4] in STOPPED else max(SLOWDOWN * b[0], MIN_LIMIT)
         h = finish(head, head[2] + limit)
     return b, h
@@ -191,18 +198,22 @@ def improvements(b, h):
     return why
 
 
+def load(stats):
+    """The results run.py recorded in the directory stats, by test name, as
+    finish gives them."""
+    runs = {}
+    for path in glob.glob(os.path.join(stats, "*.json")):
+        with open(path, encoding="utf-8") as f:
+            r = json.load(f)
+        runs[r["test"]] = (r["wall"], r["walk"], r["solve"], r["peak"],
+                           KILLED if r["verdict"] == "MEMOUT" else r["verdict"])
+    return runs
+
+
 def candidates(base_dir, head_dir):
     """The tests whose recorded numbers changed between two suite runs,
     largest relative change in wall time or memory first, at most
     MAX_CANDIDATES of them."""
-    def load(d):
-        runs = {}
-        for path in glob.glob(os.path.join(d, "*.json")):
-            with open(path, encoding="utf-8") as f:
-                r = json.load(f)
-            runs[r["test"]] = (r["wall"], r["walk"], r["solve"], r["peak"],
-                               KILLED if r["verdict"] == "MEMOUT" else r["verdict"])
-        return runs
     base, head = load(base_dir), load(head_dir)
     found = []
     for name in base.keys() & head.keys():
@@ -226,7 +237,7 @@ def cell(b, h, fmt):
     return f"{show(b)} → {show(h)}"
 
 
-def main():
+def main():  # pylint: disable=too-many-locals
     """Runs the benchmark and returns 1 when some test regressed."""
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -252,7 +263,11 @@ def main():
     # vereda.py runs in a temporary directory.
     args.base_root, args.base, args.head, args.clang = map(
         os.path.abspath, (args.base_root, args.base, args.head, args.clang))
+    suite = {}
     if args.stats:
+        # A base that ran out of time or memory in its suite run would only
+        # do so again here, at the cost of the whole limit.
+        suite = {n: r for n, r in load(args.stats[0]).items() if r[4] in STOPPED}
         names = candidates(*args.stats)
         print(f"{len(names)} tests changed between the suite runs", flush=True)
     else:
@@ -272,16 +287,19 @@ def main():
             lines.append(f"| {name} | | | | | | not in base; skipped |")
             print(lines[-1], flush=True)
             continue
-        b, h = measure(args, base_test, head_test)
+        b, h = measure(args, base_test, head_test, suite.get(name))
         why, better = regressions(b, h), improvements(b, h)
         if (why or better) and b[4] == h[4] and not h[4].startswith("ERROR"):
-            b, h = measure(args, base_test, head_test)
+            b, h = measure(args, base_test, head_test, suite.get(name))
             why, better = regressions(b, h), improvements(b, h)
         if why:
             failed.append(name)
+        verdict = b[4] if b[4] == h[4] else f"{b[4]} → {h[4]}"
+        if name in suite:
+            verdict = f"{b[4]} in the suite run → {h[4]}"
         row = (f"| {name} | {cell(b[1], h[1], '{:.2f}')} | {cell(b[2], h[2], '{:.2f}')} "
                f"| {cell(b[0], h[0], '{:.2f}')} | {cell(b[3], h[3], '{}')} "
-               f"| {b[4] if b[4] == h[4] else f'{b[4]} → {h[4]}'} "
+               f"| {verdict} "
                f"| {'**' + ', '.join(why) + '**' if why else ', '.join(better)} |")
         if why or better:
             changed.append(row)

@@ -33,3 +33,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread69
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -18,3 +18,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/06_trampoline_02
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

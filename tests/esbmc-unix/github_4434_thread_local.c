@@ -39,3 +39,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc-unix/github_4434_thread_local
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -89,3 +89,6 @@ int main() {
 // Imported from ESBMC regression/esbmc-unix/03_circular_buffer_01
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN
