@@ -58,6 +58,5 @@ int main(void)
 // Imported from ESBMC regression/esbmc/qsort_bsearch
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: the comparators compile to llvm.scmp, which the encoder does not support yet
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED
