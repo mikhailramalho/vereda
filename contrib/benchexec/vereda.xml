@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 2.3//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<!-- ReachSafety with incremental BMC, as ESBMC's SV-COMP runs, for
+     .github/workflows/benchexec.yml. The tool-info module (vereda.py here)
+     adds -m32 or -m64 from the task's data model and the property file.
+     The tasks are those of the set file that contrib/benchexec/ci.py wrote
+     for this shard into the sv-benchmarks checkout SV_BENCHMARKS names;
+     the shard's name is the benchmark's name after "vereda.". -->
+<benchmark tool="vereda" timelimit="60 s" memlimit="6 GB" cpuCores="2">
+  <option name="--clang">/usr/lib/llvm-21/bin/clang</option>
+  <option name="--incremental-bmc"/>
+  <rundefinition name="unreach-call">
+    <tasks>
+      <includesfile>$SV_BENCHMARKS/c/${benchmark_name}.set</includesfile>
+      <propertyfile>$SV_BENCHMARKS/c/properties/unreach-call.prp</propertyfile>
+    </tasks>
+  </rundefinition>
+</benchmark>
