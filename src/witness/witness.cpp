@@ -6,6 +6,7 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SHA256.h>
+#include <algorithm>
 #include <ctime>
 #include <map>
 #include <random>
@@ -37,15 +38,37 @@ static std::string uuid() {
          hex.substr(16, 4) + "-" + hex.substr(20);
 }
 
+// An input file's text and where each of its lines starts: a long trace
+// has a waypoint per iteration, and scanning the file for each one's line
+// took seconds on a file of thousands of lines.
+namespace {
+struct Source {
+  std::unique_ptr<MemoryBuffer> buf;
+  std::vector<size_t> starts; // per line, the offset of its first character
+
+  explicit Source(std::unique_ptr<MemoryBuffer> b) : buf(std::move(b)), starts{0} {
+    StringRef text = buf->getBuffer();
+    for (size_t i = 0; i < text.size(); ++i)
+      if (text[i] == '\n')
+        starts.push_back(i + 1);
+  }
+  StringRef text() const { return buf->getBuffer(); }
+  // Line n, counted from 1, without its '\n'.
+  StringRef line(unsigned n) const {
+    return text().slice(starts[n - 1], n < starts.size() ? starts[n] - 1 : text().size());
+  }
+};
+} // namespace
+
 // The task's source files with their contents, by the name debug
 // locations use; a file that cannot be read is left out.
-static std::map<std::string, std::unique_ptr<MemoryBuffer>> inputFiles(const Module &m) {
-  std::map<std::string, std::unique_ptr<MemoryBuffer>> files;
+static std::map<std::string, Source> inputFiles(const Module &m) {
+  std::map<std::string, Source> files;
   for (const DICompileUnit *cu : m.debug_compile_units()) {
     SmallString<128> path(cu->getFilename());
     sys::fs::make_absolute(cu->getDirectory(), path);
     if (auto buf = MemoryBuffer::getFile(path))
-      files[cu->getFilename().str()] = std::move(*buf);
+      files.insert_or_assign(cu->getFilename().str(), Source(std::move(*buf)));
   }
   return files;
 }
@@ -75,13 +98,10 @@ static bool hasCall(StringRef text) {
 // is left out unless another call comes before this one on the line. It is
 // left out too when the source there is not that call on one line, as for
 // a call a macro expands to, whose location is the macro's name.
-static unsigned returnColumn(const MemoryBuffer &file, const ir::SourceLoc &loc,
-                             StringRef callee) {
-  SmallVector<StringRef, 0> lines;
-  file.getBuffer().split(lines, '\n');
-  if (loc.line > lines.size() || !loc.col)
+static unsigned returnColumn(const Source &file, const ir::SourceLoc &loc, StringRef callee) {
+  if (loc.line > file.starts.size() || !loc.col)
     return 0;
-  StringRef line = lines[loc.line - 1];
+  StringRef line = file.line(loc.line);
   if (!hasCall(line.take_front(loc.col - 1)))
     return 0;
   StringRef rest = line.drop_front(loc.col - 1);
@@ -104,17 +124,12 @@ static unsigned returnColumn(const MemoryBuffer &file, const ir::SourceLoc &loc,
 // keyword of its statement. A loop's step is there already; an if's is at
 // the start of its condition, after "if (". None when the text is not that,
 // as for a statement a macro expands to.
-static std::optional<ir::SourceLoc> keyword(const MemoryBuffer &file, ir::SourceLoc loc) {
-  StringRef text = file.getBuffer();
-  size_t pos = 0;
-  for (unsigned line = 1; line < loc.line; ++line) {
-    pos = text.find('\n', pos);
-    if (pos == StringRef::npos)
-      return std::nullopt;
-    ++pos;
-  }
-  pos += loc.col - 1;
-  if (!loc.col || pos >= text.size())
+static std::optional<ir::SourceLoc> keyword(const Source &file, ir::SourceLoc loc) {
+  StringRef text = file.text();
+  if (loc.line > file.starts.size() || !loc.col)
+    return std::nullopt;
+  size_t pos = file.starts[loc.line - 1] + loc.col - 1;
+  if (pos >= text.size())
     return std::nullopt;
   auto isIdent = [](char c) { return isAlnum(c) || c == '_'; };
   StringRef word = text.drop_front(pos).take_while(isIdent);
@@ -127,9 +142,9 @@ static std::optional<ir::SourceLoc> keyword(const MemoryBuffer &file, ir::Source
   if (!before.ends_with("if") || (before.size() > 2 && isIdent(before[before.size() - 3])))
     return std::nullopt;
   size_t start = before.size() - 2;
-  size_t lineStart = text.rfind('\n', start) + 1; // npos + 1 is 0: the first line
-  loc.line = 1 + text.take_front(start).count('\n');
-  loc.col = start - lineStart + 1;
+  auto next = std::upper_bound(file.starts.begin(), file.starts.end(), start);
+  loc.line = next - file.starts.begin();
+  loc.col = start - next[-1] + 1;
   return loc;
 }
 
@@ -169,16 +184,13 @@ static std::string hex(const APFloat &x) {
 // The constraint a function_return waypoint puts on the model's value of a
 // call step, of the form \result <op> <constant> that format 2.0 allows, or
 // empty when none holds of that value alone.
-static std::string constraint(camada::SMTSolver &s, const walker::Step &step,
-                              const Module &m) {
-  if (step.value->isBoolSort()) { // a _Bool
-    auto b = s.getBool(step.value);
-    return b ? std::string("\\result == ") + (b.value() ? "1" : "0") : "";
-  }
-  auto bits = step.value->isFPSort() ? s.getFPInBin(step.value) : s.getBVInBin(step.value);
-  if (!bits)
+static std::string constraint(solver::Model &model, const walker::Step &step, const Module &m) {
+  const APInt *value = model.value(step.value);
+  if (!value)
     return "";
-  APInt v(bits.value().size(), bits.value(), 2);
+  if (step.value->isBoolSort()) // a _Bool
+    return std::string("\\result == ") + (value->isOne() ? "1" : "0");
+  const APInt &v = *value;
   const Function *f = m.getFunction(step.text);
   Type *ret = f->getReturnType();
   // A pointer is an object and an offset, and no constant names an object;
@@ -234,7 +246,7 @@ static void waypoint(raw_ostream &os, StringRef type, const ir::SourceLoc &loc, 
   os << "          function: " << quote(loc.function) << "\n";
 }
 
-Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace &trace,
+Expected<std::string> violationWitness(solver::Model &model, const walker::Trace &trace,
                                        const checks::Checks &checks, unsigned violated,
                                        const Module &m, StringRef entry) {
   auto files = inputFiles(m);
@@ -249,8 +261,7 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
     if ((isCheck && step.check != violated) || step.kind == walker::Step::Assignment ||
         step.kind == walker::Step::Assumption)
       continue;
-    auto reached = s.getBool(step.guard);
-    if (!reached || !reached.value())
+    if (!model.reaches(step.guard))
       continue;
     if (isCheck) {
       target = &step;
@@ -260,17 +271,17 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
     if (file == files.end() || !step.loc.line)
       continue;
     if (step.kind == walker::Step::Branch) {
-      if (std::optional<ir::SourceLoc> loc = keyword(*file->second, step.loc)) {
+      if (std::optional<ir::SourceLoc> loc = keyword(file->second, step.loc)) {
         lastBranching = content.size();
         waypoint(os, "branching", *loc, loc->col, step.text);
       }
       continue;
     }
-    std::string value = constraint(s, step, m);
+    std::string value = constraint(model, step, m);
     if (!value.empty()) {
       lastBranching = std::string::npos;
       waypoint(os, "function_return", step.loc,
-               returnColumn(*file->second, step.loc, step.text), value);
+               returnColumn(file->second, step.loc, step.text), value);
     }
   }
   // The witness states unreach-call, which only a call to reach_error
@@ -304,12 +315,12 @@ Expected<std::string> violationWitness(camada::SMTSolver &s, const walker::Trace
     << "      version: " << quote(VEREDA_VERSION) << "\n"
     << "    task:\n"
     << "      input_files:\n";
-  for (auto &[name, buf] : files)
+  for (auto &[name, source] : files)
     w << "      - " << quote(name) << "\n";
   w << "      input_file_hashes:\n";
-  for (auto &[name, buf] : files)
+  for (auto &[name, source] : files)
     w << "        " << quote(name) << ": "
-      << quote(toHex(SHA256::hash(arrayRefFromStringRef(buf->getBuffer())), /*LowerCase=*/true))
+      << quote(toHex(SHA256::hash(arrayRefFromStringRef(source.text())), /*LowerCase=*/true))
       << "\n";
   w << "      specification: "
     << quote("CHECK( init(" + entry.str() + "()), LTL(G ! call(reach_error())) )") << "\n"
