@@ -110,8 +110,10 @@ SMTExprRef Encoder::fresh(Type *ty, const std::string &name) {
 }
 
 SMTExprRef Encoder::value(const Value *v) {
-  if (auto it = env.find(v); it != env.end())
-    return it->second;
+  if (auto it = env.find(v); it != env.end()) {
+    const memory::Cell *c = facts.find(key(it->second));
+    return c ? c->data : it->second;
+  }
   if (auto *ci = dyn_cast<ConstantInt>(v))
     return ci->getBitWidth() == 1 ? t.boolean(ci->isOne()) : t.bv(ci->getValue());
   if (isa<UndefValue>(v)) // also poison

@@ -72,6 +72,41 @@ bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth) {
   return r;
 }
 
+void Terms::equalities(const Ref &cond, bool holds,
+                       llvm::function_ref<void(const Ref &, const Ref &)> f) const {
+  const Node *n = node(cond);
+  if (!n)
+    return;
+  switch (n->op) {
+  case Op::Not: equalities(n->a, !holds, f); return;
+  case Op::And:
+  case Op::Or:
+    if ((n->op == Op::And) == holds) { // both sides hold, or both fail
+      equalities(n->a, holds, f);
+      equalities(n->b, holds, f);
+    }
+    return;
+  case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
+    if (constant(n->b) && constant(n->b)->isZero() == holds) {
+      equalities(n->a, false, f);
+      equalities(n->c, holds, f);
+    } else if (constant(n->c) && constant(n->c)->isZero() == holds) {
+      equalities(n->a, true, f);
+      equalities(n->b, holds, f);
+    }
+    return;
+  case Op::Eq:
+    if (!holds || n->a->isBoolSort())
+      return;
+    if (constant(n->b) && !constant(n->a))
+      f(n->a, n->b);
+    else if (constant(n->a) && !constant(n->b))
+      f(n->b, n->a);
+    return;
+  default: return;
+  }
+}
+
 bool Terms::split(const Ref &e, Ref &c, Ref &x, Ref &y) const {
   const Node *n = node(e);
   if (!n || n->op != Op::Ite || !constant(n->b) || !constant(n->c))

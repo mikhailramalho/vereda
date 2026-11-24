@@ -40,7 +40,20 @@ public:
   unsigned symbolCount() const { return freshCount; }
 
   camada::SMTSortRef sort(llvm::Type *ty);
-  // The term bound to v, or a constant. Undef and poison are a fresh value per use.
+  // Terms the path being walked makes equal to a bitvector constant, from
+  // its assumptions and branches (Terms::equalities): value() returns the
+  // constant in their place, so that what is built from them folds. The
+  // walker keeps them per path, so they are a persistent map (cellmap.h)
+  // that each arrival copies as a pointer: the key is the term's address,
+  // the cell's data the constant and its provenance the term, which keeps
+  // the address from being reused.
+  using Facts = memory::CellMap;
+  Facts facts;
+  static Facts::Key key(const camada::SMTExprRef &x) {
+    return {reinterpret_cast<uintptr_t>(x.get()), 0};
+  }
+  // The term bound to v, with facts applied, or a constant. Undef and
+  // poison are a fresh value per use.
   camada::SMTExprRef value(const llvm::Value *v);
   void bind(const llvm::Value *v, camada::SMTExprRef term) { env[v] = std::move(term); }
   // The term bound to v, or a null term.

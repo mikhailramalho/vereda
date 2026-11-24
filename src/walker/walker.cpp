@@ -62,11 +62,13 @@ struct Arrival {
   SMTExprRef guard;
   SmallVector<SMTExprRef, 2> phiValues;
   memory::State mem;
+  encode::Encoder::Facts facts;
 };
 
 struct Return {
   SMTExprRef guard, value;
   memory::State mem;
+  encode::Encoder::Facts facts;
 };
 
 struct Frame {
@@ -226,7 +228,7 @@ private:
   // frame's return arrivals.
   Frame function(Function &f, SMTExprRef guard, const memory::State &st) {
     Frame frame;
-    frame.arrivals[&f.getEntryBlock()].push_back({guard, {}, st});
+    frame.arrivals[&f.getEntryBlock()].push_back({guard, {}, st, enc.facts});
     stack.push_back(&f);
     region(frame, info(f), nullptr);
     stack.pop_back();
@@ -312,6 +314,7 @@ private:
     if (arrivals.empty()) // no edge into bb was taken in this pass
       return;
     SMTExprRef guard = anyGuard(arrivals);
+    enc.facts = common(arrivals);
     memory::State st = arrivals[0].mem;
     for (unsigned i = 1; i < arrivals.size(); ++i)
       st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
@@ -355,13 +358,37 @@ private:
     return isa<Constant>(v) ? enc.value(v) : SMTExprRef();
   }
 
+  // The facts (encoder.h) that hold on every one of paths: what a join keeps.
+  template <typename Paths> static encode::Encoder::Facts common(const Paths &paths) {
+    encode::Encoder::Facts f = paths[0].facts;
+    for (const auto &p : drop_begin(paths))
+      encode::Encoder::Facts::diff(paths[0].facts, p.facts,
+                                   [&](auto k, const memory::Cell *first, const memory::Cell *) {
+                                     if (first)
+                                       f.eraseObject(k.first);
+                                   });
+    return f;
+  }
+
+  // Adds to facts what cond, which holds on the path, makes equal to a constant.
+  void learn(SMTExprRef cond, encode::Encoder::Facts &facts) {
+    t.equalities(cond, true, [&](const SMTExprRef &x, const SMTExprRef &c) {
+      facts.set(encode::Encoder::key(x), {c, x});
+    });
+  }
+
+  // Takes the edge from pred to succ, on which edge holds when it is given.
   void arrive(Frame &frame, BasicBlock *pred, BasicBlock *succ, SMTExprRef guard,
-              const memory::State &st) {
+              const memory::State &st, SMTExprRef edge = {}) {
     if (t.isFalse(guard)) // an edge folded away is not walked
       return;
-    Arrival a{guard, {}, st};
+    Arrival a{guard, {}, st, enc.facts};
+    if (edge)
+      learn(edge, a.facts);
+    std::swap(enc.facts, a.facts); // the phis take their values on the edge
     for (PHINode &phi : succ->phis())
       a.phiValues.push_back(enc.value(phi.getIncomingValueForBlock(pred)));
+    std::swap(enc.facts, a.facts);
     frame.arrivals[succ].push_back(std::move(a));
   }
 
@@ -373,8 +400,8 @@ private:
         return;
       }
       SMTExprRef c = enc.value(br->getCondition());
-      arrive(frame, bb, br->getSuccessor(0), t.land(guard, c), st);
-      arrive(frame, bb, br->getSuccessor(1), t.land(guard, t.lnot(c)), st);
+      arrive(frame, bb, br->getSuccessor(0), t.land(guard, c), st, c);
+      arrive(frame, bb, br->getSuccessor(1), t.land(guard, t.lnot(c)), st, t.lnot(c));
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       SMTExprRef cond = enc.value(sw->getCondition());
       SMTExprRef anyCase = t.boolean(false);
@@ -388,10 +415,10 @@ private:
       SMTExprRef &d = taken[sw->getDefaultDest()];
       d = d ? t.lor(d, t.lnot(anyCase)) : t.lnot(anyCase);
       for (auto &[succ, to] : taken)
-        arrive(frame, bb, succ, t.land(guard, to), st);
+        arrive(frame, bb, succ, t.land(guard, to), st, to);
     } else if (auto *ret = dyn_cast<ReturnInst>(&term)) {
       Value *v = ret->getReturnValue();
-      frame.returns.push_back({guard, v ? enc.value(v) : SMTExprRef(), st});
+      frame.returns.push_back({guard, v ? enc.value(v) : SMTExprRef(), st, enc.facts});
     } else if (isa<UnreachableInst>(term)) {
       // Clang ends a block with unreachable after a call that never returns:
       // the path ends there. Anywhere else it is __builtin_unreachable,
@@ -528,7 +555,9 @@ private:
     }
     if (name == "__VERIFIER_assume") {
       trace.push_back({Step::Assumption, guard, ir::location(c), ir::callArgumentText(c), {}});
-      return t.land(guard, enc.isTrue(c.getArgOperand(0)));
+      SMTExprRef holds = enc.isTrue(c.getArgOperand(0));
+      learn(holds, enc.facts);
+      return t.land(guard, holds);
     }
     if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
       if (counts(false))
@@ -539,8 +568,10 @@ private:
       // assert without <assert.h> is an implicitly declared function; ESBMC's
       // front end treats it as the assertion it was meant to be.
       SMTExprRef holds = enc.isTrue(c.getArgOperand(0));
-      if (!counts(false))
+      if (!counts(false)) {
+        learn(holds, enc.facts);
         return t.land(guard, holds);
+      }
       assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
       return guard;
     }
@@ -686,7 +717,9 @@ private:
       reachError = &c;
     if (callee.isVarArg())
       varArgs.push_back(passVarArgs(c, callee, guard, st));
+    encode::Encoder::Facts outer = enc.facts; // the callee's blocks set their own
     Frame frame = function(callee, guard, st);
+    enc.facts = frame.returns.empty() ? std::move(outer) : common(frame.returns);
     if (callee.isVarArg())
       varArgs.pop_back();
     reachError = outerReachError;
