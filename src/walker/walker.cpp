@@ -486,6 +486,10 @@ private:
         name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
         name == "__longjmp_chk")
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+    // Threads are not modelled yet (#49): the thread function would never
+    // run, so a violation only it reaches would be missed.
+    if (name == "pthread_create")
+      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // These write a formatted string, or what they scan, through a va_list,
     // which a bodyless call does not do (no model yet), so they refuse too.
     if (writesThroughVaList(name))
@@ -569,8 +573,9 @@ private:
     // global the program declares without defining (optind, environ, a
     // variable of a file not given), as they belong to code Vereda does not
     // see. It may also write through pointers stored in those objects, which
-    // this does not cover. The pthread functions write nothing here, as
-    // threads are not modelled yet.
+    // this does not cover. The mutex and condition-variable calls write only
+    // the lock or condition they get, which the program does not read, so
+    // they write nothing here and keep the rest of an object holding one.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -581,7 +586,7 @@ private:
     if (scanf || (format && name.ends_with("printf") &&
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
-    if (!c.onlyReadsMemory() && !name.starts_with("pthread_")) {
+    if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
@@ -719,6 +724,15 @@ private:
         (name.consume_front("__") && name.consume_back("_chk"));
     return is_contained<StringRef>({"vsprintf", "vsnprintf", "vasprintf", "vscanf", "vfscanf",
                                     "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"},
+                                   name);
+  }
+
+  static bool writesOnlyLock(StringRef name) {
+    return is_contained<StringRef>({"pthread_mutex_init", "pthread_mutex_lock",
+                                    "pthread_mutex_trylock", "pthread_mutex_unlock",
+                                    "pthread_mutex_destroy", "pthread_cond_init",
+                                    "pthread_cond_wait", "pthread_cond_signal",
+                                    "pthread_cond_broadcast", "pthread_cond_destroy"},
                                    name);
   }
 

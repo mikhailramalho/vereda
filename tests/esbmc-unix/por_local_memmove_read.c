@@ -24,3 +24,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/por_local_memmove_read
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

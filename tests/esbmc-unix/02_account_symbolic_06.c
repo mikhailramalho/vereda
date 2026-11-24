@@ -81,3 +81,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/02_account_symbolic_06
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

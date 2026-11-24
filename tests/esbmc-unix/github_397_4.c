@@ -80,4 +80,4 @@ module_exit:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN

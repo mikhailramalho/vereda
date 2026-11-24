@@ -31,4 +31,4 @@ assert(trans_preds(_-2, p(_,data(G,_,L2)), p(_,data(GP,_,L2P)), [G-GP=<0])).
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN

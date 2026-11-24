@@ -37,3 +37,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc-unix/github_4433_thread_local_dynamic
 // RUN: --force-malloc-success --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -26,3 +26,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/race_guard_cond_write
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

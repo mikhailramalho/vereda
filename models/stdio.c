@@ -22,3 +22,12 @@ FILE *tmpfile(void) { return stream(); }
 FILE *freopen(const char *path, const char *mode, FILE *s) {
   return __VERIFIER_nondet_int() ? s : NULL;
 }
+
+// Under _FILE_OFFSET_BITS=64 glibc's <stdio.h> renames the three above to
+// their 64 names. It renames fseeko, ftello, fgetpos and fsetpos too, which
+// have no model either way.
+FILE *fopen64(const char *path, const char *mode) { return stream(); }
+FILE *tmpfile64(void) { return stream(); }
+FILE *freopen64(const char *path, const char *mode, FILE *s) {
+  return __VERIFIER_nondet_int() ? s : NULL;
+}

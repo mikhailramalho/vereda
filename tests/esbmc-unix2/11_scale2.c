@@ -22,3 +22,6 @@ void main() {
 // Imported from ESBMC regression/esbmc-unix2/11_scale2
 // RUN: --unwind 10
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

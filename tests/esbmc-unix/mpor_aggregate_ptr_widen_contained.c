@@ -43,3 +43,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_widen_contained
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

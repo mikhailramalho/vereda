@@ -16,3 +16,6 @@ int main(void) {
 // Imported from ESBMC regression/esbmc-unix/github_1351_3
 // RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

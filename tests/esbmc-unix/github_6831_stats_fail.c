@@ -29,4 +29,4 @@ int main(void)
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor [0-9]+, pruned_by_hash 0, pruned_by_sleep 0, pruned_by_cs_bound 0$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN
