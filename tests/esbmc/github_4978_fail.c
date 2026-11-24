@@ -41,4 +41,5 @@ int main(void)
 // EXPECT: ^.*arithmetic overflow on add$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE
