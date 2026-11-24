@@ -7,7 +7,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/quantifiers-exists
-// Needs: __ESBMC_exists
 // RUN: --solver bitwuzla
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

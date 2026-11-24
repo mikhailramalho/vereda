@@ -14,6 +14,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/r_ok13
-// Needs: __ESBMC_r_ok
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

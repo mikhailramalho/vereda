@@ -63,9 +63,8 @@ does not help, and the effort belongs inside ESBMC.
 ## 3. What we reuse
 
 - **camada** for the solver backends.
-- **ESBMC's C operational models.** They are C, so clang compiles them.
-  Vereda supports only the `__VERIFIER_*` intrinsics; imported tests that call
-  `__ESBMC_*` or `__CPROVER_*` ones are FUTURE.
+- **ESBMC's C operational models.** They are C, so clang compiles them; the
+  `__ESBMC_*` and `__VERIFIER_*` intrinsics need mapping.
 - **ESBMC's regression suite.** About 3,400 C tests with expected verdicts.
   Many `test.desc` files match ESBMC-specific flags and messages, so sort
   early which ones translate (verdict-only tests do) before counting on it as

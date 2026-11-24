@@ -33,8 +33,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/multi_property_wrong_invariant
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
 // RUN: --loop-invariant --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

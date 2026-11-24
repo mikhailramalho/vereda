@@ -158,8 +158,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_mux_rules
-// Needs: __ESBMC_exists
 // Needs: --no-standard-checks
 // RUN: --unwind 10 --no-standard-checks --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

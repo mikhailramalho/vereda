@@ -10,11 +10,10 @@ unless it already starts with "esbmc". The test.desc goes into a comment
 header at the end of the C file, so that line numbers in the expected
 output still hold. A rerun replaces earlier copies.
 
-__ESBMC_assert, __CPROVER_assert, __ESBMC_assume, __CPROVER_assume,
-__ESBMC_atomic_begin, __ESBMC_atomic_end, __ESBMC_memset and
-__ESBMC_memcpy become __VERIFIER_assert, __VERIFIER_assume,
-__VERIFIER_atomic_begin, __VERIFIER_atomic_end, memset and memcpy in
-the copied sources,
+__ESBMC_assert, __ESBMC_assume, __ESBMC_atomic_begin,
+__ESBMC_atomic_end, __ESBMC_memset and __ESBMC_memcpy become
+__VERIFIER_assert, __VERIFIER_assume, __VERIFIER_atomic_begin,
+__VERIFIER_atomic_end, memset and memcpy in the copied sources,
 __ESBMC_builtin_object_size and __ESBMC_alloca become clang's
 __builtin_object_size and __builtin_alloca, __ESBMC_bitcast(tgt, src)
 becomes __builtin_memcpy(tgt, src, sizeof *(tgt)), __ESBMC_unroll(N)
@@ -29,10 +28,7 @@ becomes FUTURE, with the missing flags named in a "// Needs:" line;
 Vereda then rejects the flags, so the test passes until Vereda learns
 them and the script runs again. ESBMC's REQUIRES, CHECK_JSON, CHECK_FILE
 and SEED_FILE lines make a test FUTURE the same way, as run.py has none
-of them. Vereda supports only the __VERIFIER_ builtins, so a test whose
-code still calls an __ESBMC_ or __CPROVER_ function after the renames
-becomes FUTURE too, with those functions in a "// Needs:" line of their
-own, and run.py skips it without running Vereda.
+of them.
 
 Tests that read files outside their own directory are skipped, and so is
 ESBMC's "disabled" suite unless named. So are tests of features only
@@ -113,19 +109,15 @@ def suite_name(suite):
 DIRECTIVES = ("REQUIRES", "CHECK_JSON", "CHECK_FILE", "SEED_FILE")
 
 
-def header(origin, mode, args, expected, test_dir, builtins):
-    """The comment header Vereda's run.py reads, for one test.desc whose
-    sources call the __ESBMC_ and __CPROVER_ functions in builtins."""
+def header(origin, mode, args, expected, test_dir):
+    """The comment header Vereda's run.py reads, for one test.desc."""
     flags, files, missing = translate(args, test_dir)
     regexes = [r for r in expected if r.split()[0] not in DIRECTIVES]
     missing += [r for r in expected if r.split()[0] in DIRECTIVES]
     lines = [f"// Imported from ESBMC regression/{origin}"]
-    if builtins:
-        lines.append("// Needs: " + ", ".join(builtins))
-    if missing or builtins:
-        mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     if missing:
         lines += ["// Needs: " + " ".join(missing), "// RUN: " + args]
+        mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     elif flags:
         lines.append("// RUN: " + " ".join(flags))
     if files:
@@ -212,11 +204,9 @@ def copy_files(src, dest, source, tracked):
     return os.path.join(dest, "main.c")
 
 
-# ESBMC and CBMC builtins with an equivalent that Vereda models. The others
-# (quantifiers, pointer predicates, ...) have none and keep their names,
-# and a test that calls one becomes FUTURE.
+# ESBMC builtins with an equivalent that Vereda models. The others
+# (contracts, quantifiers, atomics, ...) have none and keep their names.
 RENAMES = {"__ESBMC_assert": "__VERIFIER_assert", "__ESBMC_assume": "__VERIFIER_assume",
-           "__CPROVER_assert": "__VERIFIER_assert", "__CPROVER_assume": "__VERIFIER_assume",
            "__ESBMC_memset": "memset", "__ESBMC_memcpy": "memcpy",
            "__ESBMC_atomic_begin": "__VERIFIER_atomic_begin",
            "__ESBMC_atomic_end": "__VERIFIER_atomic_end",
@@ -234,7 +224,7 @@ UNREACHABLE_FLAG = re.compile(r"(?<!\S)--enable-unreachability-intrinsic(?!\S)\s
 def rename(text):
     """Renames the builtins in text."""
     return re.sub(r"\b(" + "|".join(RENAMES) + r")\b", lambda m: RENAMES[m.group(1)], text)
-ASSERT = re.compile(r"\b__(?:ESBMC|CPROVER)_assert\s*\(")
+ASSERT = re.compile(r"\b__ESBMC_assert\s*\(")
 LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
 
 
@@ -289,13 +279,12 @@ def message_comment(message):
 
 
 def rewrite_asserts(text):
-    """Turns __ESBMC_assert(cond, message) and __CPROVER_assert(cond,
-    message) into __VERIFIER_assert(cond) with the message as a comment:
-    '// message' at the end of the line the call ends on, or '/* message */'
-    right after the call when the rest of that line continues a macro or
-    holds a comment or literal. Line numbers stay as they were. In comments
-    and strings the name changes and nothing else. The other builtins are
-    renamed as rename() says."""
+    """Turns __ESBMC_assert(cond, message) into __VERIFIER_assert(cond) with
+    the message as a comment: '// message' at the end of the line the call
+    ends on, or '/* message */' right after the call when the rest of that
+    line continues a macro or holds a comment or literal. Line numbers stay
+    as they were. In comments and strings the name changes and nothing else.
+    The other builtins are renamed as rename() says."""
     out, pending, i = [], [], 0
     while i < len(text):
         past = skip_literal(text, i)
@@ -463,16 +452,10 @@ def nondets_to_rename(texts):
     return names - (verifier & defined)
 
 
-# An __ESBMC_ or __CPROVER_ name before '(', with the type before it when
-# it has one: then it is declared or defined, not called.
-BUILTIN_CALL = re.compile(r"(?:\b(\w+)\s+|(\*)\s*)?\b((?:__ESBMC|__CPROVER)_\w+)\s*\(")
-
-
 def rename_builtins(path):
     """Renames ESBMC builtins to what Vereda models in the C files at path,
     a file or a directory; see rewrite_asserts, rename, rewrite_rounding and
-    nondets_to_rename. Returns the nondet_ names renamed and the __ESBMC_
-    and __CPROVER_ functions the code still calls."""
+    nondets_to_rename. Returns the nondet_ names renamed."""
     files = [path] if os.path.isfile(path) else [
         os.path.join(root, n) for root, _, names in os.walk(path) for n in names
         if n.endswith((".c", ".h", ".i"))]
@@ -480,20 +463,17 @@ def rename_builtins(path):
     for name in files:
         with open(name, encoding="latin-1") as f:  # any bytes round-trip
             texts[name] = f.read()
-    nondets, calls = nondets_to_rename(texts.values()), set()
+    nondets = nondets_to_rename(texts.values())
     for name, text in texts.items():
         renamed = rewrite_unroll(rewrite_bitcasts(rewrite_rounding(
             rewrite_asserts(text))))
         if nondets:
             renamed = code_sub(NONDET, lambda m: "__VERIFIER_" + m.group(0)
                                if m.group(0) in nondets else m.group(0), renamed)
-        calls.update(called for is_code, chunk in segments(renamed) if is_code
-                     for before, star, called in BUILTIN_CALL.findall(chunk)
-                     if before in ("", "return", "else", "do") and not star)
         if renamed != text:
             with open(name, "w", encoding="latin-1", newline="") as f:
                 f.write(renamed)
-    return nondets, sorted(calls)
+    return nondets
 
 
 # Features ESBMC has for its own users that SV-COMP never uses, so Vereda
@@ -589,7 +569,7 @@ def import_test(src, dest, origin, tracked):
     entry = copy_files(src, dest, source, tracked)
     if not entry:
         return "a main.c besides the source"
-    nondets, builtins = rename_builtins(entry if entry == dest + ".c" else dest)
+    nondets = rename_builtins(entry if entry == dest + ".c" else dest)
     # -Dldv_assume=__ESBMC_assume and the like name builtins too.
     args = rename(UNREACHABLE_FLAG.sub("", args).strip())
     for nondet in nondets:  # e.g. an assertion's text in the results list
@@ -604,7 +584,7 @@ def import_test(src, dest, origin, tracked):
     with open(entry, "rb") as f:
         newline = b"" if f.read().endswith(b"\n") else b"\n"
     with open(entry, "ab") as f:
-        lines = header(origin, mode, args, regexes, src, builtins)
+        lines = header(origin, mode, args, regexes, src)
         if origin in KNOWN_BUGS:
             lines += [f"// Vereda: {KNOWN_BUGS[origin]}", "// MODE: KNOWNBUG"]
         f.write(newline + ("\n".join(lines) + "\n").encode())

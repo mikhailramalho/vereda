@@ -13,8 +13,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/do_while_goto_head
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
 // RUN: --loop-invariant --max-k-step 12
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

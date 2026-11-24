@@ -33,7 +33,9 @@ int main()
   __VERIFIER_assert(all_unique(vec, SIZE)); // all elements unique
 }
 // Imported from ESBMC regression/z3/github_6123
-// Needs: __ESBMC_forall
 // RUN: --solver z3 --incremental-bmc
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

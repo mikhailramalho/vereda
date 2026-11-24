@@ -19,9 +19,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/mode_bound_independent_combined
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
 // RUN: --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: Solution found by the inductive step
+// Vereda: verdict none

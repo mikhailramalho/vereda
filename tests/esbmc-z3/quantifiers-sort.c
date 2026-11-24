@@ -22,7 +22,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/quantifiers-sort
-// Needs: __ESBMC_forall
 // RUN: --solver z3 --incremental-bmc
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

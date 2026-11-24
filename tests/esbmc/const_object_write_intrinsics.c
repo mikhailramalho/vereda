@@ -26,6 +26,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/const_object_write_intrinsics
-// Needs: __ESBMC_init_object
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

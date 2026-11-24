@@ -21,8 +21,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_invariant_call_after_loop
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

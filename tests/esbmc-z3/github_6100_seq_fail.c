@@ -18,7 +18,6 @@ int main()
     __ESBMC_forall(&x, h() == 12)); // reordered evaluation would prove this
 }
 // Imported from ESBMC regression/z3/github_6100_seq_fail
-// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$

@@ -20,9 +20,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_userinv
-// Needs: __ESBMC_loop_invariant
 // Needs: --synthesise-loop-invariants
 // RUN: --synthesise-loop-invariants --unwind 6
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

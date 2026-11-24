@@ -9,7 +9,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7119_exists_fail
-// Needs: __ESBMC_exists
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  __ESBMC_exists\(\(void \*\)\(&i\), i > 0 && i < 0\)$
+// Vereda: unmet EXPECT: ^  __ESBMC_exists\(\(void \*\)\(&i\), i > 0 && i < 0\)$
+// MODE: FUTURE
+// Vereda: verdict FAILED

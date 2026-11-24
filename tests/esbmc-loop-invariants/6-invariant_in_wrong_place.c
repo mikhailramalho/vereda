@@ -14,8 +14,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/6-invariant_in_wrong_place
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property --unwind 1 --no-unwinding-assertions
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

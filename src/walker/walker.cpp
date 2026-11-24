@@ -82,8 +82,8 @@ public:
     mem.allocateGlobals(m);
     memory::State st = mem.initial();
     for (const GlobalVariable &g : m.globals())
-      if (ownsArrays(&g))
-        mem.own(st, mem.global(&g));
+      if (unsigned bits = ownsArrays(&g, m.getDataLayout()))
+        mem.own(st, mem.global(&g), bits);
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
     function(f, t.boolean(true), st);
   }
@@ -94,9 +94,10 @@ private:
   // chain and a pointer-width index pay, and no pointer to it is stored or
   // passed on (only its provenance counts; comparing its address does not),
   // so few accesses reach it through an unknown pointer, where each object
-  // with arrays of its own is one more choice.
-  bool ownsArrays(const Value *v) {
-    auto [it, inserted] = owns.try_emplace(v, false);
+  // with arrays of its own is one more choice. Returns the bits of their
+  // elements (elementBits), or 0 for none.
+  unsigned ownsArrays(const Value *v, const DataLayout &dl) {
+    auto [it, inserted] = owns.try_emplace(v, 0);
     if (!inserted || capturesAnything(PointerMayBeCaptured(v, /*ReturnCaptures=*/true,
                                                            CaptureComponents::Provenance)))
       return it->second;
@@ -106,10 +107,59 @@ private:
       for (const User *u : work.pop_back_val()->users())
         if (auto *g = dyn_cast<GEPOperator>(u); g && seen.insert(g).second) {
           if (!g->hasAllConstantIndices())
-            return it->second = true;
+            return it->second = elementBits(v, dl);
           work.push_back(g);
         }
-    return false;
+    return 0;
+  }
+
+  // N for N = 16, 32 or 64 when every use of v and of the getelementptrs
+  // from it is a load or store of iN at an offset that is a multiple of N/8,
+  // a comparison or the no-op __vereda_uninitialised (issue #107): its own
+  // arrays then hold whole elements. 8, for bytes, otherwise; so a call or
+  // intrinsic taking v (memset, memcpy) keeps it on bytes.
+  static unsigned elementBits(const Value *v, const DataLayout &dl) {
+    unsigned bits = 0;
+    auto access = [&](Type *ty) {
+      if (!ty->isIntegerTy() || (bits && !ty->isIntegerTy(bits)))
+        return false;
+      bits = ty->getIntegerBitWidth();
+      return true;
+    };
+    SmallVector<const Value *, 8> work{v};
+    SmallVector<const GEPOperator *, 8> geps;
+    while (!work.empty()) {
+      const Value *p = work.pop_back_val();
+      for (const User *u : p->users()) {
+        bool ok = isa<ICmpInst>(u) || isa<GEPOperator>(u); // a pointer is no index
+        if (auto *l = dyn_cast<LoadInst>(u))
+          ok = access(l->getType());
+        else if (auto *s = dyn_cast<StoreInst>(u))
+          ok = s->getValueOperand() != p && access(s->getValueOperand()->getType());
+        else if (auto *g = dyn_cast<GEPOperator>(u)) {
+          geps.push_back(g);
+          work.push_back(g);
+        } else if (auto *c = dyn_cast<CallBase>(u))
+          ok = c->getCalledFunction() &&
+               c->getCalledFunction()->getName() == "__vereda_uninitialised";
+        if (!ok)
+          return 8;
+      }
+    }
+    if (bits != 16 && bits != 32 && bits != 64)
+      return 8;
+    // Each getelementptr moves by a multiple of N/8: its constant offset
+    // and the scale of each of its indices have that many low zero bits.
+    unsigned shift = Log2_32(bits / 8);
+    for (const GEPOperator *g : geps) {
+      SmallMapVector<Value *, APInt, 4> scales;
+      APInt constant(dl.getIndexTypeSizeInBits(g->getType()), 0);
+      if (!g->collectOffset(dl, constant.getBitWidth(), scales, constant) ||
+          constant.countr_zero() < shift ||
+          any_of(scales, [&](const auto &s) { return s.second.countr_zero() < shift; }))
+        return 8;
+    }
+    return bits;
   }
 
   FunctionInfo &info(Function &f) {
@@ -555,8 +605,8 @@ private:
       SMTExprRef ok = t.land(t.lnot(t.umulo(count, elem)),
                               mem.fits(t.mul(count, elem)));
       SMTExprRef p = mem.allocate(t.mul(count, elem), a->getAlign().value(), guard);
-      if (ownsArrays(a))
-        mem.own(st, p);
+      if (unsigned bits = ownsArrays(a, dl))
+        mem.own(st, p, bits);
       enc.bind(a, p);
       s.addConstraint(t.implies(guard, ok));
       return true;
@@ -781,7 +831,7 @@ private:
   checks::Checks &checks;
   Trace &trace;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
-  DenseMap<const Value *, bool> owns; // ownsArrays, per alloca and global
+  DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
   SmallVector<const Function *, 8> stack;
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.

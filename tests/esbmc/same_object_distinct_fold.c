@@ -20,6 +20,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/same_object_distinct_fold
-// Needs: __ESBMC_same_object
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

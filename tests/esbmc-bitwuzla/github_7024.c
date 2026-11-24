@@ -9,8 +9,6 @@ int main()
 ); // forall eq
 }
 // Imported from ESBMC regression/bitwuzla/github_7024
-// Needs: __ESBMC_forall
 // RUN: --solver bitwuzla
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\[Counterexample\]$

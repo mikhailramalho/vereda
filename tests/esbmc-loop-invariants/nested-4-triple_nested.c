@@ -32,8 +32,8 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/loop-invariants/nested-4-triple_nested
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

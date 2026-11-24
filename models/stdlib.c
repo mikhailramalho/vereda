@@ -25,13 +25,3 @@ void *realloc(void *p, size_t n) {
   free(p);
   return q;
 }
-
-int __VERIFIER_nondet_int(void);
-void __VERIFIER_assume(int);
-
-// Any value from 0 to RAND_MAX (C17 7.22.2.1), so srand needs no model.
-int rand(void) {
-  int r = __VERIFIER_nondet_int();
-  __VERIFIER_assume(r >= 0 && r <= 2147483647); // glibc's RAND_MAX
-  return r;
-}

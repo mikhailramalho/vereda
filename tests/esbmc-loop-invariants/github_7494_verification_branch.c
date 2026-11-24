@@ -21,9 +21,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7494_verification_branch
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant --goto-functions-only
 // RUN: --loop-invariant --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ASSUME x <= 4 // loop invariant assume \(verification branch\)\n\s+// .*\n\s+ASSIGN x=x \+ 1;\n\s+// .*\n\s+ASSUME x < 5 // loop continue condition
 // EXPECT: ASSUME x <= 4 // loop invariant assume \(k-induction hint\)\n\s+// .*\n\s+ASSIGN x=x \+ 1;
+// Vereda: verdict none

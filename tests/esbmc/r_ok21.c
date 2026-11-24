@@ -18,6 +18,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/r_ok21
-// Needs: __ESBMC_r_ok
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -24,9 +24,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_summary_cap_option
-// Needs: __ESBMC_exists
 // Needs: --no-standard-checks --max-quantifier-summary-nodes 50
 // RUN: --unwind 22 --no-standard-checks --z3 --max-quantifier-summary-nodes 50
 // MODE: FUTURE
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
 // EXPECT: reason: summary exceeded 50 expression nodes
+// Vereda: verdict none

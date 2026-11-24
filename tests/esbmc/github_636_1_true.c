@@ -12,7 +12,8 @@ int main() {
     bar(foo); 
 }
 // Imported from ESBMC regression/esbmc/github_636_1_true
-// Needs: __ESBMC_get_object_size
 // RUN: --force-malloc-success
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

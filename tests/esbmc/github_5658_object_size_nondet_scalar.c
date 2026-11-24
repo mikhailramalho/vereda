@@ -16,6 +16,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5658_object_size_nondet_scalar
-// Needs: __ESBMC_get_object_size
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -26,7 +26,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/quantifiers-field
-// Needs: __ESBMC_exists
 // RUN: --solver z3 --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

@@ -8,8 +8,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8083_init_object
-// Needs: __ESBMC_init_object
 // Needs: --interval-analysis
 // RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

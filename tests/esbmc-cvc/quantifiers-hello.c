@@ -25,7 +25,9 @@ int main()
     !__ESBMC_exists(&value, value == 0 && value == 1)); // contradiction
 }
 // Imported from ESBMC regression/cvc/quantifiers-hello
-// Needs: __ESBMC_exists, __ESBMC_forall
 // RUN: --solver cvc5
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

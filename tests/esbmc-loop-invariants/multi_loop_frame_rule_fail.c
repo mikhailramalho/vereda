@@ -31,8 +31,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/multi_loop_frame_rule_fail
-// Needs: __ESBMC_loop_assigns, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --loop-frame-rule --k-induction
 // RUN: --loop-invariant-check --loop-frame-rule --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

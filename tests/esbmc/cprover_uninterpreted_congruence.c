@@ -14,7 +14,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cprover_uninterpreted_congruence
-// Needs: __CPROVER_uninterpreted_f
 // RUN: --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

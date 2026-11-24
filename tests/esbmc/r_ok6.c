@@ -6,6 +6,4 @@ int main() {
   assert(__ESBMC_r_ok(arr, M));
 }
 // Imported from ESBMC regression/esbmc/r_ok6
-// Needs: __ESBMC_r_ok
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -24,6 +24,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7311_forall
-// Needs: __ESBMC_forall
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

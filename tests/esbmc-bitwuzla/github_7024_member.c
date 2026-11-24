@@ -17,7 +17,5 @@ int main()
 ); // no member aliases p
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_member
-// Needs: __ESBMC_forall
 // RUN: --solver bitwuzla
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

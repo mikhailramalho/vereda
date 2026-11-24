@@ -23,9 +23,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_3936_inv_inductive_fail
-// Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant --no-standard-checks
 // RUN: --loop-invariant --multi-property --no-standard-checks --z3
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+18\s+loop invariant inductive step$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

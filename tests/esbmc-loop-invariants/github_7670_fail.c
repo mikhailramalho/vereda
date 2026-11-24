@@ -28,8 +28,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7670_fail
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

@@ -83,8 +83,8 @@ int main()
 }
 
 // Imported from ESBMC regression/loop-invariants/github_3711
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

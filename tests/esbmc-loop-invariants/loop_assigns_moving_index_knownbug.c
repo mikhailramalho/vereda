@@ -25,8 +25,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/loop_assigns_moving_index_knownbug
-// Needs: __ESBMC_loop_assigns, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --loop-frame-rule
 // RUN: --loop-invariant-check --loop-frame-rule
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

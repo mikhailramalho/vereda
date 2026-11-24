@@ -20,8 +20,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/mode_exit_reasoning_check_fail
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

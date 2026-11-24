@@ -21,8 +21,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/loop_assigns_array_elem_pass
-// Needs: __ESBMC_loop_assigns, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --loop-frame-rule
 // RUN: --loop-invariant-check --loop-frame-rule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

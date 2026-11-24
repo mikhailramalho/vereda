@@ -25,9 +25,9 @@ printf("Condition 1 is false");
 }
 }
 // Imported from ESBMC regression/goto-coverage/github_1720_9
-// Needs: __CPROVER_input
 // Needs: --condition-coverage --no-cov-asserts
 // RUN: --condition-coverage --no-cov-asserts -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^Condition Coverage: 50%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// Vereda: verdict none

@@ -15,6 +15,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10811_init_object_fail
-// Needs: __ESBMC_init_object
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

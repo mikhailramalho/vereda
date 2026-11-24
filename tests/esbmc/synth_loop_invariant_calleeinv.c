@@ -31,7 +31,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_calleeinv
-// Needs: __ESBMC_loop_invariant
 // Needs: --synthesise-loop-invariants --result-only
 // RUN: --synthesise-loop-invariants --unwind 6 --multi-property --result-only
 // MODE: FUTURE
@@ -39,3 +38,4 @@ int main(void)
 // EXPECT: ^  PASSED       \[main\.assertion\.\d+\]  line 27  loop invariant base case \[i <= 4\]$
 // EXPECT: ^  PASSED       \[main\.assertion\.\d+\]  line 27  loop invariant base case \[return_value\S* == 4\]$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

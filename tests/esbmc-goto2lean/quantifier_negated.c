@@ -7,10 +7,10 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/quantifier_negated
-// Needs: __ESBMC_forall
 // Needs: --goto2lean
 // RUN: --goto2lean
 // MODE: FUTURE
 // EXPECT: ^  ¬\(∀ i : BitVec 32, \(i < x\)\) ∧ \($
 // EXPECT: any other quantifier needs a manual proof
 // EXPECT: ^  sorry$
+// Vereda: verdict none

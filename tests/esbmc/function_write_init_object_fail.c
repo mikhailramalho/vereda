@@ -5,7 +5,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/function_write_init_object_fail
-// Needs: __ESBMC_init_object
-// MODE: FUTURE
 // EXPECT: ^  dereference failure: Program code accessed in write or free mode$
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^  dereference failure: Program code accessed in write or free mode$
+// MODE: FUTURE
+// Vereda: verdict SUCCESSFUL

@@ -37,8 +37,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/multi_property_unknown_diagnosis
-// Needs: __ESBMC_loop_invariant
 // Needs: --no-standard-checks --loop-invariant
 // RUN: --no-standard-checks --loop-invariant --multi-property --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

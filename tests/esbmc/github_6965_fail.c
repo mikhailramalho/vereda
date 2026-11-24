@@ -17,7 +17,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6965_fail
-// Needs: __CPROVER_uninterpreted_equals
 // RUN: -m64 --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

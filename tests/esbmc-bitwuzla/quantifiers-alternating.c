@@ -11,7 +11,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/quantifiers-alternating
-// Needs: __ESBMC_exists, __ESBMC_forall
 // RUN: --solver bitwuzla
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

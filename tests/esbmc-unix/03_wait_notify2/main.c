@@ -114,8 +114,8 @@ int main(){
 
 }
 // Imported from ESBMC regression/esbmc-unix/03_wait_notify2
-// Needs: __ESBMC_yield
 // Needs: -I . --context-bound 3
 // RUN: -I . --unwind 2 --no-unwinding-assertions --context-bound 3
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

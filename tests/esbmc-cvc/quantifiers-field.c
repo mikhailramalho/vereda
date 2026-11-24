@@ -26,7 +26,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cvc/quantifiers-field
-// Needs: __ESBMC_exists
 // RUN: --solver cvc5 --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict FAILED

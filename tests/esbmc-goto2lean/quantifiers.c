@@ -7,7 +7,6 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/quantifiers
-// Needs: __ESBMC_exists, __ESBMC_forall
 // Needs: --goto2lean
 // RUN: --goto2lean
 // MODE: FUTURE
@@ -15,3 +14,4 @@ int main(void) {
 // EXPECT: ^  \(∀ i : BitVec 32, \(i ≤ \(4294967295#32\)\)\) ∧ \($
 // EXPECT: any other quantifier needs a manual proof
 // EXPECT: ^  sorry$
+// Vereda: verdict none

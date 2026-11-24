@@ -12,7 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cprover_uninterpreted_nonzero_fail
-// Needs: __CPROVER_uninterpreted_eq
 // RUN: --incremental-bmc
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

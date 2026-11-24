@@ -20,8 +20,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/multi_property_loop_invariant_copy_fail
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant --multi-fail-fast 1
 // RUN: --loop-invariant --multi-property --multi-fail-fast 1 --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: verdict none

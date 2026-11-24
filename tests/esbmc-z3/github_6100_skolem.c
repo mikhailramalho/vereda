@@ -13,7 +13,9 @@ int main()
 ); // abs nonnegative away from INT_MIN
 }
 // Imported from ESBMC regression/z3/github_6100_skolem
-// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: FUTURE
+// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

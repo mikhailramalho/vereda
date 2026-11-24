@@ -17,7 +17,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6154_reject_ptrwrite
-// Needs: __ESBMC_exists
 // RUN: --solver z3
-// MODE: FUTURE
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
+// Vereda: unmet EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
+// MODE: FUTURE
+// Vereda: verdict FAILED

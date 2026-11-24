@@ -21,9 +21,9 @@ int main()
   }
 }
 // Imported from ESBMC regression/k-induction/pin_read_pointer_bounds
-// Needs: __ESBMC_same_object
 // Needs: --inductive-step --partial-loops --show-vcc
 // RUN: --inductive-step --unwind 2 --partial-loops --no-unwinding-assertions --show-vcc
 // MODE: FUTURE
 // EXPECT: ^dereference failure: array bounds violated$
 // EXPECT: \A(?![\s\S]*dereference failure: invalid pointer)[\s\S]*\Z
+// Vereda: verdict none

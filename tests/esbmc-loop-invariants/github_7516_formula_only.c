@@ -13,9 +13,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/loop-invariants/github_7516_formula_only
-// Needs: __ESBMC_loop_invariant
 // Needs: --k-induction --smtlib --output phase.smt2
 // RUN: --k-induction --max-k-step 2 --smtlib --smt-formula-only --output phase.smt2
 // MODE: FUTURE
 // EXPECT: ^Checking forward condition, k = 1$
 // EXPECT: ^Checking inductive step, k = 2$
+// Vereda: verdict none

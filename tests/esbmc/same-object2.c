@@ -56,6 +56,7 @@ int main()
 
 
 // Imported from ESBMC regression/esbmc/same-object2
-// Needs: __ESBMC_same_object
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

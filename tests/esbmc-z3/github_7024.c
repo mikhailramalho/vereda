@@ -9,8 +9,6 @@ int main()
 ); // forall eq
 }
 // Imported from ESBMC regression/z3/github_7024
-// Needs: __ESBMC_forall
 // RUN: --solver z3
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\[Counterexample\]$

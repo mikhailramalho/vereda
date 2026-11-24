@@ -24,8 +24,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_pointer_intrinsics
-// Needs: __ESBMC_POINTER_OBJECT, __ESBMC_same_object
 // Needs: --clang-c-irep2-adjust-only
 // RUN: --clang-c-irep2-adjust-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: verdict none

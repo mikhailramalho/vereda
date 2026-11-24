@@ -24,9 +24,9 @@ int main()
   }
 }
 // Imported from ESBMC regression/loop-invariants/dirkex_unsafe
-// Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
 // RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^WARNING: every violated claim lies downstream of a loop invariant havoc
 // EXPECT: ^VERIFICATION UNKNOWN$
+// Vereda: verdict none

@@ -5,6 +5,7 @@ int main() {
   assert(__ESBMC_r_ok(arr, 10));
 }
 // Imported from ESBMC regression/esbmc/r_ok5
-// Needs: __ESBMC_r_ok
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED
