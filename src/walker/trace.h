@@ -9,7 +9,7 @@
 namespace vereda::walker {
 
 struct Step {
-  // Call: an integer a bodyless __VERIFIER_nondet_ function returned, for
+  // Call: the value a bodyless __VERIFIER_nondet_ function returned, for
   // the witness.
   enum Kind { Assignment, Assumption, Check, Call } kind;
   camada::SMTExprRef guard; // path condition at the step; for Check, the violation
