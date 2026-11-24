@@ -854,6 +854,10 @@ private:
     }
     if (name == "__vereda_uninitialised") // keeps LLVM from folding reads of the local
       return guard;
+    if (name == "__vereda_havoc") { // for the models: the object p points into is unknown
+      mem.havoc(st, enc.value(c.getArgOperand(0)));
+      return guard;
+    }
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
     // A struct result stays unsupported: the bodyless functions returning
@@ -871,10 +875,12 @@ private:
     // writes only its arguments' memory, it may also write errno, every
     // global the program declares without defining (optind, environ, a
     // variable of a file not given) and the memory outside the program, as
-    // they belong to code Vereda does not see. It may also write through pointers stored in those objects, which
-    // this does not cover. The mutex and condition-variable calls write only
-    // the lock or condition they get, which the program does not read, so
-    // they write nothing here and keep the rest of an object holding one.
+    // they belong to code Vereda does not see, and the objects reached
+    // through pointers stored in an object it writes (#114), which LLVM
+    // counts as such other memory too. The mutex and condition-variable
+    // calls write only the lock or condition they get, which the program
+    // does not read, so they write nothing here and keep the rest of an
+    // object holding one.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -886,20 +892,23 @@ private:
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
     if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
+      MemoryEffects effects = c.getMemoryEffects();
+      bool other = isModSet(effects.getModRef(IRMemLocation::Other));
+      SmallVector<SMTExprRef, 8> written;
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
-          mem.havoc(st, enc.value(a));
+          written.push_back(enc.value(a));
       }
-      MemoryEffects effects = c.getMemoryEffects();
+      if (other) {
+        for (GlobalVariable *g : externs)
+          written.push_back(enc.value(g));
+        written.push_back(mem.outside());
+      }
+      mem.havocCall(st, written, other);
       if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
         mem.havoc(st, enc.value(errnoObject));
-      if (isModSet(effects.getModRef(IRMemLocation::Other))) {
-        for (GlobalVariable *g : externs)
-          mem.havoc(st, enc.value(g));
-        mem.havoc(st, mem.outside());
-      }
     }
     if (scanf)
       return scan(c, f, name, tag, guard, st);

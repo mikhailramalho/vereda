@@ -16,8 +16,9 @@
 // address (stored it, passed it on, converted it to an integer, compared it:
 // the walker decides); any other address is in object 0. So a store through
 // such a pointer cannot reach an object the program kept to itself. Bytes
-// nothing wrote (uninitialised or havocked memory) hold integers, so a
-// pointer read from them is converted the same way.
+// nothing wrote (uninitialised memory, or havocked memory that held no
+// pointer) hold integers, so a pointer read from them is converted the same
+// way.
 //
 // A byte written at a constant pointer stays in the state's map of known
 // bytes and reaches the arrays only when an access at a pointer that may
@@ -54,6 +55,7 @@
 #include "memory/cellmap.h"
 #include <camada/camada.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/DenseSet.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/Module.h>
@@ -156,6 +158,14 @@ public:
   // may write any of it; for p into one of several objects, each where p
   // points into it.
   void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
+  // What a call without a body writes: the whole object at each of ps, as
+  // havoc. With reach, as such a call may follow the pointers it finds
+  // (#114), also each object but a constant that a pointer stored there
+  // points to, transitively, where the pointer of ps points into an object
+  // that reaches it; a pointer made from an integer (an address, or bytes
+  // nothing wrote) is not followed. Each object written may then hold a
+  // pointer to any object reached.
+  void havocCall(State &st, llvm::ArrayRef<camada::SMTExprRef> ps, bool reach);
   // A pointer into the memory outside the program, for havoc.
   camada::SMTExprRef outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
@@ -173,8 +183,16 @@ private:
   void prepare(State &st, camada::SMTExprRef p);
   // The objects p may point into: the constants its object chooses among,
   // and, where that object was read from memory, object 0 and every exposed
-  // object.
-  std::vector<uint64_t> candidates(camada::SMTExprRef p);
+  // object. Without integers, none for an object fromAddress made.
+  std::vector<uint64_t> candidates(camada::SMTExprRef p, bool integers = true);
+  // havoc, with prov the provenance of the bytes of a whole object written.
+  void havocWith(State &st, camada::SMTExprRef p, std::optional<uint64_t> n,
+                 camada::SMTExprRef prov);
+  void havocObject(State &st, uint64_t o, camada::SMTExprRef prov);
+  // For each object of st that may hold a pointer, the objects other than
+  // null it may point to: from its known bytes' provenance and the stores in
+  // the arrays that hold its bytes.
+  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> pointers(const State &st);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   State::Cell readByte(const State &st, camada::SMTExprRef at);
@@ -214,6 +232,7 @@ private:
   struct Object {
     camada::SMTExprRef base, size, exists;
     bool exposed;
+    bool constant = false; // a constant global or a function: never written
   };
 
   encode::Terms &t;
@@ -227,6 +246,12 @@ private:
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
   llvm::DenseMap<uint64_t, unsigned> shifts;
+  // A summarised loop's provenance array (kept alive) -> the one it reads
+  // below, which holds every pointer it does.
+  llvm::DenseMap<const camada::SMTExpr *, std::pair<camada::SMTExprRef, camada::SMTExprRef>>
+      provBelow;
+  // The objects of the pointers fromAddress made, kept alive.
+  llvm::DenseMap<const camada::SMTExpr *, camada::SMTExprRef> fromInteger;
   unsigned fresh = 0;
   camada::SMTExprRef context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
