@@ -13,6 +13,8 @@ void *memcpy(void *, const void *, size_t);
 
 void *memmove(void *, const void *, size_t);
 
+int tolower(int c);
+
 size_t strlen(const char *s) {
   size_t n = 0;
   while (s[n])
@@ -199,4 +201,20 @@ void *memccpy(void *dst, const void *src, int c, size_t n) {
     if (*d = *s, *d == (unsigned char)c)
       return d + 1;
   return NULL;
+
+int strcasecmp(const char *a, const char *b) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  while (*x && *x == *y) {
+    ++x;
+    ++y;
+  }
+  return tolower(*x) - tolower(*y);
+}
+
+int strncasecmp(const char *a, const char *b, size_t n) {
+  const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
+  for (; n; --n, ++x, ++y)
+    if (tolower(*x) != tolower(*y) || !*x)
+      return tolower(*x) - tolower(*y);
+  return 0;
 }
