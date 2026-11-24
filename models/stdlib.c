@@ -81,34 +81,20 @@ void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
   return NULL;
 }
 
-// C17 7.22.5.2.
-// Use insertion sort: for i from 1 to nmemb - 1, for j = i while j > 0 and
-// compar(element j - 1, element j) > 0, swap the two elements and decrement j.
-// Swap byte by byte with a loop over size (a char temporary), not memcpy:
-// the walker cannot do a memcpy of symbolic size.
+// C17 7.22.5.2, as an insertion sort. Elements are swapped a byte at a
+// time: the walker cannot copy a symbolic size with memcpy.
 void qsort(void *base, size_t nmemb, size_t size,
            int (*compar)(const void *, const void *)) {
-  for (size_t i = 1; i < nmemb; ++i) {
-    char tmp[size];
-    char *elem_i = (char *)base + i * size;
-    char *elem_j = elem_i;
-    size_t j = i;
-
-    while (j > 0) {
-      char *elem_prev = (char *)base + (j - 1) * size;
-      int r = compar(elem_prev, elem_j);
-      if (r <= 0)
+  char *b = base;
+  for (size_t i = 1; i < nmemb; ++i)
+    for (size_t j = i; j; --j) {
+      char *p = b + (j - 1) * size, *q = p + size;
+      if (compar(p, q) <= 0)
         break;
-
-      // Swap elements byte by byte
       for (size_t k = 0; k < size; ++k) {
-        tmp[k] = elem_prev[k];
-        elem_prev[k] = elem_j[k];
-        elem_j[k] = tmp[k];
+        char t = p[k];
+        p[k] = q[k];
+        q[k] = t;
       }
-
-      --j;
-      elem_j = elem_prev;
     }
-  }
 }

@@ -1,4 +1,5 @@
-// Test that qsort sorts an array of 3 integers correctly.
+// qsort sorts three nondet ints: the result is ordered, keeps their sum, and
+// starts with the least and ends with the greatest.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdlib.h>
@@ -7,12 +8,10 @@ extern void __VERIFIER_assume(int);
 extern void __VERIFIER_assert(int);
 
 static int cmp(const void *a, const void *b) {
-    int x = *(const int *)a, y = *(const int *)b;
-    // Prevent clang from optimizing this to llvm.scmp.i32.i32
-    // Use explicit conditional to avoid optimization issues
-    if (x < y) return -1;
-    if (x > y) return 1;
-    return 0;
+  int x = *(const int *)a, y = *(const int *)b;
+  if (x < y)
+    return -1;
+  return x > y;
 }
 
 int main(void) {
@@ -29,6 +28,5 @@ int main(void) {
       hi = x > y ? (x > z ? x : z) : (y > z ? y : z);
   __VERIFIER_assert(a[0] == lo);
   __VERIFIER_assert(a[2] == hi);
-
   return 0;
 }
