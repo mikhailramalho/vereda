@@ -96,7 +96,8 @@ void qsort(void *base, size_t nmemb, size_t size,
 
     while (j > 0) {
       char *elem_prev = (char *)base + (j - 1) * size;
-      if (compar(elem_prev, elem_j) <= 0)
+      int r = compar(elem_prev, elem_j);
+      if (r <= 0)
         break;
 
       // Swap elements byte by byte
