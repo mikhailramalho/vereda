@@ -20,9 +20,5 @@ int main(int argc, char * argv[])
 }
 // Imported from ESBMC regression/cstd/fscanf-false
 // RUN: --overflow-check -m64
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// MODE: THOROUGH

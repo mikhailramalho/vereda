@@ -52,7 +52,6 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix2/11_szymanski
 // RUN: --unwind 1 --no-unwinding-assertions
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

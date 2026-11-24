@@ -15,7 +15,6 @@ void main(void)
 }
 // Imported from ESBMC regression/bitwuzla/get_array_elem
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -15,7 +15,4 @@ int main()
 // Imported from ESBMC regression/esbmc/github_7363_bitint40
 // Needs: REQUIRES bitint
 // RUN: --overflow-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -19,7 +19,6 @@ int main()
   assert(*b);
 }
 // Imported from ESBMC regression/esbmc/github_1426
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

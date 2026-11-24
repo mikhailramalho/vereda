@@ -34,7 +34,3 @@ int main(void)
 // Imported from ESBMC regression/cstd/github_9394
 // RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

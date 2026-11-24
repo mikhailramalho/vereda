@@ -27,7 +27,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/va_list_parameter_cursor_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

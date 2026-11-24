@@ -15,7 +15,6 @@ int main(void){
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deep_expr_no_stack_crash
-// MODE: THOROUGH
 // EXPECT: ^(ERROR: expression nesting is too deep to migrate.*|VERIFICATION SUCCESSFUL)$
 // Vereda: unmet EXPECT: ^(ERROR: expression nesting is too deep to migrate.*|VERIFICATION SUCCESSFUL)$
 // MODE: FUTURE

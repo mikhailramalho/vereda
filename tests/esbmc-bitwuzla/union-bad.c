@@ -20,7 +20,6 @@ void main(void)
 }
 // Imported from ESBMC regression/bitwuzla/union-bad
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

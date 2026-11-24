@@ -4873,13 +4873,5 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc-unix/04_bzip2smp_01
 // RUN: --unwind 2
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// MODE: THOROUGH

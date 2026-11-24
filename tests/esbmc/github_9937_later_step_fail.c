@@ -12,7 +12,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_9937_later_step_fail
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

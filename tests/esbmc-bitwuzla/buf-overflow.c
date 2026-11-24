@@ -14,7 +14,6 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/bitwuzla/buf-overflow
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -25,7 +25,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vsnprintf_valist_recovery_exact
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

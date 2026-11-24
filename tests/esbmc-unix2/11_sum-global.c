@@ -50,7 +50,6 @@ assert(pc_preds(2, [[[4|4]],[[1|1]]], to)).
 */
 // Imported from ESBMC regression/esbmc-unix2/11_sum-global
 // RUN: --unwind 3
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
