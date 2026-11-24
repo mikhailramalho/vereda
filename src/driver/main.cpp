@@ -207,10 +207,13 @@ static int bmc(Function &fn, unsigned bound) {
         solvingTime();
         traced = true;
         progress("Building error trace");
-        vereda::witness::printCounterexample(solver, trace, checks, &c - checks.data(), outs());
+        // One reader for both, so the witness asks the solver for no value
+        // the counterexample has read.
+        vereda::solver::Model model(solver, terms);
+        vereda::witness::printCounterexample(model, trace, checks, &c - checks.data(), outs());
         if (!witnessFile.empty() && !witnessWritten) {
           Expected<std::string> witness = vereda::witness::violationWitness(
-              solver, trace, checks, &c - checks.data(), *fn.getParent(), entry);
+              model, trace, checks, &c - checks.data(), *fn.getParent(), entry);
           outs().flush(); // the file may be standard output too
           if (!witness) {
             errs() << "vereda: no witness: " << toString(witness.takeError()) << "\n";
