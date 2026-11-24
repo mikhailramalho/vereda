@@ -50,14 +50,18 @@ them where paths join.
   (`assume_constant_join_fail`); `x != 5 || y == 6` fixes nothing, its
   negation both sides (`assume_constant_or_fail`); each loop iteration's
   fresh value gets its own fact (`assume_constant_loop`).
+- Loop summaries (#124). A summary walks one iteration at a nondet index,
+  then leaves by the exit with the facts the loop's arrivals share, not the
+  iteration's: the loop may not run (`assume_constant_summary_fail`).
 
 `assume_constant` checks that the forms fold: every check is `false` in the
 dumped formula, where main asserts a disjunction of seven checks.
 
 ## Measurements
 
-Base is main at 8333f006, head this branch, both Release with LLVM 21.1.2,
-run side by side.
+Base is main at 8333f006, head this branch before it took in main's later
+commits (loop summaries among them), both Release with LLVM 21.1.2, run
+side by side.
 
 The 107 regression tests whose source has `__VERIFIER_assume(` or
 `assume_abort_if_not(` with `==` (not FUTURE), with `tests/bench.py --list`:
