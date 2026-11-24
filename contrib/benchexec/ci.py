@@ -115,7 +115,7 @@ def summary(new_dir, old_dir=None):
     print("\nOther is an error or out of memory.")
 
     wrong = sorted(t for t, r in new.items() if r.category == "wrong")
-    print(f"\n### {len(wrong)} wrong verdicts\n")
+    print(f"\n### Wrong verdicts: {len(wrong)}\n")
     for t in wrong:
         print(f"- `{t}`: expected {new[t].expected}, got {new[t].status}")
 

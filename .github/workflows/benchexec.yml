@@ -1,6 +1,6 @@
 # Runs Vereda on SV-COMP ReachSafety tasks with BenchExec, to catch verdict
 # changes: wrong answers and lost ones. Timing against ESBMC stays on our own
-# machine; these runners are too slow and noisy for that. Started by hand:
+# machine; shared runners are too noisy for that. Started by hand:
 #   gh workflow run benchexec.yml --ref <branch> -f sets=Loops -f filter='^loops/'
 # build makes the binary once while plan fetches the sv-benchmarks
 # directories the categories need (a partial clone from GitLab, about 50 MB
@@ -15,11 +15,13 @@
 #
 # BenchExec on GitHub's ubuntu-24.04 runners (docs/survey/
 # 2026-11-24-benchexec-on-github-runners.md): its containers need
-# unprivileged user namespaces, which Ubuntu 24.04's AppArmor denies unless
-# kernel.apparmor_restrict_unprivileged_userns is 0. It needs a cgroup of its
-# own with controllers delegated, and the runner's processes sit in a system
-# service's cgroup with no systemd user instance to ask for one, so the run
-# step moves its shell into an empty cgroup made for it and execs BenchExec.
+# unprivileged user namespaces, which Ubuntu's AppArmor denies there
+# (kernel.apparmor_restrict_unprivileged_userns is 1) until the sysctl is 0.
+# It also needs a cgroup of its own with the cpuset, cpu, io, memory and pids
+# controllers. Steps run in the runner service's cgroup, and the runner
+# user's systemd manager gets no cpuset without a drop-in and a restart, so
+# the run step moves its shell into an empty cgroup made for it and execs
+# BenchExec, which is then alone in it, as BenchExec requires.
 name: BenchExec
 
 on:
@@ -154,26 +156,6 @@ jobs:
           cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
           tool/vereda.py --version
 
-      - name: Probe (temporary)
-        continue-on-error: true
-        run: |
-          set -x
-          orig=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || true
-          cat /proc/self/cgroup
-          cat /sys/fs/cgroup/cgroup.subtree_control
-          cat /sys/fs/cgroup/cgroup.controllers
-          ls /run/user/ || true
-          echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR DBUS=$DBUS_SESSION_BUS_ADDRESS"
-          systemctl --user is-system-running 2>&1 || true
-          loginctl list-sessions 2>&1 || true
-          python3 -m benchexec.check_cgroups 2>&1 || true
-          containerexec -- /bin/true 2>&1 | tail -5 || true
-          systemd-run --user --scope -p Delegate=yes /bin/true 2>&1 || true
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          containerexec -- /bin/true 2>&1 | tail -5 || true
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=$orig
-          nproc; free -g; lscpu | head -20; df -h / /home /tmp; findmnt -l | head -40
-
       # User namespaces for the containers, and an empty cgroup with every
       # controller for BenchExec (see the header).
       - name: Set up containers and cgroups
@@ -234,6 +216,7 @@ jobs:
       - name: Make the table
         run: |
           python3 -m pip install --user --break-system-packages "$BENCHEXEC"
+          cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
           {
             echo '<table>'
             [ -d old ] && echo '<union title="earlier"><result filename="old/*.results.*.xml.bz2"/></union>'
