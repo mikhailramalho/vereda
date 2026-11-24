@@ -3,6 +3,7 @@
 #include "util/unsupported.h"
 #include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/MapVector.h>
+#include <llvm/ADT/SetVector.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <set>
 #include <vector>
@@ -635,45 +636,54 @@ void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
   havocWith(st, p, n, t.bv(IntProvenance, ObjBits));
 }
 
-void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> ps, bool reach) {
-  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
-  // For each pointer, each object reached through stored pointers from
-  // where it may point, in st as the call finds it, and the objects of the
-  // pointer it is reached from.
-  std::vector<llvm::MapVector<uint64_t, std::vector<uint64_t>>> from(ps.size());
+void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
+                       llvm::ArrayRef<SMTExprRef> read, bool reach) {
+  std::vector<SMTExprRef> ps(written.begin(), written.end());
+  ps.insert(ps.end(), read.begin(), read.end());
+  // For each pointer, the objects it may point into, and each object
+  // reached through stored pointers from where it points, in st as the
+  // call finds it, with the objects of the pointer it is reached from.
   std::vector<std::vector<uint64_t>> roots(ps.size());
-  if (reach) {
-    llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to = pointers(st);
-    for (size_t i = 0; i < ps.size(); ++i) {
-      if (!t.isTrue(t.eq(ps[i], null())))
-        roots[i] = candidates(ps[i]);
-      for (uint64_t r : roots[i]) {
-        llvm::SmallVector<uint64_t, 8> work{r};
-        llvm::DenseSet<uint64_t> seen;
-        while (!work.empty()) {
-          auto it = to.find(work.pop_back_val());
-          if (it == to.end())
-            continue;
-          for (uint64_t x : it->second)
-            if (seen.insert(x).second) {
-              from[i][x].push_back(r);
-              work.push_back(x);
-            }
-        }
+  std::vector<llvm::MapVector<uint64_t, std::vector<uint64_t>>> from(ps.size());
+  // The objects the call may hold a pointer to: those it gets a pointer
+  // into, exposed (it can store no other: the rest were passed where
+  // LLVM says nothing is captured), and those reached.
+  llvm::SetVector<uint64_t> held;
+  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
+  if (reach)
+    to = pointers(st);
+  for (size_t i = 0; i < ps.size(); ++i) {
+    if (t.isTrue(t.eq(ps[i], null())))
+      continue;
+    roots[i] = candidates(ps[i]);
+    for (uint64_t r : roots[i]) {
+      if (r < objects.size() && objects[r].exposed)
+        held.insert(r);
+      llvm::SmallVector<uint64_t, 8> work{r};
+      llvm::DenseSet<uint64_t> seen;
+      while (!work.empty()) {
+        auto it = to.find(work.pop_back_val());
+        if (it == to.end())
+          continue;
+        for (uint64_t x : it->second)
+          if (seen.insert(x).second) {
+            from[i][x].push_back(r);
+            held.insert(x);
+            work.push_back(x);
+          }
       }
     }
-    // Every object written may then hold a pointer to any of them, so that
-    // a later call reaches them again.
-    std::string id = std::to_string(fresh++);
-    llvm::DenseSet<uint64_t> named;
-    for (const auto &reached : from)
-      for (const auto &[x, rs] : reached)
-        if (named.insert(x).second)
-          prov = t.ite(t.symbol("havoc_provenance#" + id + "." + std::to_string(x), s.mkBoolSort()),
-                       t.bv(x, ObjBits), prov);
   }
+  // Every object written may then hold a pointer to any of them, so that a
+  // later call reaches them again.
+  SMTExprRef prov = t.bv(IntProvenance, ObjBits);
+  std::string id = std::to_string(fresh++);
+  for (uint64_t x : held)
+    prov = t.ite(t.symbol("havoc_provenance#" + id + "." + std::to_string(x), s.mkBoolSort()),
+                 t.bv(x, ObjBits), prov);
   for (size_t i = 0; i < ps.size(); ++i) {
-    havocWith(st, ps[i], std::nullopt, prov);
+    if (i < written.size())
+      havocWith(st, ps[i], std::nullopt, prov);
     for (const auto &[x, rs] : from[i]) {
       if (objects[x].constant)
         continue;

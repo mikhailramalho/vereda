@@ -14,10 +14,13 @@ When LLVM's memory effects say the call may write memory other than its
 arguments' (the `Other` location: any unknown function, and every C library
 function `inferattrs` gives no memory attribute, which is nearly all of
 them), it also writes, transitively, each object a pointer stored in an
-object it writes may point to: its arguments' objects, the globals the
-program declares without defining, and the memory outside the program. LLVM
-itself counts memory reached through a loaded pointer as `Other`, so a
-function it says writes only its arguments (frexp) follows nothing.
+object it gets may point to: its arguments' objects, those it only reads
+included (LLVM's `readonly` forbids writes through that pointer, not
+through pointers loaded from it, and a constant global may hold a pointer
+to a variable), the globals the program declares without defining, and the
+memory outside the program. LLVM itself counts memory reached through a
+loaded pointer as `Other`, so a function it says writes only its arguments
+(frexp) follows nothing.
 
 The pointers stored in an object come from the memory state at the call,
 with no analysis of the program: the provenance of its known bytes and the
@@ -36,17 +39,19 @@ reached from only some of them is written only where the argument points
 into one of those.
 
 After the call, each object it wrote may hold a pointer to any object
-reached: their provenance is a nondet choice among those and an integer,
-so a second call on the same struct writes `x` again, and a pointer reached
-through one argument may have been stored into another.
+reached and to any exposed object it got a pointer into: their provenance
+is a nondet choice among those and an integer. So a second call on the same
+struct writes `x` again, and `ext2(&s, &y); y = 0; ext3(&s)` may write `y`,
+as ext2 may have stored `&y` in `s`; this holds for a call that writes only
+its arguments too (strtol's end pointer into its string). An object that is
+not exposed was only passed where LLVM says nothing is captured, so no call
+can have stored its address.
 
 Sound because the code behind the call can only write memory it has a
 pointer to: one it was given, one stored in memory it can reach, the
 library's own, or one it kept from an earlier call. Not covered: the last
-(a buffer `setvbuf` was given, a context registered earlier), arguments LLVM
-marks read-only (only `inferattrs` does that for a declaration, on C library
-functions that only read them), and integers that hold an exposed object's
-address. The cost is precision where a C library function does not follow
+(a buffer `setvbuf` was given, a context registered earlier), and integers
+that hold an exposed object's address. The cost is precision where a C library function does not follow
 what it finds: `qsort` on an array of pointers now also writes the objects
 they point to, and `strtol` what a previous end pointer points to.
 
@@ -61,10 +66,16 @@ know, which never happened.
 `getline`, `getdelim` and `readv` now have models in `models/stdio.c`, so
 the common cases do not depend on the havoc: getline writes a NUL after
 the line and keeps the buffer when it holds more than the line, otherwise
-it allocates a new one, and readv writes each buffer of the iovec array.
-The characters are not modelled: the object they go to gets nondet
-contents through `__vereda_havoc`, a builtin for the models, as a buffer
-of symbolic length cannot be written byte by byte. Both may change errno.
+it allocates a new one and frees the old, and readv writes each buffer of
+the iovec array, its last byte too when the input may fill it, so that a
+buffer shorter than its `iov_len` is a write past its end. The characters
+are not modelled: the object they go to gets nondet contents through
+`__vereda_havoc`, a builtin for the models, as a buffer of symbolic length
+cannot be written byte by byte. Both may change errno. getline grows the
+buffer as `models/stdlib.c`'s realloc does but without the copy: the
+contents are nondet either way, and that copy has a symbolic size, which
+made a `while (getline(...) > 0)` loop UNKNOWN (memcpy with a symbolic
+size).
 
 ## Measured
 
@@ -75,7 +86,7 @@ other reasons): 31_cdaudio (52 objects), 27_exStbFb (33), 10_bicycle_01
 (20), 05_pfscan-1.0_01 (30), github_1070, github_1353, github_8686,
 github_7548_strsep_c, github_5868_strto, 25_git-remote-gitkrb5 and
 mem_external_optind_false. Against the same binary with the rule off, no
-verdict among the 468 changes and they take 120 s in all against 124 s;
+verdict among the 468 changes and they take 115 s in all against 124 s;
 the slowest change is 10_bicycle_01, 0.5 s to 0.9 s (UNKNOWN at
 pthread_create either way).
 

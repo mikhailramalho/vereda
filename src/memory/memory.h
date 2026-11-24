@@ -158,14 +158,17 @@ public:
   // may write any of it; for p into one of several objects, each where p
   // points into it.
   void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
-  // What a call without a body writes: the whole object at each of ps, as
-  // havoc. With reach, as such a call may follow the pointers it finds
-  // (#114), also each object but a constant that a pointer stored there
-  // points to, transitively, where the pointer of ps points into an object
-  // that reaches it; a pointer made from an integer (an address, or bytes
-  // nothing wrote) is not followed. Each object written may then hold a
-  // pointer to any object reached.
-  void havocCall(State &st, llvm::ArrayRef<camada::SMTExprRef> ps, bool reach);
+  // What a call without a body writes, given the pointers it may write
+  // through and those it only reads through: the whole object at each of
+  // written, as havoc. With reach, as such a call may follow the pointers
+  // it finds (#114), also each object but a constant that a pointer stored
+  // where any of them points may point to, transitively, where that pointer
+  // points into an object that reaches it; a pointer made from an integer
+  // (an address, or bytes nothing wrote) is not followed. Each object
+  // written may then hold a pointer to any exposed object it got a pointer
+  // into and to any object reached.
+  void havocCall(State &st, llvm::ArrayRef<camada::SMTExprRef> written,
+                 llvm::ArrayRef<camada::SMTExprRef> read, bool reach);
   // A pointer into the memory outside the program, for havoc.
   camada::SMTExprRef outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;

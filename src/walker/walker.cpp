@@ -876,7 +876,7 @@ private:
     // global the program declares without defining (optind, environ, a
     // variable of a file not given) and the memory outside the program, as
     // they belong to code Vereda does not see, and the objects reached
-    // through pointers stored in an object it writes (#114), which LLVM
+    // through pointers stored in an object it gets (#114), which LLVM
     // counts as such other memory too. The mutex and condition-variable
     // calls write only the lock or condition they get, which the program
     // does not read, so they write nothing here and keep the rest of an
@@ -894,19 +894,21 @@ private:
     if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
       MemoryEffects effects = c.getMemoryEffects();
       bool other = isModSet(effects.getModRef(IRMemLocation::Other));
-      SmallVector<SMTExprRef, 8> written;
+      // A pointer it only reads through may still hold pointers it follows.
+      SmallVector<SMTExprRef, 8> written, read;
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
-        if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
-          written.push_back(enc.value(a));
+        if (a->getType()->isPointerTy())
+          (c.onlyReadsMemory(i) || (g && g->isConstant()) ? read : written)
+              .push_back(enc.value(a));
       }
       if (other) {
         for (GlobalVariable *g : externs)
           written.push_back(enc.value(g));
         written.push_back(mem.outside());
       }
-      mem.havocCall(st, written, other);
+      mem.havocCall(st, written, read, other);
       if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
         mem.havoc(st, enc.value(errnoObject));
     }

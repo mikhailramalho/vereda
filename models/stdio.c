@@ -12,6 +12,8 @@ long __VERIFIER_nondet_long(void);
 unsigned long __VERIFIER_nondet_ulong(void);
 void __VERIFIER_assume(int);
 void *malloc(size_t);
+void free(void *);
+char __VERIFIER_nondet_char(void);
 // Gives the whole object p points into nondet contents (the walker does).
 void __vereda_havoc(void *p);
 
@@ -40,11 +42,14 @@ FILE *freopen64(const char *path, const char *mode, FILE *s) {
 }
 
 // getdelim and getline (POSIX): a line of len characters and a NUL in
-// *lineptr, which becomes a new object when it is null or holds no more than
-// len bytes; glibc starts with 120. The characters are not modelled: the
-// object they go to gets nondet contents, and so does the old one when it
-// grows, as glibc fills it first. A read that finds the end of the stream or
-// an error first returns -1. errno may change at any call (POSIX 2.3).
+// *lineptr, which is allocated when null (glibc starts with 120 bytes) and
+// grows when it holds no more than len bytes. The characters are not
+// modelled: the object gets nondet contents before it grows, as glibc fills
+// it first. It grows as models/stdlib.c's realloc does, into a new object
+// with the old one freed, but without the copy: the contents are nondet
+// either way, and a copy of symbolic size would be unsupported. A read that
+// finds the end of the stream or an error first returns -1. errno may change
+// at any call (POSIX 2.3).
 ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
   errno = __VERIFIER_nondet_int();
   if (!*lineptr || !*n) {
@@ -56,12 +61,13 @@ ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
   if (!len)
     return -1;
   __vereda_havoc(*lineptr);
-  if (len >= *n) { // a new object, whose contents malloc leaves nondet
+  if (len >= *n) {
     size_t m = __VERIFIER_nondet_ulong();
     __VERIFIER_assume(m > len);
     char *p = malloc(m);
     if (!p)
       return -1;
+    free(*lineptr);
     *lineptr = p;
     *n = m;
   }
@@ -74,14 +80,19 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 }
 
 // readv (POSIX): reads into the buffers of iov in turn. The bytes are not
-// modelled: each buffer's object gets nondet contents. Linux refuses more
-// than UIO_MAXIOV buffers, which also bounds the loop.
+// modelled: each buffer's object gets nondet contents, and its last byte
+// is written when the input may fill it, so that a buffer smaller than its
+// length is a write past its end. Linux refuses more than UIO_MAXIOV
+// buffers, which also bounds the loop.
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
   errno = __VERIFIER_nondet_int();
   if (iovcnt < 0 || iovcnt > UIO_MAXIOV)
     return -1;
-  for (int i = 0; i < iovcnt; ++i)
+  for (int i = 0; i < iovcnt; ++i) {
     __vereda_havoc(iov[i].iov_base);
+    if (iov[i].iov_len && __VERIFIER_nondet_int())
+      ((char *)iov[i].iov_base)[iov[i].iov_len - 1] = __VERIFIER_nondet_char();
+  }
   ssize_t r = __VERIFIER_nondet_long();
   __VERIFIER_assume(r >= -1);
   return r;
