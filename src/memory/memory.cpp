@@ -113,7 +113,12 @@ SMTExprRef Memory::global(const GlobalValue *g) const {
 SMTExprRef Memory::address(SMTExprRef p) { return t.add(base(object(p)), offset(p)); }
 
 SMTExprRef Memory::equal(SMTExprRef p, SMTExprRef q) {
-  SMTExprRef outside = t.lor(t.eq(object(p), t.bv(0, ObjBits)), t.eq(object(q), t.bv(0, ObjBits)));
+  // Null is equal by both measures, so only a nonzero offset in object 0
+  // needs the addresses; a test against null stays a test on the bits.
+  auto out = [&](SMTExprRef x) {
+    return t.land(t.eq(object(x), t.bv(0, ObjBits)), t.lnot(t.eq(offset(x), t.bv(0, ptrBits))));
+  };
+  SMTExprRef outside = t.lor(out(p), out(q));
   return t.lor(t.land(outside, t.eq(address(p), address(q))),
                t.land(t.lnot(outside), t.eq(p, q)));
 }

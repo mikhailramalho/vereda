@@ -110,9 +110,9 @@ public:
   // The size in bytes of the object with id obj, a pointer-width term.
   camada::SMTExprRef size(camada::SMTExprRef obj);
   camada::SMTExprRef address(camada::SMTExprRef p);   // ptrtoint
-  // p == q: object and offset equal, or, when one has object 0 (null or
-  // outside the program), the addresses: it may hold the address of an
-  // object allocated since it was converted.
+  // p == q: object and offset equal, or, when one is outside the program,
+  // the addresses: it may hold the address of an object allocated since it
+  // was converted.
   camada::SMTExprRef equal(camada::SMTExprRef p, camada::SMTExprRef q);
   // inttoptr: the exposed object that holds a, else object 0 at offset a
   // (null, or the memory outside the program).
