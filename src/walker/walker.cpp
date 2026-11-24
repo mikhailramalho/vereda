@@ -373,8 +373,14 @@ private:
         return;
       }
       SMTExprRef c = enc.value(br->getCondition());
-      arrive(frame, bb, br->getSuccessor(0), t.land(guard, c), st);
-      arrive(frame, bb, br->getSuccessor(1), t.land(guard, t.lnot(c)), st);
+      SMTExprRef taken[2] = {t.land(guard, c), t.land(guard, t.lnot(c))};
+      if (std::optional<ir::BranchSite> site = ir::branchSite(*br))
+        for (unsigned i = 0; i < 2; ++i)
+          if (site->taken[i] && !t.isFalse(taken[i]))
+            trace.push_back(
+                {Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false"});
+      arrive(frame, bb, br->getSuccessor(0), taken[0], st);
+      arrive(frame, bb, br->getSuccessor(1), taken[1], st);
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       SMTExprRef cond = enc.value(sw->getCondition());
       SMTExprRef anyCase = t.boolean(false);

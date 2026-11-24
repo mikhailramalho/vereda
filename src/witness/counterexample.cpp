@@ -56,7 +56,7 @@ void printCounterexample(camada::SMTSolver &s, const walker::Trace &trace,
   // This also hides a source assignment of the same value.
   std::map<std::string, std::string> last;
   for (const walker::Step &step : trace) {
-    if (step.kind == walker::Step::Call ||
+    if (step.kind == walker::Step::Call || step.kind == walker::Step::Branch ||
         (step.kind == walker::Step::Check && step.check != violated))
       continue;
     auto reached = s.getBool(step.guard);

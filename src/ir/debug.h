@@ -7,6 +7,7 @@
 #include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instruction.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/Support/Path.h>
 #include <optional>
 #include <string>
@@ -97,6 +98,47 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
                       : SourceLoc{fileName(var->getDirectory(), var->getFilename(), var->getScope()),
                                   var->getLine(), 0, function.str()};
   return DbgAssign{var->getName().str(), v, isUnsigned, loc};
+}
+
+// A conditional branch clang made for the condition of an if, while or for
+// statement, read from the names it gives the blocks (kept by
+// -fno-discard-value-names; InstCombine may swap the successors, and loop
+// simplification may split them, but the names stay): the value of the
+// whole condition when the branch takes each successor. A branch on an
+// operand of && or || that goes on to the next operand (land.lhs.true,
+// lor.lhs.false) decides nothing there. loc is the keyword of a loop; for
+// an if, the start of its condition, where clang opens the if's lexical
+// block. A do-while is left out: CPAchecker 4.3 refutes a witness with a
+// branching waypoint for one, at its do or its while.
+struct BranchSite {
+  SourceLoc loc;
+  std::optional<bool> taken[2];
+};
+
+inline std::optional<BranchSite> branchSite(const llvm::BranchInst &br) {
+  static const std::pair<llvm::StringRef, bool> blocks[] = {
+      {"if.then", true},    {"if.else", false}, {"if.end", false}, {"while.body", true},
+      {"while.end", false}, {"for.body", true}, {"for.end", false}};
+  BranchSite site;
+  bool isIf = false;
+  for (unsigned i = 0; i < 2; ++i)
+    for (auto &[name, value] : blocks)
+      if (br.getSuccessor(i)->getName().starts_with(name)) {
+        site.taken[i] = value;
+        isIf = name.starts_with("if.");
+      }
+  const llvm::DILocation *loc = br.getDebugLoc();
+  if ((!site.taken[0] && !site.taken[1]) || !loc)
+    return std::nullopt;
+  site.loc = location(br.getDebugLoc(), br.getFunction()->getName());
+  if (isIf) {
+    auto *block = llvm::dyn_cast<llvm::DILexicalBlock>(loc->getScope());
+    if (!block)
+      return std::nullopt;
+    site.loc.line = block->getLine();
+    site.loc.col = block->getColumn();
+  }
+  return site;
 }
 
 // ty without typedefs and qualifiers.
