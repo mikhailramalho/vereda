@@ -83,3 +83,52 @@ one job on an Intel Xeon 6975P-C runner.
 On the 41 tasks both answer, Vereda takes 4 s against 23 s (median 0.07 s
 against 0.16 s) and is faster on all 41, with a median peak of 20 MB
 against 49 MB, smaller on 40.
+
+## Loops
+
+All 764 tasks of Loops (with VerifyThis-Loops) with both tools
+(https://github.com/mikhailramalho/vereda/actions/runs/45429577641, the
+same Vereda and ESBMC): three shards of 254 or 255 tasks, whose jobs took
+1 h 49 min to 1 h 55 min (Vereda 53 to 55 min, ESBMC 56 to 59 min); the
+run took 1 h 57 min from start to report. Next to #169's local run of the
+758 tasks Loops had there, where ESBMC 8.3.0's numbers came from the day
+before:
+
+| Run | Tasks | Correct TRUE | Correct FALSE | Wrong | Unknown | Timeout | Out of memory | Score |
+|---|---|---|---|---|---|---|---|---|
+| Vereda 8f2b8df1, runners | 764 | 312 | 147 | 0 | 5 | 299 | 1 | 771 |
+| ESBMC 8.8.0, runners | 764 | 289 | 142 | 0 | 0 | 322 | 11 | 720 |
+| Vereda a453547a, local (#169) | 758 | 293 | 143 | 0 | 5 | 317 | 0 | 729 |
+| ESBMC 8.3.0, local (#169) | 758 | 282 | 136 | 0 | 0 | 334 | 6 | 700 |
+
+On the 419 tasks both answer correctly:
+
+| | Vereda | ESBMC |
+|---|---|---|
+| Total CPU time | 684 s | 775 s |
+| Median CPU time | 0.11 s | 0.27 s |
+| Faster on | 389 | 30 |
+| Total of peak memory | 17.4 GB | 25.1 GB |
+| Median peak memory | 22 MB | 49 MB |
+| Less memory on | 373 | 46 |
+
+#169 gives these only for the four sets together (691 tasks: 1,045 s
+against 1,677 s, median 0.21 s against 0.50 s, faster on 660, median
+peak 90 MB against 121 MB, with `/usr/bin/time`'s resident memory).
+
+Vereda alone answers 40 tasks, on which ESBMC times out or runs out of
+memory; ESBMC alone answers 12, on all of which Vereda times out:
+`loops-crafted-1/theatreSquare` and 11 nla-digbench-scaling tasks
+(fermat1-ll and fermat2-ll among them). Vereda's out of memory is
+`loops/n.c24`, as in the Vereda-only run. It is slower by more than 15 s
+on six tasks: `loop-acceleration/array_2-2` (38 s against 0.7 s) and
+`array_2-1` (26 against 1.4), `loop-lit/afnp2014` (16 against 0.5), and
+the nla-digbench-scaling `prodbin-ll_valuebound100` (46 against 9.5),
+`knuth_valuebound50` (51 against 25) and `prod4br-ll_valuebound50` (56
+against 40).
+
+Against the Vereda-only run of d8a8b4f9 on the runners
+(https://github.com/mikhailramalho/vereda/actions/runs/45389719355),
+Vereda gains 43 tasks and loses 2, `nla-digbench-scaling/
+egcd3-ll_valuebound20` and `geo3-ll_valuebound10`, which took 46 s and
+54 s there and now reach the 60 s limit.
