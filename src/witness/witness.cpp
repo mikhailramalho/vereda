@@ -188,7 +188,7 @@ static std::string constraint(solver::Model &model, const walker::Step &step, co
   const APInt *value = model.value(step.value);
   if (!value)
     return "";
-  if (step.value->isBoolSort()) // a _Bool
+  if (step.value.isBool()) // a _Bool
     return std::string("\\result == ") + (value->isOne() ? "1" : "0");
   const APInt &v = *value;
   const Function *f = m.getFunction(step.text);

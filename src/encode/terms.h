@@ -6,6 +6,11 @@
 // constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
 // so pointer equality is structural equality for terms built here.
+//
+// The terms it hands out are its own type, Term, which camada does not take:
+// a bit-vector constant stays Terms' own value until the solver needs it,
+// and solverTerm then makes the solver's term for it. Most constants fold
+// away without ever getting one.
 #pragma once
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
@@ -13,25 +18,78 @@
 #include <llvm/ADT/STLFunctionalExtras.h>
 #include <llvm/ADT/Twine.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <bit>
+#include <cstdint>
+#include <deque>
 #include <functional>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 namespace vereda::encode {
 
+// A term of Terms: a bit-vector constant it interned, or a term of the
+// solver. It does not convert to camada's handle, so every term that goes
+// to camada passes through Terms::solverTerm. It is one pointer, the
+// solver's handle or, with the low bit set, the constant's entry, so its
+// identity is that pointer: copies of a term compare equal, and maps key a
+// term by id().
+class Term {
+public:
+  Term() = default;
+  explicit operator bool() const { return bits; }
+  const void *id() const { return reinterpret_cast<const void *>(bits); }
+  bool operator==(const Term &o) const { return bits == o.bits; }
+  bool isBool() const { return bits && !entry() && ref()->isBoolSort(); }
+  bool isBV() const { return entry() || (bits && ref()->isBVSort()); }
+  unsigned width() const { return entry() ? entry()->value.getBitWidth() : ref()->getWidth(); }
+
+private:
+  friend class Terms;
+  struct Constant {
+    llvm::APInt value;
+    mutable camada::SMTExprRef term; // the solver's, once made
+  };
+  // A handle is one pointer only while camada's handles are unchecked, as in
+  // its release archives; checked ones would make a Term twice the size.
+  static_assert(sizeof(camada::SMTExprRef) == sizeof(uintptr_t) &&
+                    std::is_trivially_copyable_v<camada::SMTExprRef>,
+                "Term needs camada built with CAMADA_CHECKED_HANDLES=OFF");
+  explicit Term(const Constant *c) : bits(reinterpret_cast<uintptr_t>(c) | 1) {}
+  explicit Term(const camada::SMTExprRef &r) : bits(std::bit_cast<uintptr_t>(r)) {}
+  // The constant's entry, or null for a solver term.
+  const Constant *entry() const {
+    return bits & 1 ? reinterpret_cast<const Constant *>(bits - 1) : nullptr;
+  }
+  // The solver's term; null for a constant.
+  camada::SMTExprRef ref() const {
+    return bits & 1 ? camada::SMTExprRef() : std::bit_cast<camada::SMTExprRef>(bits);
+  }
+
+  uintptr_t bits = 0; // both an entry and a solver term are aligned
+};
+
 class Terms {
 public:
-  using Ref = camada::SMTExprRef;
-  explicit Terms(camada::SMTSolver &s) : s(s) {}
+  using Ref = Term;
+  explicit Terms(camada::SMTSolver &s);
+  Terms(const Terms &) = delete; // its terms point into it
   camada::SMTSolver &solver() { return s; }
 
   // The value of a constant term (width 1 for Bool), or null.
   const llvm::APInt *constant(const Ref &e) const;
-  bool isTrue(const Ref &e) const;
-  bool isFalse(const Ref &e) const;
+  bool isTrue(const Ref &e) const { return e == bools[1]; }
+  bool isFalse(const Ref &e) const { return e == bools[0]; }
+  // e as camada takes it: for a bit-vector constant the solver's term, made
+  // here the first time one is needed. The only way from a Term to camada.
+  camada::SMTExprRef solverTerm(const Ref &e);
+  // A term camada gave back: the solver's term for a constant becomes the
+  // constant again (mkIEEEFPToBV gives back the bits a float was made
+  // from), so folding still sees it.
+  Ref fromSolver(const camada::SMTExprRef &e) const;
 
   Ref bv(const llvm::APInt &v);
   // v must fit in width bits, signed or unsigned: with assertions off APInt
@@ -44,7 +102,7 @@ public:
   }
   Ref boolean(bool b);
   Ref symbol(const std::string &name, const camada::SMTSortRef &sort) {
-    return s.mkSymbol(name, sort);
+    return Ref(s.mkSymbol(name, sort));
   }
 
   Ref add(const Ref &a, const Ref &b);
@@ -143,7 +201,7 @@ public:
   // Symbol x is below limit, at least 1, wherever a term holding it is
   // read: the index of a summarised loop's iteration, whose terms count only
   // under its guard.
-  void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.get(), x, limit); }
+  void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.id(), x, limit); }
 
 private:
   // equalities over at most budget nodes of cond.
@@ -169,7 +227,7 @@ private:
   };
   struct Key {
     Op op;
-    const camada::SMTExpr *a, *b, *c;
+    const void *a, *b, *c; // ids
     unsigned x, y;
     bool operator==(const Key &o) const {
       return op == o.op && a == o.a && b == o.b && c == o.c && x == o.x && y == o.y;
@@ -190,7 +248,7 @@ private:
   // constant on each side through offsets, comparisons and memory.
   Ref lift(const Ref &a, const std::function<Ref(const Ref &)> &f);
   Ref lift(const Ref &a, const Ref &b, const std::function<Ref(const Ref &, const Ref &)> &f);
-  Ref build(const Node &n);
+  camada::SMTExprRef build(const Node &n);
   // n's operation applied to other operands.
   Ref rebuild(const Node &n, const Ref &a, const Ref &b, const Ref &c);
   // def(index) of the lambda l, once per index.
@@ -198,50 +256,52 @@ private:
 
   camada::SMTSolver &s;
   std::unordered_map<Key, Ref, KeyHash> memo;
-  // Node-based maps: folding recurses while holding references into them.
-  std::unordered_map<const camada::SMTExpr *, Node> nodes;
-  std::unordered_map<const camada::SMTExpr *, llvm::APInt> values;
-  llvm::DenseMap<llvm::APInt, Ref> bvs;
+  // The maps below key a term by its id. Node-based maps: folding recurses
+  // while holding references into them.
+  std::unordered_map<const void *, Node> nodes;
+  // The constants' entries, which stay where they are, and each by value.
+  std::deque<Term::Constant> constants;
+  llvm::DenseMap<llvm::APInt, const Term::Constant *> bvs;
+  // Per solver term made for a constant, the constant.
+  llvm::DenseMap<const camada::SMTExpr *, Ref> made;
   Ref bools[2];
   unsigned joinDepth = 0; // nesting of the concat join, bounded
   struct PairHash {
-    size_t operator()(const std::pair<const camada::SMTExpr *, const camada::SMTExpr *> &p) const {
+    size_t operator()(const std::pair<const void *, const void *> &p) const {
       return std::hash<const void *>()(p.first) * 31 + std::hash<const void *>()(p.second);
     }
   };
-  std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>, bool, PairHash>
-      implied;
+  std::unordered_map<std::pair<const void *, const void *>, bool, PairHash> implied;
   bool entails(const Ref &guard, const Ref &lit, unsigned depth);
-  std::unordered_map<const camada::SMTExpr *, bool> arith;
+  std::unordered_map<const void *, bool> arith;
   // Constant arrays built here (kept alive, so the key stays theirs) and
   // the value each holds.
-  std::unordered_map<const camada::SMTExpr *, std::pair<Ref, Ref>> filled;
+  std::unordered_map<const void *, std::pair<Ref, Ref>> filled;
   struct Lambda {
     Def def;
     Ref below;
     std::function<bool(const Ref &)> misses;
   };
-  std::unordered_map<const camada::SMTExpr *, Lambda> lambdas;
+  std::unordered_map<const void *, Lambda> lambdas;
   // Per store or choice of arrays, the lambdas it reads through without
   // passing another one.
-  std::unordered_map<const camada::SMTExpr *, std::vector<Ref>> under;
+  std::unordered_map<const void *, std::vector<Ref>> under;
   // Per lambda and index, the index (kept alive) and the definition there.
-  std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>,
-                     std::pair<Ref, Ref>, PairHash>
+  std::unordered_map<std::pair<const void *, const void *>, std::pair<Ref, Ref>, PairHash>
       reduced;
   // Per array and constant index, what select gave: a read walks up to 256
   // stores, and a load of an element reads it once per byte.
-  std::unordered_map<std::pair<const camada::SMTExpr *, const camada::SMTExpr *>, Ref, PairHash>
+  std::unordered_map<std::pair<const void *, const void *>, Ref, PairHash>
       selects;
   // Whether a < b, or a <= b, holds for every value range gives them (1),
   // for none (0), or neither (-1); signed only below the sign bit.
   int order(const Ref &a, const Ref &b, bool orEqual, bool sign);
   // How many low bits of e, a sum or product, are known to be zero.
   unsigned zeros(const Ref &e, unsigned depth = 0);
-  std::unordered_map<const camada::SMTExpr *, std::pair<Ref, uint64_t>> bounds;
-  std::unordered_map<const camada::SMTExpr *, std::optional<Range>> ranges;
+  std::unordered_map<const void *, std::pair<Ref, uint64_t>> bounds;
+  std::unordered_map<const void *, std::optional<Range>> ranges;
   // Per symbol, the terms found not to contain it.
-  std::unordered_map<const camada::SMTExpr *, std::unordered_set<const camada::SMTExpr *>> freeOf;
+  std::unordered_map<const void *, std::unordered_set<const void *>> freeOf;
 };
 
 } // namespace vereda::encode

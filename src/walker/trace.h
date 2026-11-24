@@ -1,8 +1,8 @@
 // Stage walker: the trace, one step per source-level event in walk order.
 // The witness stage reads it back under the solver's model.
 #pragma once
+#include "encode/terms.h"
 #include "ir/debug.h"
-#include <camada/camada.h>
 #include <string>
 #include <vector>
 
@@ -15,7 +15,7 @@ struct Step {
   enum Kind { Assignment, Assumption, Check, Call, Branch } kind;
   // Path condition at the step; for Check, the violation; for Branch, the
   // path condition with the branch taken.
-  camada::SMTExprRef guard;
+  encode::Term guard;
   // For Check, where the witness puts the violation: the call to
   // reach_error when the check is inside it. For Branch, ir::BranchSite's.
   ir::SourceLoc loc;
@@ -23,13 +23,13 @@ struct Step {
   // "reach_error" when the violation is a call to it; for Branch, the
   // condition's value, "true" or "false".
   std::string text;
-  camada::SMTExprRef value; // assignments and calls only
+  encode::Term value; // assignments and calls only
   bool isUnsigned = false;  // from the debug type; bitvectors carry no sign
   unsigned check = 0;       // for Check, the index of the claim in the checks
   // A store into a named variable kept in memory: the variable's debug type
   // and the byte offset written, from which the witness spells "a[2].x".
   const llvm::DIType *type = nullptr;
-  camada::SMTExprRef offset;
+  encode::Term offset;
 };
 
 using Trace = std::vector<Step>;
