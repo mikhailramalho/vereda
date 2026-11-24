@@ -1,4 +1,4 @@
-// Test that strcspn with wrong assertion fails.
+// Check strcspn with wrong assertion that fails only for specific inputs.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <string.h>
@@ -13,13 +13,9 @@ int main(void) {
   s[2] = 'c';
   s[3] = 0;
 
-  // This should fail - strcspn(s, "dx") is not always 4
-  // For strcspn(s, "dx"):
-  // - If s[0] is 'd' or 'x', return 0
-  // - Else if s[1] is 'd' or 'x', return 1
-  // - Else if s[2] is 'd' or 'x', return 2
-  // - Otherwise, return 3
-  __VERIFIER_assert(strcspn(s, "dx") == 4);
+  // This should fail - strcspn(s, "c") is not always 2
+  // It only fails when s[0] is 'c' or null terminator (which gives 0)
+  __VERIFIER_assert(strcspn(s, "c") == 2);
 
   return 0;
 }
