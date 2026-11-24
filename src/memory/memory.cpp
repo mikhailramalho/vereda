@@ -148,7 +148,26 @@ SMTExprRef Memory::ptr(const Key &k) {
 }
 
 void Memory::flush(State &st, std::optional<uint64_t> object) {
-  auto move = [&](Key k, const State::Cell &c) { storeArrays(st, k.first, ptr(k), c); };
+  std::optional<Key> last; // the element last moved
+  auto move = [&](Key k, const State::Cell &c) {
+    unsigned shift = shifts.lookup(k.first);
+    if (!shift)
+      return storeArrays(st, k.first, ptr(k), c);
+    // An element moves whole, as one store; its bytes not known are the
+    // array's. Keys come in order, so its other bytes follow this one.
+    Key e{k.first, k.second >> shift << shift};
+    if (last == e)
+      return;
+    last = e;
+    const State::Cell &own = *st.separate.find({e.first, 0});
+    SMTExprRef i = index(e.first, ptr(e)), old = t.select(own.data, i), elem;
+    for (unsigned j = 0; j < 1u << shift; ++j) {
+      const State::Cell *b = st.known.find({e.first, e.second + j});
+      SMTExprRef byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
+      elem = j ? t.concat(byte, elem) : byte;
+    }
+    st.separate.set({e.first, 0}, {t.store(own.data, i, elem), own.prov});
+  };
   if (object) {
     st.known.forObject(*object, move);
     st.known.eraseObject(*object);
@@ -159,28 +178,65 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
 }
 
 SMTExprRef Memory::index(uint64_t object, SMTExprRef at) {
-  return owned.count(object) ? offset(at) : at;
+  return owned.count(object) ? t.extract(offset(at), ptrBits - 1, shifts.lookup(object)) : at;
 }
 
-void Memory::own(State &st, SMTExprRef p) {
+void Memory::own(State &st, SMTExprRef p, unsigned bits) {
   std::optional<Key> k = key(p);
   if (!k || k->first == 0)
     return;
   uint64_t o = k->first;
-  SMTSortRef index = s.mkBVSort(ptrBits);
+  unsigned shift = Log2_32(bits / 8);
+  if (shift)
+    shifts[o] = shift;
+  SMTSortRef offsets = s.mkBVSort(ptrBits - shift);
   std::string n = std::to_string(o) + "#" + std::to_string(fresh);
-  State::Cell initial{t.symbol("object#" + n, s.mkArraySort(index, s.mkBVSort(8))),
-                      t.symbol("object_provenance#" + n,
-                               s.mkArraySort(index, s.mkBVSort(ObjBits)))};
+  State::Cell initial{t.symbol("object#" + n, s.mkArraySort(offsets, s.mkBVSort(bits))),
+                      shift ? t.bv(IntProvenance, ObjBits)
+                            : t.symbol("object_provenance#" + n,
+                                       s.mkArraySort(offsets, s.mkBVSort(ObjBits)))};
   owned[o] = initial;
   st.separate.set({o, 0}, initial);
 }
 
+// The bits of byte at within its element: (offset mod bytes) * 8, n bits wide.
+static SMTExprRef byteShift(encode::Terms &t, SMTExprRef off, unsigned shift, unsigned n) {
+  return t.shl(t.zext(t.extract(off, shift - 1, 0), n - shift), t.bv(3, n));
+}
+
+State::Cell Memory::readOwn(uint64_t object, const State::Cell &own, SMTExprRef at) {
+  SMTExprRef i = index(object, at);
+  unsigned shift = shifts.lookup(object);
+  if (!shift)
+    return {t.select(own.data, i), t.select(own.prov, i)};
+  SMTExprRef elem = t.select(own.data, i);
+  if (const APInt *j = t.constant(t.extract(offset(at), shift - 1, 0))) {
+    unsigned lo = 8 * j->getZExtValue();
+    return {t.extract(elem, lo + 7, lo), own.prov};
+  }
+  unsigned n = elem->getWidth();
+  return {t.extract(t.lshr(elem, byteShift(t, offset(at), shift, n)), 7, 0), own.prov};
+}
+
+State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, SMTExprRef at,
+                             const State::Cell &c) {
+  SMTExprRef i = index(object, at);
+  unsigned shift = shifts.lookup(object);
+  if (!shift)
+    return {t.store(own.data, i, c.data), t.store(own.prov, i, c.prov)};
+  // Read, mask and write the element back. The byte's provenance goes: a
+  // pointer stored here through an unknown pointer reads back as one made
+  // from an integer.
+  SMTExprRef elem = t.select(own.data, i);
+  unsigned n = elem->getWidth();
+  SMTExprRef sh = byteShift(t, offset(at), shift, n);
+  SMTExprRef kept = t.bvand(elem, t.bvnot(t.shl(t.bv(0xff, n), sh)));
+  return {t.store(own.data, i, t.bvor(kept, t.shl(t.zext(c.data, n - 8), sh))), own.prov};
+}
+
 void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State::Cell &c) {
   if (const State::Cell *own = st.separate.find({object, 0})) {
-    SMTExprRef i = index(object, at);
-    State::Cell stored{t.store(own->data, i, c.data), t.store(own->prov, i, c.prov)};
-    st.separate.set({object, 0}, stored);
+    st.separate.set({object, 0}, storeOwn(object, *own, at, c));
     return;
   }
   st.data = t.store(st.data, at, c.data);
@@ -190,17 +246,27 @@ void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State:
 State::Cell Memory::readArrays(const State &st, SMTExprRef at) {
   const APInt *obj = t.constant(object(at));
   if (obj)
-    if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0})) {
-      SMTExprRef i = index(obj->getZExtValue(), at);
-      return {t.select(own->data, i), t.select(own->prov, i)};
-    }
+    if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
+      return readOwn(obj->getZExtValue(), *own, at);
   State::Cell r{t.select(st.data, at), t.select(st.prov, at)};
   if (!obj)
     st.separate.forEach([&](Key k, const State::Cell &own) {
-      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits)), i = index(k.first, at);
-      r = {t.ite(is, t.select(own.data, i), r.data), t.ite(is, t.select(own.prov, i), r.prov)};
+      SMTExprRef is = t.eq(object(at), t.bv(k.first, ObjBits));
+      State::Cell b = readOwn(k.first, own, at);
+      r = {t.ite(is, b.data, r.data), t.ite(is, b.prov, r.prov)};
     });
   return r;
+}
+
+std::optional<uint64_t> Memory::element(SMTExprRef p, Type *ty) {
+  SMTExprRef c, x, y;
+  const APInt *obj = t.constant(object(p));
+  if (!obj || key(p) || t.split(p, c, x, y))
+    return std::nullopt;
+  auto it = shifts.find(obj->getZExtValue());
+  if (it == shifts.end() || !ty->isIntegerTy(8u << it->second))
+    return std::nullopt;
+  return obj->getZExtValue();
 }
 
 CellMap Memory::mergeSeparate(SMTExprRef c, const State &a, const State &b) {
@@ -281,9 +347,8 @@ void Memory::writeByte(State &st, SMTExprRef at, const State::Cell &c) {
       if (obj && obj->getZExtValue() != o)
         return;
       SMTExprRef is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
-      SMTExprRef i = index(o, at);
-      separate.set(k, {t.ite(is, t.store(own.data, i, c.data), own.data),
-                       t.ite(is, t.store(own.prov, i, c.prov), own.prov)});
+      State::Cell stored = storeOwn(o, own, at, c);
+      separate.set(k, {t.ite(is, stored.data, own.data), t.ite(is, stored.prov, own.prov)});
       shared = !obj;
     });
     st.separate = separate;
@@ -370,6 +435,12 @@ void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
   }
   if (!ty->isIntegerTy() && !ty->isFloatingPointTy()) // a float is its bits
     throw Unsupported("store of a non-integer value");
+  if (std::optional<uint64_t> o = element(p, ty)) {
+    prepare(st, p);
+    const State::Cell &own = *st.separate.find({*o, 0});
+    st.separate.set({*o, 0}, {t.store(own.data, index(*o, p), v), own.prov});
+    return;
+  }
   if (ty->isIntegerTy(1))
     v = t.ite(v, t.bv(1, 8), t.bv(0, 8));
   else if (v->getWidth() < bits)
@@ -381,6 +452,8 @@ SMTExprRef Memory::load(State &st, SMTExprRef p, Type *ty) {
   if (!ty->isIntegerTy() && !ty->isPointerTy() && !ty->isFloatingPointTy())
     throw Unsupported("load of a non-integer value");
   prepare(st, p);
+  if (std::optional<uint64_t> o = element(p, ty))
+    return t.select(st.separate.find({*o, 0})->data, index(*o, p));
   unsigned n = storeBits(dl, ty) / 8;
   State::Cell first = readByte(st, p);
   SMTExprRef bits = first.data;
@@ -419,9 +492,12 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
     return false;
   uint64_t o = k->first;
   st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
-  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits) : pointerSort();
-  st.separate.set({o, 0}, {t.constArray(index, byte),
-                           t.constArray(index, t.bv(IntProvenance, ObjBits))});
+  unsigned shift = shifts.lookup(o);
+  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
+  SMTExprRef elem = byte, prov = t.bv(IntProvenance, ObjBits);
+  for (unsigned j = 1; j < 1u << shift; ++j)
+    elem = t.concat(byte, elem);
+  st.separate.set({o, 0}, {t.constArray(index, elem), shift ? prov : t.constArray(index, prov)});
   return true;
 }
 
@@ -451,12 +527,14 @@ bool Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
                                      t.bv(IntProvenance, ObjBits)});
     return true;
   }
-  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits) : pointerSort();
+  unsigned shift = shifts.lookup(o); // an object of elements, as in fillObject
+  SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
   std::string id = std::to_string(fresh++);
   st.known.eraseObject(o);
-  st.separate.set({o, 0}, {t.symbol("havoc#" + id, s.mkArraySort(index, s.mkBVSort(8))),
-                           t.symbol("havoc_provenance#" + id,
-                                    s.mkArraySort(index, s.mkBVSort(ObjBits)))});
+  st.separate.set({o, 0}, {t.symbol("havoc#" + id, s.mkArraySort(index, s.mkBVSort(8 << shift))),
+                           shift ? t.bv(IntProvenance, ObjBits)
+                                 : t.symbol("havoc_provenance#" + id,
+                                            s.mkArraySort(index, s.mkBVSort(ObjBits)))});
   return true;
 }
 
