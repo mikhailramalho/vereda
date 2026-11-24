@@ -76,6 +76,7 @@ sanitizer checks), and forwards everything else to the binary.
 |------|---------|
 | `--unwind N` | Loop iterations and recursion depth (default: unroll until the next iteration is unreachable) |
 | `--no-unwinding-assertions` | Assume the bound instead of checking it |
+| `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
 | `--incremental-bmc`, `--max-k-step N` | Try bounds 1, 2, ... until the verdict does not depend on the bound |
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |

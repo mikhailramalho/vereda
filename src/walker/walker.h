@@ -27,6 +27,14 @@ struct Options {
   // whose walks repeat every iteration at each bound, so an unbounded run
   // printed gigabytes.
   bool showIterations = true;
+  // The loops analysis/loops.h accepts are replaced by their effect, both
+  // those with a store (ESBMC's default) and those that only check or count
+  // (its --summarize-array-loops).
+  bool summarise = true;
+  // A violation witness is asked for. It needs a waypoint per nondet value,
+  // which a summarised iteration gives for one index only, so loops that
+  // call nondet are unrolled.
+  bool witness = false;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

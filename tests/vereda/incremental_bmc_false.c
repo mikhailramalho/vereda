@@ -1,6 +1,6 @@
 // --incremental-bmc raises the bound past the failed unwinding assertions
 // until the bug at the third iteration is reachable.
-// RUN: --incremental-bmc
+// RUN: --no-summarize-array-loops --incremental-bmc
 // EXPECT: ^Bound 1 too small: unwinding assertion loop 0$
 // EXPECT: ^Bound 2 too small: unwinding assertion loop 0$
 // EXPECT-NOT: ^Bound 3 too small

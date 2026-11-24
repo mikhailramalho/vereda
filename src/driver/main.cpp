@@ -41,6 +41,10 @@ static cl::opt<unsigned> unwind("unwind",
                                 cl::init(0));
 static cl::opt<bool> noUnwindingAssertions(
     "no-unwinding-assertions", cl::desc("Assume the unwinding bound instead of checking it"));
+static cl::opt<bool> noSummarizeArrayLoops(
+    "no-summarize-array-loops",
+    cl::desc("Unroll the counting loops that only write a[i], check or count, instead of "
+             "replacing them by their effect"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> incrementalBMC(
@@ -73,8 +77,12 @@ static cl::opt<Property> property(
                           "a call to reach_error, whose body is not walked"),
                clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check")),
     cl::init(Property::All));
-static cl::opt<std::string> solverName("solver", cl::desc("SMT solver: bitwuzla, z3, cvc5"),
-                                       cl::init("bitwuzla"));
+static cl::opt<camada::SolverKind> solverKind(
+    "solver", cl::desc("SMT solver"),
+    cl::values(clEnumValN(camada::SolverKind::Bitwuzla, "bitwuzla", "Bitwuzla (default)"),
+               clEnumValN(camada::SolverKind::Z3, "z3", "Z3"),
+               clEnumValN(camada::SolverKind::CVC5, "cvc5", "cvc5")),
+    cl::init(camada::SolverKind::Bitwuzla));
 
 static void printVersion(raw_ostream &os) {
   os << "Vereda " VEREDA_VERSION " (LLVM " LLVM_VERSION_STRING ", camada " VEREDA_CAMADA_VERSION
@@ -126,7 +134,7 @@ static const int BoundTooSmall = -1;
 // assertion is not a verdict but BoundTooSmall; an unknown from the solver
 // still ends the run, as in ESBMC.
 static int bmc(Function &fn, unsigned bound) {
-  Expected<camada::SMTSolverRef> created = vereda::solver::create(solverName);
+  Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
     return 1;
@@ -145,7 +153,9 @@ static int bmc(Function &fn, unsigned bound) {
   vereda::checks::Checks checks;
   vereda::walker::Trace trace;
   vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
-                                   !incrementalBMC};
+                                   !incrementalBMC,
+                                   !noSummarizeArrayLoops,
+                                   !witnessFile.empty()};
   if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
     return unknown(toString(std::move(e)));
   // Peak memory after the walk covers the walker and the terms it built;

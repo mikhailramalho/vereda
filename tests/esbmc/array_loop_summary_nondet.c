@@ -12,8 +12,4 @@ int main()
     __VERIFIER_assert(b[x] == a[x]); // copied
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_nondet
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

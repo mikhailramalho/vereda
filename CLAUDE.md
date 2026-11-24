@@ -96,6 +96,10 @@ pointers, byte arrays, known-byte map) and `checks` per instruction.
   then links the C library models (`models/*.c`, built to `build/models-{32,64}.bc`)
   for the functions the program still calls without defining,
   builds debug-info maps. The only place that tracks LLVM API churn.
+- `analysis`: the loops the walker replaces by their effect instead of unrolling them
+  (`analysis/loops.h`, ESBMC's array loop summaries): SCEV gives the trip count and the
+  header's values; the walker runs one iteration at a nondet index, which keeps the
+  checks, and `memory` makes the array written a lambda (`Terms::lambda`).
 - `encode/terms.*`: the term builder that hash-conses and folds as terms are built;
   `memory` builds through it too. A guard that folds to false prunes the branch.
 - `checks`: each `Check` is a term satisfiable iff the property is violated, tagged with
@@ -107,8 +111,8 @@ pointers, byte arrays, known-byte map) and `checks` per instruction.
 
 Layering rules from `docs/architecture.md`: a stage includes only stages to its left;
 LLVM headers only in `ir`, `analysis`, `walker`, `encode`; camada headers only in
-`encode`, `memory`, `checks`, `solver`. Directories listed there but absent (`analysis/`,
-`models/`, `scripts/`) are created when that stage starts.
+`encode`, `memory`, `checks`, `solver`. Directories listed there but absent (`scripts/`)
+are created when that stage starts.
 
 ## Conventions
 
