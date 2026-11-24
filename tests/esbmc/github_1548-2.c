@@ -8,6 +8,3 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc/github_1548-2
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

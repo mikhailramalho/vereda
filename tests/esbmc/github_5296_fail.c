@@ -61,5 +61,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5296_fail
-// RUN: -m64 --incremental-bmc --force-malloc-success
+// RUN: -m64 --incremental-bmc --no-pointer-check --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$

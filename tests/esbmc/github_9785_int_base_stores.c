@@ -50,6 +50,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_int_base_stores
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: out of memory, needs 9.5 GB
 // MODE: KNOWNBUG

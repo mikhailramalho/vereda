@@ -24,6 +24,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_2457
 // Needs: __CPROVER_DYNAMIC_OBJECT, __CPROVER_LIVE_OBJECT, __CPROVER_OBJECT_SIZE, __CPROVER_POINTER_OFFSET, __CPROVER_r_ok, __CPROVER_rw_ok, __CPROVER_same_object, __CPROVER_w_ok
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,5 +11,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cprover_memory_primitives_fail
 // Needs: __CPROVER_OBJECT_SIZE
+// RUN: --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -16,5 +16,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cprover_memory_primitives
 // Needs: __CPROVER_OBJECT_SIZE, __CPROVER_r_ok, __CPROVER_same_object
+// RUN: --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

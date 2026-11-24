@@ -8,6 +8,3 @@ int main()
 // Imported from ESBMC regression/esbmc/const_object_write_nondet_memory_fail
 // EXPECT: ^  dereference failure: write access to const object `t'$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  dereference failure: write access to const object `t'$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
