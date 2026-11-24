@@ -105,27 +105,16 @@ void *memchr(const void *s, int c, size_t n) {
 }
 
 char *strstr(const char *haystack, const char *needle) {
-  // Handle special case: empty needle
   if (!*needle)
     return (char *)haystack;
-
-  // Search for the first character of needle in haystack
   for (; *haystack; ++haystack) {
-    // Check if needle matches starting at this position
-    const char *h = haystack;
-    const char *n = needle;
-
-    // Compare characters one by one
+    const char *h = haystack, *n = needle;
     while (*n && *h == *n) {
       ++h;
       ++n;
     }
-
-    // If we've matched all of needle, we found it
     if (!*n)
       return (char *)haystack;
   }
-
-  // Not found
   return NULL;
 }

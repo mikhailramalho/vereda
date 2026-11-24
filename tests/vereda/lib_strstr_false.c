@@ -1,13 +1,16 @@
-// The strstr model: it should return a pointer to the first occurrence of needle in haystack,
-// or NULL if none, or haystack itself when needle is empty.
+// strstr(s, "bc") is NULL when s[0] is 0, so the model must find that empty
+// string for the check to fail.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <string.h>
-extern void __VERIFIER_assert(int);
 extern char __VERIFIER_nondet_char(void);
+extern void __VERIFIER_assert(int);
 int main(void) {
-  char s[4] = {__VERIFIER_nondet_char(), 'b', 'c', 0};
-  char *p = strstr(s, "bc");
-  __VERIFIER_assert(p == s + 2); // This should fail since "bc" starts at position 1
+  char s[4];
+  s[0] = __VERIFIER_nondet_char();
+  s[1] = 'b';
+  s[2] = 'c';
+  s[3] = 0;
+  __VERIFIER_assert(strstr(s, "bc") != NULL);
   return 0;
 }
