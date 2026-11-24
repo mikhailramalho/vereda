@@ -46,7 +46,8 @@ static std::pair<std::string, std::string> assignment(solver::Model &model,
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
-                         const checks::Checks &checks, unsigned violated, raw_ostream &os) {
+                         const checks::Checks &checks, unsigned violated, raw_ostream &os,
+                         bool showLibraryStates) {
   os << "\n";
   WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[Counterexample]";
   os << "\n\n";
@@ -66,6 +67,12 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     if (step.kind == walker::Step::Assumption) {
       os << "\n/*\nAssumption:\n  " << step.loc.display() << "\n  " << step.text << "\n*/\n";
       continue;
+    }
+    StringRef file = step.loc.file;
+    if (!showLibraryStates && file.consume_front("/rustc/")) {
+      auto [hash, rest] = file.split('/');
+      if (!hash.empty() && rest.starts_with("library/"))
+        continue;
     }
     std::string text = step.text;
     bool isUnsigned = step.isUnsigned;
