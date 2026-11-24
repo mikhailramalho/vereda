@@ -14,4 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_array_member_store
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

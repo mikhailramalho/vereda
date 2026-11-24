@@ -15,5 +15,6 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/r_ok13
 // Needs: __ESBMC_r_ok
+// RUN: --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

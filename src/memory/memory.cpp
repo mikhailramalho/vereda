@@ -102,14 +102,15 @@ void Memory::allocateGlobals(const Module &m,
     uint64_t size = dl.getTypeAllocSize(g.getValueType());
     globals[&g] = allocate(t.bv(size, ptrBits), g.getPointerAlignment(dl).value(),
                            t.boolean(true), exposed(&g));
-    objects.back().constant = g.isConstant();
+    if (g.isConstant())
+      objects.back().constant = &g;
   }
   // A function whose address is taken is an object of one byte, so that a
   // pointer to it is an ordinary pointer: stored, compared and called.
   for (const Function &f : m)
     if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true)) {
       globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f));
-      objects.back().constant = true;
+      objects.back().constant = &f;
     }
 }
 
@@ -656,7 +657,28 @@ void Memory::fill(State &st, uint64_t o, SMTExprRef byte) {
 }
 
 void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
-  havocWith(st, p, n, t.bv(IntProvenance, ObjBits));
+  havocWith(st, p, n, t.bv(IntProvenance, ObjBits), true);
+}
+
+std::vector<std::pair<const GlobalVariable *, SMTExprRef>> Memory::readOnly(SMTExprRef p) {
+  std::vector<std::pair<const GlobalVariable *, SMTExprRef>> r;
+  for (uint64_t o : candidates(p, false))
+    if (o < objects.size())
+      if (auto *g = dyn_cast_or_null<GlobalVariable>(objects[o].constant))
+        r.push_back({g, into(p, o)});
+  return r;
+}
+
+SMTExprRef Memory::into(SMTExprRef obj, uint64_t o) {
+  SMTExprRef c, x, y;
+  // As candidates() walks it.
+  if (obj->getWidth() != ObjBits && !t.choice(obj, c, x, y))
+    obj = object(obj);
+  if (fromInteger.count(obj.get()))
+    return t.boolean(false);
+  if (t.choice(obj, c, x, y))
+    return t.ite(c, into(x, o), into(y, o));
+  return t.eq(obj, t.bv(o, ObjBits));
 }
 
 void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
@@ -706,7 +728,7 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
                  t.bv(x, ObjBits), prov);
   for (size_t i = 0; i < ps.size(); ++i) {
     if (i < written.size())
-      havocWith(st, ps[i], std::nullopt, prov);
+      havocWith(st, ps[i], std::nullopt, prov, false);
     for (const auto &[x, rs] : from[i]) {
       if (objects[x].constant)
         continue;
@@ -724,12 +746,13 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
   }
 }
 
-void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov) {
+void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov,
+                       bool constants) {
   SMTExprRef c, x, y;
   if (t.split(p, c, x, y)) {
     State a = st, b = st;
-    havocWith(a, x, n, prov);
-    havocWith(b, y, n, prov);
+    havocWith(a, x, n, prov, constants);
+    havocWith(b, y, n, prov, constants);
     st = ite(c, a, b);
     return;
   }
@@ -737,7 +760,7 @@ void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTEx
   if (!obj) { // each object p may point into, where it does
     for (uint64_t o : candidates(p)) {
       State a = st;
-      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov);
+      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov, constants);
       st = ite(t.eq(object(p), t.bv(o, ObjBits)), a, st);
     }
     return;
@@ -746,7 +769,8 @@ void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTEx
   std::optional<Key> k = key(p);
   // Null writes nothing; any other pointer with object 0 is into the memory
   // outside the program, which the call may write as a whole.
-  if (o >= objects.size() || (o == 0 && k && k->second == 0))
+  if (o >= objects.size() || (o == 0 && k && k->second == 0) ||
+      (objects[o].constant && !constants))
     return;
   const APInt *size = t.constant(objects[o].size);
   if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object

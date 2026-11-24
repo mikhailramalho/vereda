@@ -160,9 +160,17 @@ public:
   // may write any of it; for p into one of several objects, each where p
   // points into it.
   void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
+  // The constant globals p may point into, each with where it does: a write
+  // there modifies a string literal or an object defined const, which C11
+  // leaves undefined (6.4.5p7, 6.7.3p6). A pointer made from an integer is
+  // not counted, as it points into an object only by the addresses the
+  // solver picks.
+  std::vector<std::pair<const llvm::GlobalVariable *, camada::SMTExprRef>>
+  readOnly(camada::SMTExprRef p);
   // What a call without a body writes, given the pointers it may write
   // through and those it only reads through: the whole object at each of
-  // written, as havoc. With reach, as such a call may follow the pointers
+  // written, as havoc, but a constant global or a function, which the call
+  // may not write. With reach, as such a call may follow the pointers
   // it finds (#114), also each object but a constant that a pointer stored
   // where any of them points may point to, transitively, where that pointer
   // points into an object that reaches it; a pointer made from an integer
@@ -193,9 +201,13 @@ private:
   // whether p's object was read from memory.
   std::vector<uint64_t> candidates(camada::SMTExprRef p, bool integers = true,
                                    bool *read = nullptr);
-  // havoc, with prov the provenance of the bytes of a whole object written.
+  // havoc, with prov the provenance of the bytes of a whole object written;
+  // a constant object is left as it is unless constants.
   void havocWith(State &st, camada::SMTExprRef p, std::optional<uint64_t> n,
-                 camada::SMTExprRef prov);
+                 camada::SMTExprRef prov, bool constants);
+  // Where obj, an object id or a pointer, is object o, but by an address
+  // converted to a pointer.
+  camada::SMTExprRef into(camada::SMTExprRef obj, uint64_t o);
   void havocObject(State &st, uint64_t o, camada::SMTExprRef prov);
   // For each object of st that may hold a pointer, the objects other than
   // null it may point to: from its known bytes' provenance and the stores in
@@ -240,7 +252,9 @@ private:
   struct Object {
     camada::SMTExprRef base, size, exists;
     bool exposed;
-    bool constant = false; // a constant global or a function: never written
+    // The constant global or the function the object is, if either, which
+    // the program may not write.
+    const llvm::GlobalValue *constant = nullptr;
   };
 
   encode::Terms &t;

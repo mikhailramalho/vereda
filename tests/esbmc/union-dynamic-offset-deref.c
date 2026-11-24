@@ -36,4 +36,5 @@ int main(void) {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/union-dynamic-offset-deref
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

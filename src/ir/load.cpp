@@ -1,8 +1,10 @@
 #include "ir/load.h"
 
 #include <llvm/ADT/DepthFirstIterator.h>
+#include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
@@ -11,6 +13,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
@@ -908,6 +911,31 @@ static void fixIrreducible(Module &m) {
   }
 }
 
+// InstCombine deletes a write into a constant global as undefined
+// behaviour, which the walker checks (a write into a string literal or an
+// object defined const). This makes the constant globals a store, memset,
+// memcpy or memmove may write writable, and returns them for the caller to
+// make constant again once InstCombine has run. A library call it turns
+// into such a copy (strcpy from a constant string) is still deleted.
+static SmallVector<GlobalVariable *, 4> unconstantWritten(Module &m) {
+  SmallSetVector<GlobalVariable *, 4> written;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f)) {
+      auto *s = dyn_cast<StoreInst>(&i);
+      auto *mi = dyn_cast<MemIntrinsic>(&i);
+      if (!s && !mi)
+        continue;
+      SmallVector<const Value *, 4> objects;
+      getUnderlyingObjects(s ? s->getPointerOperand() : mi->getRawDest(), objects, nullptr, 0);
+      for (const Value *o : objects)
+        if (auto *g = dyn_cast<GlobalVariable>(o); g && g->isConstant())
+          written.insert(const_cast<GlobalVariable *>(g));
+    }
+  for (GlobalVariable *g : written)
+    g->setConstant(false);
+  return written.takeVector();
+}
+
 static Error runPipeline(Module &m, StringRef pipeline) {
   LoopAnalysisManager lam;
   FunctionAnalysisManager fam;
@@ -974,10 +1002,13 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   // nothing on undefined behaviour. Revisit when a folded check shows up.
   // no-verify-fixpoint, as LLVM's own pipelines run it: a textual pipeline
   // otherwise aborts when InstCombine needs more than one iteration.
+  SmallVector<GlobalVariable *, 4> written = unconstantWritten(*module);
   if (Error e = runPipeline(*module,
                             "function(instcombine<no-verify-fixpoint>,"
                             "scalarizer<load-store;variable-insert-extract>)"))
     return std::move(e);
+  for (GlobalVariable *g : written)
+    g->setConstant(true);
   // After InstCombine, which sets fixIrreducible's guard on a way in from a
   // block it finds dead, or reached only by undefined behaviour, to poison,
   // where the walker may still walk; before loop-simplify and lcssa, which

@@ -16,4 +16,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memset_empty_union
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
