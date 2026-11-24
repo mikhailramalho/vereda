@@ -490,7 +490,15 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   const APInt *size = t.constant(objects[k->first].size);
   if (!size || *size != n)
     return false;
-  uint64_t o = k->first;
+  fill(st, k->first, byte);
+  return true;
+}
+
+void Memory::fill(State &st, SMTExprRef p, SMTExprRef byte) {
+  fill(st, key(p)->first, byte);
+}
+
+void Memory::fill(State &st, uint64_t o, SMTExprRef byte) {
   st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
   unsigned shift = shifts.lookup(o);
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
@@ -498,7 +506,6 @@ bool Memory::fillObject(State &st, SMTExprRef p, SMTExprRef byte, uint64_t n) {
   for (unsigned j = 1; j < 1u << shift; ++j)
     elem = t.concat(byte, elem);
   st.separate.set({o, 0}, {t.constArray(index, elem), shift ? prov : t.constArray(index, prov)});
-  return true;
 }
 
 bool Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {

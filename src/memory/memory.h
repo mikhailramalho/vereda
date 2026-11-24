@@ -110,6 +110,9 @@ public:
   // MinSeparate bytes is one constant array; anything else goes byte by
   // byte, which past MaxBytes is unsupported.
   void set(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  // Writes byte to every byte of the object p starts, whatever its size,
+  // as one constant array: calloc with a size that is not constant.
+  void fill(State &st, camada::SMTExprRef p, camada::SMTExprRef byte);
   void copy(State &st, camada::SMTExprRef dst, camada::SMTExprRef src, uint64_t n);
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it; with bits 16, 32
@@ -156,6 +159,7 @@ private:
   camada::SMTExprRef index(uint64_t object, camada::SMTExprRef at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
+  void fill(State &st, uint64_t object, camada::SMTExprRef byte);
   void setBytes(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   // set for initialisers: no limit, as they were written byte by byte before.
   void fillOrSet(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n) {

@@ -1133,12 +1133,14 @@ private:
       ok = t.land(ok, enc.fresh(Type::getInt1Ty(c.getContext()), "malloc_succeeds"));
     SMTExprRef p = mem.allocate(size, 16, t.land(guard, ok));
     if (isCalloc) {
-      // A product beyond the largest object makes ok false: nothing to zero.
-      uint64_t n;
-      if (!__builtin_mul_overflow(constantSize(c.getArgOperand(0), guard, "calloc"),
-                                  constantSize(c.getArgOperand(1), guard, "calloc"), &n) &&
-          isUIntN(bits - 1, n))
-        mem.set(st, p, t.bv(0, 8), n);
+      // A size that is not constant gets a constant array of zeros, whatever
+      // it is on the path. A product beyond the largest object makes ok
+      // false: nothing to zero.
+      const APInt *n = t.constant(size);
+      if (!n)
+        mem.fill(st, p, t.bv(0, 8));
+      else if (!t.isFalse(ok))
+        mem.set(st, p, t.bv(0, 8), n->getZExtValue());
     }
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
