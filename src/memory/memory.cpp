@@ -24,7 +24,7 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
   // base() of the constant 0 folds to objects[0].base and the constraint to
   // true, which left bases[0] free and a stored null read back non-null.
   s.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
-  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), false});
+  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), false});
   end = t.bv(1, ptrBits); // no object at address 0
 }
 
@@ -84,7 +84,7 @@ SMTExprRef Memory::allocate(SMTExprRef size, uint64_t align, SMTExprRef exists, 
   s.addConstraint(t.implies(exists, layout));
   SMTExprRef obj = t.bv(id, ObjBits);
   s.addConstraint(t.eq(base(obj), b));
-  objects.push_back({b, size, exposed});
+  objects.push_back({b, size, exists, exposed});
   end = t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
@@ -128,7 +128,9 @@ SMTExprRef Memory::fromAddress(SMTExprRef a) {
     if (!o.exposed)
       continue;
     // One past the end still belongs to the object: the gap keeps it unique.
-    SMTExprRef inside = t.land(t.uge(a, o.base), t.ule(a, t.add(o.base, o.size)));
+    // Only an object the path allocated holds an address: elsewhere its base
+    // is free, and address 0 could land in it as a non-null pointer.
+    SMTExprRef inside = t.land(o.exists, t.land(t.uge(a, o.base), t.ule(a, t.add(o.base, o.size))));
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
     off = t.ite(inside, t.sub(a, o.base), off);
   }

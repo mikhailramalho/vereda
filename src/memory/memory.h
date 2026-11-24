@@ -200,7 +200,7 @@ private:
                      const std::function<camada::SMTExprRef(const llvm::Constant *)> &valueOf);
 
   struct Object {
-    camada::SMTExprRef base, size;
+    camada::SMTExprRef base, size, exists;
     bool exposed;
   };
 
