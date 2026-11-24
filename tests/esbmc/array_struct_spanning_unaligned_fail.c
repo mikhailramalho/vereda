@@ -10,7 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_struct_spanning_unaligned_fail
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

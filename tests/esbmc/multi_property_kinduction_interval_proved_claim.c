@@ -14,6 +14,3 @@ int main()
 // Imported from ESBMC regression/esbmc/multi_property_kinduction_interval_proved_claim
 // Needs: --k-induction --interval-analysis
 // RUN: --k-induction --interval-analysis --multi-property --max-k-step 10
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

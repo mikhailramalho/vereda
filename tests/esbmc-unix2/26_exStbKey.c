@@ -5202,7 +5202,3 @@ for(counter=0; counter<argc; counter++)
 // Imported from ESBMC regression/esbmc-unix2/26_exStbKey
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

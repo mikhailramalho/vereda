@@ -54,7 +54,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix2/11_time_var_mutex
 // RUN: --unwind 1 --no-unwinding-assertions
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

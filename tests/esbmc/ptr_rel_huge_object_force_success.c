@@ -25,7 +25,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/ptr_rel_huge_object_force_success
 // RUN: --force-malloc-success
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

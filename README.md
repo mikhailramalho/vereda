@@ -102,6 +102,9 @@ loop_unwind_false.c, function main
 VERIFICATION FAILED
 ```
 
+A run that ends in an error instead of a verdict (a bad option, an input that
+cannot be loaded, a failed compile) exits with 6, as in ESBMC.
+
 ## Tests
 
 A test is a C or IR file under `tests/<suite>/`, or

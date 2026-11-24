@@ -70,7 +70,6 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc/github_1172-3
 // RUN: --unwind 1 --no-unwinding-assertions --fp2bv
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdivision by zero\b
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

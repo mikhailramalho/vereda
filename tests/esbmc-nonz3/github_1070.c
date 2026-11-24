@@ -67,10 +67,6 @@ int main(int argc, char* argv[]) {
 }
 // Imported from ESBMC regression/nonz3/github_1070
 // RUN: --unwind 1
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \b(dereference failure:|unwinding assertion loop|VLA array dimension must be greater than zero)\b
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// MODE: THOROUGH

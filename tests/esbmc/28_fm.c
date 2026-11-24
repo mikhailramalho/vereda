@@ -518,7 +518,6 @@ f1() {
 }
 // Imported from ESBMC regression/esbmc/28_fm
 // RUN: --overflow-check
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

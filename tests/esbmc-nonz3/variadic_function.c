@@ -75,7 +75,3 @@ main (void)
 // Imported from ESBMC regression/nonz3/variadic_function
 // RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -48,7 +48,6 @@ int main(void) {
 
 // Imported from ESBMC regression/esbmc-unix/github_1889
 // RUN: --no-unwinding-assertions --unwind 2
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

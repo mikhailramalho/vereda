@@ -647,6 +647,26 @@ def record_verdict(test, verdict):
         f.write("".join(lines))
 
 
+# A header line set_mode replaces: a mode, or why a mode was set (not the
+# recorded verdict, which record_verdict owns).
+MODE_LINE = re.compile(r"^\s*//\s*(MODE:|Vereda: (?!verdict ))")
+
+
+def set_mode(test, mode, why=()):
+    """Sets the test's mode, with the reasons in why, in place of the mode
+    and reasons it had, so a flipped test does not keep the old ones. CORE,
+    the default, is written as no MODE line, and a mode that passes (CORE,
+    THOROUGH) needs no reason."""
+    with open(test, encoding="utf-8", errors="surrogateescape") as f:
+        lines = [l for l in f.read().splitlines(keepends=True) if not MODE_LINE.match(l)]
+    if mode in run.FAIL_MODES:
+        lines += [f"// Vereda: {w[:150]}\n" for w in why]
+    if mode != "CORE":
+        lines.append(f"// MODE: {mode}\n")
+    with open(test, "w", encoding="utf-8", errors="surrogateescape") as f:
+        f.write("".join(lines))
+
+
 def mark(tests, runner):
     """Runs each test with runner, the run.py command line without the test,
     and flips the mode of those that do not behave as their mode says; one
@@ -674,9 +694,7 @@ def mark(tests, runner):
             if proc.returncode not in (0, run.SKIPPED):
                 mode = "CORE" if desc["MODE"] in run.FAIL_MODES else "FUTURE"
                 why = ([l for l in lines if l.startswith("unmet")] or lines[-1:])[:1]
-                with open(test, "a", encoding="utf-8") as f:
-                    f.write("".join(f"// Vereda: {w[:150]}\n" for w in why)
-                            + f"// MODE: {mode}\n")
+                set_mode(test, mode, why)
                 flipped += 1
             if now:  # a timeout tells nothing, so it keeps the earlier record
                 record_verdict(test, now if run.parse(test)["MODE"] in run.FAIL_MODES else None)

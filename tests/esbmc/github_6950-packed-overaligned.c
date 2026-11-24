@@ -21,7 +21,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6950-packed-overaligned
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

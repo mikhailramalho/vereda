@@ -31,7 +31,4 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc/github_197
 // RUN: --incremental-bmc
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

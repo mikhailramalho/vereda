@@ -46,7 +46,3 @@ int main()
 // Imported from ESBMC regression/esbmc/va_list_own_cursor
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -119,10 +119,33 @@ static void svcomp(StringRef verdict) {
     outs() << verdict << "\n";
 }
 
+// Exit code of a run that ends in an error rather than a verdict: a bad
+// option, an input that cannot be loaded, a solver that cannot be created,
+// a dump that cannot be written or no memory left. ESBMC uses 6 too, so 1
+// means VERIFICATION FAILED only.
+static const int ErrorExit = 6;
+
 static int unknown(const Twine &reason) {
   outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
   svcomp("UNKNOWN");
   return 2;
+}
+
+// Ends the run with code once its output is written, without freeing the
+// solver, the terms or the module: that took about 2 s after a large walk,
+// for memory the process is about to give back
+// (docs/survey/2026-11-24-exit-without-teardown.md). The files this driver
+// writes are closed by then. A build with AddressSanitizer tears down as
+// usual, so that its leak check still runs, and so does a run whose standard
+// output failed, for outs()'s destructor to report it.
+static int finish(int code) {
+  outs().flush();
+  errs().flush();
+  if (!LLVM_ADDRESS_SANITIZER_BUILD && !outs().has_error()) {
+    std::fflush(nullptr); // anything a solver printed through stdio
+    std::_Exit(code);
+  }
+  return code;
 }
 
 // What bmc() returns under --incremental-bmc when a loop or recursion needs
@@ -137,7 +160,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
-    return 1;
+    return ErrorExit;
   }
   camada::SMTSolver &solver = **created;
   progress("Walking " + entry);
@@ -157,7 +180,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
                                    !noSummarizeArrayLoops,
                                    !witnessFile.empty()};
   if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
-    return unknown(toString(std::move(e)));
+    return finish(unknown(toString(std::move(e))));
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
   outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
@@ -178,9 +201,9 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     solver.pop();
     std::string name = incrementalBMC ? "formula-k" + std::to_string(bound) + ".smt2" : "formula.smt2";
     if (!dump(name, [&](raw_ostream &os) { os << formula; }))
-      return 1;
+      return finish(ErrorExit);
     if (dumpSMTOnly)
-      return 0;
+      return finish(0);
   }
 
   progress("Solving with " + solver.getSolverNameAndVersion());
@@ -232,7 +255,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     solvingTime();
 
   if (verdict.kind == vereda::solver::Verdict::Unknown)
-    return unknown(verdict.detail);
+    return finish(unknown(verdict.detail));
 
   bool bug = false;
   for (size_t i = 0; i < checks.size(); ++i)
@@ -273,12 +296,12 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     svcomp(!bug                                  ? "UNKNOWN"
            : property == Property::UnreachCall ? "FALSE_REACH"
                                                : "FALSE_OVERFLOW");
-    return 1;
+    return finish(1);
   }
   WithColor(outs(), raw_ostream::GREEN, /*Bold=*/true) << "VERIFICATION SUCCESSFUL";
   outs() << "\n";
   svcomp("TRUE");
-  return 0;
+  return finish(0);
 }
 
 int main(int argc, char **argv) {
@@ -288,13 +311,15 @@ int main(int argc, char **argv) {
   std::set_new_handler([] {
     outs().flush();
     std::fputs("vereda: out of memory\n", stderr);
-    std::_Exit(1);
+    std::_Exit(ErrorExit);
   });
   cl::SetVersionPrinter(printVersion);
-  cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n");
+  // With an error stream, a bad option returns false instead of exiting with 1.
+  if (!cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n", &errs()))
+    return ErrorExit;
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {
     errs() << argv[0] << ": --dump-dir needs a --dump-* flag\n";
-    return 1;
+    return ErrorExit;
   }
 
   progress("Loading " + inputFile);
@@ -306,7 +331,7 @@ int main(int argc, char **argv) {
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self));
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
-    return 1;
+    return ErrorExit;
   }
   outs() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
          << ((*module)->getDataLayout().isLittleEndian() ? "little" : "big") << "-endian "
@@ -314,14 +339,14 @@ int main(int argc, char **argv) {
   outs() << "IR preparation time: " << loadTime.elapsed() << "\n";
   if (dumpIROnly || dumpIRToo) {
     if (!dump("ir.ll", [&](raw_ostream &os) { (*module)->print(os, nullptr); }))
-      return 1;
+      return ErrorExit;
     if (dumpIROnly)
       return 0;
   }
   Function *fn = (*module)->getFunction(entry);
   if (!fn || fn->isDeclaration()) {
     errs() << argv[0] << ": no function " << entry << "\n";
-    return 1;
+    return ErrorExit;
   }
 
   if (!incrementalBMC) {
@@ -329,21 +354,21 @@ int main(int argc, char **argv) {
     for (cl::Option *o : boundFlags)
       if (o->getNumOccurrences()) {
         errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
-        return 1;
+        return ErrorExit;
       }
     return bmc(*fn, unwind);
   }
   if (!kStep) {
     errs() << argv[0] << ": --k-step must be at least 1\n";
-    return 1;
+    return ErrorExit;
   }
   if (dumpSMTOnly) {
     errs() << argv[0] << ": --dump-smt-only stops before the solver picks the bound; use --unwind\n";
-    return 1;
+    return ErrorExit;
   }
   if (unwind || noUnwindingAssertions) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
-    return 1;
+    return ErrorExit;
   }
   // While every path runs a loop of known trip count past bound k, the
   // bounds below the one that unwinds it only add iterations of that loop,
@@ -364,5 +389,5 @@ int main(int argc, char **argv) {
     if (int r = bmc(*fn, k, &unwindsAt); r != BoundTooSmall)
       return r;
   }
-  return unknown("no verdict up to bound " + std::to_string(maxKStep));
+  return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
 }

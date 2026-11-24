@@ -24,7 +24,3 @@ int main(void) {
 
 // Imported from ESBMC regression/esbmc-unix/ferror_unlocked_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

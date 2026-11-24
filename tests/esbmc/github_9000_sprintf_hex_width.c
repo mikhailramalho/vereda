@@ -16,7 +16,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_9000_sprintf_hex_width
 // RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

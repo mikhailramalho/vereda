@@ -18,10 +18,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/cpachecker-long-min-64.c
 // RUN: -m64
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: x = -9223372036854775807 - 1
-// Vereda: unmet EXPECT: x = -9223372036854775807 - 1
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to THOROUGH
 // MODE: THOROUGH

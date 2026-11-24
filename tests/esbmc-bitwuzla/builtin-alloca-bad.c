@@ -29,7 +29,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/builtin-alloca-bad
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

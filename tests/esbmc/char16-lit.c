@@ -10,7 +10,4 @@ int main()
 // Imported from ESBMC regression/esbmc/char16-lit
 // Needs: REQUIRES uchar_h
 // RUN: 
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

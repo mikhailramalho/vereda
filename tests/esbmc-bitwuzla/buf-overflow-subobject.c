@@ -23,7 +23,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/buf-overflow-subobject
 // RUN: --solver bitwuzla
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

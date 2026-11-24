@@ -8,7 +8,4 @@ int main() {
 // Imported from ESBMC regression/esbmc/bitvector_03
 // Needs: REQUIRES bitint_wide
 // RUN: 
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

@@ -19,7 +19,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/force_malloc_success_unrepresentable
 // RUN: --force-malloc-success
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: KNOWNBUG test passed unexpectedly; promote it to CORE
-// MODE: CORE

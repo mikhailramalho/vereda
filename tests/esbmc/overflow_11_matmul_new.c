@@ -81,7 +81,6 @@ int main()
 
 // Imported from ESBMC regression/esbmc/overflow_11_matmul_new
 // RUN: --overflow-check
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

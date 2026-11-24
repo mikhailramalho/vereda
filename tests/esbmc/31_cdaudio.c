@@ -8822,9 +8822,5 @@ NTSTATUS ZwClose(HANDLE Handle )
 }
 // Imported from ESBMC regression/esbmc/31_cdaudio
 // RUN: --unwind 1 --no-unwinding-assertions
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// MODE: THOROUGH

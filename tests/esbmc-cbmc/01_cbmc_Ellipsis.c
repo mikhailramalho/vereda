@@ -7,7 +7,3 @@ int main() {
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Ellipsis
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

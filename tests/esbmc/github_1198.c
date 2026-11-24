@@ -132,9 +132,5 @@ int main() {
 } 
 // Imported from ESBMC regression/esbmc/github_1198
 // RUN: --unwind 1
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// MODE: THOROUGH

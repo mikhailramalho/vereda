@@ -12,7 +12,4 @@ int main()
 // Imported from ESBMC regression/esbmc/128_bitint_width
 // Needs: REQUIRES bitint
 // RUN: 
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

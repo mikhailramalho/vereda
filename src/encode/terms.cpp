@@ -138,6 +138,21 @@ bool Terms::choice(const Ref &e, Ref &c, Ref &x, Ref &y) const {
   return true;
 }
 
+bool Terms::stored(const Ref &e, Ref &a, Ref &i, Ref &v) const {
+  const Node *n = node(e);
+  if (!n || n->op != Op::Store)
+    return false;
+  a = n->a;
+  i = n->b;
+  v = n->c;
+  return true;
+}
+
+Ref Terms::filledWith(const Ref &e) const {
+  auto it = filled.find(e.get());
+  return it == filled.end() ? Ref() : it->second.second;
+}
+
 Ref Terms::lift(const Ref &a, const std::function<Ref(const Ref &)> &f) {
   Ref c, x, y;
   return split(a, c, x, y) ? ite(c, f(x), f(y)) : Ref();
@@ -588,6 +603,16 @@ Ref Terms::smulo(const Ref &a, const Ref &b) {
 #undef FOLD2
 
 Ref Terms::select(const Ref &array, const Ref &index) {
+  if (!constant(index))
+    return uncached(array, index);
+  // A reference into the map stays valid while the select below adds to it.
+  Ref &r = selects[{array.get(), index.get()}];
+  if (!r)
+    r = uncached(array, index);
+  return r;
+}
+
+Ref Terms::uncached(const Ref &array, const Ref &index) {
   // A read of a constant array is its value, at any index.
   Ref arr = array;
   unsigned steps = 256;

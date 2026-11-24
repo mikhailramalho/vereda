@@ -140,7 +140,6 @@ int main(int argc, char *argv[]){
 }
 // Imported from ESBMC regression/esbmc/github_60
 // RUN: --unwind 1 --no-unwinding-assertions
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: !overflow
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

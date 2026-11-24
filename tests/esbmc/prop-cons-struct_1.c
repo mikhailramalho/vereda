@@ -18,6 +18,3 @@ int main() {
 // Imported from ESBMC regression/esbmc/prop-cons-struct_1
 // Needs: --show-vcc
 // RUN: --show-vcc
-// MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE

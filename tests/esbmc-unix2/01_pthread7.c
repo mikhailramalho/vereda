@@ -28,7 +28,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread7
-// MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

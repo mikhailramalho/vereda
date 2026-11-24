@@ -300,10 +300,36 @@ private:
     }
   }
 
+  // Whether no path leaves l and nothing it does can be seen: each edge out
+  // of it is a branch on a constant that never takes it, and no instruction
+  // in it has a side effect or calls anything but an intrinsic without one.
+  // A check is a call or an edge out of l (to an assert's, a trap's or an
+  // unreachable's block), so l has none. ESBMC turns such a loop,
+  // `while (1);`, into assume(0).
+  static bool endless(const Loop *l) {
+    for (BasicBlock *bb : l->blocks()) {
+      auto *br = dyn_cast<BranchInst>(bb->getTerminator());
+      auto *c = br && br->isConditional() ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
+      for (BasicBlock *succ : successors(bb))
+        if (!l->contains(succ) && (!c || br->getSuccessor(c->isZero()) == succ))
+          return false;
+      for (Instruction &i : *bb)
+        if (i.mayHaveSideEffects() || (isa<CallBase>(i) && !isa<IntrinsicInst>(i)))
+          return false;
+    }
+    return true;
+  }
+
   void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
+    BasicBlock *header = l->getHeader();
+    // The paths that reach an endless loop end there, as at unreachable,
+    // and its header keeps the IR, debug info and loop numbers as they were.
+    if (endless(l)) {
+      frame.arrivals.erase(header);
+      return;
+    }
     if (opts.summarise && summarise(frame, fi, l))
       return;
-    BasicBlock *header = l->getHeader();
     unsigned number = fi.loopNumber.lookup(l);
     for (unsigned i = 0;; ++i) {
       auto it = frame.arrivals.find(header);
@@ -592,7 +618,8 @@ private:
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (SMTExprRef v = traceValue(a->value))
-            trace.push_back({Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned});
+            trace.push_back(
+                {Step::Assignment, guard, std::move(a->loc), std::move(a->name), v, a->isUnsigned});
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
@@ -859,6 +886,10 @@ private:
     }
     if (name == "__vereda_uninitialised") // keeps LLVM from folding reads of the local
       return guard;
+    if (name == "__vereda_havoc") { // for the models: the object p points into is unknown
+      mem.havoc(st, enc.value(c.getArgOperand(0)));
+      return guard;
+    }
     if (name == "abort" || name == "exit" || name == "_Exit")
       return t.boolean(false);
     // A struct result stays unsupported: the bodyless functions returning
@@ -876,10 +907,12 @@ private:
     // writes only its arguments' memory, it may also write errno, every
     // global the program declares without defining (optind, environ, a
     // variable of a file not given) and the memory outside the program, as
-    // they belong to code Vereda does not see. It may also write through pointers stored in those objects, which
-    // this does not cover. The mutex and condition-variable calls write only
-    // the lock or condition they get, which the program does not read, so
-    // they write nothing here and keep the rest of an object holding one.
+    // they belong to code Vereda does not see, and the objects reached
+    // through pointers stored in an object it gets (#114), which LLVM
+    // counts as such other memory too. The mutex and condition-variable
+    // calls write only the lock or condition they get, which the program
+    // does not read, so they write nothing here and keep the rest of an
+    // object holding one.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -891,20 +924,25 @@ private:
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
     if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
+      MemoryEffects effects = c.getMemoryEffects();
+      bool other = isModSet(effects.getModRef(IRMemLocation::Other));
+      // A pointer it only reads through may still hold pointers it follows.
+      SmallVector<SMTExprRef, 8> written, read;
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
-        if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
-          mem.havoc(st, enc.value(a));
+        if (a->getType()->isPointerTy())
+          (c.onlyReadsMemory(i) || (g && g->isConstant()) ? read : written)
+              .push_back(enc.value(a));
       }
-      MemoryEffects effects = c.getMemoryEffects();
+      if (other) {
+        for (GlobalVariable *g : externs)
+          written.push_back(enc.value(g));
+        written.push_back(mem.outside());
+      }
+      mem.havocCall(st, written, read, other);
       if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
         mem.havoc(st, enc.value(errnoObject));
-      if (isModSet(effects.getModRef(IRMemLocation::Other))) {
-        for (GlobalVariable *g : externs)
-          mem.havoc(st, enc.value(g));
-        mem.havoc(st, mem.outside());
-      }
     }
     if (scanf)
       return scan(c, f, name, tag, guard, st);
