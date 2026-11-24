@@ -155,6 +155,26 @@ the tasks were already answered at a small bound: under `--incremental-bmc`
 a loop stops early only once the bound passes the range, and the solver,
 not the walk, takes the time in the tasks that time out.
 
+## esbmc-unix2/23_picosat-846_01
+
+The pull request's bench flagged this test (KNOWNBUG, recorded as taking
+over 300 s): UNKNOWN in 0.46 s on main, killed for memory after 38 s with
+this branch. Main stops on `llvm.ptrmask`, which the printf model uses to
+align a `va_arg`, in the option parsing it walks for `argc >= 2`. Under
+`--unwind 2` the paths with `argc >= 2` end at main's first loop, so
+`1 < argc` in `picosat_main` is false, as the ranges now show: the walk
+skips the parsing and ends (3.4 s, 301 MB, 9 checks), and Bitwuzla runs out
+of memory on the sixth check, the unwinding assertion of that first loop,
+which needs no more than `argc >= 2`, after five writes-to-const checks in
+picosat's allocator. With `--no-pointer-check` the walk takes 134 MB and
+that check still runs past 150 s. Nothing of the ranges grows: with
+`__VERIFIER_assume(argc == 1)` added, which main's constants already fold,
+both binaries walk the same formula (7 checks, 274 MB, a byte-identical
+10.2 MB dump) and both run out of 4 GB, at 108.6 s and 108.8 s. Main's quick
+UNKNOWN is the walk stopping on a path that no execution takes;
+`assume_range_dead_unsupported` has that shape. Why the solver needs
+gigabytes for that check is another issue.
+
 ## Not done
 
 The memory stage's checks (an index against an object's size) are built by
