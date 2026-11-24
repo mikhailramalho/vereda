@@ -173,14 +173,14 @@ def main():
         # time limit ends the run, and a step of 2. A step of 8 answered more
         # of the tasks that stopped at bound 50 but skipped the small bounds
         # where others fail (docs/survey/2026-11-24-k-step-2.md). Bound 2 is
-        # checked too, for at most 10 s of solving: some bugs need it and
+        # checked too, for at most 20 s of solving: some bugs need it and
         # bound 3 takes minutes, while elsewhere bound 2 takes minutes and
         # bound 3 finds a bug at once
         # (docs/survey/2026-11-24-bound-2-with-a-time-limit.md). They go
         # first: the binary takes the last of a repeated flag, the user's.
         if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
             rest = ["--unlimited-k-steps", "--k-step", "2", "--k-step-from", "3",
-                    "--k-step-from-time-limit", "10"] + rest
+                    "--k-step-from-time-limit", "20"] + rest
     if args.sanitize:
         flags += [f + ",".join(sorted(set(args.sanitize)))
                   for f in ("-fsanitize=", "-fsanitize-trap=")]
