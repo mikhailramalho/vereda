@@ -42,4 +42,5 @@ int main()
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

@@ -26,7 +26,13 @@
 // from the start, indexed by the offset alone: stores to other objects stay
 // out of its chain, and the solver compares pointer-width indices, not the
 // object id too. It starts from fixed nondet arrays of its own, which also
-// stand for its bytes on a path that has not created it yet.
+// stand for its bytes on a path that has not created it yet. One that the
+// walker finds read and written only as whole iN at multiples of N/8 bytes
+// (issue #107) has a data array of N-bit elements, indexed by offset / (N/8),
+// and no provenance array, as no pointer is stored there: a load or store of
+// iN at a symbolic offset is one select or store. Its known bytes move to the
+// array an element at a time, and an access through an unknown pointer that
+// may hit it reads or writes one byte of an element.
 #pragma once
 #include "encode/terms.h"
 #include "memory/cellmap.h"
@@ -50,7 +56,8 @@ struct State {
   CellMap known;
   // Objects with arrays of their own, at key (object id, 0): its data and
   // provenance arrays, indexed by the whole pointer or, for an object
-  // given them by own(), by the offset.
+  // given them by own(), by the offset. For an object of elements, its
+  // element array and the constant provenance of an integer.
   CellMap separate;
 };
 
@@ -104,8 +111,9 @@ public:
   void set(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
   void copy(State &st, camada::SMTExprRef dst, camada::SMTExprRef src, uint64_t n);
   // Gives the object of p, a pointer to a new object, arrays of its own
-  // indexed by offset, before anything is written to it.
-  void own(State &st, camada::SMTExprRef p);
+  // indexed by offset, before anything is written to it; with bits 16, 32
+  // or 64, arrays of elements of that many bits.
+  void own(State &st, camada::SMTExprRef p, unsigned bits = 8);
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 
@@ -123,6 +131,14 @@ private:
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   State::Cell readByte(const State &st, camada::SMTExprRef at);
+  // The byte at at from object's own arrays own, and those arrays with c
+  // stored at at.
+  State::Cell readOwn(uint64_t object, const State::Cell &own, camada::SMTExprRef at);
+  State::Cell storeOwn(uint64_t object, const State::Cell &own, camada::SMTExprRef at,
+                       const State::Cell &c);
+  // The object of p when its elements are of type ty and p is at a symbolic
+  // offset, where an access is one select or store once prepare(st, p) ran.
+  std::optional<uint64_t> element(camada::SMTExprRef p, llvm::Type *ty);
   // The arrays' bytes at a pointer that is not a known byte.
   State::Cell readArrays(const State &st, camada::SMTExprRef at);
   // Stores c at at in the arrays that hold object's bytes in st: its own or
@@ -130,7 +146,8 @@ private:
   void storeArrays(State &st, uint64_t object, camada::SMTExprRef at, const State::Cell &c);
   CellMap mergeSeparate(camada::SMTExprRef c, const State &a, const State &b);
   // Where object's own arrays index the pointer at: by offset for an object
-  // given them by own(), by the whole pointer otherwise.
+  // given them by own(), divided by the element's bytes for one of
+  // elements, by the whole pointer otherwise.
   camada::SMTExprRef index(uint64_t object, camada::SMTExprRef at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, camada::SMTExprRef p, camada::SMTExprRef byte, uint64_t n);
@@ -159,6 +176,8 @@ private:
   camada::SMTExprRef end;      // first address after the last object
   llvm::DenseMap<const llvm::GlobalValue *, camada::SMTExprRef> globals;
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
+  // Object id -> log2 of its element's bytes, for an object of elements.
+  llvm::DenseMap<uint64_t, unsigned> shifts;
   unsigned fresh = 0;
   camada::SMTExprRef context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
