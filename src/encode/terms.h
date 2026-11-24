@@ -47,7 +47,7 @@ private:
     mutable camada::SMTExprRef term; // the solver's, once made
   };
   explicit Term(const Constant *c) : key(c) {}
-  explicit Term(camada::SMTExprRef r) : key(r.get()), ref(std::move(r)) {}
+  explicit Term(const camada::SMTExprRef &r) : key(r.get()), ref(r) {}
   // The constant's entry, or null for a solver term.
   const Constant *entry() const { return ref ? nullptr : static_cast<const Constant *>(key); }
 
@@ -59,6 +59,7 @@ class Terms {
 public:
   using Ref = Term;
   explicit Terms(camada::SMTSolver &s);
+  Terms(const Terms &) = delete; // its terms point into it
   camada::SMTSolver &solver() { return s; }
 
   // The value of a constant term (width 1 for Bool), or null.
@@ -71,7 +72,7 @@ public:
   // A term camada gave back: the solver's term for a constant becomes the
   // constant again (mkIEEEFPToBV gives back the bits a float was made
   // from), so folding still sees it.
-  Ref fromSolver(camada::SMTExprRef e) const;
+  Ref fromSolver(const camada::SMTExprRef &e) const;
 
   Ref bv(const llvm::APInt &v);
   // v must fit in width bits, signed or unsigned: with assertions off APInt

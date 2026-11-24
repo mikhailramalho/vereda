@@ -60,11 +60,11 @@ camada::SMTExprRef Terms::solverTerm(const Ref &e) {
   return c->term;
 }
 
-Ref Terms::fromSolver(camada::SMTExprRef e) const {
+Ref Terms::fromSolver(const camada::SMTExprRef &e) const {
   if (!e)
     return {};
   auto it = made.find(e.get());
-  return it == made.end() ? Ref(std::move(e)) : it->second;
+  return it == made.end() ? Ref(e) : it->second;
 }
 
 bool Terms::entails(const Ref &guard, const Ref &lit) { return entails(guard, lit, 0); }
