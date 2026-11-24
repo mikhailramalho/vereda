@@ -45,7 +45,7 @@ struct FunctionInfo {
     for (BasicBlock *bb : rpo)
       for (BasicBlock *succ : successors(bb))
         if (index.lookup(succ) <= index.lookup(bb) && !dt.dominates(succ, bb))
-          throw Unsupported("irreducible control flow in " + f.getName().str());
+          throw Unsupported("irreducible control flow in " + llvm::demangle(f.getName().str()));
     for (BasicBlock *bb : rpo)
       if (li.isLoopHeader(bb))
         loopNumber[li.getLoopFor(bb)] = loopNumber.size();
@@ -359,7 +359,7 @@ private:
         }
         if (opts.showIterations)
           outs() << "Unwinding loop " << number << " iteration " << i << "   "
-                 << loopLocation(l).str() << "\n";
+                 << loopLocation(l).display() << "\n";
       }
       frame.iteration[l] = i;
       region(frame, fi, l);
@@ -757,7 +757,7 @@ private:
       for (const InlineAsm::ConstraintInfo &ci : ia->ParseConstraints())
         if ((ci.Type == InlineAsm::isOutput && ci.isIndirect) ||
             (ci.Type == InlineAsm::isClobber && ci.Codes[0] == "{memory}"))
-          throw Unsupported("inline asm that may write memory at " + ir::location(c).str());
+          throw Unsupported("inline asm that may write memory at " + ir::location(c).display());
       if (!c.getType()->isVoidTy())
         enc.bind(&c, enc.fresh(c.getType(), "asm@" + ir::location(c).str()));
       return guard;
@@ -770,10 +770,10 @@ private:
     if (!callee) {
       callee = dyn_cast<Function>(c.getCalledOperand()->stripPointerCasts());
       if (!callee)
-        throw Unsupported("indirect call at " + ir::location(c).str());
+        throw Unsupported("indirect call at " + ir::location(c).display());
       if (!callee->isDeclaration())
-        throw Unsupported("call to " + callee->getName().str() +
-                          " with a mismatched signature at " + ir::location(c).str());
+        throw Unsupported("call to " + llvm::demangle(callee->getName().str()) +
+                          " with a mismatched signature at " + ir::location(c).display());
     }
     StringRef name = callee->getName();
     std::string tag = name.str() + "@" + ir::location(c).str();
@@ -822,16 +822,19 @@ private:
     if (name == "setjmp" || name == "_setjmp" || name == "__sigsetjmp" || name == "sigsetjmp" ||
         name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
         name == "__longjmp_chk")
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // Threads are not modelled yet (#49): the thread function would never
     // run, so a violation only it reaches would be missed.
     if (name == "pthread_create")
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // These write a formatted string, or what they scan, through a va_list,
     // which a bodyless call does not do (models/printf.c has the ones that
     // print to memory), so they refuse too.
     if (writesThroughVaList(name))
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // From ir's lowering of longjmp: a jump no frame on the stack resumes.
     // Inner frames return for their caller to try; the outermost has none.
     if (name == "__vereda_longjmp_unmatched") {
@@ -843,7 +846,7 @@ private:
     }
     if (name == "__vereda_longjmp_unsupported")
       throw Unsupported("longjmp back past a value its setjmp needs in " +
-                        c.getFunction()->getName().str());
+                        llvm::demangle(c.getFunction()->getName().str()));
     if (name == "malloc" || name == "calloc") {
       allocateHeap(c, name, guard, st);
       return guard;
@@ -923,8 +926,8 @@ private:
     // one are mostly libgcc's complex arithmetic (__muldc3), whose result C
     // defines, so a nondet one would give wrong FAILEDs.
     if (c.getType()->isStructTy())
-      throw Unsupported("call to " + name.str() + " returning a struct at " +
-                        ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " returning a struct at " +
+                        ir::location(c).display());
     // An unknown external returns an unconstrained value and may write all
     // of each object it gets a pointer to (read, fgets, ioctl), except a
     // constant and what its attributes, which LLVM infers for the C library,
@@ -941,7 +944,7 @@ private:
     // does not read, so they write nothing here and keep the rest of an
     // object holding one.
     if (warned.insert(callee).second)
-      util::warning("no body for function " + name);
+      util::warning("no body for function " + llvm::demangle(name.str()));
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
     StringRef f;
     bool format = c.getFunctionType()->isVarArg() && params &&
@@ -1134,7 +1137,7 @@ private:
     bool x64 = isX86_64(c);
     if (c.getCallingConv() != CallingConv::C)
       throw Unsupported("variadic call with another calling convention at " +
-                        ir::location(c).str());
+                        ir::location(c).display());
     const DataLayout &dl = mem.layout();
     unsigned bits = mem.pointerBits(), slot = x64 ? 8 : 4, gp = 0, fp = 48;
     uint64_t onStack = 0, named = 0;
@@ -1149,7 +1152,7 @@ private:
           !(byval || isFP || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
-                          " at " + ir::location(c).str());
+                          " at " + ir::location(c).display());
       if (x64 && !byval && isFP && fp < 176) {
         where.push_back({true, fp});
         fp += 16;
@@ -1194,7 +1197,7 @@ private:
   // first variadic argument on the stack.
   void vaStart(CallBase &c, memory::State &st) {
     if (varArgs.empty() || varArgs.back().callee != stack.back())
-      throw Unsupported("va_start outside a variadic call at " + ir::location(c).str());
+      throw Unsupported("va_start outside a variadic call at " + ir::location(c).display());
     const VarArgs &va = varArgs.back();
     Term ap = enc.value(c.getArgOperand(0));
     Type *ptr = c.getArgOperand(0)->getType(), *i32 = Type::getInt32Ty(c.getContext());

@@ -3,6 +3,7 @@
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/BinaryFormat/Dwarf.h>
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/DebugProgramInstruction.h>
@@ -27,6 +28,12 @@ struct SourceLoc {
     if (col)
       out += " column " + std::to_string(col);
     return out + " function " + function;
+  }
+
+  std::string display() const {
+    SourceLoc loc = *this;
+    loc.function = llvm::demangle(function);
+    return loc.str();
   }
 };
 

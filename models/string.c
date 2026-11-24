@@ -299,3 +299,14 @@ char *strsep(char **sp, const char *delim) {
   *sp = end;
   return tok;
 }
+
+size_t strlcpy(char *dst, const char *src, size_t size) {
+  size_t i = 0;
+  size_t srclen = strlen(src);
+  if (size > 0) {
+    for (; i < size - 1 && src[i]; ++i)
+      dst[i] = src[i];
+    dst[i] = 0;
+  }
+  return srclen;
+}
