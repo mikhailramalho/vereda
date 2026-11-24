@@ -752,7 +752,7 @@ bool Encoder::intrinsic(CallBase &c) {
   }
   Term (Terms::*op)(const Term &, const Term &) = nullptr;
   Term (Terms::*less)(const Term &, const Term &) = &Terms::slt;
-  switch (f->getIntrinsicID()) { // InstCombine's min and max
+  switch (f->getIntrinsicID()) { // InstCombine's min, max and three-way compare
   case Intrinsic::umin:
   case Intrinsic::umax: less = &Terms::ult; [[fallthrough]];
   case Intrinsic::smin:
@@ -760,6 +760,14 @@ bool Encoder::intrinsic(CallBase &c) {
     Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
     bool min = f->getIntrinsicID() == Intrinsic::umin || f->getIntrinsicID() == Intrinsic::smin;
     bind(&c, t.ite((t.*less)(a, b), min ? a : b, min ? b : a));
+    return true;
+  }
+  case Intrinsic::ucmp: less = &Terms::ult; [[fallthrough]];
+  case Intrinsic::scmp: { // -1, 0 or 1, in the call's own width
+    Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+    unsigned w = c.getType()->getIntegerBitWidth();
+    bind(&c, t.ite((t.*less)(a, b), t.bv(-1, w),
+                   t.ite((t.*less)(b, a), t.bv(1, w), t.bv(0, w))));
     return true;
   }
   default: break;
