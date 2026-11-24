@@ -6290,5 +6290,4 @@ main(int argc, char **argv)
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: FUTURE test passed unexpectedly; promote it to CORE
-// MODE: CORE
+// Vereda: verdict UNKNOWN

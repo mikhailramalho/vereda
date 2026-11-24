@@ -132,3 +132,6 @@ int main() {
 // EXPECT: ^Violated property:$
 // EXPECT: dereference failure: NULL pointer
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^Violated property:$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

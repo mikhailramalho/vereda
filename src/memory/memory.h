@@ -144,6 +144,8 @@ public:
   // may write any of it; for p into one of several objects, each where p
   // points into it.
   void havoc(State &st, camada::SMTExprRef p, std::optional<uint64_t> n = std::nullopt);
+  // A pointer into the memory outside the program, for havoc.
+  camada::SMTExprRef outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
 

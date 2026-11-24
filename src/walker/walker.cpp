@@ -550,7 +550,7 @@ private:
     // Bodyless verifier functions, as ESBMC treats them by default: a defined
     // one is an ordinary call, except reach_error under unreach-call, above.
     if (name == "__VERIFIER_nondet_memory") {
-      havoc(st, c.getArgOperand(0), constantSize(c.getArgOperand(1), guard, name), guard);
+      mem.havoc(st, enc.value(c.getArgOperand(0)), constantSize(c.getArgOperand(1), guard, name));
       return guard;
     }
     if (name.starts_with("__VERIFIER_nondet_")) {
@@ -604,10 +604,10 @@ private:
     // say it only reads. With a constant format without positional
     // arguments, scanf writes its variadic arguments as scan says, and
     // printf none unless the format has a %n. Unless its attributes say it
-    // writes only its arguments' memory, it may also write errno and every
+    // writes only its arguments' memory, it may also write errno, every
     // global the program declares without defining (optind, environ, a
-    // variable of a file not given), as they belong to code Vereda does not
-    // see. It may also write through pointers stored in those objects, which
+    // variable of a file not given) and the memory outside the program, as
+    // they belong to code Vereda does not see. It may also write through pointers stored in those objects, which
     // this does not cover. The mutex and condition-variable calls write only
     // the lock or condition they get, which the program does not read, so
     // they write nothing here and keep the rest of an object holding one.
@@ -626,14 +626,16 @@ private:
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
-          havoc(st, a, std::nullopt, guard);
+          mem.havoc(st, enc.value(a));
       }
       MemoryEffects effects = c.getMemoryEffects();
       if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
-        havoc(st, errnoObject, std::nullopt, guard);
-      if (isModSet(effects.getModRef(IRMemLocation::Other)))
+        mem.havoc(st, enc.value(errnoObject));
+      if (isModSet(effects.getModRef(IRMemLocation::Other))) {
         for (GlobalVariable *g : externs)
-          havoc(st, g, std::nullopt, guard);
+          mem.havoc(st, enc.value(g));
+        mem.havoc(st, mem.outside());
+      }
     }
     if (scanf)
       return scan(c, f, name, tag, guard, st);
@@ -685,7 +687,7 @@ private:
       else if (cv.conv == 's' || cv.conv == '[')
         n = single(t.sub(mem.size(mem.object(enc.value(a))), mem.offset(enc.value(a))), guard);
       memory::State written = st;
-      havoc(written, a, n, guard);
+      mem.havoc(written, enc.value(a), n);
       st = mem.ite(done, written, st);
     }
     SMTExprRef range = t.land(t.sge(r, t.bv(-1, bits)), t.sle(r, t.bv(assigned, bits)));
@@ -931,18 +933,6 @@ private:
     if (!n)
       throw Unsupported(what.str() + " with a symbolic size");
     return *n;
-  }
-
-  // Gives the n bytes at a, or its whole object, nondet contents (see
-  // Memory::havoc). A pointer whose object the terms leave open, as after a
-  // store at a symbolic address, writes only that object when it has one
-  // value on the path, rather than each object it may point into.
-  void havoc(memory::State &st, Value *a, std::optional<uint64_t> n, SMTExprRef guard) {
-    SMTExprRef p = enc.value(a), obj = mem.object(p), c, x, y;
-    if (!t.constant(obj) && !t.split(p, c, x, y))
-      if (std::optional<uint64_t> o = single(obj, guard))
-        p = mem.ptr(t.bv(*o, obj->getWidth()), mem.offset(p));
-    mem.havoc(st, p, n);
   }
 
   // alloca, load and store, and the atomics. Returns false for any other
