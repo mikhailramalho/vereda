@@ -62,6 +62,8 @@ static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremen
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
                                             "first violation"));
+static cl::opt<bool> showLibraryStates(
+    "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
                            cl::desc("Encode floating point in bit-vectors, as camada does, instead "
                                     "of the solver's floating-point theory"));
@@ -236,7 +238,8 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
         // One reader for both, so the witness asks the solver for no value
         // the counterexample has read.
         vereda::solver::Model model(solver, terms);
-        vereda::witness::printCounterexample(model, trace, checks, &c - checks.data(), outs());
+        vereda::witness::printCounterexample(model, trace, checks, &c - checks.data(), outs(),
+                                               showLibraryStates);
         if (!witnessFile.empty() && !witnessWritten) {
           Expected<std::string> witness = vereda::witness::violationWitness(
               model, trace, checks, &c - checks.data(), *fn.getParent(), entry);

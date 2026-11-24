@@ -15,6 +15,6 @@ namespace vereda::witness {
 // that found the violation.
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
                          const checks::Checks &checks, unsigned violated,
-                         llvm::raw_ostream &os);
+                         llvm::raw_ostream &os, bool showLibraryStates);
 
 } // namespace vereda::witness
