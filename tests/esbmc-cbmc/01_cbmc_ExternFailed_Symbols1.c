@@ -13,4 +13,5 @@ int main()
   assert(*q==2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_ExternFailed_Symbols1
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION FAILED$

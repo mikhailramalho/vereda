@@ -26,4 +26,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/math_cos01
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

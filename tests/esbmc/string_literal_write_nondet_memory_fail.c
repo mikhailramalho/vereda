@@ -8,6 +8,3 @@ int main()
 // Imported from ESBMC regression/esbmc/string_literal_write_nondet_memory_fail
 // EXPECT: ^  dereference failure: write access to string constant$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  dereference failure: write access to string constant$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

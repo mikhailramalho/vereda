@@ -11,3 +11,7 @@ int main ()
 }
 // Imported from ESBMC regression/cstd/strstr_bug
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Vereda: ESBMC marks this KNOWNBUG; the program is correct (strncpy writes "sampl" over "simpl")
+// MODE: KNOWNBUG
+// Vereda: verdict SUCCESSFUL

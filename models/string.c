@@ -8,6 +8,8 @@
 #include <stddef.h>
 
 void *memset(void *, int, size_t);
+void *malloc(size_t);
+void *memcpy(void *, const void *, size_t);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -79,6 +81,41 @@ char *strrchr(const char *s, int c) {
   return (char *)last;
 }
 
+size_t strspn(const char *s, const char *accept) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *a;
+    for (a = accept; *a && *a != s[n]; ++a)
+      ;
+    if (!*a)
+      break;
+  }
+  return n;
+}
+
+size_t strcspn(const char *s, const char *reject) {
+  size_t n = 0;
+  for (; s[n]; ++n) {
+    const char *r;
+    for (r = reject; *r && *r != s[n]; ++r)
+      ;
+    if (*r)
+      break;
+  }
+  return n;
+}
+
+char *strpbrk(const char *s, const char *accept) {
+  for (; *s; ++s) {
+    const char *a;
+    for (a = accept; *a && *a != *s; ++a)
+      ;
+    if (*a)
+      return (char *)s;
+  }
+  return NULL;
+}
+
 // Returns from inside the loop, so that comparing n equal bytes takes n
 // iterations and no extra visit to test the count.
 int memcmp(const void *a, const void *b, size_t n) {
@@ -102,4 +139,42 @@ void *memchr(const void *s, int c, size_t n) {
     if (*p == (unsigned char)c)
       return (void *)p;
   return NULL;
+}
+
+char *strstr(const char *haystack, const char *needle) {
+  if (!*needle)
+    return (char *)haystack;
+  for (; *haystack; ++haystack) {
+    const char *h = haystack, *n = needle;
+    while (*n && *h == *n) {
+      ++h;
+      ++n;
+    }
+    if (!*n)
+      return (char *)haystack;
+  }
+  return NULL;
+}
+
+char *strdup(const char *s) {
+  size_t n = strlen(s);
+  char *d = malloc(n + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i <= n; ++i)
+    d[i] = s[i];
+  return d;
+}
+
+char *strndup(const char *s, size_t n) {
+  size_t m = strnlen(s, n);
+  char *d = malloc(m + 1);
+  if (!d)
+    return NULL;
+  // Copy string character by character to avoid memcpy with symbolic size
+  for (size_t i = 0; i < m; ++i)
+    d[i] = s[i];
+  d[m] = 0;
+  return d;
 }
