@@ -1,6 +1,7 @@
 #include "encode/terms.h"
 
 #include <algorithm>
+#include <numeric>
 #include <llvm/ADT/Hashing.h>
 
 using llvm::APInt;
@@ -280,6 +281,10 @@ Ref Terms::mul(const Ref &a, const Ref &b) {
 Ref Terms::udiv(const Ref &a, const Ref &b) {
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca && cb && !cb->isZero()) return bv(ca->udiv(*cb));
+  // x * c / c is x when x * c does not wrap.
+  if (const Node *n = node(a); n && n->op == Op::Mul && cb && !cb->isZero() && range(a))
+    if (const APInt *c = constant(n->b); c && *c == *cb)
+      return n->a;
   return make({Op::UDiv, a, b});
 }
 Ref Terms::sdiv(const Ref &a, const Ref &b) {
@@ -290,6 +295,9 @@ Ref Terms::sdiv(const Ref &a, const Ref &b) {
 Ref Terms::urem(const Ref &a, const Ref &b) {
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca && cb && !cb->isZero()) return bv(ca->urem(*cb));
+  if (const Node *n = node(a); n && n->op == Op::Mul && cb && !cb->isZero() && range(a))
+    if (const APInt *c = constant(n->b); c && *c == *cb)
+      return bv(0, a->getWidth());
   return make({Op::URem, a, b});
 }
 Ref Terms::srem(const Ref &a, const Ref &b) {
@@ -371,6 +379,11 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
     memo.emplace(k, r);
     return r;
   }
+  // y[w-1:k] ++ 0^k is y when y's low k bits are zero: an offset made
+  // into an element index and back.
+  if (nh && nh->op == Op::Extract && cl && cl->isZero() && nh->y == lo->getWidth() &&
+      nh->x + 1 == nh->a->getWidth() && zeros(nh->a) >= nh->y)
+    return nh->a;
   // x[h:m+1] ++ x[m:l] is x[h:l]: bytes read back from one stored value.
   if (nh && nl && nh->op == Op::Extract && nl->op == Op::Extract &&
       nh->a.get() == nl->a.get() && nh->y == nl->x + 1)
@@ -448,6 +461,7 @@ Ref Terms::ult(const Ref &a, const Ref &b) {
   // Nothing is below the least value or above the greatest, here and in
   // ule, slt and sle: x >= g with g a global still zero when loaded is true.
   if ((cb && cb->isZero()) || (ca && ca->isAllOnes())) return boolean(false);
+  if (int o = order(a, b, false, false); o >= 0) return boolean(o);
   return make({Op::Ult, a, b});
 }
 Ref Terms::ule(const Ref &a, const Ref &b) {
@@ -456,6 +470,7 @@ Ref Terms::ule(const Ref &a, const Ref &b) {
     return r;
   if (a.get() == b.get()) return boolean(true);
   if ((ca && ca->isZero()) || (cb && cb->isAllOnes())) return boolean(true);
+  if (int o = order(a, b, true, false); o >= 0) return boolean(o);
   return make({Op::Ule, a, b});
 }
 Ref Terms::slt(const Ref &a, const Ref &b) {
@@ -464,6 +479,7 @@ Ref Terms::slt(const Ref &a, const Ref &b) {
     return r;
   if (a.get() == b.get()) return boolean(false);
   if ((cb && cb->isMinSignedValue()) || (ca && ca->isMaxSignedValue())) return boolean(false);
+  if (int o = order(a, b, false, true); o >= 0) return boolean(o);
   return make({Op::Slt, a, b});
 }
 Ref Terms::sle(const Ref &a, const Ref &b) {
@@ -472,6 +488,7 @@ Ref Terms::sle(const Ref &a, const Ref &b) {
     return r;
   if (a.get() == b.get()) return boolean(true);
   if ((ca && ca->isMinSignedValue()) || (cb && cb->isMaxSignedValue())) return boolean(true);
+  if (int o = order(a, b, true, true); o >= 0) return boolean(o);
   return make({Op::Sle, a, b});
 }
 
@@ -613,8 +630,14 @@ Ref Terms::select(const Ref &array, const Ref &index) {
 }
 
 Ref Terms::uncached(const Ref &array, const Ref &index) {
-  // A read of a constant array is its value, at any index.
   Ref arr = array;
+  for (auto l = lambdas.find(arr.get()); l != lambdas.end() && l->second.misses &&
+                                         l->second.misses(index);
+       l = lambdas.find(arr.get()))
+    arr = l->second.below;
+  if (arr.get() != array.get())
+    return select(arr, index);
+  // A read of a constant array is its value, at any index.
   unsigned steps = 256;
   if (const APInt *ci = constant(index))
     if (Ref v = read(arr, *ci, steps))
@@ -632,17 +655,17 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
   return r;
 }
 
-Ref Terms::lambda(const camada::SMTSortRef &sort, const std::string &name,
-                  std::function<Ref(const Ref &)> def) {
+Ref Terms::lambda(const camada::SMTSortRef &sort, const std::string &name, Def def,
+                  const Ref &below, std::function<bool(const Ref &)> misses) {
   Ref r = s.mkSymbol(name, sort);
-  lambdas.emplace(r.get(), std::move(def));
+  lambdas.emplace(r.get(), Lambda{std::move(def), below, std::move(misses)});
   return r;
 }
 
 Ref Terms::reduce(const Ref &l, const Ref &index) {
   if (auto it = reduced.find({l.get(), index.get()}); it != reduced.end())
     return it->second.second;
-  Ref r = lambdas.at(l.get())(index);
+  Ref r = lambdas.at(l.get()).def(index);
   reduced.try_emplace({l.get(), index.get()}, index, r);
   return r;
 }
@@ -789,6 +812,98 @@ bool Terms::arithmetic(const Ref &e) {
     arith.emplace(p, r);
   }
   return value(e.get());
+}
+
+std::optional<Terms::Range> Terms::range(const Ref &e, unsigned depth) {
+  if (!e->isBVSort() || e->getWidth() > 64)
+    return std::nullopt;
+  if (const APInt *c = constant(e))
+    return Range{c->getZExtValue(), c->getZExtValue(), 0};
+  if (auto b = bounds.find(e.get()); b != bounds.end())
+    return Range{0, b->second.second - 1, 1};
+  const Node *n = node(e);
+  // A deep term (a long ite chain) is left unknown.
+  if (!n || depth > 32)
+    return std::nullopt;
+  if (auto it = ranges.find(e.get()); it != ranges.end())
+    return it->second;
+  using U = unsigned __int128;
+  U max = (U(1) << e->getWidth()) - 1;
+  // lo + stride * i up to hi, with hi moved down onto that lattice, so
+  // that every value, hi among them, is lo modulo the stride.
+  auto make = [&](U lo, U hi, U stride) -> std::optional<Range> {
+    if (hi > max || lo > hi)
+      return std::nullopt;
+    hi = stride ? lo + (hi - lo) / stride * stride : lo;
+    return Range{uint64_t(lo), uint64_t(hi), hi == lo ? 0 : uint64_t(stride)};
+  };
+  auto get = [&](const Ref &x) { return range(x, depth + 1); };
+  // x >> by, exact when the stride is a multiple of 2^by.
+  auto right = [&](const Range &v, uint64_t by) {
+    uint64_t s = by >= 64 || v.stride % (uint64_t(1) << by) ? 1 : v.stride >> by;
+    return by >= 64 ? make(0, 0, 0) : make(v.lo >> by, v.hi >> by, s);
+  };
+  std::optional<Range> r, a, b;
+  switch (n->op) {
+  case Op::Add:
+  case Op::Sub:
+  case Op::Mul:
+  case Op::Concat:
+    if (!(a = get(n->a)) || !(b = get(n->b)))
+      break;
+    if (n->op == Op::Add)
+      r = make(U(a->lo) + b->lo, U(a->hi) + b->hi, std::gcd(a->stride, b->stride));
+    else if (n->op == Op::Sub && a->lo >= b->hi)
+      r = make(a->lo - b->hi, a->hi - b->lo, std::gcd(a->stride, b->stride));
+    else if (n->op == Op::Mul && (!a->stride || !b->stride)) {
+      const Range &x = a->stride ? *a : *b;
+      U k = a->stride ? b->lo : a->lo;
+      r = make(x.lo * k, x.hi * k, x.stride * k);
+    } else if (n->op == Op::Concat) {
+      unsigned low = n->b->getWidth();
+      r = make((U(a->lo) << low) + b->lo, (U(a->hi) << low) + b->hi,
+               std::gcd(uint64_t(U(a->stride) << low), b->stride));
+    }
+    break;
+  case Op::LShr:
+    if (const APInt *c = constant(n->b); c && (a = get(n->a)))
+      r = right(*a, c->getLimitedValue(64));
+    break;
+  case Op::Extract:
+    if ((a = get(n->a)))
+      r = right(*a, n->y);
+    break;
+  case Op::ZExt:
+  case Op::SExt: // below the sign bit, as zext
+    if ((a = get(n->a)) && (n->op == Op::ZExt || !(a->hi >> (n->a->getWidth() - 1))))
+      r = a;
+    break;
+  default:
+    break;
+  }
+  ranges.emplace(e.get(), r);
+  return r;
+}
+
+int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign) {
+  std::optional<Range> x = range(a), y = x ? range(b) : std::nullopt;
+  if (!x || !y || (sign && std::max(x->hi, y->hi) >> (a->getWidth() - 1)))
+    return -1;
+  if (orEqual ? x->hi <= y->lo : x->hi < y->lo)
+    return 1;
+  if (orEqual ? x->lo > y->hi : x->lo >= y->hi)
+    return 0;
+  return -1;
+}
+
+unsigned Terms::zeros(const Ref &e, unsigned depth) {
+  if (const APInt *c = constant(e))
+    return c->countr_zero();
+  const Node *n = node(e);
+  if (!n || depth > 32 || (n->op != Op::Add && n->op != Op::Sub && n->op != Op::Mul))
+    return 0;
+  unsigned x = zeros(n->a, depth + 1), y = zeros(n->b, depth + 1);
+  return n->op == Op::Mul ? std::min(x + y, e->getWidth()) : std::min(x, y);
 }
 
 Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
