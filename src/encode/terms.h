@@ -5,7 +5,9 @@
 // sides settle, and a select at a constant index over stores at other
 // constant indices and joins. It also
 // shares terms: building the same term twice returns the same reference,
-// so pointer equality is structural equality for terms built here.
+// so pointer equality is structural equality for terms built here. What
+// holds only on one path (the bounds a path's conditions give its terms)
+// never folds a term here: decide answers for that path alone.
 //
 // The terms it hands out are its own type, Term, which camada does not take:
 // a bit-vector constant stays Terms' own value until the solver needs it,
@@ -188,6 +190,15 @@ public:
   // Whether e multiplies, divides or takes a remainder, outside of arrays.
   bool arithmetic(const Ref &e);
 
+  // What a path's conditions bound a term of at most 64 bits to: its least
+  // and greatest value as an unsigned and as a signed number.
+  struct Bounds {
+    uint64_t ulo, uhi;
+    int64_t slo, shi;
+    bool operator==(const Bounds &) const = default;
+  };
+  // The bounds a path knows a term by, if any (encoder.h keeps them).
+  using Known = llvm::function_ref<std::optional<Bounds>(const Ref &)>;
   // The values a term of at most 64 bits may take: lo + stride * i for
   // i = 0, 1, ... up to hi, with no wrap past its width (a strided
   // interval, as in value-set analysis). Known for constants, symbols given
@@ -197,16 +208,29 @@ public:
   struct Range {
     uint64_t lo, hi, stride;
   };
-  std::optional<Range> range(const Ref &e, unsigned depth = 0);
+  std::optional<Range> range(const Ref &e) { return range(e, {}, 0); }
+  // Whether cmp, an =, <, <= (unsigned or signed) or the negation of one,
+  // holds for every value the ranges of its sides take under known (1), for
+  // none (0), or neither (-1).
+  int decide(const Ref &cmp, Known known);
+  // Calls set(x, b) for each term x that cond being true, or false when
+  // !holds, bounds tighter than its range under known: x on one side of a
+  // <, <= (unsigned or signed) or its negation, found as equalities finds
+  // an =, bounded by the range of the other side.
+  void narrow(const Ref &cond, bool holds, Known known,
+              llvm::function_ref<void(const Ref &, const Bounds &)> set);
   // Symbol x is below limit, at least 1, wherever a term holding it is
   // read: the index of a summarised loop's iteration, whose terms count only
   // under its guard.
   void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.id(), x, limit); }
 
 private:
-  // equalities over at most budget nodes of cond.
-  void equalities(const Ref &cond, bool holds,
-                  llvm::function_ref<void(const Ref &, const Ref &)> f, unsigned &budget) const;
+  struct Node;
+  // f(lit, holds) for each literal of cond (a node that is not a not, an
+  // and, an or nor a Bool ite with a constant arm), as cond being true, or
+  // false when !holds, makes it hold or fail, over at most budget nodes.
+  void literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
+                unsigned &budget) const;
   // The value at constant index i of arr, past stores at other constant
   // indices, which arr moves over, and through joins whose two sides hold
   // the same value there (as a stream pointer does after a branch that
@@ -293,13 +317,27 @@ private:
   // stores, and a load of an element reads it once per byte.
   std::unordered_map<std::pair<const void *, const void *>, Ref, PairHash>
       selects;
-  // Whether a < b, or a <= b, holds for every value range gives them (1),
-  // for none (0), or neither (-1); signed only below the sign bit.
-  int order(const Ref &a, const Ref &b, bool orEqual, bool sign);
+  // range, with each term also narrowed to the bounds known gives it. Such
+  // a range holds only on known's path, so it is not kept, and nothing
+  // folds by it but decide.
+  std::optional<Range> range(const Ref &e, Known known, unsigned depth);
+  // Whether a < b, or a <= b, holds for every value range (or srange, if
+  // sign) gives them (1), for none (0), or neither (-1).
+  int order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known = {});
+  // The least and greatest value of e as signed numbers: from its range
+  // when that does not cross the sign bit, the bounds known gives it, and
+  // the operand it sign-extends; null when there are none (a path no
+  // execution takes) or e is wider than 64 bits.
+  std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known, unsigned depth);
+  // The range of n, a term of width bits, from its operands' (range's work).
+  std::optional<Range> shape(const Node &n, unsigned width, Known known, unsigned depth);
+  // range's results for one query under known, cleared per query (a
+  // DenseMap shrinks when it clears, so a large query leaves no cost).
+  llvm::DenseMap<const void *, std::optional<Range>> scratch;
   // How many low bits of e, a sum or product, are known to be zero.
   unsigned zeros(const Ref &e, unsigned depth = 0);
   std::unordered_map<const void *, std::pair<Ref, uint64_t>> bounds;
-  std::unordered_map<const void *, std::optional<Range>> ranges;
+  llvm::DenseMap<const void *, std::optional<Range>> ranges;
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const void *, std::unordered_set<const void *>> freeOf;
 };

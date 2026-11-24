@@ -283,7 +283,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
       bool fails = verdict.status[i] == Status::Fails;
       ++checked;
       failed += fails;
-      std::string unit = c.loc.file + ", function " + c.loc.function;
+      std::string unit = c.loc.file + ", function " + llvm::demangle(c.loc.function);
       if (unit != lastUnit)
         outs() << (lastUnit.empty() ? "" : "\n") << unit << "\n";
       lastUnit = unit;

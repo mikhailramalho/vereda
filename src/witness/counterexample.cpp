@@ -65,7 +65,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     if (step.kind == walker::Step::Check)
       break;
     if (step.kind == walker::Step::Assumption) {
-      os << "\n/*\nAssumption:\n  " << step.loc.str() << "\n  " << step.text << "\n*/\n";
+      os << "\n/*\nAssumption:\n  " << step.loc.display() << "\n  " << step.text << "\n*/\n";
       continue;
     }
     StringRef file = step.loc.file;
@@ -91,14 +91,14 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     if (prev == stmt)
       continue;
     prev = stmt;
-    os << "\n// State " << ++n << " " << step.loc.str() << " thread 0\n  " << stmt;
+    os << "\n// State " << ++n << " " << step.loc.display() << " thread 0\n  " << stmt;
     if (!bits.empty())
       WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << bits;
     os << "\n";
   }
   const checks::Check &c = checks[violated];
-  os << "\n// State " << ++n << " " << c.loc.str() << " thread 0\n"
-     << "/*\nViolated property:\n  " << c.loc.str() << "\n  " << c.comment << "\n";
+  os << "\n// State " << ++n << " " << c.loc.display() << " thread 0\n"
+     << "/*\nViolated property:\n  " << c.loc.display() << "\n  " << c.comment << "\n";
   if (!c.expr.empty())
     os << "  " << c.expr << "\n";
   os << "*/\n\n";
