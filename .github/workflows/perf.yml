@@ -26,6 +26,14 @@ permissions:
   pull-requests: write
   actions: read
 
+# A new push to a pull request cancels the runs its earlier pushes still
+# have going. Runs on main are never cancelled (each commit is its own
+# group): every main commit's Tests run gives the numbers perf.yml compares
+# pull requests against.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   bench:
     runs-on: ubuntu-24.04
