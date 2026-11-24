@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <llvm/ADT/Hashing.h>
-#include <llvm/ADT/SmallString.h>
 
 using llvm::APInt;
 
@@ -35,11 +34,18 @@ const Terms::Node *Terms::node(const Ref &e) const {
 Ref Terms::bv(const APInt &v) {
   Ref &r = bvs[v];
   if (!r) {
-    llvm::SmallString<128> bits;
-    v.toString(bits, 2, /*Signed=*/false);
-    std::string padded(v.getBitWidth() - bits.size(), '0');
-    padded += bits;
-    r = s.mkBVFromBin(padded, v.getBitWidth());
+    // Up to 64 bits, camada hands the value to the solver as an integer;
+    // a string of digits would be parsed back, twice in Bitwuzla.
+    unsigned w = v.getBitWidth();
+    if (w <= 64) {
+      r = s.mkBVFromDec(static_cast<int64_t>(v.getZExtValue()), w);
+    } else {
+      std::string bits(w, '0');
+      for (unsigned i = 0; i < w; ++i)
+        if (v[i])
+          bits[w - 1 - i] = '1';
+      r = s.mkBVFromBin(bits, w);
+    }
     values.try_emplace(r.get(), v);
   }
   return r;
