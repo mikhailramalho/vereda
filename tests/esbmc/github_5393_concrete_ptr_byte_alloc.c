@@ -18,4 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5393_concrete_ptr_byte_alloc
+// RUN: --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

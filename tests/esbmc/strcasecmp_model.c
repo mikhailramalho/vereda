@@ -20,6 +20,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/strcasecmp_model
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

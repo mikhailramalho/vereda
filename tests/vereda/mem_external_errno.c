@@ -1,7 +1,7 @@
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // errno is zero at program start, and a call without a body whose attributes
-// say it only reads memory (atoi) or writes only its arguments' (frexp)
+// say it only reads memory (atof) or writes only its arguments' (frexp)
 // leaves errno and the library's globals alone.
 #include <errno.h>
 #include <math.h>
@@ -14,7 +14,7 @@ int main(void) {
   int e;
   errno = 7;
   optind = 2;
-  int n = atoi(a);
+  int n = (int)atof(a);
   frexp(1.5, &e);
   __VERIFIER_assert(errno == 7);
   __VERIFIER_assert(optind == 2);

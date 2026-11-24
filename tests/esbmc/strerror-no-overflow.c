@@ -10,6 +10,3 @@ int main()
 // Imported from ESBMC regression/esbmc/strerror-no-overflow
 // RUN: --overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

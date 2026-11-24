@@ -102,14 +102,15 @@ void Memory::allocateGlobals(const Module &m,
     uint64_t size = dl.getTypeAllocSize(g.getValueType());
     globals[&g] = allocate(t.bv(size, ptrBits), g.getPointerAlignment(dl).value(),
                            t.boolean(true), exposed(&g));
-    objects.back().constant = g.isConstant();
+    if (g.isConstant())
+      objects.back().constant = &g;
   }
   // A function whose address is taken is an object of one byte, so that a
   // pointer to it is an ordinary pointer: stored, compared and called.
   for (const Function &f : m)
     if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true)) {
       globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f));
-      objects.back().constant = true;
+      objects.back().constant = &f;
     }
 }
 
@@ -164,8 +165,14 @@ State Memory::initial() {
           t.constArray(index, t.bv(IntProvenance, ObjBits))};
 }
 
-// Past this many known bytes in a state, all go to the arrays.
-static const size_t MaxKnown = 4096;
+// Past this many known bytes in a state, all go to the arrays. 1 MiB keeps
+// known the bytes a loop writes at constant indices into a large array, so
+// that a read at a constant index finds its byte instead of walking a chain
+// of stores.
+static const size_t MaxKnown = 1 << 20;
+// Past this many bytes of an object that differ at a join, it goes to the
+// arrays on both sides.
+static const size_t MaxChoices = 1024;
 
 std::optional<Memory::Key> Memory::key(SMTExprRef p) const {
   const APInt *v = t.constant(p);
@@ -422,10 +429,10 @@ void Memory::prepare(State &st, SMTExprRef p) {
     flush(st, o);
 }
 
-std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers) {
+std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers, bool *read) {
   std::vector<uint64_t> r;
   std::vector<SMTExprRef> work{p};
-  bool read = false;
+  bool fromMemory = false;
   while (!work.empty()) {
     SMTExprRef e = work.back(), c, x, y;
     work.pop_back();
@@ -441,10 +448,12 @@ std::vector<uint64_t> Memory::candidates(SMTExprRef p, bool integers) {
       work.push_back(x);
       work.push_back(y);
     } else {
-      read = true;
+      fromMemory = true;
     }
   }
-  if (read) // from memory, where only pointers to exposed objects are stored
+  if (read)
+    *read = fromMemory;
+  else if (fromMemory) // where only pointers to exposed objects are stored
     for (uint64_t id = 0; id < objects.size(); ++id)
       if (id == 0 || objects[id].exposed)
         r.push_back(id);
@@ -522,14 +531,25 @@ State Memory::ite(SMTExprRef c, const State &a0, const State &b0) {
   // An object whose bytes would become a choice between two values that
   // multiply or divide goes to the arrays on both sides instead. There the
   // solver bit-blasts a stored value only where a read needs it; as a choice,
-  // all of them up front (RERS Problem14 ran out of memory).
+  // all of them up front (RERS Problem14 ran out of memory). So does one
+  // with more than MaxChoices bytes that differ, counted before any byte is
+  // read: reading many bytes from a side that flushed the object walks the
+  // flush's stores for each, and a choice per byte of a large object copied
+  // on both sides solved slower than a choice of arrays.
   State a = a0, b = b0;
+  std::set<uint64_t> moved;
+  llvm::DenseMap<uint64_t, size_t> differ;
+  CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *, const State::Cell *) {
+    if (++differ[k.first] == MaxChoices + 1)
+      moved.insert(k.first);
+  });
   // Only the bytes whose cells differ need a choice; the rest stay as a has
   // them. A byte known on one side only reads the other side's arrays, which
   // the flushes below change only at other objects.
   std::vector<std::pair<Key, std::pair<State::Cell, State::Cell>>> sides;
-  std::set<uint64_t> moved;
   CellMap::diff(a.known, b.known, [&](Key k, const State::Cell *x, const State::Cell *y) {
+    if (moved.count(k.first))
+      return;
     State::Cell xa = x ? *x : readByte(a, ptr(k)), yb = y ? *y : readByte(b, ptr(k));
     if (xa.data.get() != yb.data.get() && (t.arithmetic(xa.data) || t.arithmetic(yb.data)))
       moved.insert(k.first);
@@ -658,7 +678,28 @@ void Memory::fill(State &st, uint64_t o, SMTExprRef byte) {
 }
 
 void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
-  havocWith(st, p, n, t.bv(IntProvenance, ObjBits));
+  havocWith(st, p, n, t.bv(IntProvenance, ObjBits), true);
+}
+
+std::vector<std::pair<const GlobalVariable *, SMTExprRef>> Memory::readOnly(SMTExprRef p) {
+  std::vector<std::pair<const GlobalVariable *, SMTExprRef>> r;
+  for (uint64_t o : candidates(p, false))
+    if (o < objects.size())
+      if (auto *g = dyn_cast_or_null<GlobalVariable>(objects[o].constant))
+        r.push_back({g, into(p, o)});
+  return r;
+}
+
+SMTExprRef Memory::into(SMTExprRef obj, uint64_t o) {
+  SMTExprRef c, x, y;
+  // As candidates() walks it.
+  if (obj->getWidth() != ObjBits && !t.choice(obj, c, x, y))
+    obj = object(obj);
+  if (fromInteger.count(obj.get()))
+    return t.boolean(false);
+  if (t.choice(obj, c, x, y))
+    return t.ite(c, into(x, o), into(y, o));
+  return t.eq(obj, t.bv(o, ObjBits));
 }
 
 void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
@@ -708,7 +749,7 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
                  t.bv(x, ObjBits), prov);
   for (size_t i = 0; i < ps.size(); ++i) {
     if (i < written.size())
-      havocWith(st, ps[i], std::nullopt, prov);
+      havocWith(st, ps[i], std::nullopt, prov, false);
     for (const auto &[x, rs] : from[i]) {
       if (objects[x].constant)
         continue;
@@ -726,12 +767,13 @@ void Memory::havocCall(State &st, llvm::ArrayRef<SMTExprRef> written,
   }
 }
 
-void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov) {
+void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTExprRef prov,
+                       bool constants) {
   SMTExprRef c, x, y;
   if (t.split(p, c, x, y)) {
     State a = st, b = st;
-    havocWith(a, x, n, prov);
-    havocWith(b, y, n, prov);
+    havocWith(a, x, n, prov, constants);
+    havocWith(b, y, n, prov, constants);
     st = ite(c, a, b);
     return;
   }
@@ -739,7 +781,7 @@ void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTEx
   if (!obj) { // each object p may point into, where it does
     for (uint64_t o : candidates(p)) {
       State a = st;
-      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov);
+      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov, constants);
       st = ite(t.eq(object(p), t.bv(o, ObjBits)), a, st);
     }
     return;
@@ -748,7 +790,8 @@ void Memory::havocWith(State &st, SMTExprRef p, std::optional<uint64_t> n, SMTEx
   std::optional<Key> k = key(p);
   // Null writes nothing; any other pointer with object 0 is into the memory
   // outside the program, which the call may write as a whole.
-  if (o >= objects.size() || (o == 0 && k && k->second == 0))
+  if (o >= objects.size() || (o == 0 && k && k->second == 0) ||
+      (objects[o].constant && !constants))
     return;
   const APInt *size = t.constant(objects[o].size);
   if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object
@@ -776,18 +819,35 @@ void Memory::havocObject(State &st, uint64_t o, SMTExprRef prov) {
 llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State &st) {
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
   SMTExprRef intProv = t.bv(IntProvenance, ObjBits);
-  // The objects a byte of provenance prov may point to, for each object in.
+  // A pointer read from memory may point to every exposed object, which
+  // goes to an object once: each byte of a pointer copied may have a
+  // provenance of its own.
+  std::vector<uint64_t> exposed;
+  for (uint64_t id = 1; id < objects.size(); ++id)
+    if (objects[id].exposed)
+      exposed.push_back(id);
+  llvm::DenseSet<uint64_t> holdsRead;
+  // The objects a byte of provenance prov may point to, for each object in,
+  // with each provenance looked up once.
+  llvm::DenseMap<const camada::SMTExpr *, std::pair<std::vector<uint64_t>, bool>> targets;
   auto add = [&](llvm::ArrayRef<uint64_t> in, const SMTExprRef &prov) {
-    std::vector<uint64_t> xs;
-    for (uint64_t x : candidates(prov, false))
-      if (x && x < objects.size()) // not null, nor an integer's
-        xs.push_back(x);
-    if (!xs.empty())
-      for (uint64_t o : in)
+    auto [it, inserted] = targets.try_emplace(prov.get());
+    auto &[xs, read] = it->second;
+    if (inserted)
+      for (uint64_t x : candidates(prov, false, &read))
+        if (x && x < objects.size()) // not null, nor an integer's
+          xs.push_back(x);
+    for (uint64_t o : in) {
+      if (!xs.empty())
         to[o].insert(xs.begin(), xs.end());
+      if (read && !exposed.empty() && holdsRead.insert(o).second)
+        to[o].insert(exposed.begin(), exposed.end());
+    }
   };
+  // A pointer's bytes share one provenance: add each once per object.
+  llvm::DenseSet<std::pair<uint64_t, const camada::SMTExpr *>> added;
   st.known.forEach([&](Key k, const State::Cell &c) {
-    if (c.prov.get() != intProv.get())
+    if (c.prov.get() != intProv.get() && added.insert({k.first, c.prov.get()}).second)
       add(k.first, c.prov);
   });
   // The provenance stored in the arrays: in those indexed by pointer, each

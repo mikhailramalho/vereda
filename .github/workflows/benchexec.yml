@@ -1,17 +1,22 @@
 # Runs Vereda on SV-COMP ReachSafety tasks with BenchExec, to catch verdict
-# changes: wrong answers and lost ones. Timing against ESBMC stays on our own
-# machine; shared runners are too noisy for that. Started by hand:
+# changes: wrong answers and lost ones, and, with tools 'vereda esbmc', ESBMC
+# on the same tasks and runners, to compare the two. Started by hand:
 #   gh workflow run benchexec.yml --ref <branch> -f sets=Loops -f filter='^loops/'
 # build makes the binary once while plan fetches the sv-benchmarks
 # directories the categories need (a partial clone from GitLab, about 50 MB
 # for the four default ones, so no cache) and splits each category into
-# shards of at most 4.5 hours, even if every task ran to its time limit
-# (contrib/benchexec/ci.py). Each shard runs in its own job, two tasks at a
-# time with 2 cores and 6 GB each, in BenchExec's containers. report merges
-# the shards into one table (table-generator), writes the correct, wrong,
-# unknown and timed-out counts per category and the wrong verdicts to the
-# job summary, lists the tasks gained and lost against an earlier run when
-# given one, and fails on a wrong verdict.
+# shards of at most 4.5 hours, even if every tool ran every task to its time
+# limit (contrib/benchexec/ci.py). Each shard runs in its own job, Vereda
+# and then ESBMC, two tasks at a time with 2 cores and 6 GB each, in
+# BenchExec's containers, so both tools' numbers for a task come from the
+# same runner. ESBMC is a release's prebuilt Linux binary, run through the
+# SV-COMP wrapper of the same tag with incremental BMC (esbmc.xml), and
+# doubles the time, so manual runs leave it out unless asked. report merges
+# the shards into one table (table-generator), writes to the job summary
+# each tool's counts and score per category, the time and memory of both on
+# the tasks both answer correctly, and the wrong verdicts, lists Vereda's
+# tasks gained and lost against an earlier run when given one, and fails on
+# a wrong verdict of Vereda's.
 #
 # BenchExec on GitHub's ubuntu-24.04 runners (docs/survey/
 # 2026-11-24-benchexec-on-github-runners.md): its containers need
@@ -20,8 +25,10 @@
 # It also needs a cgroup of its own with the cpuset, cpu, io, memory and pids
 # controllers. Steps run in the runner service's cgroup, and the runner
 # user's systemd manager gets no cpuset without a drop-in and a restart, so
-# the run step moves its shell into an empty cgroup made for it and execs
-# BenchExec, which is then alone in it, as BenchExec requires.
+# each tool's run step moves its shell into an empty cgroup made for it and
+# execs BenchExec, which is then alone in it, as BenchExec requires. Each
+# tool needs a cgroup of its own: BenchExec leaves its cgroup with
+# controllers enabled for children, where no process may join.
 name: BenchExec
 
 on:
@@ -42,6 +49,16 @@ on:
       compare:
         description: ID or URL of an earlier run of this workflow to compare with
         default: ''
+      tools:
+        description: Tools to run on each shard; ESBMC doubles the time
+        type: choice
+        options:
+          - vereda
+          - vereda esbmc
+        default: vereda
+      esbmc:
+        description: ESBMC release tag (github.com/esbmc/esbmc), when it runs
+        default: v8.8
 
 permissions:
   contents: read
@@ -112,9 +129,10 @@ jobs:
         env:
           TIMEOUT: ${{ inputs.timeout }}
           FILTER: ${{ inputs.filter }}
+          TOOLS: ${{ inputs.tools }}
           SETS: ${{ inputs.sets }}
         run: |
-          shards=$(contrib/benchexec/ci.py plan sv-benchmarks "$TIMEOUT" "$FILTER" $SETS)
+          shards=$(contrib/benchexec/ci.py plan sv-benchmarks "$TIMEOUT" "$FILTER" "$TOOLS" $SETS)
           echo "shards=$shards" >> "$GITHUB_OUTPUT"
           tar --exclude=.git -cf sv-benchmarks.tar sv-benchmarks
 
@@ -158,30 +176,59 @@ jobs:
           cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
           tool/vereda.py --version
 
+      # The release's static binary (with its debug information) and the
+      # wrapper, which runs ./esbmc and needs only Python's standard library.
+      - name: Fetch ESBMC
+        if: contains(inputs.tools, 'esbmc')
+        env:
+          ESBMC: ${{ inputs.esbmc }}
+        run: |
+          curl -sSfL -o esbmc.zip "https://github.com/esbmc/esbmc/releases/download/$ESBMC/esbmc-linux.zip"
+          unzip -q -j esbmc.zip release/bin/esbmc -d esbmc
+          rm esbmc.zip
+          curl -sSfL -o esbmc/esbmc-wrapper.py "https://raw.githubusercontent.com/esbmc/esbmc/$ESBMC/scripts/competitions/svcomp/esbmc-wrapper.py"
+          chmod +x esbmc/esbmc-wrapper.py
+          cd esbmc && ./esbmc-wrapper.py -v
+
       # User namespaces for the containers, and an empty cgroup with every
-      # controller for BenchExec (see the header).
+      # controller for each tool's BenchExec (see the header).
       - name: Set up containers and cgroups
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           echo "+cpuset +cpu +io +memory +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
-          sudo mkdir /sys/fs/cgroup/benchexec
-          sudo chown -R "$(id -u):$(id -g)" /sys/fs/cgroup/benchexec
+          sudo mkdir /sys/fs/cgroup/benchexec-vereda /sys/fs/cgroup/benchexec-esbmc
+          sudo chown -R "$(id -u):$(id -g)" /sys/fs/cgroup/benchexec-vereda /sys/fs/cgroup/benchexec-esbmc
 
       # The tool sees the file system read-only, which it needs no more than,
       # with a /tmp of its own and an overlay on /home, where BenchExec makes
       # the container's home directory.
-      - name: Run BenchExec
+      - name: Run Vereda
         env:
           SHARD: ${{ matrix.shard }}
           TIMEOUT: ${{ inputs.timeout }}
         run: |
-          echo $$ | sudo tee /sys/fs/cgroup/benchexec/cgroup.procs > /dev/null
+          echo $$ | sudo tee /sys/fs/cgroup/benchexec-vereda/cgroup.procs > /dev/null
           exec benchexec contrib/benchexec/vereda.xml --name "$SHARD" --tool-directory tool \
             -o results/ -N 2 -T "${TIMEOUT}s" --read-only-dir / --overlay-dir /home
 
+      # As Vereda, from the tool's directory: BenchExec asks the wrapper for
+      # ESBMC's version from where it is started.
+      - name: Run ESBMC
+        if: contains(inputs.tools, 'esbmc')
+        working-directory: esbmc
+        env:
+          SHARD: ${{ matrix.shard }}
+          TIMEOUT: ${{ inputs.timeout }}
+        run: |
+          echo $$ | sudo tee /sys/fs/cgroup/benchexec-esbmc/cgroup.procs > /dev/null
+          exec benchexec ../contrib/benchexec/esbmc.xml --name "$SHARD" --tool-directory . \
+            -o ../results/ -N 2 -T "${TIMEOUT}s" --read-only-dir / --overlay-dir /home
+
       # BenchExec exits 0 even when it ran nothing.
       - name: Check for results
-        run: ls results/*.results.*.xml.bz2
+        env:
+          TOOLS: ${{ inputs.tools }}
+        run: for tool in $TOOLS; do ls results/$tool.*.results.*.xml.bz2; done
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -213,16 +260,21 @@ jobs:
           id=${COMPARE##*/runs/}
           gh run download "${id%%/*}" -R "$GITHUB_REPOSITORY" -n results -D old
 
-      # One column per run, each the union of its shards; with two, the
-      # tables also come as a diff of the tasks whose results differ.
+      # One column per tool and run, each the union of its shards; with two,
+      # the tables also come as a diff of the tasks whose results differ.
+      # The earlier run's column is Vereda's only.
       - name: Make the table
         run: |
           python3 -m pip install --user --break-system-packages "$BENCHEXEC"
           cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
           {
             echo '<table>'
-            [ -d old ] && echo '<union title="earlier"><result filename="old/*.results.*.xml.bz2"/></union>'
-            echo '<union title="this run"><result filename="results/*.results.*.xml.bz2"/></union>'
+            [ -d old ] && echo '<union title="Vereda, earlier"><result filename="old/vereda.*.results.*.xml.bz2"/></union>'
+            for tool in vereda esbmc; do
+              if compgen -G "results/$tool.*.results.*.xml.bz2" > /dev/null; then
+                echo "<union title=\"$tool\"><result filename=\"results/$tool.*.results.*.xml.bz2\"/></union>"
+              fi
+            done
             echo '</table>'
           } > table.xml
           ~/.local/bin/table-generator -x table.xml -o results -n vereda
@@ -233,11 +285,12 @@ jobs:
           TIMEOUT: ${{ inputs.timeout }}
           FILTER: ${{ inputs.filter }}
           REVISION: ${{ needs.plan.outputs.revision }}
+          ESBMC: ${{ contains(inputs.tools, 'esbmc') && format(', ESBMC {0}', inputs.esbmc) || '' }}
         run: |
           {
-            echo "## Vereda on ReachSafety $SETS"
+            echo "## ReachSafety $SETS"
             echo
-            echo "Vereda $GITHUB_SHA, sv-benchmarks $REVISION, ${TIMEOUT} s per task${FILTER:+, tasks matching \`$FILTER\`}."
+            echo "Vereda $GITHUB_SHA$ESBMC, sv-benchmarks $REVISION, ${TIMEOUT} s per task${FILTER:+, tasks matching \`$FILTER\`}."
             echo "The tables are in the results artifact."
             echo
           } >> "$GITHUB_STEP_SUMMARY"

@@ -11,6 +11,3 @@ int main(int argc, char **argv)
 // Imported from ESBMC regression/esbmc/github_1548-lit
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: write access to string constant
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
