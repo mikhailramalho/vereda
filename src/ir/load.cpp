@@ -363,6 +363,9 @@ static Value *lowerKernelAtomic(CallInst *c, StringRef code, StringRef shape, St
                  (bits && bits != c->getDataLayout().getTypeSizeInBits(t))))
     return nullptr;
   IRBuilder<> b(c);
+  LLVMContext &ctx = c->getContext();
+  c->setMetadata(AsmMD, MDNode::get(ctx, MDString::get(ctx, code)));
+  b.CollectMetadataToCopy(c, {ctx.getMDKindID(AsmMD)});
   auto order = AtomicOrdering::SequentiallyConsistent;
   Value *flag = nullptr;
   if (bit) { // the bit at offset v, signed, from the operand's start
@@ -400,11 +403,11 @@ static Value *lowerKernelAtomic(CallInst *c, StringRef code, StringRef shape, St
 // expects no return (BUG()), but not where a trap handler may resume after
 // it, as newer kernels' WARN() has it; bswap becomes
 // llvm.bswap; the kernel's atomics are above, and its cmpxchg becomes a
-// cmpxchg. Of its MMIO accessors (asm/io.h), a write is a
-// store, and a read, a mov from memory into a register, writes no memory, so
-// it loses its "memory" clobber and the walker gives it a nondet value, as a
-// device register may hold anything (its operand is still loaded, for the
-// checks on the pointer). An asm with alternatives, code the kernel may
+// cmpxchg, their writes marked with AsmMD for the walker. Of its MMIO
+// accessors (asm/io.h), a write is a store, and a read, a mov from memory
+// into a register, writes no memory, so it loses its "memory" clobber and
+// the walker gives it a nondet value, as a device register may hold
+// anything (its operand is still loaded, for the checks on the pointer). An asm with alternatives, code the kernel may
 // patch in at boot, or in Intel syntax is none of these. The walker handles
 // the rest.
 static void lowerInlineAsm(Module &m) {
@@ -457,10 +460,11 @@ static void lowerInlineAsm(Module &m) {
                ty->isIntegerTy() && sized(ty) && c->getArgOperand(1)->getType() == ty &&
                c->getArgOperand(2)->getType() == ty) {
       auto order = AtomicOrdering::SequentiallyConsistent;
-      r = b.CreateExtractValue(b.CreateAtomicCmpXchg(c->getArgOperand(0), c->getArgOperand(2),
-                                                     c->getArgOperand(1), MaybeAlign(), order,
-                                                     order),
-                               0);
+      AtomicCmpXchgInst *cx = b.CreateAtomicCmpXchg(c->getArgOperand(0), c->getArgOperand(2),
+                                                    c->getArgOperand(1), MaybeAlign(), order,
+                                                    order);
+      cx->setMetadata(AsmMD, MDNode::get(m.getContext(), MDString::get(m.getContext(), code)));
+      r = b.CreateExtractValue(cx, 0);
     } else if (code == "mov $1,$0" && shape == "=v,*m" && c->getParamElementType(0)) {
       b.CreateLoad(c->getParamElementType(0), c->getArgOperand(0), /*isVolatile=*/true);
       c->setCalledOperand(InlineAsm::get(ia->getFunctionType(), ia->getAsmString(), ops,

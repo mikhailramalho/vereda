@@ -1,6 +1,7 @@
 #include "walker/walker.h"
 
 #include "ir/debug.h"
+#include "ir/load.h"
 #include "ir/sanitizer.h"
 #include "ir/source.h"
 #include "util/log.h"
@@ -775,6 +776,7 @@ private:
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
       Value *v = w->getValueOperand();
       SMTExprRef p = enc.value(w->getPointerOperand());
+      asmTarget(inst, p);
       mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
       // A source store into a named variable kept in memory (a global, an
       // array, a local whose address is taken) is an assignment to show.
@@ -794,6 +796,7 @@ private:
       if (!ty->isIntegerTy() || ty->isIntegerTy(1))
         throw Unsupported("instruction " + encode::describe(&inst));
       SMTExprRef p = enc.value(cx->getPointerOperand());
+      asmTarget(inst, p);
       SMTExprRef old = mem.load(st, p, ty);
       SMTExprRef ok = t.eq(old, enc.value(cx->getCompareOperand()));
       if (cx->isWeak()) // may fail even when equal
@@ -804,6 +807,21 @@ private:
       return true;
     }
     return isa<FenceInst>(inst);
+  }
+
+  // A write an inline asm became (ir marks it with AsmMD) goes only through
+  // a pointer to a known object, or one of two: any other pointer, such as
+  // one the program read but never set, may point to any object, and a
+  // write there could reach state the asm never touches.
+  void asmTarget(Instruction &inst, const SMTExprRef &p) {
+    MDNode *md = inst.getMetadata(ir::AsmMD);
+    if (!md)
+      return;
+    SMTExprRef obj = mem.object(p), c, x, y;
+    if (!t.constant(obj) && !t.split(obj, c, x, y))
+      throw Unsupported("inline asm `" + cast<MDString>(md->getOperand(0))->getString().str() +
+                        "` through a pointer to an unknown object at " +
+                        ir::location(inst).str());
   }
 
   // The source variable whose memory p points into, when it is a global or
@@ -835,6 +853,7 @@ private:
         !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
       throw Unsupported("instruction " + encode::describe(&rmw));
     SMTExprRef p = enc.value(rmw.getPointerOperand());
+    asmTarget(rmw, p);
     SMTExprRef old = mem.load(st, p, ty), v = enc.value(rmw.getValOperand());
     unsigned w = ty->isIntegerTy() ? ty->getIntegerBitWidth() : 0;
     auto one = [&] { return t.bv(1, w); };

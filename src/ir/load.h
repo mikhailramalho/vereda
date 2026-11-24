@@ -17,4 +17,8 @@ namespace vereda::ir {
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "");
 
+// Metadata on the writes an inline asm atomic or bit operation became: the
+// asm's instructions, as one string.
+inline constexpr const char *AsmMD = "vereda.asm";
+
 } // namespace vereda::ir
