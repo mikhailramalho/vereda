@@ -416,9 +416,16 @@ void Encoder::encode(Instruction &inst) {
     r = fcmp(fc->getPredicate(), fc->getOperand(0), fc->getOperand(1));
   } else if (auto *cmp = dyn_cast<ICmpInst>(&inst)) {
     SMTExprRef a = value(cmp->getOperand(0)), b = value(cmp->getOperand(1));
-    // Pointers are equal when object and offset are; ordered comparison
+    // Pointers are equal as Memory::equal says; ordered comparison
     // compares addresses.
-    if (cmp->getOperand(0)->getType()->isPointerTy() && !cmp->isEquality()) {
+    if (cmp->getOperand(0)->getType()->isPointerTy()) {
+      if (cmp->isEquality()) {
+        r = mem.equal(a, b);
+        if (cmp->getPredicate() == CmpInst::ICMP_NE)
+          r = t.lnot(r);
+        bind(&inst, r);
+        return;
+      }
       a = mem.address(a);
       b = mem.address(b);
     }

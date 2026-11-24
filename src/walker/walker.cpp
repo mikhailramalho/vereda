@@ -142,10 +142,11 @@ public:
 
 private:
   // Whether the address of v, an alloca, a global or a function, may reach
-  // code outside the program or an integer (memory.h, #137): its provenance
-  // is captured (stored, passed to a call, converted to an integer,
-  // returned), or it is in a global's initialiser. A constant getelementptr
-  // or cast of v is followed as an instruction would be.
+  // code outside the program or an integer, or be compared with one
+  // (memory.h, #137): any capture but a test against null (stored, passed to
+  // a call, converted to an integer, returned, compared), or it is in a
+  // global's initialiser. A constant getelementptr or cast of v is followed
+  // as an instruction would be.
   bool exposed(const Value *v) {
     struct Tracker : CaptureTracker {
       bool exposed = false;
@@ -157,7 +158,7 @@ private:
           PointerMayBeCaptured(ce, this);
           return exposed ? Stop : ContinueIgnoringReturn;
         }
-        exposed = !isa<Instruction>(u->getUser()) || capturesAnyProvenance(ci.UseCC);
+        exposed = !isa<Instruction>(u->getUser()) || !capturesAddressIsNullOnly(ci.UseCC);
         return exposed ? Stop : Continue;
       }
     };

@@ -1,11 +1,9 @@
 // A pointer made from an integer before an object came to sit at that
-// address should compare equal to a pointer to the object (C11 6.5.9p6 with
-// 6.3.2.3p5). Read back from memory it does (mem_inttoptr_copy); kept in a
-// register it still points nowhere, and pointer equality compares object and
-// offset. Comparing addresses instead would let an undef pointer equal an
-// object's address without pointing into it (esbmc/github_8517_assume_pins_pointer).
+// address compares equal to a pointer to the object (C11 6.5.9p6 with
+// 6.3.2.3p5). Read back from memory it is converted again
+// (mem_inttoptr_copy); kept in a register it points outside the program, and
+// a comparison with such a pointer compares addresses (#137).
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: KNOWNBUG
 #include <stdint.h>
 #include <stdlib.h>
 extern void __VERIFIER_assert(int);

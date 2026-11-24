@@ -14,7 +14,6 @@ namespace vereda::memory {
 
 static const unsigned ObjBits = 32;
 static const int64_t IntProvenance = -1; // a byte that holds no pointer
-static const uint64_t Outside = 1;       // the memory outside the program
 
 Memory::Memory(encode::Terms &t, const DataLayout &dl)
     : t(t), s(t.solver()), dl(dl), ptrBits(dl.getPointerSizeInBits(0)) {
@@ -26,8 +25,6 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
   // true, which left bases[0] free and a stored null read back non-null.
   s.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
   objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), false});
-  s.addConstraint(t.eq(base(t.bv(Outside, ObjBits)), t.bv(0, ptrBits)));
-  objects.push_back({t.bv(0, ptrBits), t.bvnot(t.bv(0, ptrBits)), false});
   end = t.bv(1, ptrBits); // no object at address 0
 }
 
@@ -115,13 +112,18 @@ SMTExprRef Memory::global(const GlobalValue *g) const {
 
 SMTExprRef Memory::address(SMTExprRef p) { return t.add(base(object(p)), offset(p)); }
 
+SMTExprRef Memory::equal(SMTExprRef p, SMTExprRef q) {
+  SMTExprRef outside = t.lor(t.eq(object(p), t.bv(0, ObjBits)), t.eq(object(q), t.bv(0, ObjBits)));
+  return t.lor(t.land(outside, t.eq(address(p), address(q))),
+               t.land(t.lnot(outside), t.eq(p, q)));
+}
+
 SMTExprRef Memory::fromAddress(SMTExprRef a) {
   // One comparison per exposed object created so far. The object and the
   // offset are built apart, so that object() of the result is a choice
   // among constants.
-  SMTExprRef obj = t.ite(t.eq(a, t.bv(0, ptrBits)), t.bv(0, ObjBits), t.bv(Outside, ObjBits));
-  SMTExprRef off = a; // base 0, for null and outside
-  for (unsigned id = Outside + 1; id < objects.size(); ++id) {
+  SMTExprRef obj = t.bv(0, ObjBits), off = a; // null, or outside the program
+  for (unsigned id = 1; id < objects.size(); ++id) {
     const Object &o = objects[id];
     if (!o.exposed)
       continue;
@@ -330,7 +332,7 @@ std::vector<uint64_t> Memory::candidates(SMTExprRef p) {
   }
   if (read) // from memory, where only pointers to exposed objects are stored
     for (uint64_t id = 0; id < objects.size(); ++id)
-      if (id <= Outside || objects[id].exposed)
+      if (id == 0 || objects[id].exposed)
         r.push_back(id);
   llvm::sort(r);
   r.erase(std::unique(r.begin(), r.end()), r.end());
@@ -460,15 +462,13 @@ static unsigned storeBits(const DataLayout &dl, Type *ty) {
 void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {
   unsigned bits = storeBits(dl, ty);
   if (ty->isPointerTy()) {
-    // A pointer outside the program, or with no object but an offset, was
+    // A pointer with no object but an offset, outside the program, was
     // made from an integer, so it is stored as one and a load converts it
     // again (#75). Null keeps object 0 and is never converted. The test is
     // on the offset, which, unlike the address, folds on each side of
     // ite(ok, p, null).
     SMTExprRef obj = object(v);
-    SMTExprRef made = t.lor(t.eq(obj, t.bv(Outside, ObjBits)),
-                            t.land(t.eq(obj, t.bv(0, ObjBits)),
-                                   t.lnot(t.eq(offset(v), t.bv(0, ptrBits)))));
+    SMTExprRef made = t.land(t.eq(obj, t.bv(0, ObjBits)), t.lnot(t.eq(offset(v), t.bv(0, ptrBits))));
     storeBytes(st, p, address(v), t.ite(made, t.bv(IntProvenance, ObjBits), obj));
     return;
   }
@@ -559,9 +559,11 @@ void Memory::havoc(State &st, SMTExprRef p, std::optional<uint64_t> n) {
     return;
   }
   uint64_t o = obj->getZExtValue();
-  if (o == 0 || o >= objects.size())
-    return;
   std::optional<Key> k = key(p);
+  // Null writes nothing; any other pointer with object 0 is into the memory
+  // outside the program, which the call may write as a whole.
+  if (o >= objects.size() || (o == 0 && k && k->second == 0))
+    return;
   const APInt *size = t.constant(objects[o].size);
   if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object
     if (*n > MaxBytes)

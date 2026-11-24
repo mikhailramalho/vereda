@@ -2,21 +2,22 @@
 // section 4.4). A pointer is one bitvector: a 32-bit object id above a
 // pointer-width offset. Memory is one byte array indexed by that pointer,
 // plus a provenance array giving, per byte, the object of a stored pointer.
-// Object 0 is null. Each object has a symbolic base address, above the
-// previous object's end with a gap of at least one byte; addresses matter
-// only for ptrtoint, inttoptr and ordered pointer comparison. Layout
-// constraints hold only on paths where the object exists.
+// Each object has a symbolic base address, above the previous object's end
+// with a gap of at least one byte; addresses matter only for ptrtoint,
+// inttoptr, ordered pointer comparison and comparison with a pointer outside
+// the program. Layout constraints hold only on paths where the object
+// exists.
 //
-// Object 1 is the memory outside the program (issue #137): at base 0, as
-// large as the address space and outside the layout, so its offset is the
-// address. A pointer the program did not make (a call without a body
-// returns one, main gets argv, a nondet or undef pointer) is an integer
-// address converted to a pointer, and fromAddress gives an object only if
-// the program exposed its address (stored it, passed it on, converted it to
-// an integer: the walker decides); any other address is in object 1. So a
-// store through such a pointer cannot reach an object the program kept to
-// itself. Bytes nothing wrote (uninitialised or havocked memory) hold
-// integers, so a pointer read from them is converted the same way.
+// Object 0, at base 0, is null at offset 0 and the memory outside the
+// program at any other (issue #137): its offset is the address. A pointer
+// the program did not make (a call without a body returns one, main gets
+// argv, a nondet or undef pointer) is an integer address converted to a
+// pointer, and fromAddress gives an object only if the program exposed its
+// address (stored it, passed it on, converted it to an integer, compared it:
+// the walker decides); any other address is in object 0. So a store through
+// such a pointer cannot reach an object the program kept to itself. Bytes
+// nothing wrote (uninitialised or havocked memory) hold integers, so a
+// pointer read from them is converted the same way.
 //
 // A byte written at a constant pointer stays in the state's map of known
 // bytes and reaches the arrays only when an access at a pointer that may
@@ -109,8 +110,12 @@ public:
   // The size in bytes of the object with id obj, a pointer-width term.
   camada::SMTExprRef size(camada::SMTExprRef obj);
   camada::SMTExprRef address(camada::SMTExprRef p);   // ptrtoint
-  // inttoptr: the exposed object that holds a, else null for 0 and the
-  // memory outside the program for any other address.
+  // p == q: object and offset equal, or, when one has object 0 (null or
+  // outside the program), the addresses: it may hold the address of an
+  // object allocated since it was converted.
+  camada::SMTExprRef equal(camada::SMTExprRef p, camada::SMTExprRef q);
+  // inttoptr: the exposed object that holds a, else object 0 at offset a
+  // (null, or the memory outside the program).
   camada::SMTExprRef fromAddress(camada::SMTExprRef a);
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
@@ -150,8 +155,8 @@ private:
   // of the objects p may point into.
   void prepare(State &st, camada::SMTExprRef p);
   // The objects p may point into: the constants its object chooses among,
-  // and, where that object was read from memory, null, the memory outside
-  // the program and every exposed object.
+  // and, where that object was read from memory, object 0 and every exposed
+  // object.
   std::vector<uint64_t> candidates(camada::SMTExprRef p);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
