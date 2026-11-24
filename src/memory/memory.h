@@ -26,7 +26,9 @@
 // scalar globals and locals at a fixed address then never touch the arrays.
 // At a join, an object whose two sides hold different values that multiply,
 // divide or take a remainder goes to the arrays, so that the solver works on
-// that arithmetic only where a read needs it.
+// that arithmetic only where a read needs it; so does one whose two sides
+// differ in many bytes, which one choice of arrays joins more cheaply than a
+// choice per byte.
 //
 // A fill that covers a whole object of at least MinSeparate bytes (memset,
 // calloc, a zeroed global) gives the object arrays of its own, constant
@@ -186,8 +188,11 @@ private:
   void prepare(State &st, camada::SMTExprRef p);
   // The objects p may point into: the constants its object chooses among,
   // and, where that object was read from memory, object 0 and every exposed
-  // object. Without integers, none for an object fromAddress made.
-  std::vector<uint64_t> candidates(camada::SMTExprRef p, bool integers = true);
+  // object. Without integers, none for an object fromAddress made. With
+  // read, it leaves out object 0 and the exposed objects and sets *read to
+  // whether p's object was read from memory.
+  std::vector<uint64_t> candidates(camada::SMTExprRef p, bool integers = true,
+                                   bool *read = nullptr);
   // havoc, with prov the provenance of the bytes of a whole object written.
   void havocWith(State &st, camada::SMTExprRef p, std::optional<uint64_t> n,
                  camada::SMTExprRef prov);
