@@ -45,18 +45,27 @@ public:
   unsigned symbolCount() const { return freshCount; }
 
   camada::SMTSortRef sort(llvm::Type *ty);
-  // Terms the path being walked makes equal to a bitvector constant, from
-  // its assumptions and branches (Terms::equalities): value() returns the
-  // constant in their place, so that what is built from them folds. The
-  // walker keeps them per path, so they are a persistent map (cellmap.h)
-  // that each arrival copies as a pointer: the key is the term's address,
-  // the cell's data the constant and its provenance the term, which keeps
-  // the address from being reused.
-  using Facts = memory::CellMap;
+  // What the path being walked knows of a term from its assumptions and
+  // branches: a bitvector constant it equals (Terms::equalities), which
+  // value() returns in its place so that what is built from it folds, and
+  // bounds (Terms::narrow), by which a comparison of it folds as it is
+  // encoded. Keyed by the term's id; terms live as long as the solver.
+  struct Fact {
+    Term constant;
+    std::optional<Terms::Bounds> bounds;
+    bool operator==(const Fact &o) const = default;
+  };
+  // The walker keeps them per path, in a persistent map (cellmap.h) that
+  // each arrival copies as a pointer.
+  using Facts = memory::Trie<Fact>;
   Facts facts;
   static Facts::Key key(const Term &x) {
     return {reinterpret_cast<uintptr_t>(x.id()), 0};
   }
+  // Adds to into what cond, which holds on its path, says of its terms.
+  void learn(const Term &cond, Facts &into);
+  // What two paths' facts on one term both say, if anything: for a join.
+  static std::optional<Fact> join(const Fact &a, const Fact &b);
   // The term bound to v, with facts applied, or a constant. Undef and
   // poison are a fresh value per use.
   Term value(const llvm::Value *v);
