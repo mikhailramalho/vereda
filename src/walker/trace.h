@@ -10,14 +10,18 @@ namespace vereda::walker {
 
 struct Step {
   // Call: the value a bodyless __VERIFIER_nondet_ function returned, for
-  // the witness.
-  enum Kind { Assignment, Assumption, Check, Call } kind;
-  camada::SMTExprRef guard; // path condition at the step; for Check, the violation
+  // the witness. Branch: a branch that decides a source condition (see
+  // ir::branchSite) taken one way, for the witness.
+  enum Kind { Assignment, Assumption, Check, Call, Branch } kind;
+  // Path condition at the step; for Check, the violation; for Branch, the
+  // path condition with the branch taken.
+  camada::SMTExprRef guard;
   // For Check, where the witness puts the violation: the call to
-  // reach_error when the check is inside it.
+  // reach_error when the check is inside it. For Branch, ir::BranchSite's.
   ir::SourceLoc loc;
   // The variable, the assumed expression or the callee; for Check,
-  // "reach_error" when the violation is a call to it.
+  // "reach_error" when the violation is a call to it; for Branch, the
+  // condition's value, "true" or "false".
   std::string text;
   camada::SMTExprRef value; // assignments and calls only
   bool isUnsigned = false;  // from the debug type; bitvectors carry no sign

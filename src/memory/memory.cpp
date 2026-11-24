@@ -15,6 +15,10 @@ namespace vereda::memory {
 static const unsigned ObjBits = 32;
 static const int64_t IntProvenance = -1; // a byte that holds no pointer
 
+static unsigned storeBits(const DataLayout &dl, Type *ty) {
+  return 8 * dl.getTypeStoreSize(ty).getFixedValue();
+}
+
 Memory::Memory(encode::Terms &t, const DataLayout &dl)
     : t(t), s(t.solver()), dl(dl), ptrBits(dl.getPointerSizeInBits(0)) {
   if (dl.isBigEndian())
@@ -250,6 +254,69 @@ State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, SMTExprRef
   return {t.store(own.data, i, t.bvor(kept, t.shl(t.zext(c.data, n - 8), sh))), own.prov};
 }
 
+void Memory::summarise(State &st, SMTExprRef first, uint64_t stride, Type *ty, SMTExprRef count,
+                       Iteration iteration) {
+  uint64_t o = t.constant(object(first))->getZExtValue();
+  flush(st, o);
+  const State::Cell *own = st.separate.find({o, 0});
+  State::Cell below = own ? *own : State::Cell{st.data, st.prov};
+  bool byOffset = own && owned.count(o);
+  // An object of elements (#118) is read and written only as whole values
+  // of ty, at multiples of their size: an element is a value or none.
+  unsigned shift = byOffset ? shifts.lookup(o) : 0, bits = storeBits(dl, ty);
+  assert((!shift || bits == 8u << shift) && "the loop's store is an access of an element");
+  SMTExprRef start = offset(first), objectId = t.bv(o, ObjBits), intProv = t.bv(IntProvenance, ObjBits);
+  // The element at index j of the arrays: whether the loop wrote it, and
+  // what, unless j is in another object.
+  auto at = [=, this](const SMTExprRef &j) -> std::pair<SMTExprRef, SMTExprRef> {
+    SMTExprRef in = byOffset ? t.boolean(true) : t.eq(object(j), objectId);
+    if (t.isFalse(in))
+      return {in, {}};
+    SMTExprRef off = !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
+    SMTExprRef d = t.sub(off, start), n, b;
+    if (isPowerOf2_64(stride)) {
+      n = t.lshr(d, t.bv(Log2_64(stride), ptrBits));
+      b = t.bvand(d, t.bv(stride - 1, ptrBits));
+    } else {
+      n = t.udiv(d, t.bv(stride, ptrBits));
+      b = t.urem(d, t.bv(stride, ptrBits));
+    }
+    auto [stored, v] = iteration(n);
+    in = t.land(in, t.land(t.land(t.ult(n, count), t.ult(b, t.bv(bits / 8, ptrBits))), stored));
+    if (ty->isIntegerTy(1))
+      v = t.ite(v, t.bv(1, 8), t.bv(0, 8));
+    else if (v->getWidth() < bits)
+      v = t.zext(v, bits - v->getWidth());
+    if (shift)
+      return {in, v};
+    SMTExprRef r = t.extract(v, 7, 0);
+    for (unsigned i = 1; i < bits / 8; ++i)
+      r = t.ite(t.eq(b, t.bv(i, ptrBits)), t.extract(v, 8 * i + 7, 8 * i), r);
+    return {in, r};
+  };
+  SMTSortRef index = !byOffset ? pointerSort() : s.mkBVSort(ptrBits - shift);
+  std::string n = std::to_string(fresh++);
+  State::Cell after{t.lambda(s.mkArraySort(index, s.mkBVSort(8u << shift)), "summary#" + n,
+                             [=, this](const SMTExprRef &j) {
+                               auto [in, v] = at(j);
+                               SMTExprRef old = t.select(below.data, j);
+                               return t.isFalse(in) ? old : t.ite(in, v, old);
+                             }),
+                    below.prov};
+  // An object of elements has no provenance array: it holds no pointer.
+  if (!shift)
+    after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)), "summary_provenance#" + n,
+                          [=, this](const SMTExprRef &j) {
+                            SMTExprRef old = t.select(below.prov, j);
+                            return old.get() == intProv.get() ? old
+                                                              : t.ite(at(j).first, intProv, old);
+                          });
+  if (own)
+    st.separate.set({o, 0}, after);
+  else
+    st.data = after.data, st.prov = after.prov;
+}
+
 void Memory::storeArrays(State &st, uint64_t object, SMTExprRef at, const State::Cell &c) {
   if (const State::Cell *own = st.separate.find({object, 0})) {
     st.separate.set({object, 0}, storeOwn(object, *own, at, c));
@@ -460,10 +527,6 @@ void Memory::storeBytes(State &st, SMTExprRef p, SMTExprRef bits, SMTExprRef pro
   prepare(st, p);
   for (unsigned i = 0; i < n; ++i)
     writeByte(st, bytePtr(p, i), {t.extract(bits, 8 * i + 7, 8 * i), prov});
-}
-
-static unsigned storeBits(const DataLayout &dl, Type *ty) {
-  return 8 * dl.getTypeStoreSize(ty).getFixedValue();
 }
 
 void Memory::store(State &st, SMTExprRef p, SMTExprRef v, Type *ty) {

@@ -22,9 +22,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_rejected
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops --unwind 12 --no-unwinding-assertions
-// MODE: FUTURE
+// RUN: --unwind 12 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Summarised 1 array loop\(s\)$
-// Vereda: verdict none
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

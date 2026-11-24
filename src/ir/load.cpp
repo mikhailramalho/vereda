@@ -486,7 +486,8 @@ static void lowerInlineAsm(Module &m) {
 // walker reads as one fresh value. A call, not freeze poison: InstCombine
 // may replace that by any constant. Each call is tagged with the variable it
 // stands for, so that dropUninitialisedRecords can remove the assignment of
-// it that mem2reg would put in the trace.
+// it that mem2reg would put in the trace. A scalar local never read before
+// it is written gets none (writtenBeforeRead).
 //
 // A local that holds an array, or a variable-length array, stays in memory,
 // whose untouched bytes the walker reads as one unknown value already. But
@@ -495,6 +496,31 @@ static void lowerInlineAsm(Module &m) {
 // argument and does not capture it, right after the alloca keeps them from
 // folding; the walker treats it as a no-op.
 static const char *UninitialisedMD = "vereda.uninitialised";
+
+// Whether scalar local a is only stored to and loaded, each load after a
+// store on every path to it: then no read sees it uninitialised and
+// nondetLocals leaves it alone. Its nondet value would be dead, and would
+// cost a store in the entry block, from which mem2reg walks the whole
+// dominator tree, once per local; on btor2c's tasks, tens of thousands of
+// locals in one main of thousands of blocks, that was most of IR
+// preparation.
+static bool writtenBeforeRead(AllocaInst *a, const DominatorTree &dt) {
+  Type *ty = a->getAllocatedType();
+  SmallVector<StoreInst *, 2> stores;
+  SmallVector<LoadInst *, 4> loads;
+  for (User *u : a->users()) {
+    if (auto *st = dyn_cast<StoreInst>(u); st && st->getPointerOperand() == a &&
+                                           st->isSimple() && st->getValueOperand()->getType() == ty)
+      stores.push_back(st);
+    else if (auto *ld = dyn_cast<LoadInst>(u); ld && ld->isSimple() && ld->getType() == ty)
+      loads.push_back(ld);
+    else
+      return false;
+  }
+  return all_of(loads, [&](LoadInst *ld) {
+    return any_of(stores, [&](StoreInst *st) { return dt.dominates(st, ld); });
+  });
+}
 
 static void nondetLocals(Module &m) {
   DenseMap<Type *, FunctionCallee> nondet;
@@ -515,10 +541,15 @@ static void nondetLocals(Module &m) {
   for (Function &f : m) {
     if (f.isDeclaration())
       continue;
+    // Decided before anything is inserted, which would make each dominance
+    // query within the entry block renumber it.
+    DominatorTree dt(f);
     SmallVector<AllocaInst *, 8> locals;
     for (Instruction &inst : instructions(f))
       if (auto *a = dyn_cast<AllocaInst>(&inst))
-        locals.push_back(a);
+        if (!a->isStaticAlloca() || a->isArrayAllocation() || !scalar(a->getAllocatedType()) ||
+            !writtenBeforeRead(a, dt))
+          locals.push_back(a);
     for (AllocaInst *a : locals) {
       IRBuilder<> b(a->getNextNode());
       b.SetCurrentDebugLocation(DebugLoc()); // no source line: not a store to show

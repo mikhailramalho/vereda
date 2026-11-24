@@ -13,8 +13,4 @@ int main()
     __VERIFIER_assert(arr[i] == i); // arr[i] == i
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

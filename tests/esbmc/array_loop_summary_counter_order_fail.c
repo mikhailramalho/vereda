@@ -7,8 +7,4 @@ int main() {
   __VERIFIER_assert(x == y + 1);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_counter_order_fail
-// Needs: --summarize-array-loops
-// RUN: --summarize-array-loops
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
