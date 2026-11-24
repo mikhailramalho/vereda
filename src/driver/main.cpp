@@ -73,8 +73,12 @@ static cl::opt<Property> property(
                           "a call to reach_error, whose body is not walked"),
                clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check")),
     cl::init(Property::All));
-static cl::opt<std::string> solverName("solver", cl::desc("SMT solver: bitwuzla, z3, cvc5"),
-                                       cl::init("bitwuzla"));
+static cl::opt<camada::SolverKind> solverKind(
+    "solver", cl::desc("SMT solver"),
+    cl::values(clEnumValN(camada::SolverKind::Bitwuzla, "bitwuzla", "Bitwuzla (default)"),
+               clEnumValN(camada::SolverKind::Z3, "z3", "Z3"),
+               clEnumValN(camada::SolverKind::CVC5, "cvc5", "cvc5")),
+    cl::init(camada::SolverKind::Bitwuzla));
 
 static void printVersion(raw_ostream &os) {
   os << "Vereda " VEREDA_VERSION " (LLVM " LLVM_VERSION_STRING ", camada " VEREDA_CAMADA_VERSION
@@ -126,7 +130,7 @@ static const int BoundTooSmall = -1;
 // assertion is not a verdict but BoundTooSmall; an unknown from the solver
 // still ends the run, as in ESBMC.
 static int bmc(Function &fn, unsigned bound) {
-  Expected<camada::SMTSolverRef> created = vereda::solver::create(solverName);
+  Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
     return 1;

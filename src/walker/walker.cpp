@@ -130,13 +130,21 @@ public:
   void entry(Function &f) {
     for (Argument &arg : f.args())
       enc.bind(&arg, enc.fresh(arg.getType(), "arg_" + arg.getName().str()));
-    const Module &m = *f.getParent();
-    mem.allocateGlobals(m, [this](const GlobalValue *g) { return exposed(g); });
+    Module &m = *f.getParent();
+    // A global only declared is defined outside the program, which knows
+    // its address.
+    mem.allocateGlobals(m, [this](const GlobalValue *g) {
+      return g->isDeclaration() || exposed(g);
+    });
     memory::State st = mem.initial();
     for (const GlobalVariable &g : m.globals())
       if (unsigned bits = ownsArrays(&g, m.getDataLayout()))
         mem.own(st, mem.global(&g), bits);
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
+    errnoObject = m.getNamedGlobal("__vereda_errno");
+    for (GlobalVariable &g : m.globals())
+      if (g.isDeclaration() && !g.isConstant() && !g.getName().starts_with("__vereda_"))
+        externs.push_back(&g);
     function(f, t.boolean(true), st);
   }
 
@@ -516,7 +524,8 @@ private:
     if (name == "pthread_create")
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // These write a formatted string, or what they scan, through a va_list,
-    // which a bodyless call does not do (no model yet), so they refuse too.
+    // which a bodyless call does not do (models/printf.c has the ones that
+    // print to memory), so they refuse too.
     if (writesThroughVaList(name))
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // From ir's lowering of longjmp: a jump no frame on the stack resumes.
@@ -548,8 +557,10 @@ private:
       SMTExprRef v = enc.fresh(c.getType(), tag);
       enc.bind(&c, v);
       // For the witness, which reads the value's type from the callee: not
-      // for a call through a mismatched signature.
-      if (c.getCalledFunction())
+      // for a call whose result type differs from it. One declared without
+      // a prototype, as in many SV-COMP tasks, is variadic and called
+      // without the "...", but returns the same type.
+      if (c.getType() == callee->getReturnType())
         trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
       return guard;
     }
@@ -592,11 +603,14 @@ private:
     // constant and what its attributes, which LLVM infers for the C library,
     // say it only reads. With a constant format without positional
     // arguments, scanf writes its variadic arguments as scan says, and
-    // printf none unless the format has a %n. It may also write through
-    // pointers stored in those objects, or to globals, which this does not
-    // cover. The mutex and condition-variable calls write only the lock or
-    // condition they get, which the program does not read, so they write
-    // nothing here and keep the rest of an object holding one.
+    // printf none unless the format has a %n. Unless its attributes say it
+    // writes only its arguments' memory, it may also write errno and every
+    // global the program declares without defining (optind, environ, a
+    // variable of a file not given), as they belong to code Vereda does not
+    // see. It may also write through pointers stored in those objects, which
+    // this does not cover. The mutex and condition-variable calls write only
+    // the lock or condition they get, which the program does not read, so
+    // they write nothing here and keep the rest of an object holding one.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -607,13 +621,20 @@ private:
     if (scanf || (format && name.ends_with("printf") &&
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
-    if (!c.onlyReadsMemory() && !writesOnlyLock(name))
+    if (!c.onlyReadsMemory() && !writesOnlyLock(name)) {
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
           havoc(st, a, std::nullopt, guard);
       }
+      MemoryEffects effects = c.getMemoryEffects();
+      if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
+        havoc(st, errnoObject, std::nullopt, guard);
+      if (isModSet(effects.getModRef(IRMemLocation::Other)))
+        for (GlobalVariable *g : externs)
+          havoc(st, g, std::nullopt, guard);
+    }
     if (scanf)
       return scan(c, f, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
@@ -732,13 +753,12 @@ private:
     return after;
   }
 
-  // vsprintf, vsnprintf, vasprintf and the v*scanf, under glibc's names too.
+  // The v*scanf and vswprintf, under glibc's names too.
   static bool writesThroughVaList(StringRef name) {
     name.consume_front("__isoc99_") || name.consume_front("__isoc23_") ||
         (name.consume_front("__") && name.consume_back("_chk"));
-    return is_contained<StringRef>({"vsprintf", "vsnprintf", "vasprintf", "vscanf", "vfscanf",
-                                    "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"},
-                                   name);
+    return is_contained<StringRef>(
+        {"vscanf", "vfscanf", "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"}, name);
   }
 
   static bool writesOnlyLock(StringRef name) {
@@ -1154,12 +1174,14 @@ private:
       ok = t.land(ok, enc.fresh(Type::getInt1Ty(c.getContext()), "malloc_succeeds"));
     SMTExprRef p = mem.allocate(size, 16, t.land(guard, ok));
     if (isCalloc) {
-      // A product beyond the largest object makes ok false: nothing to zero.
-      uint64_t n;
-      if (!__builtin_mul_overflow(constantSize(c.getArgOperand(0), guard, "calloc"),
-                                  constantSize(c.getArgOperand(1), guard, "calloc"), &n) &&
-          isUIntN(bits - 1, n))
-        mem.set(st, p, t.bv(0, 8), n);
+      // A size that is not constant gets a constant array of zeros, whatever
+      // it is on the path. A product beyond the largest object makes ok
+      // false: nothing to zero.
+      const APInt *n = t.constant(size);
+      if (!n)
+        mem.fill(st, p, t.bv(0, 8));
+      else if (!t.isFalse(ok))
+        mem.set(st, p, t.bv(0, 8), n->getZExtValue());
     }
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
@@ -1185,6 +1207,12 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
+  // What a call without a body may write besides its arguments' objects:
+  // errno, and the writable globals the program declares without defining,
+  // except the models' stdin, stdout and stderr objects, whose contents no
+  // program reads and which a call that gets the stream writes anyway.
+  GlobalVariable *errnoObject = nullptr;
+  SmallVector<GlobalVariable *, 4> externs;
 };
 
 } // namespace

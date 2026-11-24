@@ -576,6 +576,18 @@ bool Encoder::intrinsic(CallBase &c) {
     bind(&c, r);
     return true;
   }
+  // Funnel shifts, as LangRef defines them: shift the concatenation a:b by
+  // the amount modulo N and keep the high (fshl) or low (fshr) N bits. The
+  // 2N-bit shift never reaches 2N, so an amount of 0 gives a or b unshifted.
+  if (f->getIntrinsicID() == Intrinsic::fshl || f->getIntrinsicID() == Intrinsic::fshr) {
+    SMTExprRef a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
+    unsigned n = a->getWidth();
+    SMTExprRef by = t.zext(t.urem(value(c.getArgOperand(2)), t.bv(n, n)), n);
+    bind(&c, f->getIntrinsicID() == Intrinsic::fshl
+                 ? t.extract(t.shl(t.concat(a, b), by), 2 * n - 1, n)
+                 : t.extract(t.lshr(t.concat(a, b), by), n - 1, 0));
+    return true;
+  }
   SMTExprRef (Terms::*op)(const SMTExprRef &, const SMTExprRef &) = nullptr;
   SMTExprRef (Terms::*less)(const SMTExprRef &, const SMTExprRef &) = &Terms::slt;
   switch (f->getIntrinsicID()) { // InstCombine's min and max
