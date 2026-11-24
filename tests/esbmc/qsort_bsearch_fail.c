@@ -21,7 +21,7 @@ int main(void)
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
 // EXPECT: FAILED\s+\[main.assertion.2\].*a\[0\] == 3
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// Vereda: the comparators compile to llvm.scmp, which the encoder does not support yet
+// Vereda: unmet EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
+// Vereda: the verdict is right; Vereda proves the bsearch assertion while walking, so it lists only the other one, as main.assertion.1, and names it by __assert_fail, not by its condition
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED
