@@ -15,6 +15,7 @@
 #include <llvm/Support/WithColor.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -57,6 +58,15 @@ static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
                                               "until a verdict or the time limit"));
 static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremental-bmc by this"),
                                cl::init(1));
+static cl::opt<unsigned> kStepFrom("k-step-from",
+                                   cl::desc("Raise the bound of --incremental-bmc by 1 up to "
+                                            "this bound and by --k-step from it"),
+                                   cl::init(1));
+static cl::opt<unsigned> kStepFromTimeLimit(
+    "k-step-from-time-limit",
+    cl::desc("Solve each bound below --k-step-from that --k-step alone would skip for at most "
+             "this many seconds, and go on to the next bound past that (0: no limit)"),
+    cl::init(0));
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
                                             "first violation"));
@@ -149,14 +159,16 @@ static int finish(int code) {
 }
 
 // What bmc() returns under --incremental-bmc when a loop or recursion needs
-// a larger bound.
+// a larger bound, or the solve ran past its limit.
 static const int BoundTooSmall = -1;
 
 // Walks fn with the given bound, solves and prints the verdict; returns the
 // exit code. Under --incremental-bmc, a failed unwinding or recursion
 // assertion is not a verdict but BoundTooSmall, with unwindsAt set to its
-// (checks.h); an unknown from the solver still ends the run, as in ESBMC.
-static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
+// (checks.h), and so is a solve that runs past a nonzero limit; any other
+// unknown from the solver still ends the run, as in ESBMC.
+static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr,
+               std::chrono::seconds limit = {}) {
   Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
@@ -250,10 +262,14 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
           else
             os << *witness;
         }
-      });
+      }, limit);
   if (!traced)
     solvingTime();
 
+  if (verdict.timedOut) {
+    outs() << "Bound " << bound << " passed over: no answer in " << limit.count() << " s\n";
+    return BoundTooSmall;
+  }
   if (verdict.kind == vereda::solver::Verdict::Unknown)
     return finish(unknown(verdict.detail));
 
@@ -350,7 +366,8 @@ int main(int argc, char **argv) {
   }
 
   if (!incrementalBMC) {
-    cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
+    cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep, &kStepFrom,
+                                &kStepFromTimeLimit};
     for (cl::Option *o : boundFlags)
       if (o->getNumOccurrences()) {
         errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
@@ -376,17 +393,31 @@ int main(int argc, char **argv) {
   // are skipped, but the bound at most doubles, so that a bug in an early
   // iteration of a long loop does not wait for a walk of all of it. The
   // largest bound is never skipped.
+  //
+  // Below --k-step-from the bound rises by 1. A bound this adds to those of
+  // --k-step finds a bug that needs it without the next bound's solve, which
+  // can be far slower, but its own solve can be the slow one: proving that
+  // bound 2 has no bug can take minutes where bound 3 finds one at once. So
+  // such a bound gets --k-step-from-time-limit, past which the run goes on
+  // to the next bound: a bug a bound finds, every larger bound finds too
+  // (docs/survey/2026-11-24-bound-2-with-a-time-limit.md). It does not count
+  // as the bound last walked, so the other bounds are those of --k-step.
   unsigned unwindsAt = 0, walked = 0;
-  for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k += kStep) {
-    if ((unlimitedKSteps || k + kStep <= maxKStep) && k < std::min(unwindsAt, 2 * walked))
+  auto next = [](unsigned k) { return k + (k < kStepFrom ? 1 : kStep); };
+  for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k = next(k)) {
+    bool largest = !unlimitedKSteps && next(k) > maxKStep;
+    if (!largest && k < std::min(unwindsAt, 2 * walked))
       continue;
-    walked = k;
+    bool added = !largest && k < kStepFrom && (k - 1) % kStep != 0;
+    if (!added)
+      walked = k;
     // A new walk and solver per bound, as ESBMC: the walk merges the paths
     // leaving a loop, so a larger bound changes everything after it. (One
     // solver with a scope per bound was measured and not kept; see
     // docs/survey/2026-11-22-incremental-bmc.md.)
     progress("Checking bound k = " + std::to_string(k));
-    if (int r = bmc(*fn, k, &unwindsAt); r != BoundTooSmall)
+    if (int r = bmc(*fn, k, &unwindsAt, std::chrono::seconds(added ? kStepFromTimeLimit : 0));
+        r != BoundTooSmall)
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
