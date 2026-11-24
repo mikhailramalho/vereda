@@ -17,9 +17,12 @@
 #include <llvm/ADT/STLFunctionalExtras.h>
 #include <llvm/ADT/Twine.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <bit>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -28,17 +31,18 @@ namespace vereda::encode {
 
 // A term of Terms: a bit-vector constant it interned, or a term of the
 // solver. It does not convert to camada's handle, so every term that goes
-// to camada passes through Terms::solverTerm. Its identity is one pointer,
-// the constant's entry or the solver's term: copies of a term compare equal,
-// and maps key a term by id().
+// to camada passes through Terms::solverTerm. It is one pointer, the
+// solver's handle or, with the low bit set, the constant's entry, so its
+// identity is that pointer: copies of a term compare equal, and maps key a
+// term by id().
 class Term {
 public:
   Term() = default;
-  explicit operator bool() const { return key; }
-  const void *id() const { return key; }
-  bool operator==(const Term &o) const { return key == o.key; }
-  bool isBool() const { return ref && ref->isBoolSort(); }
-  unsigned width() const { return ref ? ref->getWidth() : entry()->value.getBitWidth(); }
+  explicit operator bool() const { return bits; }
+  const void *id() const { return reinterpret_cast<const void *>(bits); }
+  bool operator==(const Term &o) const { return bits == o.bits; }
+  bool isBool() const { return bits && !entry() && ref()->isBoolSort(); }
+  unsigned width() const { return entry() ? entry()->value.getBitWidth() : ref()->getWidth(); }
 
 private:
   friend class Terms;
@@ -46,13 +50,23 @@ private:
     llvm::APInt value;
     mutable camada::SMTExprRef term; // the solver's, once made
   };
-  explicit Term(const Constant *c) : key(c) {}
-  explicit Term(const camada::SMTExprRef &r) : key(r.get()), ref(r) {}
+  // A handle is one pointer only while camada's handles are unchecked, as in
+  // its release archives; checked ones would make a Term twice the size.
+  static_assert(sizeof(camada::SMTExprRef) == sizeof(uintptr_t) &&
+                    std::is_trivially_copyable_v<camada::SMTExprRef>,
+                "Term needs camada built with CAMADA_CHECKED_HANDLES=OFF");
+  explicit Term(const Constant *c) : bits(reinterpret_cast<uintptr_t>(c) | 1) {}
+  explicit Term(const camada::SMTExprRef &r) : bits(std::bit_cast<uintptr_t>(r)) {}
   // The constant's entry, or null for a solver term.
-  const Constant *entry() const { return ref ? nullptr : static_cast<const Constant *>(key); }
+  const Constant *entry() const {
+    return bits & 1 ? reinterpret_cast<const Constant *>(bits - 1) : nullptr;
+  }
+  // The solver's term; null for a constant.
+  camada::SMTExprRef ref() const {
+    return bits & 1 ? camada::SMTExprRef() : std::bit_cast<camada::SMTExprRef>(bits);
+  }
 
-  const void *key = nullptr; // the entry, or the solver's term
-  camada::SMTExprRef ref;    // the solver's term; null for a constant
+  uintptr_t bits = 0; // both an entry and a solver term are aligned
 };
 
 class Terms {

@@ -40,7 +40,7 @@ Ref Terms::boolean(bool b) { return bools[b]; }
 camada::SMTExprRef Terms::solverTerm(const Ref &e) {
   const Term::Constant *c = e.entry();
   if (!c)
-    return e.ref;
+    return e.ref();
   if (!c->term) {
     // Up to 64 bits, camada hands the value to the solver as an integer;
     // a string of digits would be parsed back, twice in Bitwuzla.
