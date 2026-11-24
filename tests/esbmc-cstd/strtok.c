@@ -23,6 +23,3 @@ int main ()
 // Imported from ESBMC regression/cstd/strtok
 // RUN: --unwind 7
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED
