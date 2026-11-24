@@ -14,5 +14,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8240_fail
+// Needs: __CPROVER_OBJECT_SIZE __CPROVER_r_ok
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

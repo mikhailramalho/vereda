@@ -8,10 +8,14 @@ proved (issue #13). Such a call now gives nondet contents to the whole object
 each pointer argument points to, unless the argument is a constant global or
 LLVM's `inferattrs`, now the last pass before the models are linked, marks it
 read-only (the format of printf, the source of sscanf, the buffer of fwrite).
-Variadic arguments stay untouched except for the scanf family, whose
-constant format says which argument gets how many bytes and which are
-written for each result r; a format that is not a constant writes every
-argument's whole object. `__VERIFIER_nondet_memory(p, n)` writes n nondet
+Variadic pointer arguments get the same, except for the scanf family, whose
+constant format says which argument gets how many bytes and which are written
+for each result r, and the printf family, which writes none unless its
+constant format has a `%n`. A format that is not a constant, or that names
+arguments by position (`%1$d`), writes every argument's whole object, and
+scanf's result is then any int. The format is read as glibc reads it: `%S`
+and `%C` are `%ls` and `%lc`, `%llf` and `%qf` are `%Lf`, `%ms` writes a
+pointer, and a conversion it does not know writes the whole object. `__VERIFIER_nondet_memory(p, n)` writes n nondet
 bytes at p the same way.
 
 A pointer whose object is not a constant term (loaded after a store at a
@@ -23,13 +27,15 @@ may point anywhere, wipe the whole memory, so it was not built.
 
 stdin, stdout and stderr and the streams fopen, fdopen, tmpfile and freopen
 return are now objects of a model (`models/stdio.c`), so that a stream
-argument has one object; every opened stream is the same object, or null.
+argument has one object; each opened stream is a new heap object, or null.
 fmemopen and open_memstream stay bodyless: their streams write the program's
 own buffer, which a fixed stream object would hide, so calls on them are
-UNKNOWN. The pthread functions and `__CPROVER_uninterpreted_*` write nothing:
-threads are not modelled, and an uninterpreted function is pure. Writes
-through pointers stored inside the objects, and to globals, stay unmodelled,
-as does printf's `%n`.
+UNKNOWN. The pthread functions write nothing, as threads are not modelled.
+ESBMC's and CBMC's builtins (`__ESBMC_*`, `__CPROVER_*`) get no special case,
+as Vereda supports only the `__VERIFIER_*` ones: a call to one is a bodyless
+call like any other, so tests that pass a pointer to one (`__ESBMC_same_object`,
+`__CPROVER_r_ok`) may give UNKNOWN and are FUTURE with a `// Needs:` line. Writes
+through pointers stored inside the objects, and to globals, stay unmodelled.
 
 On the imported ESBMC tests whose linked IR calls a bodyless function that
 may write through a pointer (1,209 tests), 20 FUTURE tests now give the

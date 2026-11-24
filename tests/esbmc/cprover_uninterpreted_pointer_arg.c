@@ -18,5 +18,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cprover_uninterpreted_pointer_arg
+// Needs: __CPROVER_uninterpreted_hasher
 // RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict FAILED

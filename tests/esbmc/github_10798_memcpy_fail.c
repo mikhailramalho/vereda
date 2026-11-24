@@ -18,4 +18,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10798_memcpy_fail
+// Needs: __ESBMC_POINTER_OBJECT __ESBMC_same_object
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

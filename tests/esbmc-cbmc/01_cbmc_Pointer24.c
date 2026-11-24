@@ -13,7 +13,8 @@ int main()
   assert(!__ESBMC_same_object(p, 0));
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer24
+// Needs: __ESBMC_same_object
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: verdict UNKNOWN
