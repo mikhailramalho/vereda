@@ -269,12 +269,13 @@ private:
   std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known, unsigned depth);
   // The range of n, a term of width bits, from its operands' (range's work).
   std::optional<Range> shape(const Node &n, unsigned width, Known known, unsigned depth);
-  // range's results for one query under known.
-  std::unordered_map<const camada::SMTExpr *, std::optional<Range>> scratch;
+  // range's results for one query under known, cleared per query (a
+  // DenseMap shrinks when it clears, so a large query leaves no cost).
+  llvm::DenseMap<const camada::SMTExpr *, std::optional<Range>> scratch;
   // How many low bits of e, a sum or product, are known to be zero.
   unsigned zeros(const Ref &e, unsigned depth = 0);
   std::unordered_map<const camada::SMTExpr *, std::pair<Ref, uint64_t>> bounds;
-  std::unordered_map<const camada::SMTExpr *, std::optional<Range>> ranges;
+  llvm::DenseMap<const camada::SMTExpr *, std::optional<Range>> ranges;
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const camada::SMTExpr *, std::unordered_set<const camada::SMTExpr *>> freeOf;
 };

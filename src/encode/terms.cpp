@@ -837,7 +837,7 @@ std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned dep
     if (auto it = cache.find(e.get()); it != cache.end())
       r = it->second;
     else
-      cache.emplace(e.get(), r = shape(*n, e->getWidth(), known, depth));
+      cache.try_emplace(e.get(), r = shape(*n, e->getWidth(), known, depth));
   }
   std::optional<Bounds> f = known ? known(e) : std::nullopt;
   if (!f)
