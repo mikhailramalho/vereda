@@ -154,6 +154,26 @@ jobs:
           cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
           tool/vereda.py --version
 
+      - name: Probe (temporary)
+        continue-on-error: true
+        run: |
+          set -x
+          orig=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || true
+          cat /proc/self/cgroup
+          cat /sys/fs/cgroup/cgroup.subtree_control
+          cat /sys/fs/cgroup/cgroup.controllers
+          ls /run/user/ || true
+          echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR DBUS=$DBUS_SESSION_BUS_ADDRESS"
+          systemctl --user is-system-running 2>&1 || true
+          loginctl list-sessions 2>&1 || true
+          python3 -m benchexec.check_cgroups 2>&1 || true
+          containerexec -- /bin/true 2>&1 | tail -5 || true
+          systemd-run --user --scope -p Delegate=yes /bin/true 2>&1 || true
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          containerexec -- /bin/true 2>&1 | tail -5 || true
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=$orig
+          nproc; free -g; lscpu | head -20; df -h / /home /tmp; findmnt -l | head -40
+
       # User namespaces for the containers, and an empty cgroup with every
       # controller for BenchExec (see the header).
       - name: Set up containers and cgroups
