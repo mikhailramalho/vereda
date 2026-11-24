@@ -131,13 +131,17 @@ public:
   void entry(Function &f) {
     for (Argument &arg : f.args())
       enc.bind(&arg, enc.fresh(arg.getType(), "arg_" + arg.getName().str()));
-    const Module &m = *f.getParent();
+    Module &m = *f.getParent();
     mem.allocateGlobals(m);
     memory::State st = mem.initial();
     for (const GlobalVariable &g : m.globals())
       if (unsigned bits = ownsArrays(&g, m.getDataLayout()))
         mem.own(st, mem.global(&g), bits);
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
+    errnoObject = m.getNamedGlobal("__vereda_errno");
+    for (GlobalVariable &g : m.globals())
+      if (g.isDeclaration() && !g.isConstant() && !g.getName().starts_with("__vereda_"))
+        externs.push_back(&g);
     function(f, t.boolean(true), st);
   }
 
@@ -560,10 +564,13 @@ private:
     // constant and what its attributes, which LLVM infers for the C library,
     // say it only reads. With a constant format without positional
     // arguments, scanf writes its variadic arguments as scan says, and
-    // printf none unless the format has a %n. It may also write through
-    // pointers stored in those objects, or to globals, which this does not
-    // cover. The pthread functions write nothing here, as threads are not
-    // modelled yet.
+    // printf none unless the format has a %n. Unless its attributes say it
+    // writes only its arguments' memory, it may also write errno and every
+    // global the program declares without defining (optind, environ, a
+    // variable of a file not given), as they belong to code Vereda does not
+    // see. It may also write through pointers stored in those objects, which
+    // this does not cover. The pthread functions write nothing here, as
+    // threads are not modelled yet.
     if (warned.insert(callee).second)
       util::warning("no body for function " + name);
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
@@ -574,13 +581,20 @@ private:
     if (scanf || (format && name.ends_with("printf") &&
                   none_of(conversions(f), [](const Conversion &cv) { return cv.conv == 'n'; })))
       end = params;
-    if (!c.onlyReadsMemory() && !name.starts_with("pthread_"))
+    if (!c.onlyReadsMemory() && !name.starts_with("pthread_")) {
       for (unsigned i = 0; i < end; ++i) {
         Value *a = c.getArgOperand(i);
         auto *g = dyn_cast<GlobalVariable>(a->stripPointerCasts());
         if (a->getType()->isPointerTy() && !c.onlyReadsMemory(i) && !(g && g->isConstant()))
           havoc(st, name, c, a, std::nullopt, guard);
       }
+      MemoryEffects effects = c.getMemoryEffects();
+      if (errnoObject && isModSet(effects.getModRef(IRMemLocation::ErrnoMem)))
+        havoc(st, name, c, errnoObject, std::nullopt, guard);
+      if (isModSet(effects.getModRef(IRMemLocation::Other)))
+        for (GlobalVariable *g : externs)
+          havoc(st, name, c, g, std::nullopt, guard);
+    }
     if (scanf)
       return scan(c, f, name, tag, guard, st);
     if (!c.getType()->isVoidTy())
@@ -1163,6 +1177,12 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
+  // What a call without a body may write besides its arguments' objects:
+  // errno, and the writable globals the program declares without defining,
+  // except the models' stdin, stdout and stderr objects, whose contents no
+  // program reads and which a call that gets the stream writes anyway.
+  GlobalVariable *errnoObject = nullptr;
+  SmallVector<GlobalVariable *, 4> externs;
 };
 
 } // namespace

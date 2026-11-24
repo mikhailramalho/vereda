@@ -71,10 +71,10 @@ int isspace(int c) { return SPACE(c); }
 int isupper(int c) { return UPPER(c); }
 int isxdigit(int c) { return XDIGIT(c); }
 
-int *__errno_location(void) {
-  static int e;
-  return &e;
-}
+// errno, zero at program start (C17 7.5p3). The walker finds it by name: a
+// call without a body may set it.
+int __vereda_errno;
+int *__errno_location(void) { return &__vereda_errno; }
 
 long __VERIFIER_nondet_long(void);
 
