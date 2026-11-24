@@ -95,6 +95,7 @@ def started(root, binary, clang, test, tmp, memory_limit):
     def limit_memory():
         size = memory_limit << 20
         resource.setrlimit(resource.RLIMIT_AS, (size, size))
+        resource.setrlimit(resource.RLIMIT_FSIZE, (run.OUTPUT_LIMIT, run.OUTPUT_LIMIT))
 
     # The other threads only wait for processes, so the child, which calls
     # nothing but setrlimit before exec, cannot block on a lock they hold.
@@ -138,6 +139,8 @@ def finish(started_run, deadline):
         wall, verdict = ended[0] - start, None
     out.seek(0)
     text = out.read()
+    if verdict is None and run.stopped_note(out.name):  # as run.py, a timeout
+        wall, verdict = None, TIMEOUT
     if verdict is None:
         verdicts = run.VERDICT.findall(text)
         if verdicts:

@@ -1,0 +1,251 @@
+# Runs Vereda on SV-COMP ReachSafety tasks with BenchExec, to catch verdict
+# changes: wrong answers and lost ones. Timing against ESBMC stays on our own
+# machine; shared runners are too noisy for that. Started by hand:
+#   gh workflow run benchexec.yml --ref <branch> -f sets=Loops -f filter='^loops/'
+# build makes the binary once while plan fetches the sv-benchmarks
+# directories the categories need (a partial clone from GitLab, about 50 MB
+# for the four default ones, so no cache) and splits each category into
+# shards of at most 4.5 hours, even if every task ran to its time limit
+# (contrib/benchexec/ci.py). Each shard runs in its own job, two tasks at a
+# time with 2 cores and 6 GB each, in BenchExec's containers. report merges
+# the shards into one table (table-generator), writes the correct, wrong,
+# unknown and timed-out counts per category and the wrong verdicts to the
+# job summary, lists the tasks gained and lost against an earlier run when
+# given one, and fails on a wrong verdict.
+#
+# BenchExec on GitHub's ubuntu-24.04 runners (docs/survey/
+# 2026-11-24-benchexec-on-github-runners.md): its containers need
+# unprivileged user namespaces, which Ubuntu's AppArmor denies there
+# (kernel.apparmor_restrict_unprivileged_userns is 1) until the sysctl is 0.
+# It also needs a cgroup of its own with the cpuset, cpu, io, memory and pids
+# controllers. Steps run in the runner service's cgroup, and the runner
+# user's systemd manager gets no cpuset without a drop-in and a restart, so
+# the run step moves its shell into an empty cgroup made for it and execs
+# BenchExec, which is then alone in it, as BenchExec requires.
+name: BenchExec
+
+on:
+  workflow_dispatch:
+    inputs:
+      sets:
+        description: ReachSafety categories (sv-benchmarks set names; Heap, Loops and Recursive add LinkedLists and VerifyThis)
+        default: Arrays ControlFlow Heap Loops
+      timeout:
+        description: CPU time limit per task, in seconds
+        default: '60'
+      filter:
+        description: Python regular expression; only the tasks whose path under c/ it matches (e.g. ^loops/)
+        default: ''
+      svbenchmarks:
+        description: sv-benchmarks branch, tag or commit
+        default: svcomp27-freeze
+      compare:
+        description: ID or URL of an earlier run of this workflow to compare with
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  BENCHEXEC: benchexec==3.37
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # As tests.yml: LLVM 21 from apt.llvm.org, which has hung for hours.
+      - name: Install packages
+        timeout-minutes: 20
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
+
+      # The binary finds its models next to it, and vereda.py the binary.
+      # A tar keeps the files executable.
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
+          ninja -C build vereda models
+          mkdir tool
+          cp vereda.py build/models-32.bc build/models-64.bc tool/
+          strip -o tool/vereda build/vereda
+          tar -cf vereda.tar tool
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vereda
+          path: vereda.tar
+          retention-days: 7
+
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      revision: ${{ steps.fetch.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch sv-benchmarks
+        id: fetch
+        env:
+          REV: ${{ inputs.svbenchmarks }}
+          SETS: ${{ inputs.sets }}
+        run: |
+          git init -q sv-benchmarks
+          cd sv-benchmarks
+          git remote add origin https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
+          git fetch -q --depth 1 --filter=blob:none origin "$REV"
+          git sparse-checkout set --no-cone '/c/*.set' /c/properties/
+          git -c advice.detachedHead=false checkout -q FETCH_HEAD
+          dirs=$(../contrib/benchexec/ci.py dirs . $SETS)
+          git sparse-checkout add $dirs
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          du -sh c
+
+      - name: Plan the shards
+        id: plan
+        env:
+          TIMEOUT: ${{ inputs.timeout }}
+          FILTER: ${{ inputs.filter }}
+          SETS: ${{ inputs.sets }}
+        run: |
+          shards=$(contrib/benchexec/ci.py plan sv-benchmarks "$TIMEOUT" "$FILTER" $SETS)
+          echo "shards=$shards" >> "$GITHUB_OUTPUT"
+          tar --exclude=.git -cf sv-benchmarks.tar sv-benchmarks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sv-benchmarks
+          path: sv-benchmarks.tar
+          retention-days: 7
+
+  run:
+    needs: [build, plan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vereda
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sv-benchmarks
+
+      # clang 21 for vereda.py, gcc-multilib for -m32 headers.
+      - name: Install clang and BenchExec
+        timeout-minutes: 20
+        run: |
+          tar -xf vereda.tar
+          tar -xf sv-benchmarks.tar
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-21 gcc-multilib
+          python3 -m pip install --user --break-system-packages "$BENCHEXEC"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
+          tool/vereda.py --version
+
+      # User namespaces for the containers, and an empty cgroup with every
+      # controller for BenchExec (see the header).
+      - name: Set up containers and cgroups
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          echo "+cpuset +cpu +io +memory +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
+          sudo mkdir /sys/fs/cgroup/benchexec
+          sudo chown -R "$(id -u):$(id -g)" /sys/fs/cgroup/benchexec
+
+      # The tool sees the file system read-only, which it needs no more than,
+      # with a /tmp of its own and an overlay on /home, where BenchExec makes
+      # the container's home directory.
+      - name: Run BenchExec
+        env:
+          SHARD: ${{ matrix.shard }}
+          TIMEOUT: ${{ inputs.timeout }}
+        run: |
+          echo $$ | sudo tee /sys/fs/cgroup/benchexec/cgroup.procs > /dev/null
+          exec benchexec contrib/benchexec/vereda.xml --name "$SHARD" --tool-directory tool \
+            -o results/ -N 2 -T "${TIMEOUT}s" --read-only-dir / --overlay-dir /home
+
+      # BenchExec exits 0 even when it ran nothing.
+      - name: Check for results
+        run: ls results/*.results.*.xml.bz2
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-${{ matrix.shard }}
+          path: results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  report:
+    needs: [plan, run]
+    if: ${{ !cancelled() && needs.run.result != 'skipped' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
+      - name: Download the earlier run's results
+        if: inputs.compare != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPARE: ${{ inputs.compare }}
+        run: |
+          id=${COMPARE##*/runs/}
+          gh run download "${id%%/*}" -R "$GITHUB_REPOSITORY" -n results -D old
+
+      # One column per run, each the union of its shards; with two, the
+      # tables also come as a diff of the tasks whose results differ.
+      - name: Make the table
+        run: |
+          python3 -m pip install --user --break-system-packages "$BENCHEXEC"
+          cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"
+          {
+            echo '<table>'
+            [ -d old ] && echo '<union title="earlier"><result filename="old/*.results.*.xml.bz2"/></union>'
+            echo '<union title="this run"><result filename="results/*.results.*.xml.bz2"/></union>'
+            echo '</table>'
+          } > table.xml
+          ~/.local/bin/table-generator -x table.xml -o results -n vereda
+
+      - name: Summarize
+        env:
+          SETS: ${{ inputs.sets }}
+          TIMEOUT: ${{ inputs.timeout }}
+          FILTER: ${{ inputs.filter }}
+          REVISION: ${{ needs.plan.outputs.revision }}
+        run: |
+          {
+            echo "## Vereda on ReachSafety $SETS"
+            echo
+            echo "Vereda $GITHUB_SHA, sv-benchmarks $REVISION, ${TIMEOUT} s per task${FILTER:+, tasks matching \`$FILTER\`}."
+            echo "The tables are in the results artifact."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          contrib/benchexec/ci.py summary results $([ -d old ] && echo old) >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results
+          path: results/
+          retention-days: 90

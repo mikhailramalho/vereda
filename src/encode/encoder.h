@@ -67,7 +67,8 @@ public:
   // except for floats in the solver's theory.
   camada::SMTExprRef toBits(camada::SMTExprRef v, llvm::Type *ty);
   camada::SMTExprRef fromBits(camada::SMTExprRef bits, llvm::Type *ty);
-  // A fresh unconstrained term of v's type, named after its origin (nondet calls, arguments).
+  // A fresh unconstrained term of v's type, named after its origin (nondet
+  // calls, arguments); for a pointer, a fresh address converted to one.
   camada::SMTExprRef fresh(llvm::Type *ty, const std::string &name);
   // Encodes arithmetic, comparison, cast, select, freeze, extractvalue,
   // insertvalue and getelementptr, binding the result.

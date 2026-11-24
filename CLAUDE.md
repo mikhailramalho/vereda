@@ -66,7 +66,9 @@ and so do tests still calling an `__ESBMC_*` or `__CPROVER_*` function after the
 (Vereda supports only `__VERIFIER_*` builtins), which `tests/run.py` skips without running;
 `--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
 timeout (`REGRESS_TIMEOUT`); a run that times out is skipped in any mode, and `--mark`
-never changes a mode because of one.
+never changes a mode because of one. A run may write at most 256 MB to any file, its
+output included (a loop unrolled without `--unwind` prints a line per iteration); one
+stopped there counts as timed out.
 Every test also runs under a memory limit (`REGRESS_MEMORY_LIMIT`, 4096 MB of address
 space); going past it fails the test, except a KNOWNBUG one, and `--mark` leaves its mode
 alone. CI runs 3 tests at a time so that three such tests fit its 16 GB.

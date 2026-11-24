@@ -732,4 +732,5 @@ static void _GLOBAL__I_a(void) {
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE
