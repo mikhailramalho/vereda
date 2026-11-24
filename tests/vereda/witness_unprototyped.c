@@ -2,8 +2,8 @@
 // tasks, still gets its function_return waypoints. On i386 clang declares
 // it variadic but calls it without the "...", with the same result type.
 // RUN: -m32 --witness -
-// EXPECT: value: "\\\\result == 4000000000"(\n.*){3}\n +line: 13\n +column: 43\n
-// EXPECT: value: "\\\\result == -3"(\n.*){3}\n +line: 14\n +column: 35\n
+// EXPECT: value: "\\\\result == 4000000000"(\n.*){3}\n +line: 13\n +function: "main"\n
+// EXPECT: value: "\\\\result == -3"(\n.*){3}\n +line: 14\n +function: "main"\n
 // EXPECT: VERIFICATION FAILED
 extern void __assert_fail(const char *, const char *, unsigned, const char *);
 void reach_error() { __assert_fail("0", "witness_unprototyped.c", 3, "reach_error"); }
