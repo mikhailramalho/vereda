@@ -11,6 +11,8 @@ void *memset(void *, int, size_t);
 void *malloc(size_t);
 void *memcpy(void *, const void *, size_t);
 
+void *memmove(void *, const void *, size_t);
+
 size_t strlen(const char *s) {
   size_t n = 0;
   while (s[n])
@@ -172,4 +174,29 @@ char *strndup(const char *s, size_t n) {
     d[i] = s[i];
   d[m] = 0;
   return d;
+
+// BSD string functions
+char *index(const char *s, int c) {
+  return strchr(s, c);
+}
+
+char *rindex(const char *s, int c) {
+  return strrchr(s, c);
+}
+
+void bzero(void *p, size_t n) {
+  memset(p, 0, n);
+}
+
+void bcopy(const void *src, void *dst, size_t n) {
+  memmove(dst, src, n);
+}
+
+void *memccpy(void *dst, const void *src, int c, size_t n) {
+  unsigned char *d = dst;
+  const unsigned char *s = src;
+  for (; n; --n, ++d, ++s)
+    if (*d = *s, *d == (unsigned char)c)
+      return d + 1;
+  return NULL;
 }
