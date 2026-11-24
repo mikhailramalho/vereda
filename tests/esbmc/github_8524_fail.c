@@ -20,4 +20,5 @@ int main(void)
 // EXPECT: ^\s+r = 5; //
 // Vereda: unmet EXPECT: ^\s+r = 5 \(
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: FUTURE test passed unexpectedly; promote it to CORE
+// MODE: CORE

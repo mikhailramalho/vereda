@@ -483,7 +483,8 @@ private:
         name == "__longjmp_chk")
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // These write a formatted string, or what they scan, through a va_list,
-    // which a bodyless call does not do (no model yet), so they refuse too.
+    // which a bodyless call does not do (models/printf.c has the ones that
+    // print to memory), so they refuse too.
     if (writesThroughVaList(name))
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // From ir's lowering of longjmp: a jump no frame on the stack resumes.
@@ -699,13 +700,12 @@ private:
     return after;
   }
 
-  // vsprintf, vsnprintf, vasprintf and the v*scanf, under glibc's names too.
+  // The v*scanf and vswprintf, under glibc's names too.
   static bool writesThroughVaList(StringRef name) {
     name.consume_front("__isoc99_") || name.consume_front("__isoc23_") ||
         (name.consume_front("__") && name.consume_back("_chk"));
-    return is_contained<StringRef>({"vsprintf", "vsnprintf", "vasprintf", "vscanf", "vfscanf",
-                                    "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"},
-                                   name);
+    return is_contained<StringRef>(
+        {"vscanf", "vfscanf", "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"}, name);
   }
 
   // The va_list layouts known: x86-64 SysV (true) and i386 (false).
