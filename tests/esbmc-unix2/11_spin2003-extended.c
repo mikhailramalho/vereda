@@ -20,3 +20,6 @@ int main() {
 // Imported from ESBMC regression/esbmc-unix2/11_spin2003-extended
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

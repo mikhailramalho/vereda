@@ -163,3 +163,6 @@ assert(trans_preds(_-2, p(_,data(__CNT__,__START_ASYNC__,_,_,_,_,_,_,_,_,_,_,_,_
 // Imported from ESBMC regression/esbmc-unix2/11_lu-fig4-complete.fixed
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

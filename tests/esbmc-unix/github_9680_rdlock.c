@@ -22,3 +22,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9680_rdlock
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

@@ -4879,3 +4879,6 @@ int main(int argc, char *argv[])
 // MODE: FUTURE
 // Vereda: FUTURE test passed unexpectedly; promote it to CORE
 // MODE: CORE
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

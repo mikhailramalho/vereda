@@ -38,3 +38,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_05
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

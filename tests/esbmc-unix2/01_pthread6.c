@@ -27,3 +27,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread6
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

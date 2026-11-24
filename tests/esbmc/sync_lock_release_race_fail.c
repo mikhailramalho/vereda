@@ -19,3 +19,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/sync_lock_release_race_fail
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

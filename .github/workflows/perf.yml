@@ -13,6 +13,7 @@ name: Performance
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     branches: [main]
     paths-ignore: ['docs/**', '**.md']
   workflow_dispatch:
@@ -26,8 +27,18 @@ permissions:
   pull-requests: write
   actions: read
 
+# A new push to a pull request cancels the runs its earlier pushes still
+# have going, and so does landing or closing it: the closed event starts a
+# run in the same group whose jobs are skipped. Runs on main are never
+# cancelled (each commit is its own group): every main commit's Tests run
+# gives the numbers perf.yml compares pull requests against.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   bench:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-24.04
     # Two builds, waiting for the Tests runs, and when needed the base's
     # suite (about 30 minutes three at a time) and the side-by-side reruns.
