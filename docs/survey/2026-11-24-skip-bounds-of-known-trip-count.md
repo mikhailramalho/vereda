@@ -90,6 +90,10 @@ would now give UNKNOWN where it gave FALSE.
 | standard_vector_difference_ground (TRUE) | timeout | 25 s, 17 bounds | 13.7 s, 2 bounds | timeout at bound 72,416 |
 | partial_lesser_bound-1 (TRUE) | timeout | timeout | timeout | timeout |
 
+With main at 5d351dc0 merged in (#182, and #185, which exits without
+tearing down the last bound's solver), this change takes 0.46, 0.43 and
+14.3 s on the first three.
+
 Growing the step with the bound (option 2 of #175) helps every task whose
 bound climbs, not only these, but checks bounds a bug may need exactly
 (`2026-11-24-k-step-2.md`) and still walks about nine times the last
