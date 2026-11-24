@@ -49,59 +49,34 @@ imaxdiv_t imaxdiv(intmax_t n, intmax_t d) { return (imaxdiv_t){n / d, n % d}; }
 // so the model wraps where an out-of-range result is undefined in C.
 static unsigned long long atoi_helper(const char *s) {
   while (*s == ' ' || (*s >= '\t' && *s <= '\r'))
-    s++;
-
-  int neg = 0;
-  if (*s == '-') {
-    neg = 1;
-    s++;
-  } else if (*s == '+') {
-    s++;
-  }
-
-  unsigned long long result = 0;
-  while (*s >= '0' && *s <= '9') {
-    result = result * 10 + (*s - '0');
-    s++;
-  }
-
-  if (neg)
-    return -result;
-
-  return result;
+    ++s;
+  int neg = *s == '-';
+  if (*s == '-' || *s == '+')
+    ++s;
+  unsigned long long n = 0;
+  for (; *s >= '0' && *s <= '9'; ++s)
+    n = n * 10 + (*s - '0');
+  return neg ? -n : n;
 }
 
-int atoi(const char *s) {
-  return (int)atoi_helper(s);
-}
-
-long atol(const char *s) {
-  return (long)atoi_helper(s);
-}
-
-long long atoll(const char *s) {
-  return (long long)atoi_helper(s);
-}
+int atoi(const char *s) { return atoi_helper(s); }
+long atol(const char *s) { return atoi_helper(s); }
+long long atoll(const char *s) { return atoi_helper(s); }
 
 // C17 7.22.5.1.
 void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
               int (*compar)(const void *, const void *)) {
-  size_t lo = 0;
-  size_t hi = nmemb;
-
+  size_t lo = 0, hi = nmemb;
   while (lo < hi) {
     size_t mid = lo + (hi - lo) / 2;
     const char *p = (const char *)base + mid * size;
     int r = compar(key, p);
-
-    if (r == 0)
+    if (!r)
       return (void *)p;
-    else if (r < 0)
+    if (r < 0)
       hi = mid;
     else
       lo = mid + 1;
   }
-
   return NULL;
 }
-

@@ -1,4 +1,4 @@
-// Test that strerror returns non-NULL pointer with valid string content
+// strerror gives a non-empty message for any error number.
 // RUN: --unwind 16
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <string.h>

@@ -12,6 +12,11 @@ void *malloc(size_t);
 void *memcpy(void *, const void *, size_t);
 void *memmove(void *, const void *, size_t);
 int tolower(int);
+void *__VERIFIER_nondet_pointer(void);
+int __VERIFIER_nondet_int(void);
+unsigned long __VERIFIER_nondet_ulong(void);
+// Gives the whole object p points into nondet contents (the walker does).
+void __vereda_havoc(void *p);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -227,10 +232,28 @@ int strncasecmp(const char *a, const char *b, size_t n) {
   return 0;
 }
 
-// Vereda models only the "C" locale, where collation is strcmp's order.
-int strcoll(const char *a, const char *b) { return strcmp(a, b); }
+// Collation is strcmp's order in the "C" locale, where a program starts
+// (C17 7.11.1.1p4). Once setlocale has been given a locale, strcoll and
+// strxfrm give any result; setlocale returns any pointer, as it would
+// without a body.
+static int c_collation = 1;
+
+char *setlocale(int category, const char *locale) {
+  if (locale)
+    c_collation = 0;
+  return __VERIFIER_nondet_pointer();
+}
+
+int strcoll(const char *a, const char *b) {
+  return c_collation ? strcmp(a, b) : __VERIFIER_nondet_int();
+}
 
 size_t strxfrm(char *dst, const char *src, size_t n) {
+  if (!c_collation) {
+    if (n)
+      __vereda_havoc(dst);
+    return __VERIFIER_nondet_ulong();
+  }
   size_t len = strlen(src);
   if (len < n)
     for (size_t i = 0; i <= len; ++i)

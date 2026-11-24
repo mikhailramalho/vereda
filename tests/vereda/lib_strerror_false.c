@@ -1,4 +1,4 @@
-// Test that strerror returns "Success" only for 0 (should fail when e != 0)
+// strerror gives "Success" only for 0.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <string.h>

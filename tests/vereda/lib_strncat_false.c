@@ -1,4 +1,4 @@
-// Test of strncat: wrong assertion should fail verification
+// strncat appends nothing when s[0] is 0, so d keeps length 1.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <string.h>
@@ -15,7 +15,6 @@ int main(void) {
   char d[8] = {'x', 0};
   strncat(d, s, 2);
 
-  // This assertion should fail when s[0] is 0 (because strlen(d) would be 1)
   __VERIFIER_assert(strlen(d) == 3);
 
   return 0;

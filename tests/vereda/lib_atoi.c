@@ -1,4 +1,5 @@
-// Tests of atoi, atol and atoll.
+// atoi, atol and atoll on "?42" whose first character is nondet: a digit, a
+// sign, white space or anything else.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdlib.h>

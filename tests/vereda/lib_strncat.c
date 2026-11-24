@@ -1,4 +1,5 @@
-// Test of strncat: append at most n characters from src to dst
+// strncat appends at most n characters of a string whose first character is
+// nondet.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <string.h>

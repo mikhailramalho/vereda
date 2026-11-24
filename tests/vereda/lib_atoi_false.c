@@ -1,4 +1,4 @@
-// Tests of atoi, atol and atoll - false assertion.
+// atoi gives 42 when s[0] is '+' or white space.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <stdlib.h>
@@ -12,7 +12,6 @@ int main(void) {
   s[2] = '2';
   s[3] = 0;
 
-  // This assertion is false only when s[0] is '+' or white space
   __VERIFIER_assert(atoi(s) != 42);
   return 0;
 }
