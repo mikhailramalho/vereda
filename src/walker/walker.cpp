@@ -16,6 +16,7 @@
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/InstIterator.h>
+#include <llvm/IR/Intrinsics.h>
 #include <algorithm>
 #include <memory>
 
@@ -67,6 +68,14 @@ struct Return {
 struct Frame {
   DenseMap<const BasicBlock *, SmallVector<Arrival, 2>> arrivals;
   SmallVector<Return, 2> returns;
+};
+
+// Where a call to a variadic function left its arguments, for va_start.
+struct VarArgs {
+  const Function *callee;
+  SMTExprRef regs;  // x86-64: the register save area
+  SMTExprRef stack; // the first variadic argument on the stack
+  unsigned gp, fp;  // x86-64: the register save area offsets past the named arguments
 };
 
 class Walk {
@@ -378,6 +387,15 @@ private:
         return guard;
       if (name == "llvm.trap") // __builtin_trap: an abnormal end, not an error, as in ESBMC
         return t.boolean(false);
+      switch (callee->getIntrinsicID()) {
+      case Intrinsic::vastart: vaStart(c, st); return guard;
+      case Intrinsic::vacopy: // a va_list holds no pointer into itself
+        mem.copy(st, enc.value(c.getArgOperand(0)), enc.value(c.getArgOperand(1)),
+                 isX86_64(c) ? 24 : 4);
+        return guard;
+      case Intrinsic::vaend: return guard;
+      default: break;
+      }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
         if (counts(true))
@@ -405,6 +423,10 @@ private:
     if (name == "setjmp" || name == "_setjmp" || name == "__sigsetjmp" || name == "sigsetjmp" ||
         name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
         name == "__longjmp_chk")
+      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+    // These write a formatted string, or what they scan, through a va_list,
+    // which a bodyless call does not do (no model yet), so they refuse too.
+    if (writesThroughVaList(name))
       throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
     // From ir's lowering of longjmp: a jump no frame on the stack resumes.
     // Inner frames return for their caller to try; the outermost has none.
@@ -473,8 +495,6 @@ private:
 
   // Walks a defined callee in a new frame.
   SMTExprRef enter(CallBase &c, Function &callee, SMTExprRef guard, memory::State &st) {
-    if (callee.isVarArg())
-      throw Unsupported("variadic function " + callee.getName().str());
     unsigned depth = std::count(stack.begin(), stack.end(), &callee);
     if (depth > 0) {
       bool cut = false;
@@ -513,7 +533,11 @@ private:
     const CallBase *outerReachError = reachError;
     if (callee.getName() == "reach_error")
       reachError = &c;
+    if (callee.isVarArg())
+      varArgs.push_back(passVarArgs(c, callee, guard, st));
     Frame frame = function(callee, guard, st);
+    if (callee.isVarArg())
+      varArgs.pop_back();
     reachError = outerReachError;
 
     SMTExprRef after = t.boolean(false), result;
@@ -528,6 +552,115 @@ private:
     if (!c.getType()->isVoidTy())
       enc.bind(&c, result ? result : enc.fresh(c.getType(), "noreturn"));
     return after;
+  }
+
+  // vsprintf, vsnprintf, vasprintf and the v*scanf, under glibc's names too.
+  static bool writesThroughVaList(StringRef name) {
+    name.consume_front("__isoc99_") || name.consume_front("__isoc23_") ||
+        (name.consume_front("__") && name.consume_back("_chk"));
+    return is_contained<StringRef>({"vsprintf", "vsnprintf", "vasprintf", "vscanf", "vfscanf",
+                                    "vsscanf", "vswprintf", "vwscanf", "vfwscanf", "vswscanf"},
+                                   name);
+  }
+
+  // The va_list layouts known: x86-64 SysV (true) and i386 (false).
+  static bool isX86_64(const CallBase &c) {
+    const Module &m = *c.getModule();
+    const Triple &tt = m.getTargetTriple();
+    unsigned bits = m.getDataLayout().getPointerSizeInBits();
+    if (tt.isOSWindows() || !((tt.getArch() == Triple::x86_64 && bits == 64) ||
+                              (tt.getArch() == Triple::x86 && bits == 32)))
+      throw Unsupported("variadic arguments on " + tt.str());
+    return bits == 64;
+  }
+
+  // Lays out the arguments of c, a call to the variadic callee, where the
+  // caller leaves them, which is what clang's va_arg code in the callee
+  // reads. On x86-64 the first six integers and pointers go in general
+  // registers and the first eight floats and doubles in SSE registers, which
+  // the callee's prologue saves to its register save area; the rest, and
+  // byval aggregates, go on the stack in slots of 8 bytes. On i386 all go on
+  // the stack in slots of 4. Clang has already split a small struct into such
+  // pieces, or made it byval when the registers it needs are taken, so the IR
+  // arguments can be placed one by one. Only the variadic ones are written:
+  // va_arg never reads a named one.
+  VarArgs passVarArgs(CallBase &c, Function &callee, SMTExprRef guard, memory::State &st) {
+    bool x64 = isX86_64(c);
+    if (c.getCallingConv() != CallingConv::C)
+      throw Unsupported("variadic call with another calling convention at " +
+                        ir::location(c).str());
+    const DataLayout &dl = mem.layout();
+    unsigned bits = mem.pointerBits(), slot = x64 ? 8 : 4, gp = 0, fp = 48;
+    uint64_t onStack = 0, named = 0;
+    VarArgs va{&callee, {}, {}, gp, fp};
+    // Per argument: in the register save area or on the stack, and where.
+    SmallVector<std::pair<bool, uint64_t>, 8> where;
+    for (unsigned i = 0; i < c.arg_size(); ++i) {
+      Type *ty = c.getArgOperand(i)->getType();
+      bool byval = c.isByValArgument(i), isFP = ty->isFloatTy() || ty->isDoubleTy();
+      if (c.paramHasAttr(i, Attribute::InReg) || c.paramHasAttr(i, Attribute::InAlloca) ||
+          c.paramHasAttr(i, Attribute::Preallocated) || c.paramHasAttr(i, Attribute::Nest) ||
+          !(byval || isFP || ty->isPointerTy() ||
+            (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
+        throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
+                          " at " + ir::location(c).str());
+      if (x64 && !byval && isFP && fp < 176) {
+        where.push_back({true, fp});
+        fp += 16;
+      } else if (x64 && !byval && !isFP && gp < 48) {
+        where.push_back({true, gp});
+        gp += 8;
+      } else {
+        uint64_t size =
+            byval ? dl.getTypeAllocSize(c.getParamByValType(i)) : dl.getTypeStoreSize(ty);
+        uint64_t align =
+            byval ? std::max<uint64_t>(slot, c.getParamAlign(i).valueOrOne().value()) : slot;
+        where.push_back({false, alignTo(onStack, align)});
+        onStack = alignTo(where.back().second + size, slot);
+      }
+      if (i < callee.arg_size()) {
+        va.gp = gp;
+        va.fp = fp;
+        named = onStack;
+      }
+    }
+    // The stack starts 16-byte aligned at a call, which clang's va_arg code
+    // relies on for an over-aligned byval argument.
+    SMTExprRef stackArea = mem.allocate(t.bv(onStack, bits), 16, guard);
+    va.stack = mem.advance(stackArea, t.bv(named, bits));
+    if (x64)
+      va.regs = mem.allocate(t.bv(176, bits), 16, guard);
+    for (unsigned i = callee.arg_size(); i < c.arg_size(); ++i) {
+      Value *arg = c.getArgOperand(i);
+      SMTExprRef at =
+          mem.advance(where[i].first ? va.regs : stackArea, t.bv(where[i].second, bits));
+      if (c.isByValArgument(i))
+        mem.copy(st, at, enc.value(arg), dl.getTypeAllocSize(c.getParamByValType(i)));
+      else
+        mem.store(st, at, enc.toBits(enc.value(arg), arg->getType()), arg->getType());
+    }
+    return va;
+  }
+
+  // va_start(ap) in the innermost variadic frame: on x86-64 ap is
+  // {gp_offset, fp_offset, overflow_arg_area, reg_save_area}, the offsets
+  // past the registers the named arguments took; on i386 it points to the
+  // first variadic argument on the stack.
+  void vaStart(CallBase &c, memory::State &st) {
+    if (varArgs.empty() || varArgs.back().callee != stack.back())
+      throw Unsupported("va_start outside a variadic call at " + ir::location(c).str());
+    const VarArgs &va = varArgs.back();
+    SMTExprRef ap = enc.value(c.getArgOperand(0));
+    Type *ptr = c.getArgOperand(0)->getType(), *i32 = Type::getInt32Ty(c.getContext());
+    if (!isX86_64(c)) {
+      mem.store(st, ap, va.stack, ptr);
+      return;
+    }
+    unsigned bits = mem.pointerBits();
+    mem.store(st, ap, t.bv(va.gp, 32), i32);
+    mem.store(st, mem.advance(ap, t.bv(4, bits)), t.bv(va.fp, 32), i32);
+    mem.store(st, mem.advance(ap, t.bv(8, bits)), va.stack, ptr);
+    mem.store(st, mem.advance(ap, t.bv(16, bits)), va.regs, ptr);
   }
 
   // Whether a failed assertion, or sanitizer check, violates the property
@@ -833,6 +966,7 @@ private:
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
   SmallVector<const Function *, 8> stack;
+  SmallVector<VarArgs, 2> varArgs; // of the variadic frames on the stack, innermost last
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.
   const CallBase *reachError = nullptr;
