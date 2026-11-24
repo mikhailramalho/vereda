@@ -33,13 +33,23 @@ jobs:
     # suite (about 30 minutes three at a time) and the side-by-side reruns.
     timeout-minutes: 150
     steps:
+      # A pull request's head is the merge commit CI tests, and its first
+      # parent is main as it was then. The event's base.sha is not: it can
+      # stay at the main of an earlier push, whose numbers may be stale or
+      # missing.
       - uses: actions/checkout@v4
         with:
           path: head
+          fetch-depth: 2
+
+      - name: Find the base
+        id: base
+        if: github.event_name == 'pull_request'
+        run: echo "sha=$(git -C head rev-parse HEAD^1)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha || inputs.base }}
+          ref: ${{ steps.base.outputs.sha || inputs.base }}
           path: base
           # History to walk back past docs-only commits to numbers on main.
           fetch-depth: 50
@@ -47,7 +57,9 @@ jobs:
       # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
       # in /usr/lib/llvm-21 and downloads only camada; its libraries are
       # plain objects, so links need no ThinLTO step.
+      # The step has hung for hours (twice on 2026-11-24); fail it instead.
       - name: Install packages
+        timeout-minutes: 20
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
           echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
@@ -96,10 +108,11 @@ jobs:
 
       # After the pull request's own tests, so main's run for the base has
       # most likely finished too; from the Tests run of the base commit's
-      # push to main, waiting for it if it is still running. A commit without a run is skipped only if it
-      # touched docs alone (tests.yml skips those, and the binary is the
+      # push to main, waiting up to 40 minutes for it if it is still running.
+      # A commit without a run is skipped only if it touched docs alone (tests.yml skips those, and the binary is the
       # same); a code commit without numbers, or a run that failed before
-      # uploading them or whose numbers expired, leaves found unset.
+      # uploading them, whose numbers expired or that did not finish in time,
+      # leaves found unset.
       - name: Get the base's numbers from main
         id: base-stats
         if: github.event_name == 'pull_request'
@@ -117,7 +130,7 @@ jobs:
               fi
               continue
             fi
-            gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
+            timeout 40m gh run watch "$id" -R "$GITHUB_REPOSITORY" --interval 60 > /dev/null || true
             if gh run download "$id" -R "$GITHUB_REPOSITORY" -n regress-stats -D base-stats; then
               echo "base numbers from $c, run $id: $(ls base-stats | wc -l) tests"
               echo "found=true" >> "$GITHUB_OUTPUT"
@@ -185,7 +198,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
-          BASE: ${{ github.event.pull_request.base.sha }}
+          BASE: ${{ steps.base.outputs.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ -s changes.md ]; then
