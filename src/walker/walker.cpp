@@ -300,10 +300,36 @@ private:
     }
   }
 
+  // Whether no path leaves l and nothing it does can be seen: each edge out
+  // of it is a branch on a constant that never takes it, and no instruction
+  // in it has a side effect or calls anything but an intrinsic without one.
+  // A check is a call or an edge out of l (to an assert's, a trap's or an
+  // unreachable's block), so l has none. ESBMC turns such a loop,
+  // `while (1);`, into assume(0).
+  static bool endless(const Loop *l) {
+    for (BasicBlock *bb : l->blocks()) {
+      auto *br = dyn_cast<BranchInst>(bb->getTerminator());
+      auto *c = br && br->isConditional() ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
+      for (BasicBlock *succ : successors(bb))
+        if (!l->contains(succ) && (!c || br->getSuccessor(c->isZero()) == succ))
+          return false;
+      for (Instruction &i : *bb)
+        if (i.mayHaveSideEffects() || (isa<CallBase>(i) && !isa<IntrinsicInst>(i)))
+          return false;
+    }
+    return true;
+  }
+
   void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
+    BasicBlock *header = l->getHeader();
+    // The paths that reach an endless loop end there, as at unreachable,
+    // and its header keeps the IR, debug info and loop numbers as they were.
+    if (endless(l)) {
+      frame.arrivals.erase(header);
+      return;
+    }
     if (opts.summarise && summarise(frame, fi, l))
       return;
-    BasicBlock *header = l->getHeader();
     unsigned number = fi.loopNumber.lookup(l);
     for (unsigned i = 0;; ++i) {
       auto it = frame.arrivals.find(header);
