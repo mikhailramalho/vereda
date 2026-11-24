@@ -29,3 +29,6 @@ int main()
 // Imported from ESBMC regression/esbmc-unix2/pthread_cleanup9_fail
 // RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

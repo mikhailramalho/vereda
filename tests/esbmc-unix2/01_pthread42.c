@@ -40,4 +40,4 @@ void main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN

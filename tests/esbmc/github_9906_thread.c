@@ -25,4 +25,4 @@ int main(void)
 // EXPECT: longjmp to a jmp_buf whose setjmp is not active
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN

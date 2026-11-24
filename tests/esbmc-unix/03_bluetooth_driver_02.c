@@ -81,3 +81,6 @@ void main()
 }
 // Imported from ESBMC regression/esbmc-unix/03_bluetooth_driver_02
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

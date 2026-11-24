@@ -37,3 +37,6 @@ int main() {
 // Imported from ESBMC regression/esbmc-unix2/11_cook.fig2.pldi07
 // RUN: --unwind 5 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

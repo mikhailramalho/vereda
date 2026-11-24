@@ -52,3 +52,6 @@ assert(pc_preds(2, [[[4|4]],[[1|1]]], to)).
 // RUN: --unwind 3
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

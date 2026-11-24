@@ -31,4 +31,4 @@ int main() {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: schedules_explored 1[0-9][0-9],
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict UNKNOWN

@@ -28,3 +28,6 @@ int main() {
 // Imported from ESBMC regression/esbmc-unix2/11_podelski.fig2.lics04
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

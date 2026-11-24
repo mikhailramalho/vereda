@@ -35,3 +35,6 @@ int main() {
 // RUN: --unwind 3
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

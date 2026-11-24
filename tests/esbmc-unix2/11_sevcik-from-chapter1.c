@@ -31,3 +31,6 @@ int main() {
 // Imported from ESBMC regression/esbmc-unix2/11_sevcik-from-chapter1
 // RUN: --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

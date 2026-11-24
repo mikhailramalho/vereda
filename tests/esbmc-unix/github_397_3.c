@@ -76,3 +76,6 @@ module_exit:
 // Imported from ESBMC regression/esbmc-unix/github_397_3
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

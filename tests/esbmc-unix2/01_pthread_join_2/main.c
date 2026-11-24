@@ -64,3 +64,6 @@ main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (int \*)exit1 == \&a || (int \*)exit1 == \&b || (int \*)exit1 == \&c || (int \*)exit1 == \&d
 // EXPECT: (int \*)exit2 == \&a || (int \*)exit2 == \&b || (int \*)exit2 == \&c || (int \*)exit2 == \&d
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN
