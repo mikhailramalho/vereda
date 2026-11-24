@@ -29,6 +29,6 @@ int main()
 // RUN: --neurosym --neurosym-prog fake-neurosym.sh --neurosym-model-prog "z3 -in"
 // MODE: FUTURE
 // EXPECT: ^\[Counterexample\]$
-// EXPECT: ^  w\.f = 0 \(00000000 00000000 00000000 00000000\)$
+// EXPECT: ^  w\.f = 0; // 00000000 00000000 00000000 00000000$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

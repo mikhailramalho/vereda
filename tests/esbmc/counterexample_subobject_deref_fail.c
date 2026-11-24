@@ -29,7 +29,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_subobject_deref_fail
-// EXPECT: ^  o\.g = 9 \(00000000 00000000 00000000 00001001\)$
+// EXPECT: ^  o\.g = 9; // 00000000 00000000 00000000 00001001$
 // EXPECT: ^  p->g = \{ \.g=9, \.in=\{ \.pad=0, \.g=5 \} \}$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  p->g = \{ \.g=9, \.in=\{ \.pad=0, \.g=5 \} \}$

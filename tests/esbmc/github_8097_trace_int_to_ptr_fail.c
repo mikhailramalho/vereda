@@ -21,7 +21,7 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8097_trace_int_to_ptr_fail
 // RUN: -m64
 // EXPECT: ^  u\.s\.c\[1\] = 4
-// EXPECT: ^  r = &x$
+// EXPECT: ^  r = &x;$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  r = &x$
 // MODE: FUTURE

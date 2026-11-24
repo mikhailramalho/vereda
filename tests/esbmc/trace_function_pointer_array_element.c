@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/trace_function_pointer_array_element
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  resolved = &handler$
+// EXPECT: ^  resolved = &handler;$
 // Vereda: unmet EXPECT: ^  resolved = &handler$
 // MODE: FUTURE
 // Vereda: verdict FAILED

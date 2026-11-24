@@ -23,4 +23,5 @@ int main()
 // EXPECT: x = -9223372036854775807 - 1
 // Vereda: unmet EXPECT: x = -9223372036854775807 - 1
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: FUTURE test passed unexpectedly; promote it to THOROUGH
+// MODE: THOROUGH
