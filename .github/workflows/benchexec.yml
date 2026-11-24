@@ -23,8 +23,6 @@
 name: BenchExec
 
 on:
-  push:
-    branches: [ci/benchexec]
   workflow_dispatch:
     inputs:
       sets:
