@@ -30,7 +30,7 @@ class Tool(benchexec.tools.template.BaseTool2):
         return "https://github.com/mikhailramalho/vereda"
 
     def version(self, executable):
-        # "Vereda 0.1.0 (LLVM 21.1.8, camada 0.24)"
+        # "Vereda 0.1.0 (LLVM 23.1.6, camada 0.25)"
         return self._version_from_tool(executable, line_prefix="Vereda ").split()[0]
 
     def cmdline(self, executable, options, task, rlimits):

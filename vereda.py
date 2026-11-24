@@ -184,6 +184,10 @@ def main():
     if args.sanitize:
         flags += [f + ",".join(sorted(set(args.sanitize)))
                   for f in ("-fsanitize=", "-fsanitize-trap=")]
+        # Since clang 22, a trap's location is line 0 of an artificial
+        # function inlined at the check, which names the reason; without it,
+        # the trap is at the check itself.
+        flags.append("-fsanitize-debug-trap-reasons=none")
 
     binary = args.bin or find_binary()
     if args.help:

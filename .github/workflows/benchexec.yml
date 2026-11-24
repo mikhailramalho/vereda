@@ -73,14 +73,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # As tests.yml: LLVM 21 from apt.llvm.org, which has hung for hours.
+      # As tests.yml: LLVM 23 from apt.llvm.org, which has hung for hours.
       - name: Install packages
         timeout-minutes: 20
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
-          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-23 main" | sudo tee /etc/apt/sources.list.d/llvm-23.list
           sudo apt-get update
-          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
+          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-23 lld-23 llvm-23-dev libpolly-23-dev
 
       # The binary finds its models next to it, and vereda.py the binary.
       # A tar keeps the files executable.
@@ -161,16 +161,16 @@ jobs:
         with:
           name: sv-benchmarks
 
-      # clang 21 for vereda.py, gcc-multilib for -m32 headers.
+      # clang 23 for vereda.py, gcc-multilib for -m32 headers.
       - name: Install clang and BenchExec
         timeout-minutes: 20
         run: |
           tar -xf vereda.tar
           tar -xf sv-benchmarks.tar
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
-          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-23 main" | sudo tee /etc/apt/sources.list.d/llvm-23.list
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-21 gcc-multilib
+          sudo apt-get install -y --no-install-recommends clang-23 gcc-multilib
           python3 -m pip install --user --break-system-packages "$BENCHEXEC"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           cp contrib/benchexec/vereda.py "$(python3 -c 'import benchexec.tools as t, os; print(os.path.dirname(t.__file__))')"

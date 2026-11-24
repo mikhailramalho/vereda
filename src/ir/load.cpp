@@ -342,11 +342,11 @@ static const KernelAtomic kernelAtomics[] = {
 static bool noReturn(Instruction *next) {
   if (isa<UnreachableInst>(next))
     return true;
-  auto *br = dyn_cast<BranchInst>(next);
-  if (!br || br->isConditional())
+  auto *br = dyn_cast<UncondBrInst>(next);
+  if (!br)
     return false;
-  auto *loop = dyn_cast<BranchInst>(&br->getSuccessor(0)->front());
-  return loop && loop->isUnconditional() && loop->getSuccessor(0) == loop->getParent();
+  auto *loop = dyn_cast<UncondBrInst>(&br->getSuccessor()->front());
+  return loop && loop->getSuccessor() == loop->getParent();
 }
 
 // The IR for an asm in kernelAtomics (code and shape as there, ops its

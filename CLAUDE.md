@@ -11,25 +11,27 @@ its rules, `docs/survey/` a dated log of measurements and design decisions, one 
 ## Build, run, test
 
 ```sh
-cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON   # installed LLVM 21, else the pinned one; camada
+cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON   # installed LLVM 23, else the pinned one; camada
 cmake --build build                                       # the existing build/ may use Makefiles
 ctest --test-dir build -L vereda -j8                      # Vereda's own suite (fast; the suite dir is the label)
 ctest --test-dir build -j$(nproc)                         # everything, incl. ~6,500 imported esbmc* tests
 ctest --test-dir build -R 'vereda/loop_nested$' --output-on-failure   # one test
 ```
 
-With `DOWNLOAD_DEPENDENCIES`, an LLVM 21-23 under `/usr/lib/llvm-*` is used with its clang;
-otherwise the pinned release is downloaded, an LTO build whose own clang/lld become the
-compiler and linker. camada is downloaded unless `camada_DIR` is given, and mimalloc's
-sources (built in place of glibc's malloc) unless `MIMALLOC_SOURCE_DIR` is. Set
+Vereda builds with LLVM 23 only. With `DOWNLOAD_DEPENDENCIES`, a given `LLVM_DIR`, else an
+LLVM 23 in `/usr/lib/llvm-23`, else the pinned release (downloaded) is used, its own
+clang/lld becoming the compiler and linker (the release is an LTO build). camada is
+downloaded unless `camada_DIR` is given, and mimalloc's sources (built in place of glibc's
+malloc) unless `MIMALLOC_SOURCE_DIR` is. Set
 `VEREDA_DEPS_DIR` to share downloads between build directories and worktrees. Without
-`DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 21 to 23) and `camada_DIR`.
+`DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 23) and `camada_DIR`. A build directory
+configured with an older LLVM fails to configure; reconfigure it with `cmake --fresh`.
 
 Run the verifier through the front end, which compiles C with clang (and llvm-link for
 several files) and forwards every flag it does not know to the binary:
 
 ```sh
-./vereda.py --clang build/deps/llvm/LLVM-21.1.8-Linux-X64/bin/clang file.c --unwind 5
+./vereda.py --clang build/deps/llvm/LLVM-23.1.6-Linux-X64/bin/clang file.c --unwind 5
 ./vereda.py -h                      # front-end flags, then the binary's
 ```
 

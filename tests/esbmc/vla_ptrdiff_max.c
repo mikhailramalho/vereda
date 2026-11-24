@@ -16,6 +16,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_ptrdiff_max
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

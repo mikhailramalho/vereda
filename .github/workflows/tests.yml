@@ -58,17 +58,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # LLVM 21 from apt.llvm.org (the image has 16 to 18). Configure finds it
-      # in /usr/lib/llvm-21 and downloads only camada; its libraries are
+      # LLVM 23 from apt.llvm.org (the image has 16 to 18). Configure finds it
+      # in /usr/lib/llvm-23 and downloads only camada; its libraries are
       # plain objects, so links need no ThinLTO step.
       # The step has hung for hours (twice on 2026-11-24); fail it instead.
       - name: Install packages
         timeout-minutes: 20
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
-          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-23 main" | sudo tee /etc/apt/sources.list.d/llvm-23.list
           sudo apt-get update
-          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-21 lld-21 llvm-21-dev libpolly-21-dev
+          sudo apt-get install -y ninja-build zlib1g-dev libxml2-dev libzstd-dev libgmp-dev libmpfr-dev gcc-multilib clang-23 lld-23 llvm-23-dev libpolly-23-dev
 
       - name: Configure
         run: cmake -S . -B build -G Ninja -DDOWNLOAD_DEPENDENCIES=ON
