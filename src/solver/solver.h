@@ -8,8 +8,8 @@
 
 namespace vereda::solver {
 
-// "bitwuzla", "z3" or "cvc5", subject to what camada was built with.
-llvm::Expected<camada::SMTSolverRef> create(const std::string &name);
+// Bitwuzla, Z3 or CVC5, subject to what camada was built with.
+llvm::Expected<camada::SMTSolverRef> create(camada::SolverKind kind);
 
 enum class Status { NotChecked, Holds, Fails };
 
