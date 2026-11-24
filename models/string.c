@@ -262,3 +262,40 @@ size_t strxfrm(char *dst, const char *src, size_t n) {
 }
 
 char *strerror(int errnum) { return (char *)(errnum ? "Unknown error" : "Success"); }
+
+// POSIX strtok_r: skips the leading delimiters, then ends the token at the
+// next one, if any, and saves where the next call starts.
+char *strtok_r(char *str, const char *delim, char **save) {
+  if (!str)
+    str = *save;
+  str += strspn(str, delim);
+  if (!*str) {
+    *save = str;
+    return NULL;
+  }
+  char *end = str + strcspn(str, delim);
+  if (*end)
+    *end++ = 0;
+  *save = end;
+  return str;
+}
+
+char *strtok(char *str, const char *delim) {
+  static char *save;
+  return strtok_r(str, delim, &save);
+}
+
+// BSD strsep: unlike strtok, it does not skip leading delimiters, so a
+// token can be empty.
+char *strsep(char **sp, const char *delim) {
+  char *tok = *sp;
+  if (!tok)
+    return NULL;
+  char *end = tok + strcspn(tok, delim);
+  if (*end)
+    *end++ = 0;
+  else
+    end = NULL;
+  *sp = end;
+  return tok;
+}
