@@ -108,6 +108,9 @@ public:
   bool arithmetic(const Ref &e);
 
 private:
+  // equalities over at most budget nodes of cond.
+  void equalities(const Ref &cond, bool holds,
+                  llvm::function_ref<void(const Ref &, const Ref &)> f, unsigned &budget) const;
   // The value at constant index i of arr, past stores at other constant
   // indices, which arr moves over, and through joins whose two sides hold
   // the same value there (as a stream pointer does after a branch that
