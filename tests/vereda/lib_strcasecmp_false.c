@@ -1,3 +1,4 @@
+// strcasecmp(s, "abc") is 0 when s[0] is 'a' or 'A'.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION FAILED$
 #include <strings.h>
@@ -11,7 +12,7 @@ int main(void) {
   s[2] = 'c';
   s[3] = 0;
 
-  __VERIFIER_assert(strcasecmp(s, "abc") != 0); // This is wrong only when s[0] is 'a' or 'A'
+  __VERIFIER_assert(strcasecmp(s, "abc") != 0);
 
   return 0;
 }

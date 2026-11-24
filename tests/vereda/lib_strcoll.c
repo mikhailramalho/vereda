@@ -1,3 +1,5 @@
+// strcoll orders as strcmp does in the C locale, and strxfrm copies a string that
+// fits and returns its length.
 // RUN: --unwind 8
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <string.h>

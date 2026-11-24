@@ -10,10 +10,8 @@
 void *memset(void *, int, size_t);
 void *malloc(size_t);
 void *memcpy(void *, const void *, size_t);
-
 void *memmove(void *, const void *, size_t);
-
-int tolower(int c);
+int tolower(int);
 
 size_t strlen(const char *s) {
   size_t n = 0;
@@ -176,35 +174,30 @@ char *strndup(const char *s, size_t n) {
     d[i] = s[i];
   d[m] = 0;
   return d;
-
-// BSD string functions
-char *index(const char *s, int c) {
-  return strchr(s, c);
 }
 
-char *rindex(const char *s, int c) {
-  return strrchr(s, c);
-}
+char *index(const char *s, int c) { return strchr(s, c); }
 
-void bzero(void *p, size_t n) {
-  memset(p, 0, n);
-}
+char *rindex(const char *s, int c) { return strrchr(s, c); }
 
-void bcopy(const void *src, void *dst, size_t n) {
-  memmove(dst, src, n);
-}
+void bzero(void *p, size_t n) { memset(p, 0, n); }
+
+void bcopy(const void *src, void *dst, size_t n) { memmove(dst, src, n); }
 
 void *memccpy(void *dst, const void *src, int c, size_t n) {
   unsigned char *d = dst;
   const unsigned char *s = src;
-  for (; n; --n, ++d, ++s)
-    if (*d = *s, *d == (unsigned char)c)
-      return d + 1;
+  for (; n; --n) {
+    *d = *s++;
+    if (*d++ == (unsigned char)c)
+      return d;
+  }
   return NULL;
+}
 
 int strcasecmp(const char *a, const char *b) {
   const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
-  while (*x && *x == *y) {
+  while (*x && tolower(*x) == tolower(*y)) {
     ++x;
     ++y;
   }
@@ -217,30 +210,17 @@ int strncasecmp(const char *a, const char *b, size_t n) {
     if (tolower(*x) != tolower(*y) || !*x)
       return tolower(*x) - tolower(*y);
   return 0;
-
-// From C17 7.24.4.3 and 7.24.4.5: strcoll returns strcmp(a, b) in the "C" locale
-int strcoll(const char *a, const char *b) {
-  return strcmp(a, b);
 }
 
-// From C17 7.24.4.5: strxfrm returns strlen(src) and copies src to dst with its terminator,
-// only when that length is less than n; when n is 0, dst may be NULL
+// Vereda models only the "C" locale, where collation is strcmp's order.
+int strcoll(const char *a, const char *b) { return strcmp(a, b); }
+
 size_t strxfrm(char *dst, const char *src, size_t n) {
   size_t len = strlen(src);
-  if (n != 0 && len < n) {
-    size_t i = 0;
-    while (i <= len) { // copy including null terminator
+  if (len < n)
+    for (size_t i = 0; i <= len; ++i)
       dst[i] = src[i];
-      ++i;
-    }
-  }
   return len;
-
-char *strerror(int errnum) {
-  // C17 7.24.6.2: returns pointer to message string that program must not modify
-  // Return "Success" for 0 and "Unknown error" for anything else (string literals)
-  if (errnum == 0)
-    return (char *)"Success";
-  else
-    return (char *)"Unknown error";
 }
+
+char *strerror(int errnum) { return (char *)(errnum ? "Unknown error" : "Success"); }
