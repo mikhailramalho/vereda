@@ -23,7 +23,7 @@ struct Verdict {
 // Asks the solver about each check under its own assumption, assertions
 // before unwinding assertions. Calls violated on each satisfiable one while
 // its model is available, and stops there unless all is set.
-Verdict decide(camada::SMTSolver &s, const checks::Checks &checks, bool all,
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
                llvm::function_ref<void(const checks::Check &)> violated);
 
 } // namespace vereda::solver

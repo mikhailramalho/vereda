@@ -10,73 +10,80 @@ namespace vereda::encode {
 
 using Ref = Terms::Ref;
 
+static const APInt False(1, 0), True(1, 1);
+
+Terms::Terms(camada::SMTSolver &s) : s(s), bools{Ref(s.mkBool(false)), Ref(s.mkBool(true))} {}
+
 size_t Terms::KeyHash::operator()(const Key &k) const {
   return llvm::hash_combine(static_cast<uint8_t>(k.op), k.a, k.b, k.c, k.x, k.y);
 }
 
 const APInt *Terms::constant(const Ref &e) const {
-  auto it = values.find(e.get());
-  return it == values.end() ? nullptr : &it->second;
-}
-bool Terms::isTrue(const Ref &e) const {
-  const APInt *v = constant(e);
-  return v && e->isBoolSort() && v->isOne();
-}
-bool Terms::isFalse(const Ref &e) const {
-  const APInt *v = constant(e);
-  return v && e->isBoolSort() && v->isZero();
+  if (const Term::Constant *c = e.entry())
+    return &c->value;
+  return isTrue(e) ? &True : isFalse(e) ? &False : nullptr;
 }
 
 const Terms::Node *Terms::node(const Ref &e) const {
-  auto it = nodes.find(e.get());
+  auto it = nodes.find(e.id());
   return it == nodes.end() ? nullptr : &it->second;
 }
 
 Ref Terms::bv(const APInt &v) {
-  Ref &r = bvs[v];
-  if (!r) {
+  auto [it, fresh] = bvs.try_emplace(v);
+  if (fresh)
+    it->second = &constants.emplace_back(Term::Constant{v, {}});
+  return Ref(it->second);
+}
+
+Ref Terms::boolean(bool b) { return bools[b]; }
+
+camada::SMTExprRef Terms::solverTerm(const Ref &e) {
+  const Term::Constant *c = e.entry();
+  if (!c)
+    return e.ref();
+  if (!c->term) {
     // Up to 64 bits, camada hands the value to the solver as an integer;
     // a string of digits would be parsed back, twice in Bitwuzla.
+    const APInt &v = c->value;
     unsigned w = v.getBitWidth();
     if (w <= 64) {
-      r = s.mkBVFromDec(static_cast<int64_t>(v.getZExtValue()), w);
+      c->term = s.mkBVFromDec(static_cast<int64_t>(v.getZExtValue()), w);
     } else {
       std::string bits(w, '0');
       for (unsigned i = 0; i < w; ++i)
         if (v[i])
           bits[w - 1 - i] = '1';
-      r = s.mkBVFromBin(bits, w);
+      c->term = s.mkBVFromBin(bits, w);
     }
-    values.try_emplace(r.get(), v);
+    made.try_emplace(c->term.get(), e);
   }
-  return r;
+  return c->term;
 }
 
-Ref Terms::boolean(bool b) {
-  Ref &r = bools[b];
-  if (!r) {
-    r = s.mkBool(b);
-    values.try_emplace(r.get(), APInt(1, b));
-  }
-  return r;
+Ref Terms::fromSolver(const camada::SMTExprRef &e) const {
+  if (!e)
+    return {};
+  auto it = made.find(e.get());
+  return it == made.end() ? Ref(e) : it->second;
 }
 
 bool Terms::entails(const Ref &guard, const Ref &lit) { return entails(guard, lit, 0); }
 
 bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth) {
-  if (guard.get() == lit.get() || isTrue(lit) || isFalse(guard))
+  if (guard == lit || isTrue(lit) || isFalse(guard))
     return true;
   const Node *n = node(guard);
   // Deep guards give up, which only loses a fold.
   if (!n || (n->op != Op::And && n->op != Op::Or) || depth > 1000)
     return false;
-  auto [it, fresh] = implied.try_emplace({guard.get(), lit.get()}, false);
+  auto [it, fresh] = implied.try_emplace({guard.id(), lit.id()}, false);
   if (!fresh)
     return it->second;
   Ref a = n->a, b = n->b;
   bool r = n->op == Op::And ? entails(a, lit, depth + 1) || entails(b, lit, depth + 1)
                             : entails(a, lit, depth + 1) && entails(b, lit, depth + 1);
-  implied[{guard.get(), lit.get()}] = r; // the map may have rehashed
+  implied[{guard.id(), lit.id()}] = r; // the map may have rehashed
   return r;
 }
 
@@ -86,7 +93,7 @@ void Terms::equalities(const Ref &cond, bool holds,
   // exponential time; equalities sit near the top.
   unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
-    if (n.op != Op::Eq || !h || n.a->isBoolSort())
+    if (n.op != Op::Eq || !h || n.a.isBool())
       return;
     if (constant(n.b) && !constant(n.a))
       f(n.a, n.b);
@@ -148,7 +155,7 @@ bool Terms::stored(const Ref &e, Ref &a, Ref &i, Ref &v) const {
 }
 
 Ref Terms::filledWith(const Ref &e) const {
-  auto it = filled.find(e.get());
+  auto it = filled.find(e.id());
   return it == filled.end() ? Ref() : it->second.second;
 }
 
@@ -160,26 +167,26 @@ Ref Terms::lift(const Ref &a, const std::function<Ref(const Ref &)> &f) {
 Ref Terms::lift(const Ref &a, const Ref &b, const std::function<Ref(const Ref &, const Ref &)> &f) {
   Ref ca, cb, ax = a, ay = a, bx = b, by = b;
   bool sa = split(a, ca, ax, ay), sb = split(b, cb, bx, by);
-  if ((!sa && !sb) || (sa && sb && ca.get() != cb.get()) || (!sa && !constant(a)) ||
+  if ((!sa && !sb) || (sa && sb && ca != cb) || (!sa && !constant(a)) ||
       (!sb && !constant(b)))
     return {};
   return ite(sa ? ca : cb, f(ax, bx), f(ay, by));
 }
 
 Ref Terms::make(Node n) {
-  Key k{n.op, n.a.get(), n.b ? n.b.get() : nullptr, n.c ? n.c.get() : nullptr, n.x, n.y};
+  Key k{n.op, n.a.id(), n.b.id(), n.c.id(), n.x, n.y};
   auto [it, fresh] = memo.try_emplace(k);
   if (fresh) {
-    it->second = build(n);
+    it->second = Ref(build(n));
     std::vector<Ref> reads;
     auto add = [&](const Ref &l) {
-      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &r) { return r.get() == l.get(); }))
+      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &r) { return r == l; }))
         reads.push_back(l);
     };
     auto through = [&](const Ref &array) {
-      if (lambdas.count(array.get()))
+      if (lambdas.count(array.id()))
         add(array);
-      else if (auto u = under.find(array.get()); u != under.end())
+      else if (auto u = under.find(array.id()); u != under.end())
         for (const Ref &l : u->second)
           add(l);
     };
@@ -188,14 +195,14 @@ Ref Terms::make(Node n) {
     else if (n.op == Op::Ite)
       through(n.b), through(n.c);
     if (!reads.empty())
-      under.emplace(it->second.get(), std::move(reads));
-    nodes.try_emplace(it->second.get(), std::move(n));
+      under.emplace(it->second.id(), std::move(reads));
+    nodes.try_emplace(it->second.id(), std::move(n));
   }
   return it->second;
 }
 
-Ref Terms::build(const Node &n) {
-  const Ref &a = n.a, &b = n.b;
+camada::SMTExprRef Terms::build(const Node &n) {
+  camada::SMTExprRef a = solverTerm(n.a), b = solverTerm(n.b), c = solverTerm(n.c);
   switch (n.op) {
   case Op::Add: return s.mkBVAdd(a, b);
   case Op::Sub: return s.mkBVSub(a, b);
@@ -224,7 +231,7 @@ Ref Terms::build(const Node &n) {
   case Op::Or: return s.mkOr(a, b);
   case Op::Xor: return s.mkXor(a, b);
   case Op::Not: return s.mkNot(a);
-  case Op::Ite: return s.mkIte(a, b, n.c);
+  case Op::Ite: return s.mkIte(a, b, c);
   case Op::UAddO: return s.mkBVUAddOverflow(a, b);
   case Op::SAddO: return s.mkBVSAddOverflow(a, b);
   case Op::USubO: return s.mkBVUSubOverflow(a, b);
@@ -232,7 +239,7 @@ Ref Terms::build(const Node &n) {
   case Op::UMulO: return s.mkBVUMulOverflow(a, b);
   case Op::SMulO: return s.mkBVSMulOverflow(a, b);
   case Op::Select: return s.mkArraySelect(a, b);
-  case Op::Store: return s.mkArrayStore(a, b, n.c);
+  case Op::Store: return s.mkArrayStore(a, b, c);
   }
   llvm_unreachable("unknown op");
 }
@@ -257,10 +264,10 @@ Ref Terms::sub(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return sub(x, y); }))
     return r;
   if (cb && cb->isZero()) return a;
-  if (a.get() == b.get()) return bv(0, a->getWidth());
+  if (a == b) return bv(0, a.width());
   if (const Node *n = node(a); n && n->op == Op::Add) { // (x + y) - x
-    if (n->a.get() == b.get()) return n->b;
-    if (n->b.get() == b.get()) return n->a;
+    if (n->a == b) return n->b;
+    if (n->b == b) return n->a;
   }
   return make({Op::Sub, a, b});
 }
@@ -269,7 +276,7 @@ Ref Terms::mul(const Ref &a, const Ref &b) {
   FOLD2(bv(*ca * *cb))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return mul(x, y); }))
     return r;
-  if ((ca && ca->isZero()) || (cb && cb->isZero())) return bv(0, a->getWidth());
+  if ((ca && ca->isZero()) || (cb && cb->isZero())) return bv(0, a.width());
   if (cb && cb->isOne()) return a;
   if (ca && ca->isOne()) return b;
   return make({Op::Mul, a, b});
@@ -295,7 +302,7 @@ Ref Terms::urem(const Ref &a, const Ref &b) {
   if (ca && cb && !cb->isZero()) return bv(ca->urem(*cb));
   if (const Node *n = node(a); n && n->op == Op::Mul && cb && !cb->isZero() && range(a))
     if (const APInt *c = constant(n->b); c && *c == *cb)
-      return bv(0, a->getWidth());
+      return bv(0, a.width());
   return make({Op::URem, a, b});
 }
 Ref Terms::srem(const Ref &a, const Ref &b) {
@@ -325,10 +332,10 @@ Ref Terms::bvand(const Ref &a, const Ref &b) {
   FOLD2(bv(*ca & *cb))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return bvand(x, y); }))
     return r;
-  if ((ca && ca->isZero()) || (cb && cb->isZero())) return bv(0, a->getWidth());
+  if ((ca && ca->isZero()) || (cb && cb->isZero())) return bv(0, a.width());
   if (cb && cb->isAllOnes()) return a;
   if (ca && ca->isAllOnes()) return b;
-  if (a.get() == b.get()) return a;
+  if (a == b) return a;
   return make({Op::BVAnd, a, b});
 }
 Ref Terms::bvor(const Ref &a, const Ref &b) {
@@ -337,14 +344,14 @@ Ref Terms::bvor(const Ref &a, const Ref &b) {
     return r;
   if (cb && cb->isZero()) return a;
   if (ca && ca->isZero()) return b;
-  if (a.get() == b.get()) return a;
+  if (a == b) return a;
   return make({Op::BVOr, a, b});
 }
 Ref Terms::bvxor(const Ref &a, const Ref &b) {
   FOLD2(bv(*ca ^ *cb))
   if (cb && cb->isZero()) return a;
   if (ca && ca->isZero()) return b;
-  if (a.get() == b.get()) return bv(0, a->getWidth());
+  if (a == b) return bv(0, a.width());
   return make({Op::BVXor, a, b});
 }
 Ref Terms::bvnot(const Ref &a) {
@@ -365,9 +372,9 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
   // level per join, and every load would otherwise walk all of it.
   // Past 1000 levels the join stops, which only loses a fold and
   // keeps the recursion off the end of the stack.
-  if (nh && nl && nh->op == Op::Ite && nl->op == Op::Ite && nh->a.get() == nl->a.get() &&
+  if (nh && nl && nh->op == Op::Ite && nl->op == Op::Ite && nh->a == nl->a &&
       joinDepth < 1000) {
-    Key k{Op::Concat, hi.get(), lo.get(), nullptr, 0, 0};
+    Key k{Op::Concat, hi.id(), lo.id(), nullptr, 0, 0};
     if (auto it = memo.find(k); it != memo.end())
       return it->second;
     Ref c = nh->a, ha = nh->b, hb = nh->c, la = nl->b, lb = nl->c;
@@ -379,18 +386,18 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
   }
   // y[w-1:k] ++ 0^k is y when y's low k bits are zero: an offset made
   // into an element index and back.
-  if (nh && nh->op == Op::Extract && cl && cl->isZero() && nh->y == lo->getWidth() &&
-      nh->x + 1 == nh->a->getWidth() && zeros(nh->a) >= nh->y)
+  if (nh && nh->op == Op::Extract && cl && cl->isZero() && nh->y == lo.width() &&
+      nh->x + 1 == nh->a.width() && zeros(nh->a) >= nh->y)
     return nh->a;
   // x[h:m+1] ++ x[m:l] is x[h:l]: bytes read back from one stored value.
   if (nh && nl && nh->op == Op::Extract && nl->op == Op::Extract &&
-      nh->a.get() == nl->a.get() && nh->y == nl->x + 1)
+      nh->a == nl->a && nh->y == nl->x + 1)
     return extract(nh->a, nh->x, nl->y);
   return make({Op::Concat, hi, lo});
 }
 
 Ref Terms::extract(const Ref &a, unsigned hi, unsigned lo) {
-  if (lo == 0 && hi + 1 == a->getWidth()) return a;
+  if (lo == 0 && hi + 1 == a.width()) return a;
   if (const APInt *ca = constant(a)) return bv(ca->extractBits(hi - lo + 1, lo));
   if (Ref r = lift(a, [&](const Ref &x) { return extract(x, hi, lo); }))
     return r;
@@ -399,14 +406,14 @@ Ref Terms::extract(const Ref &a, unsigned hi, unsigned lo) {
     case Op::Extract:
       return extract(n->a, hi + n->y, lo + n->y);
     case Op::Concat: {
-      unsigned w = n->b->getWidth();
+      unsigned w = n->b.width();
       if (hi < w) return extract(n->b, hi, lo);
       if (lo >= w) return extract(n->a, hi - w, lo - w);
       break;
     }
     case Op::ZExt:
     case Op::SExt:
-      if (hi < n->a->getWidth()) return extract(n->a, hi, lo);
+      if (hi < n->a.width()) return extract(n->a, hi, lo);
       break;
     default:
       break;
@@ -433,10 +440,10 @@ Ref Terms::sext(const Ref &a, unsigned n) {
 Ref Terms::eq(const Ref &a, const Ref &b) {
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return eq(x, y); }))
     return r;
-  if (a.get() == b.get()) return boolean(true);
+  if (a == b) return boolean(true);
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca && cb) return boolean(*ca == *cb);
-  if (a->isBoolSort()) {
+  if (a.isBool()) {
     if (ca) return ca->isOne() ? b : lnot(b);
     if (cb) return cb->isOne() ? a : lnot(a);
   } else if (ca || cb) {
@@ -444,8 +451,8 @@ Ref Terms::eq(const Ref &a, const Ref &b) {
     // known object is never equal to null or to another object's pointer.
     const Ref &c = ca ? a : b, &x = ca ? b : a;
     if (const Node *n = node(x); n && n->op == Op::Concat) {
-      unsigned w = n->b->getWidth();
-      return land(eq(extract(c, c->getWidth() - 1, w), n->a), eq(extract(c, w - 1, 0), n->b));
+      unsigned w = n->b.width();
+      return land(eq(extract(c, c.width() - 1, w), n->a), eq(extract(c, w - 1, 0), n->b));
     }
   }
   return make({Op::Eq, a, b});
@@ -455,7 +462,7 @@ Ref Terms::ult(const Ref &a, const Ref &b) {
   FOLD2(boolean(ca->ult(*cb)))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return ult(x, y); }))
     return r;
-  if (a.get() == b.get()) return boolean(false);
+  if (a == b) return boolean(false);
   // Nothing is below the least value or above the greatest, here and in
   // ule, slt and sle: x >= g with g a global still zero when loaded is true.
   if ((cb && cb->isZero()) || (ca && ca->isAllOnes())) return boolean(false);
@@ -466,7 +473,7 @@ Ref Terms::ule(const Ref &a, const Ref &b) {
   FOLD2(boolean(ca->ule(*cb)))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return ule(x, y); }))
     return r;
-  if (a.get() == b.get()) return boolean(true);
+  if (a == b) return boolean(true);
   if ((ca && ca->isZero()) || (cb && cb->isAllOnes())) return boolean(true);
   if (int o = order(a, b, true, false); o >= 0) return boolean(o);
   return make({Op::Ule, a, b});
@@ -475,7 +482,7 @@ Ref Terms::slt(const Ref &a, const Ref &b) {
   FOLD2(boolean(ca->slt(*cb)))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return slt(x, y); }))
     return r;
-  if (a.get() == b.get()) return boolean(false);
+  if (a == b) return boolean(false);
   if ((cb && cb->isMinSignedValue()) || (ca && ca->isMaxSignedValue())) return boolean(false);
   if (int o = order(a, b, false, true); o >= 0) return boolean(o);
   return make({Op::Slt, a, b});
@@ -484,7 +491,7 @@ Ref Terms::sle(const Ref &a, const Ref &b) {
   FOLD2(boolean(ca->sle(*cb)))
   if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return sle(x, y); }))
     return r;
-  if (a.get() == b.get()) return boolean(true);
+  if (a == b) return boolean(true);
   if ((ca && ca->isMinSignedValue()) || (cb && cb->isMaxSignedValue())) return boolean(true);
   if (int o = order(a, b, true, true); o >= 0) return boolean(o);
   return make({Op::Sle, a, b});
@@ -499,10 +506,10 @@ Ref Terms::lnot(const Ref &a) {
 Ref Terms::land(const Ref &a, const Ref &b) {
   if (isFalse(a) || isFalse(b)) return boolean(false);
   if (isTrue(a)) return b;
-  if (isTrue(b) || a.get() == b.get()) return a;
+  if (isTrue(b) || a == b) return a;
   const Node *na = node(a), *nb = node(b);
-  if ((na && na->op == Op::Not && na->a.get() == b.get()) ||
-      (nb && nb->op == Op::Not && nb->a.get() == a.get()))
+  if ((na && na->op == Op::Not && na->a == b) ||
+      (nb && nb->op == Op::Not && nb->a == a))
     return boolean(false);
   // A condition the guard already has: g and c is g, and g and not c is
   // false, which prunes the edge while it is walked.
@@ -513,20 +520,20 @@ Ref Terms::land(const Ref &a, const Ref &b) {
 Ref Terms::lor(const Ref &a, const Ref &b) {
   if (isTrue(a) || isTrue(b)) return boolean(true);
   if (isFalse(a)) return b;
-  if (isFalse(b) || a.get() == b.get()) return a;
+  if (isFalse(b) || a == b) return a;
   const Node *na = node(a), *nb = node(b);
-  if ((na && na->op == Op::Not && na->a.get() == b.get()) ||
-      (nb && nb->op == Op::Not && nb->a.get() == a.get()))
+  if ((na && na->op == Op::Not && na->a == b) ||
+      (nb && nb->op == Op::Not && nb->a == a))
     return boolean(true);
   // Branches rejoining, as ESBMC's guard |= with the one-conjunct suffixes
   // it sees in practice: (p and x) or (p and y) is p and (x or y), so an
   // if/else diamond joins back to p, and p or (p and x) is p.
   bool andA = na && na->op == Op::And, andB = nb && nb->op == Op::And;
-  if (andB && nb->a.get() == a.get())
+  if (andB && nb->a == a)
     return a;
-  if (andA && na->a.get() == b.get())
+  if (andA && na->a == b)
     return b;
-  if (andA && andB && na->a.get() == nb->a.get())
+  if (andA && andB && na->a == nb->a)
     return land(na->a, lor(na->b, nb->b));
   return make({Op::Or, a, b});
 }
@@ -537,25 +544,25 @@ Ref Terms::lor(const Ref &a, const Ref &b) {
 static constexpr unsigned SpineBound = 64;
 
 int Terms::conjunct(const Ref &g, const Ref &c) const {
-  auto find = [this](const camada::SMTExpr *e) {
+  auto find = [this](const void *e) {
     auto it = nodes.find(e);
     return it == nodes.end() ? nullptr : &it->second;
   };
-  const Node *nc = find(c.get());
-  const camada::SMTExpr *e = g.get();
+  const Node *nc = find(c.id());
+  const void *e = g.id();
   for (unsigned i = 0; i < SpineBound; ++i) {
     const Node *n = find(e);
     bool isAnd = n && n->op == Op::And;
-    const camada::SMTExpr *lit = isAnd ? n->b.get() : e; // the bottom is a conjunct too
-    if (lit == c.get())
+    const void *lit = isAnd ? n->b.id() : e; // the bottom is a conjunct too
+    if (lit == c.id())
       return 1;
     const Node *nl = find(lit);
-    if ((nc && nc->op == Op::Not && nc->a.get() == lit) ||
-        (nl && nl->op == Op::Not && nl->a.get() == c.get()))
+    if ((nc && nc->op == Op::Not && nc->a.id() == lit) ||
+        (nl && nl->op == Op::Not && nl->a == c))
       return -1;
     if (!isAnd)
       return 0;
-    e = n->a.get();
+    e = n->a.id();
   }
   return 0;
 }
@@ -564,14 +571,14 @@ Ref Terms::lxor(const Ref &a, const Ref &b) {
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca) return ca->isOne() ? lnot(b) : b;
   if (cb) return cb->isOne() ? lnot(a) : a;
-  if (a.get() == b.get()) return boolean(false);
+  if (a == b) return boolean(false);
   return make({Op::Xor, a, b});
 }
 
 Ref Terms::ite(const Ref &c, const Ref &a, const Ref &b) {
-  if (isTrue(c) || a.get() == b.get()) return a;
+  if (isTrue(c) || a == b) return a;
   if (isFalse(c)) return b;
-  if (a->isBoolSort()) {
+  if (a.isBool()) {
     if (isTrue(a) && isFalse(b)) return c;
     if (isFalse(a) && isTrue(b)) return lnot(c);
   }
@@ -579,9 +586,9 @@ Ref Terms::ite(const Ref &c, const Ref &a, const Ref &b) {
   // so that a choice of constants (a phi of malloc's result and null) stays
   // one ite that split sees.
   const Node *n = node(a);
-  if (n && n->op == Op::Ite && n->c.get() == b.get()) return ite(land(c, n->a), n->b, b);
+  if (n && n->op == Op::Ite && n->c == b) return ite(land(c, n->a), n->b, b);
   n = node(b);
-  if (n && n->op == Op::Ite && n->c.get() == a.get()) return ite(land(lnot(c), n->a), n->b, a);
+  if (n && n->op == Op::Ite && n->c == a) return ite(land(lnot(c), n->a), n->b, a);
   return make({Op::Ite, c, a, b});
 }
 
@@ -621,7 +628,7 @@ Ref Terms::select(const Ref &array, const Ref &index) {
   if (!constant(index))
     return uncached(array, index);
   // A reference into the map stays valid while the select below adds to it.
-  Ref &r = selects[{array.get(), index.get()}];
+  Ref &r = selects[{array.id(), index.id()}];
   if (!r)
     r = uncached(array, index);
   return r;
@@ -629,55 +636,55 @@ Ref Terms::select(const Ref &array, const Ref &index) {
 
 Ref Terms::uncached(const Ref &array, const Ref &index) {
   Ref arr = array;
-  for (auto l = lambdas.find(arr.get()); l != lambdas.end() && l->second.misses &&
+  for (auto l = lambdas.find(arr.id()); l != lambdas.end() && l->second.misses &&
                                          l->second.misses(index);
-       l = lambdas.find(arr.get()))
+       l = lambdas.find(arr.id()))
     arr = l->second.below;
-  if (arr.get() != array.get())
+  if (arr != array)
     return select(arr, index);
   // A read of a constant array is its value, at any index.
   unsigned steps = 256;
   if (const APInt *ci = constant(index))
     if (Ref v = read(arr, *ci, steps))
       return v;
-  if (auto it = filled.find(arr.get()); it != filled.end())
+  if (auto it = filled.find(arr.id()); it != filled.end())
     return it->second.second;
-  if (lambdas.count(arr.get()))
+  if (lambdas.count(arr.id()))
     return reduce(arr, index);
-  bool fresh = !memo.count({Op::Select, arr.get(), index.get(), nullptr, 0, 0});
+  bool fresh = !memo.count({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
   Ref r = make({Op::Select, arr, index});
-  if (auto u = under.find(arr.get()); fresh && u != under.end())
+  if (auto u = under.find(arr.id()); fresh && u != under.end())
     for (const Ref &l : std::vector<Ref>(u->second))
-      if (!memo.count({Op::Select, l.get(), index.get(), nullptr, 0, 0}))
-        s.addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
+      if (!memo.count({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
+        s.addConstraint(solverTerm(eq(make({Op::Select, l, index}), reduce(l, index))));
   return r;
 }
 
 Ref Terms::lambda(const camada::SMTSortRef &sort, const std::string &name, Def def,
                   const Ref &below, std::function<bool(const Ref &)> misses) {
-  Ref r = s.mkSymbol(name, sort);
-  lambdas.emplace(r.get(), Lambda{std::move(def), below, std::move(misses)});
+  Ref r(s.mkSymbol(name, sort));
+  lambdas.emplace(r.id(), Lambda{std::move(def), below, std::move(misses)});
   return r;
 }
 
 Ref Terms::reduce(const Ref &l, const Ref &index) {
-  if (auto it = reduced.find({l.get(), index.get()}); it != reduced.end())
+  if (auto it = reduced.find({l.id(), index.id()}); it != reduced.end())
     return it->second.second;
-  Ref r = lambdas.at(l.get()).def(index);
-  reduced.try_emplace({l.get(), index.get()}, index, r);
+  Ref r = lambdas.at(l.id()).def(index);
+  reduced.try_emplace({l.id(), index.id()}, index, r);
   return r;
 }
 
 Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
-  std::unordered_set<const camada::SMTExpr *> &same = freeOf[from.get()];
-  std::unordered_map<const camada::SMTExpr *, Ref> done;
+  std::unordered_set<const void *> &same = freeOf[from.id()];
+  std::unordered_map<const void *, Ref> done;
   // What x becomes, or null while its operands are pending.
   auto known = [&](const Ref &x) -> Ref {
-    if (x.get() == from.get())
+    if (x == from)
       return to;
-    if (!node(x) || same.count(x.get()))
+    if (!node(x) || same.count(x.id()))
       return x;
-    auto it = done.find(x.get());
+    auto it = done.find(x.id());
     return it == done.end() ? Ref() : it->second;
   };
   // Iterative, as a guard can be deeper than the stack.
@@ -699,11 +706,10 @@ Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
     if (!ready)
       continue;
     stack.pop_back();
-    auto raw = [](const Ref &r) { return r ? r.get() : nullptr; };
-    if (raw(now[0]) == raw(kids[0]) && raw(now[1]) == raw(kids[1]) && raw(now[2]) == raw(kids[2]))
-      same.insert(x.get());
+    if (now[0] == kids[0] && now[1] == kids[1] && now[2] == kids[2])
+      same.insert(x.id());
     else
-      done[x.get()] = rebuild(n, now[0], now[1], now[2]);
+      done[x.id()] = rebuild(n, now[0], now[1], now[2]);
   }
   return known(e);
 }
@@ -756,7 +762,7 @@ Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
     if (n && n->op == Op::Ite) { // a join: both sides must hold the same value
       --steps;
       Ref a = n->b, b = n->c, x = read(a, i, steps), y = x ? read(b, i, steps) : Ref();
-      return y && x.get() == y.get() ? x : Ref();
+      return y && x == y ? x : Ref();
     }
     if (!n || n->op != Op::Store)
       break;
@@ -767,7 +773,7 @@ Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
       return n->c;
     arr = n->a;
   }
-  auto it = filled.find(arr.get());
+  auto it = filled.find(arr.id());
   return it != filled.end() ? it->second.second : Ref();
 }
 
@@ -775,28 +781,27 @@ bool Terms::arithmetic(const Ref &e) {
   // Iterative, as an ite chain can be deeper than the stack. A read from an
   // array is a leaf: what was stored there is the solver's business only
   // when the read needs it.
-  auto inner = [this](const camada::SMTExpr *p) -> const Node * {
+  auto inner = [this](const void *p) -> const Node * {
     auto it = nodes.find(p);
     return it == nodes.end() || it->second.op == Op::Select ? nullptr : &it->second;
   };
   auto own = [](Op op) {
     return op == Op::Mul || op == Op::UDiv || op == Op::SDiv || op == Op::URem || op == Op::SRem;
   };
-  auto known = [&](const camada::SMTExpr *p) { return !inner(p) || arith.count(p); };
-  auto value = [&](const camada::SMTExpr *p) { return inner(p) && arith.at(p); };
-  std::vector<const camada::SMTExpr *> stack{e.get()};
+  auto known = [&](const void *p) { return !inner(p) || arith.count(p); };
+  auto value = [&](const void *p) { return inner(p) && arith.at(p); };
+  std::vector<const void *> stack{e.id()};
   while (!stack.empty()) {
-    const camada::SMTExpr *p = stack.back();
+    const void *p = stack.back();
     if (known(p)) {
       stack.pop_back();
       continue;
     }
     const Node &n = *inner(p);
-    auto raw = [](const Ref &r) { return r ? r.get() : nullptr; };
-    const camada::SMTExpr *kids[] = {raw(n.a), raw(n.b), raw(n.c)};
+    const void *kids[] = {n.a.id(), n.b.id(), n.c.id()};
     bool ready = true;
     if (!own(n.op))
-      for (const camada::SMTExpr *k : kids)
+      for (const void *k : kids)
         if (k && !known(k)) {
           stack.push_back(k);
           ready = false;
@@ -805,11 +810,11 @@ bool Terms::arithmetic(const Ref &e) {
       continue;
     stack.pop_back();
     bool r = own(n.op);
-    for (const camada::SMTExpr *k : kids)
+    for (const void *k : kids)
       r = r || (k && value(k));
     arith.emplace(p, r);
   }
-  return value(e.get());
+  return value(e.id());
 }
 
 // The greatest unsigned and the least and greatest signed value of w bits,
@@ -824,20 +829,20 @@ static uint64_t toUnsigned(int64_t v, unsigned w) { return uint64_t(v) & umax(w)
 static bool oneSide(uint64_t lo, uint64_t hi, unsigned w) { return lo >> (w - 1) == hi >> (w - 1); }
 
 std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned depth) {
-  if (!e->isBVSort() || e->getWidth() > 64)
+  if (!e.isBV() || e.width() > 64)
     return std::nullopt;
   if (const APInt *c = constant(e))
     return Range{c->getZExtValue(), c->getZExtValue(), 0};
   std::optional<Range> r;
-  if (auto b = bounds.find(e.get()); b != bounds.end())
+  if (auto b = bounds.find(e.id()); b != bounds.end())
     r = Range{0, b->second.second - 1, 1};
   // A deep term (a long ite chain) is left unknown.
   else if (const Node *n = node(e); n && depth <= 32) {
     auto &cache = known ? scratch : ranges;
-    if (auto it = cache.find(e.get()); it != cache.end())
+    if (auto it = cache.find(e.id()); it != cache.end())
       r = it->second;
     else
-      cache.try_emplace(e.get(), r = shape(*n, e->getWidth(), known, depth));
+      cache.try_emplace(e.id(), r = shape(*n, e.width(), known, depth));
   }
   std::optional<Bounds> f = known ? known(e) : std::nullopt;
   if (!f)
@@ -892,7 +897,7 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
       U k = a->stride ? b->lo : a->lo;
       r = make(x.lo * k, x.hi * k, x.stride * k);
     } else if (n.op == Op::Concat) {
-      unsigned low = n.b->getWidth();
+      unsigned low = n.b.width();
       r = make((U(a->lo) << low) + b->lo, (U(a->hi) << low) + b->hi,
                std::gcd(uint64_t(U(a->stride) << low), b->stride));
     }
@@ -907,7 +912,7 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
     break;
   case Op::ZExt:
   case Op::SExt: // below the sign bit, as zext
-    if ((a = get(n.a)) && (n.op == Op::ZExt || !(a->hi >> (n.a->getWidth() - 1))))
+    if ((a = get(n.a)) && (n.op == Op::ZExt || !(a->hi >> (n.a.width() - 1))))
       r = a;
     break;
   default:
@@ -918,9 +923,9 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
 
 std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known known,
                                                          unsigned depth) {
-  if (!e->isBVSort() || e->getWidth() > 64)
+  if (!e.isBV() || e.width() > 64)
     return std::nullopt;
-  unsigned w = e->getWidth();
+  unsigned w = e.width();
   int64_t lo = smin(w), hi = smax(w);
   auto meet = [&](int64_t l, int64_t h) {
     lo = std::max(lo, l);
@@ -989,13 +994,13 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
   unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     bool sign = n.op == Op::Slt || n.op == Op::Sle;
-    if ((!sign && n.op != Op::Ult && n.op != Op::Ule) || n.a->getWidth() > 64)
+    if ((!sign && n.op != Op::Ult && n.op != Op::Ule) || n.a.width() > 64)
       return;
     // x < y, or x <= y; when the literal fails, its sides swap: !(a < b) is
     // b <= a.
     bool strict = (n.op == Op::Ult || n.op == Op::Slt) == h;
     const Ref &x = h ? n.a : n.b, &y = h ? n.b : n.a;
-    unsigned w = x->getWidth();
+    unsigned w = x.width();
     scratch.clear();
     auto now = [&](const Ref &e) {
       Bounds b{0, umax(w), smin(w), smax(w)};
@@ -1045,21 +1050,21 @@ unsigned Terms::zeros(const Ref &e, unsigned depth) {
   if (!n || depth > 32 || (n->op != Op::Add && n->op != Op::Sub && n->op != Op::Mul))
     return 0;
   unsigned x = zeros(n->a, depth + 1), y = zeros(n->b, depth + 1);
-  return n->op == Op::Mul ? std::min(x + y, e->getWidth()) : std::min(x, y);
+  return n->op == Op::Mul ? std::min(x + y, e.width()) : std::min(x, y);
 }
 
 Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
   // Storing a constant array's own value changes nothing. A flush stores each
   // byte's provenance, which for a zero-filled object's own arrays is the
   // value they already hold, so that array stays constant.
-  if (auto it = filled.find(array.get()); it != filled.end() && it->second.second.get() == value.get())
+  if (auto it = filled.find(array.id()); it != filled.end() && it->second.second == value)
     return array;
   return make({Op::Store, array, index, value});
 }
 
 Ref Terms::constArray(const camada::SMTSortRef &index, const Ref &value) {
-  Ref r = s.mkArrayConst(index, value);
-  filled.emplace(r.get(), std::make_pair(r, value));
+  Ref r(s.mkArrayConst(index, solverTerm(value)));
+  filled.emplace(r.id(), std::make_pair(r, value));
   return r;
 }
 

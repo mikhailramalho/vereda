@@ -51,37 +51,34 @@ public:
   // bounds (Terms::narrow), by which a comparison of it folds as it is
   // encoded. The term is kept, so its address, the key, is not reused.
   struct Fact {
-    camada::SMTExprRef constant, term;
+    Term constant, term;
     std::optional<Terms::Bounds> bounds;
-    bool operator==(const Fact &o) const {
-      return (constant ? constant.get() : nullptr) == (o.constant ? o.constant.get() : nullptr) &&
-             term.get() == o.term.get() && bounds == o.bounds;
-    }
+    bool operator==(const Fact &o) const = default;
   };
   // The walker keeps them per path, in a persistent map (cellmap.h) that
   // each arrival copies as a pointer.
   using Facts = memory::Trie<Fact>;
   Facts facts;
-  static Facts::Key key(const camada::SMTExprRef &x) {
-    return {reinterpret_cast<uintptr_t>(x.get()), 0};
+  static Facts::Key key(const Term &x) {
+    return {reinterpret_cast<uintptr_t>(x.id()), 0};
   }
   // Adds to into what cond, which holds on its path, says of its terms.
-  void learn(const camada::SMTExprRef &cond, Facts &into);
+  void learn(const Term &cond, Facts &into);
   // What two paths' facts on one term both say, if anything: for a join.
   static std::optional<Fact> join(const Fact &a, const Fact &b);
   // The term bound to v, with facts applied, or a constant. Undef and
   // poison are a fresh value per use.
-  camada::SMTExprRef value(const llvm::Value *v);
-  void bind(const llvm::Value *v, camada::SMTExprRef term) { env[v] = std::move(term); }
+  Term value(const llvm::Value *v);
+  void bind(const llvm::Value *v, Term term) { env[v] = std::move(term); }
   // The term bound to v, or a null term.
-  camada::SMTExprRef bound(const llvm::Value *v) const { return env.lookup(v); }
+  Term bound(const llvm::Value *v) const { return env.lookup(v); }
   // A value of type ty as the bits memory holds, and back: the identity
   // except for floats in the solver's theory.
-  camada::SMTExprRef toBits(camada::SMTExprRef v, llvm::Type *ty);
-  camada::SMTExprRef fromBits(camada::SMTExprRef bits, llvm::Type *ty);
+  Term toBits(Term v, llvm::Type *ty);
+  Term fromBits(Term bits, llvm::Type *ty);
   // A fresh unconstrained term of v's type, named after its origin (nondet
   // calls, arguments); for a pointer, a fresh address converted to one.
-  camada::SMTExprRef fresh(llvm::Type *ty, const std::string &name);
+  Term fresh(llvm::Type *ty, const std::string &name);
   // Encodes arithmetic, comparison, cast, select, freeze, extractvalue,
   // insertvalue and getelementptr, binding the result.
   void encode(llvm::Instruction &inst);
@@ -89,51 +86,50 @@ public:
   // result. Returns false for any other intrinsic.
   bool intrinsic(llvm::CallBase &c);
   // v != 0 as a Bool term, for assume and assert arguments and branch conditions.
-  camada::SMTExprRef isTrue(const llvm::Value *v);
+  Term isTrue(const llvm::Value *v);
   // An integer term (Bool for i1) as a bitvector of width bits, extending by
   // sign or zero, or truncating.
-  camada::SMTExprRef resize(camada::SMTExprRef v, unsigned width, bool isSigned);
+  Term resize(Term v, unsigned width, bool isSigned);
 
 private:
   unsigned packedWidth(llvm::Type *ty);
-  camada::SMTExprRef toField(camada::SMTExprRef v, llvm::Type *ty);
-  camada::SMTExprRef fromField(camada::SMTExprRef bits, llvm::Type *ty);
-  camada::SMTExprRef replaceBits(camada::SMTExprRef v, unsigned low, camada::SMTExprRef part);
-  camada::SMTExprRef toBool(camada::SMTExprRef bv);
-  camada::SMTExprRef fromBool(camada::SMTExprRef b, unsigned width);
-  camada::SMTExprRef binary(unsigned opcode, const llvm::Value *lhs, const llvm::Value *rhs);
-  camada::SMTExprRef castTo(unsigned opcode, const llvm::Value *op, llvm::Type *dst);
-  camada::SMTExprRef gep(const llvm::GEPOperator &g);
+  Term toField(Term v, llvm::Type *ty);
+  Term fromField(Term bits, llvm::Type *ty);
+  Term replaceBits(Term v, unsigned low, Term part);
+  Term toBool(Term bv);
+  Term fromBool(Term b, unsigned width);
+  Term binary(unsigned opcode, const llvm::Value *lhs, const llvm::Value *rhs);
+  Term castTo(unsigned opcode, const llvm::Value *op, llvm::Type *dst);
+  Term gep(const llvm::GEPOperator &g);
   camada::SMTSortRef fpSort(llvm::Type *ty);
-  camada::SMTExprRef fp(const llvm::Value *v); // v as a float of the theory or encoding
-  camada::SMTExprRef bits(const camada::SMTExprRef &fp); // an operation's result as a value
+  // v as a float of the theory or encoding, for camada's operations on floats.
+  camada::SMTExprRef fp(const llvm::Value *v);
+  Term bits(const camada::SMTExprRef &fp); // an operation's result as a value
   bool native() const { return fpEncoding == camada::FPEncoding::Native; }
-  camada::SMTExprRef signBit(const llvm::Value *v); // true when v's sign bit is set
+  Term signBit(const llvm::Value *v); // true when v's sign bit is set
   camada::SMTExprRef rm(camada::RM mode);
-  camada::SMTExprRef fcmp(llvm::CmpInst::Predicate p, const llvm::Value *a,
-                          const llvm::Value *b);
+  Term fcmp(llvm::CmpInst::Predicate p, const llvm::Value *a, const llvm::Value *b);
   // Whether the float with these bits is in one of the classes of mask, as
   // llvm.is.fpclass takes it.
-  camada::SMTExprRef fpClass(const camada::SMTExprRef &x, llvm::Type *ty, unsigned mask);
+  Term fpClass(const Term &x, llvm::Type *ty, unsigned mask);
   bool fpIntrinsic(llvm::CallBase &c);
   // v's value when its term is a constant float of an IEEE format.
   std::optional<llvm::APFloat> constFloat(const llvm::Value *v);
   // The constant float f as a value of type ty, and the same for the result
   // of an operation on constants, except null for a NaN, whose bits are the
   // encoding's (any NaN natively, the hardware's with fp2bv).
-  camada::SMTExprRef floatValue(const llvm::APFloat &f, llvm::Type *ty);
-  camada::SMTExprRef folded(const llvm::APFloat &r, llvm::Type *ty);
+  Term floatValue(const llvm::APFloat &f, llvm::Type *ty);
+  Term folded(const llvm::APFloat &r, llvm::Type *ty);
 
   Terms &t;
   camada::SMTSolver &s;
   memory::Memory &mem;
   camada::FPEncoding fpEncoding;
-  llvm::DenseMap<const llvm::Value *, camada::SMTExprRef> env;
+  llvm::DenseMap<const llvm::Value *, Term> env;
   // In the solver's theory, one term per constant float, keyed by its bits
   // (so -0 and +0 stay apart), and the bits of each such term.
-  llvm::DenseMap<std::pair<const llvm::fltSemantics *, llvm::APInt>, camada::SMTExprRef>
-      floatTerms;
-  llvm::DenseMap<const camada::SMTExpr *, llvm::APInt> floatBits;
+  llvm::DenseMap<std::pair<const llvm::fltSemantics *, llvm::APInt>, Term> floatTerms;
+  llvm::DenseMap<const void *, llvm::APInt> floatBits; // by Term id
   unsigned freshCount = 0;
 };
 

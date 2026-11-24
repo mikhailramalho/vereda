@@ -9,7 +9,7 @@
 // from one share whole subtrees, which diff() skips. In-order iteration is in
 // key order, and an object's keys are one subtree.
 #pragma once
-#include <camada/camada.h>
+#include "encode/terms.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -18,10 +18,8 @@
 namespace vereda::memory {
 
 struct Cell {
-  camada::SMTExprRef data, prov;
-  bool operator==(const Cell &o) const {
-    return data.get() == o.data.get() && prov.get() == o.prov.get();
-  }
+  encode::Term data, prov;
+  bool operator==(const Cell &o) const { return data == o.data && prov == o.prov; }
 };
 
 template <class C> class Trie {
