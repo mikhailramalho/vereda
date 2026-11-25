@@ -186,10 +186,124 @@ Term Memory::ptr(const Key &k) {
   return t.bv((APInt(ObjBits + ptrBits, k.first) << ptrBits) | APInt(ObjBits + ptrBits, k.second));
 }
 
-void Memory::flush(State &st, std::optional<uint64_t> object) {
+void Memory::flushObject(State &st, uint64_t o) {
+  unsigned shift = shifts.lookup(o);
+  unsigned elemBytes = 1u << shift;
+  bool byOffset = owned.count(o);
+  const APInt *size = o > 0 && o < objects.size() ? t.constant(objects[o].size) : nullptr;
+  // When every byte of an object's constant size is in st.known, the prior
+  // array is never read: base the object's array on its dominant value (or a
+  // range lambda when a few contiguous runs cover the rest) instead of
+  // emitting a store chain over the nondet initial array.
+  if (size && !size->isZero() && size->ule(MaxKnown) &&
+      (size->getZExtValue() & (elemBytes - 1)) == 0 &&
+      (st.separate.find({o, 0}) || size->getZExtValue() >= MinSeparate)) {
+    uint64_t n = size->getZExtValue();
+    std::vector<State::Cell> bytes;
+    bytes.reserve(n);
+    uint64_t expected = 0;
+    bool allKnown = true;
+    st.known.forObject(o, [&](Key k, const State::Cell &c) {
+      if (!allKnown || k.second != expected) {
+        allKnown = false;
+        return;
+      }
+      bytes.push_back(c);
+      ++expected;
+    });
+    if (allKnown && expected == n) {
+      uint64_t numElems = n >> shift;
+      std::vector<Term> elems;
+      elems.reserve(numElems);
+      for (uint64_t e = 0; e < numElems; ++e) {
+        Term elem = bytes[e << shift].data;
+        for (unsigned j = 1; j < elemBytes; ++j)
+          elem = t.concat(bytes[(e << shift) + j].data, elem);
+        elems.push_back(elem);
+      }
+      struct Run {
+        uint64_t lo, hi;
+        Term val;
+      };
+      std::vector<Run> runs;
+      llvm::DenseMap<const void *, std::pair<Term, uint64_t>> counts;
+      Term dom = elems[0];
+      uint64_t domCount = 0;
+      for (uint64_t e = 0; e < numElems; ++e) {
+        auto &entry = counts[elems[e].id()];
+        if (!entry.first)
+          entry.first = elems[e];
+        if (++entry.second > domCount) {
+          domCount = entry.second;
+          dom = elems[e];
+        }
+        if (!runs.empty() && runs.back().val == elems[e])
+          runs.back().hi = e + 1;
+        else
+          runs.push_back({e, e + 1, elems[e]});
+      }
+      SMTSortRef indexSort = byOffset ? s.mkBVSort(ptrBits - shift) : pointerSort();
+      unsigned idxWidth = byOffset ? ptrBits - shift : ptrBits;
+      std::vector<Run> otherRuns;
+      uint64_t otherElems = numElems - domCount;
+      for (const Run &r : runs)
+        if (r.val != dom)
+          otherRuns.push_back(r);
+      Term data;
+      constexpr size_t MaxLambdaRuns = 8;
+      constexpr uint64_t MinLambdaElems = 8;
+      if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
+          otherElems >= MinLambdaElems && otherElems >= 2 * otherRuns.size()) {
+        data = t.lambda(
+            s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),
+            "flush#" + std::to_string(fresh++),
+            [this, byOffset, idxWidth, dom, otherRuns = std::move(otherRuns)](const Term &j) {
+              Term off = byOffset ? j : offset(j);
+              Term r = dom;
+              for (const Run &run : otherRuns) {
+                Term in;
+                if (run.lo + 1 == run.hi)
+                  in = t.eq(off, t.bv(APInt(idxWidth, run.lo)));
+                else if (run.lo == 0)
+                  in = t.ult(off, t.bv(APInt(idxWidth, run.hi)));
+                else
+                  in = t.land(t.uge(off, t.bv(APInt(idxWidth, run.lo))),
+                              t.ult(off, t.bv(APInt(idxWidth, run.hi))));
+                r = t.ite(in, run.val, r);
+              }
+              return r;
+            });
+      } else {
+        data = t.constArray(indexSort, dom);
+        for (const Run &r : otherRuns)
+          for (uint64_t e = r.lo; e < r.hi; ++e)
+            data = t.store(data, byOffset ? t.bv(APInt(idxWidth, e)) : ptr({o, e << shift}), r.val);
+      }
+      Term prov = t.bv(IntProvenance, ObjBits);
+      if (!shift) {
+        Term domProv = bytes[0].prov;
+        uint64_t domProvCount = 0;
+        llvm::DenseMap<const void *, std::pair<Term, uint64_t>> provCounts;
+        for (uint64_t i = 0; i < n; ++i) {
+          auto &entry = provCounts[bytes[i].prov.id()];
+          if (!entry.first)
+            entry.first = bytes[i].prov;
+          if (++entry.second > domProvCount) {
+            domProvCount = entry.second;
+            domProv = bytes[i].prov;
+          }
+        }
+        prov = t.constArray(indexSort, domProv);
+        for (uint64_t i = 0; i < n; ++i)
+          if (bytes[i].prov != domProv)
+            prov = t.store(prov, byOffset ? t.bv(APInt(idxWidth, i)) : ptr({o, i}), bytes[i].prov);
+      }
+      st.separate.set({o, 0}, {data, prov});
+      return;
+    }
+  }
   std::optional<Key> last; // the element last moved
-  auto move = [&](Key k, const State::Cell &c) {
-    unsigned shift = shifts.lookup(k.first);
+  st.known.forObject(o, [&](Key k, const State::Cell &c) {
     if (!shift)
       return storeArrays(st, k.first, ptr(k), c);
     // An element moves whole, as one store; its bytes not known are the
@@ -202,7 +316,7 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
     last = e;
     const State::Cell &own = *st.separate.find({e.first, 0});
     Term i = index(e.first, ptr(e)), old, elem;
-    for (unsigned j = 0; j < 1u << shift; ++j) {
+    for (unsigned j = 0; j < elemBytes; ++j) {
       const State::Cell *b = st.known.find({e.first, e.second + j});
       if (!b && !old)
         old = t.select(own.data, i);
@@ -210,14 +324,23 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
       elem = j ? t.concat(byte, elem) : byte;
     }
     st.separate.set({e.first, 0}, {t.store(own.data, i, elem), own.prov});
-  };
+  });
+}
+
+void Memory::flush(State &st, std::optional<uint64_t> object) {
   if (object) {
-    st.known.forObject(*object, move);
+    flushObject(st, *object);
     st.known.eraseObject(*object);
-  } else {
-    st.known.forEach(move);
-    st.known.clear();
+    return;
   }
+  std::vector<uint64_t> objs;
+  st.known.forEach([&](Key k, const State::Cell &) {
+    if (objs.empty() || objs.back() != k.first)
+      objs.push_back(k.first);
+  });
+  for (uint64_t o : objs)
+    flushObject(st, o);
+  st.known.clear();
 }
 
 Term Memory::index(uint64_t object, Term at) {
