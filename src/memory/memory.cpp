@@ -353,7 +353,7 @@ void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term co
                             return old == intProv ? old : t.ite(at(j).first, intProv, old);
                           },
                           below.prov, misses);
-    provBelow[after.prov.id()] = {after.prov, below.prov}; // the pointers it may hold
+    provBelow[after.prov.id()] = {after.prov, {{below.prov, std::nullopt, byOffset}}}; // the pointers it may hold
   }
   if (own)
     st.separate.set({o, 0}, after);
@@ -760,7 +760,7 @@ bool Memory::applyRange(State &st, uint64_t o, Term p, uint64_t n, const char *n
                                                                    : t.ite(in, intProv, old);
                           },
                           below.prov, misses);
-    provBelow[after.prov.id()] = {after.prov, below.prov};
+    provBelow[after.prov.id()] = {after.prov, {{below.prov, std::nullopt, byOffset}}};
   }
   if (own)
     st.separate.set({o, 0}, after);
@@ -1043,40 +1043,56 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
   // for it. An object's own arrays may choose the shared ones on one side
   // of a join, which the first walk has seen already.
   llvm::DenseSet<const void *> shared;
-  auto walk = [&](const Term &arrays, std::optional<uint64_t> own, bool byOffset) {
-    llvm::DenseSet<const void *> local, &seen = own ? local : shared;
-    std::vector<Term> work{arrays};
-    while (!work.empty()) {
-      Term e = work.back(), a, i, v, c;
-      work.pop_back();
-      if (!seen.insert(e.id()).second || (own && shared.count(e.id())))
-        continue;
-      if (Term f = t.filledWith(e)) {
-        if (f == intProv)
-          continue;
-        if (!own)
-          throw Unsupported("memory whose provenance is not known");
-        add(*own, f);
-        continue;
-      }
-      if (t.stored(e, a, i, v)) {
-        if (v != intProv)
-          add(byOffset ? std::vector<uint64_t>{*own} : candidates(i), v);
-        work.push_back(a);
-      } else if (t.choice(e, c, a, v)) {
-        work.push_back(a);
-        work.push_back(v);
-      } else if (auto it = provBelow.find(e.id()); it != provBelow.end()) {
-        work.push_back(it->second.second);
-      } else {
-        throw Unsupported("memory whose provenance is not known");
-      }
-    }
-  };
-  walk(st.prov, std::nullopt, false);
+  std::function<void(const Term &, std::optional<uint64_t>, std::optional<uint64_t>, bool)> walk =
+      [&](const Term &arrays, std::optional<uint64_t> source, std::optional<uint64_t> dest,
+          bool byOffset) {
+        llvm::DenseSet<const void *> local, &seen = dest ? local : shared;
+        std::vector<Term> work{arrays};
+        while (!work.empty()) {
+          Term e = work.back(), a, i, v, c;
+          work.pop_back();
+          if (!seen.insert(e.id()).second || (dest && source == dest && shared.count(e.id())))
+            continue;
+          if (Term f = t.filledWith(e)) {
+            if (f == intProv)
+              continue;
+            if (!dest)
+              throw Unsupported("memory whose provenance is not known");
+            add(*dest, f);
+            continue;
+          }
+          if (t.stored(e, a, i, v)) {
+            if (v != intProv) {
+              if (byOffset) {
+                add(*dest, v);
+              } else if (source && dest) {
+                std::vector<uint64_t> cs = candidates(i);
+                if (llvm::is_contained(cs, *source))
+                  add(*dest, v);
+              } else {
+                add(candidates(i), v);
+              }
+            }
+            work.push_back(a);
+          } else if (t.choice(e, c, a, v)) {
+            work.push_back(a);
+            work.push_back(v);
+          } else if (auto it = provBelow.find(e.id()); it != provBelow.end()) {
+            for (const ProvEdge &edge : it->second.second) {
+              if (!edge.fromObject)
+                work.push_back(edge.array);
+              else
+                walk(edge.array, edge.fromObject, dest, edge.byOffset);
+            }
+          } else {
+            throw Unsupported("memory whose provenance is not known");
+          }
+        }
+      };
+  walk(st.prov, std::nullopt, std::nullopt, false);
   st.separate.forEach([&](Key k, const State::Cell &c) {
     if (!shifts.count(k.first))
-      walk(c.prov, k.first, owned.count(k.first));
+      walk(c.prov, k.first, k.first, owned.count(k.first));
   });
   return to;
 }
@@ -1096,7 +1112,180 @@ void Memory::setBytes(State &st, Term p, Term byte, uint64_t n) {
     writeByte(st, bytePtr(p, i), {byte, prov});
 }
 
+bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
+  if (n < MinSeparate)
+    return false;
+  if (ptrBits < 64 && n >= (uint64_t(1) << ptrBits))
+    return false;
+  Term c, x, y;
+  if (t.split(dst, c, x, y)) {
+    int pick = side(c);
+    if (pick >= 0)
+      return copyArray(st, pick ? x : y, src, n);
+    State a = st, b = st;
+    if (!copyArray(a, x, src, n) || !copyArray(b, y, src, n))
+      return false;
+    st = ite(c, a, b);
+    return true;
+  }
+  if (t.split(src, c, x, y)) {
+    if (int pick = side(c); pick >= 0)
+      src = pick ? x : y;
+  }
+  const APInt *dstObjId = t.constant(object(dst));
+  if (!dstObjId || dstObjId->isZero() || dstObjId->uge(objects.size()))
+    return false;
+  uint64_t dstObj = dstObjId->getZExtValue();
+
+  // Flush all objects src may point into so their arrays are up to date.
+  std::vector<uint64_t> srcObjs = candidates(src);
+  for (uint64_t o : srcObjs)
+    flush(st, o);
+
+  Term dstOff = offset(dst);
+  const APInt *dstOffC = t.constant(dstOff);
+  const APInt *dstSize = t.constant(objects[dstObj].size);
+  bool wholeDst = dstOffC && dstOffC->isZero() && dstSize && *dstSize == n;
+  Term intProv = t.bv(IntProvenance, ObjBits);
+
+  // Fast path 1: whole-object copy between two owned objects with matching
+  // element width reuses src's arrays directly.
+  if (wholeDst && owned.count(dstObj)) {
+    if (const APInt *srcObjId = t.constant(object(src))) {
+      uint64_t srcObj = srcObjId->getZExtValue();
+      const APInt *srcOffC = t.constant(offset(src));
+      if (srcOffC && srcOffC->isZero() && owned.count(srcObj) &&
+          shifts.lookup(dstObj) == shifts.lookup(srcObj)) {
+        if (const State::Cell *srcOwn = st.separate.find({srcObj, 0})) {
+          st.known.eraseObject(dstObj);
+          st.separate.set({dstObj, 0}, *srcOwn);
+          return true;
+        }
+      }
+    }
+  }
+
+  // Fast path 2: whole-object copy from a constant-filled object becomes a
+  // constant-array fill of dst.
+  if (wholeDst && srcObjs.size() == 1 && !shifts.count(srcObjs[0])) {
+    if (const State::Cell *srcOwn = st.separate.find({srcObjs[0], 0})) {
+      if (Term fillByte = t.filledWith(srcOwn->data);
+          fillByte && t.filledWith(srcOwn->prov) == intProv) {
+        fill(st, dstObj, fillByte);
+        return true;
+      }
+    }
+  }
+
+  // Element-width arrays (shift > 0) are only created for objects never passed
+  // to memcpy/memmove; if one is reached here, fall back to byte-by-byte.
+  if (shifts.count(dstObj))
+    return false;
+
+  // For a partial copy, dstObj's bytes outside [dstOff, dstOff + n) must be in
+  // its arrays before wrapping them in a lambda. For a whole-object copy, all
+  // known bytes of dstObj are overwritten (and if dstObj was in srcObjs, it
+  // was already flushed above).
+  if (wholeDst)
+    st.known.eraseObject(dstObj);
+  else
+    flush(st, dstObj);
+
+  // Snapshot the pre-copy state for reading src, which preserves memmove
+  // overlap semantics when dstObj == srcObj.
+  State srcState = st;
+  srcState.known.clear();
+
+  const State::Cell *own = st.separate.find({dstObj, 0});
+  State::Cell below = own ? *own : State::Cell{st.data, st.prov};
+  bool byOffset = owned.count(dstObj);
+  SMTSortRef indexSort = byOffset ? s.mkBVSort(ptrBits) : pointerSort();
+  Term dstObjTerm = t.bv(dstObj, ObjBits);
+
+  auto offsetOf = [=, this](const Term &j) { return byOffset ? j : offset(j); };
+
+  // True when j is definitely outside the copied range [dstOff, dstOff + n),
+  // so select forwards straight to below without instantiating the lambda.
+  std::function<bool(const Term &)> misses;
+  if (!wholeDst) {
+    misses = [=, this](const Term &j) {
+      if (!byOffset && t.isFalse(t.eq(object(j), dstObjTerm)))
+        return true;
+      if (!dstOffC)
+        return false;
+      std::optional<encode::Terms::Range> v = t.range(offsetOf(j));
+      if (!v)
+        return false;
+      using U = unsigned __int128;
+      U lo = dstOffC->getZExtValue(), end = lo + U(n);
+      return end <= (U(1) << ptrBits) && (v->hi < lo || v->lo >= end);
+    };
+  }
+
+  Term len = t.bv(n, ptrBits);
+  auto inRange = [=, this](const Term &j) -> std::pair<Term, Term> {
+    Term off = offsetOf(j);
+    Term d = t.sub(off, dstOff);
+    if (wholeDst)
+      return {t.boolean(true), d};
+    return {t.ult(d, len), d};
+  };
+
+  std::string id = std::to_string(fresh++);
+  Term newData = t.lambda(
+      s.mkArraySort(indexSort, s.mkBVSort(8)), "copy#" + id,
+      [=, this](const Term &j) {
+        auto [in, d] = inRange(j);
+        if (t.isFalse(in))
+          return t.select(below.data, j);
+        Term srcVal = readArrays(srcState, advance(src, d)).data;
+        return t.isTrue(in) ? srcVal : t.ite(in, srcVal, t.select(below.data, j));
+      },
+      wholeDst ? Term() : below.data, misses);
+
+  // If no src candidate can hold a pointer and below.prov holds none (or is
+  // overwritten whole), the destination's provenance stays a constant array.
+  llvm::SmallVector<ProvEdge, 2> provEdges;
+  bool srcHasPointers = false;
+  for (uint64_t o : srcObjs) {
+    if (shifts.count(o))
+      continue;
+    const State::Cell *so = srcState.separate.find({o, 0});
+    Term arr = so ? so->prov : srcState.prov;
+    if (t.filledWith(arr) == intProv)
+      continue;
+    srcHasPointers = true;
+    provEdges.push_back({arr, o, so && owned.count(o)});
+  }
+
+  Term newProv;
+  if (!srcHasPointers && (wholeDst || t.filledWith(below.prov) == intProv)) {
+    newProv = t.constArray(indexSort, intProv);
+  } else {
+    newProv = t.lambda(
+        s.mkArraySort(indexSort, s.mkBVSort(ObjBits)), "copy_provenance#" + id,
+        [=, this](const Term &j) {
+          auto [in, d] = inRange(j);
+          if (t.isFalse(in))
+            return t.select(below.prov, j);
+          Term srcProv = srcHasPointers ? readArrays(srcState, advance(src, d)).prov : intProv;
+          return t.isTrue(in) ? srcProv : t.ite(in, srcProv, t.select(below.prov, j));
+        },
+        wholeDst ? Term() : below.prov, misses);
+    if (!wholeDst)
+      provEdges.push_back({below.prov, std::nullopt, byOffset});
+    provBelow[newProv.id()] = {newProv, std::move(provEdges)};
+  }
+
+  st.separate.set({dstObj, 0}, {newData, newProv});
+  return true;
+}
+
 void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
+  if (!n || dst == src)
+    return;
+  if (copyArray(st, dst, src, n))
+    return;
   if (n > MaxBytes)
     throw Unsupported("a copy of " + std::to_string(n) + " bytes");
   // Read everything first, so overlapping ranges copy as memmove does.

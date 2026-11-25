@@ -237,6 +237,9 @@ private:
   encode::Term index(uint64_t object, encode::Term at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  // An array-level copy of n bytes from src to dst, if handled without
+  // byte-by-byte stores: true when done.
+  bool copyArray(State &st, encode::Term dst, encode::Term src, uint64_t n);
   // A partial-range lambda over the arrays below for n >= MinSeparate bytes
   // at p in constant object o: returns true when handled.
   bool applyRange(State &st, uint64_t o, encode::Term p, uint64_t n, const char *name,
@@ -278,9 +281,18 @@ private:
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
   llvm::DenseMap<uint64_t, unsigned> shifts;
-  // A summarised loop's provenance array (kept alive) -> the one it reads
-  // below, which holds every pointer it does.
-  llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> provBelow;
+  // Provenance array source for a lambda provenance array: when fromObject is
+  // set, only bytes belonging to *fromObject are read from array (indexed by
+  // offset if byOffset, else by whole pointer); otherwise array is the same
+  // object's own array below.
+  struct ProvEdge {
+    encode::Term array;
+    std::optional<uint64_t> fromObject;
+    bool byOffset;
+  };
+  // A lambda's provenance array (kept alive) -> the arrays it reads from,
+  // which together hold every pointer it may hold.
+  llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
   unsigned fresh = 0;
