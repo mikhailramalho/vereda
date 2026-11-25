@@ -15,6 +15,7 @@
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/ScalarEvolutionExpressions.h>
 #include <llvm/Analysis/ValueTracking.h>
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
@@ -24,6 +25,7 @@
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Intrinsics.h>
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 
 using namespace llvm;
@@ -918,6 +920,9 @@ private:
       auto *prev = dyn_cast_or_null<CallBase>(term.getPrevNode());
       if ((!prev || !prev->doesNotReturn()) && counts(false))
         assertion(term, guard, "__builtin_unreachable", "");
+    } else if (isa<InvokeInst>(term)) {
+      throw Unsupported("exception unwinding (invoke) is not supported at " + ir::location(term).str() +
+                        "; for Rust, compile with -C panic=abort");
     } else {
       throw Unsupported(std::string("terminator ") + term.getOpcodeName());
     }
@@ -984,6 +989,46 @@ private:
     if (opts.property == Property::UnreachCall && name == "reach_error") {
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
+    }
+    // Rust lowers assertions and checked arithmetic and indexing to panic calls.
+    // Recognise Rust symbols only, including when their bodies are linked in.
+    if (name.starts_with("_R") || name.starts_with("_ZN")) {
+      char *raw = llvm::rustDemangle(name.str());
+      std::string demangled = raw ? raw : "";
+      std::free(raw);
+      // Older rustc uses Itanium-style symbols ending in a Rust hash.
+      if (demangled.empty() && name.starts_with("_ZN") && name.size() >= 20 &&
+          name.substr(name.size() - 20, 3) == "17h" && name.ends_with("E") &&
+          name.substr(name.size() - 17, 16).find_first_not_of("0123456789abcdef") == StringRef::npos)
+        demangled = llvm::demangle(name.str());
+      StringRef symbol(demangled);
+      bool library = symbol.starts_with("core::") || symbol.starts_with("alloc::") ||
+                     symbol.starts_with("std::");
+      StringRef entry = symbol.split("::h").first.split("::<").first;
+      bool exits = entry == "std::process::exit" || entry == "std::process::abort" ||
+                   entry == "core::intrinsics::abort";
+      bool stops = c.doesNotReturn() || isa_and_nonnull<UnreachableInst>(c.getNextNode());
+      if (exits)
+        return t.boolean(false);
+      if ((library && callee->isDeclaration() && stops) ||
+          symbol.starts_with("core::panicking::panic") ||
+          symbol.starts_with("core::panicking::assert_failed") ||
+          symbol.starts_with("std::panicking::begin_panic") ||
+          symbol.starts_with("std::panicking::rust_panic_with_hook") ||
+          symbol == "std::panicking::panic" || symbol.starts_with("std::panicking::panic::")) {
+        bool overflow = symbol.contains("overflow");
+        bool bounds = symbol.contains("bounds_check") ||
+                      (symbol.contains("index") && symbol.contains("fail")) ||
+                      symbol.contains("slice_error_fail");
+        const char *message = overflow ? "arithmetic overflow"
+                              : bounds ? "array bounds violated" : "Rust panic";
+        checks::Property kind = overflow ? checks::Property::ArithmeticOverflow
+                                : bounds ? checks::Property::ArrayBounds
+                                         : checks::Property::Assertion;
+        if (counts(overflow))
+          assertion(c, guard, message, "", nullptr, kind);
+        return t.boolean(false);
+      }
     }
     // memcmp, bcmp and memchr from the models (which have no debug info) or
     // bodyless: the walker reads the range whole, which costs no unwinding
@@ -1399,11 +1444,12 @@ private:
   // A check at inst, violated when violated holds; comment names it. An
   // instruction with several checks tells them apart by what.
   void assertion(const Instruction &inst, Term violated, std::string comment,
-                 std::string expr, const void *what = nullptr) {
+                 std::string expr, const void *what = nullptr,
+                 checks::Property kind = checks::Property::Assertion) {
     unsigned &index = assertionNumber[{&inst, what}];
     if (!index)
-      index = ++assertionsIn[inst.getFunction()];
-    claim(checks::Property::Assertion, ir::location(inst), std::move(comment), std::move(expr),
+      index = ++assertionsIn[{inst.getFunction(), unsigned(kind)}];
+    claim(kind, ir::location(inst), std::move(comment), std::move(expr),
           index, violated, {&inst, what});
   }
 
@@ -1762,7 +1808,7 @@ private:
   DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
   DenseMap<ClaimKey, unsigned> assertionNumber;
   const char literals = 0; // what the checks of writes into string literals check
-  DenseMap<const Function *, unsigned> assertionsIn;
+  DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;

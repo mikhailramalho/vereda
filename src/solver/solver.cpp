@@ -90,7 +90,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
     DenseMap<const void *, size_t> byId;
     for (size_t i = 0; i < checks.size(); ++i) {
       const checks::Check &check = checks[i];
-      if ((check.property != checks::Property::Assertion) != unwinding)
+      if (check.isUnwinding() != unwinding)
         continue;
       if (t.isFalse(check.violated)) {
         v.status[i] = Status::Holds;

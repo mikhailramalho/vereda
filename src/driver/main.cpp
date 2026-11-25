@@ -231,7 +231,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   vereda::util::Stopwatch solveTime;
   using vereda::solver::Status;
   auto isAssertion = [](const vereda::checks::Check &c) {
-    return c.property == vereda::checks::Property::Assertion;
+    return !c.isUnwinding();
   };
   // The time so far goes before each error trace, which is not solving
   // time, and after solving when there is no trace.

@@ -1,12 +1,12 @@
 # Vereda
 
-A bounded model checker for C that works on LLVM IR, with k-induction planned.
+A bounded model checker for C and Rust that works on LLVM IR, with k-induction planned.
 Vereda is Portuguese for a narrow trail: the walker follows every one through
 the program.
 
 ## What it does
 
-`vereda.py` compiles C to LLVM bitcode with clang, then the `vereda` binary
+`vereda.py` compiles C with clang or Rust with rustc to LLVM bitcode, then the `vereda` binary
 walks the IR from the entry function. As it walks, it unrolls loops and
 recursion and encodes each instruction as SMT terms through
 [camada](https://github.com/mikhailramalho/camada). The solver then either
@@ -56,6 +56,14 @@ instead of a download; an empty `MIMALLOC_SOURCE_DIR` keeps glibc's malloc.
 With it off, set `LLVM_DIR` (LLVM 23) and `camada_DIR` to installed
 copies, and `MIMALLOC_SOURCE_DIR` to use mimalloc.
 
+Rust uses rustc 1.100.0, whose bitcode matches LLVM 23. CMake uses `rustc`
+from PATH when it has that version, or `-DRUSTC_EXECUTABLE=/path/to/rustc`.
+With `DOWNLOAD_DEPENDENCIES=ON`, a missing or different system version makes
+it download the pinned compiler and standard library from static.rust-lang.org,
+verify their SHA-256 hashes, and install them under the dependency directory.
+This does not change rustup or install Cargo. Without downloads, supply rustc
+1.100.0. The selected path is saved beside the binary for the front end.
+
 CMake keeps a build directory's first compiler. If you switch
 `DOWNLOAD_DEPENDENCIES` on in an existing build directory, reconfigure with
 `cmake --fresh` or the link fails with "file format not recognized". The same
@@ -66,18 +74,30 @@ configure.
 
 ```sh
 ./vereda.py --clang build/deps/llvm/LLVM-23.1.6-Linux-X64/bin/clang file.c --unwind 5
+./vereda.py file.rs --unwind 5
 ```
 
 The version banner comes before compilation and includes the executable's
 build commit immediately after the camada version. Rebuilding refreshes the
 short commit hash; builds without Git metadata report `commit unknown`.
 
-`vereda.py` takes C (`.c`, `.i`) or IR (`.ll`, `.bc`) inputs and its own
-flags (`--clang`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
+`vereda.py` takes C (`.c`, `.i`), Rust (`.rs`) or IR (`.ll`, `.bc`) inputs and its own
+flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and ESBMC's `--overflow-check`,
 `--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
 sanitizer checks), and forwards everything else to the binary.
-`vereda.py -h` lists both sets. The main verifier flags:
+`vereda.py -h` lists both sets.
+
+Rust source is compiled with edition 2024, debug info, no optimisation,
+checked integer arithmetic and `panic=abort`. Ordinary `fn main()` and
+`#![no_main]` programs with a C entry point are accepted; verification enters
+the source main directly, bypassing Rust runtime startup. `--keep-ir` also
+works for Rust. `--rustc` (or `$RUSTC`) overrides CMake's compiler, and must
+still be version 1.100.0. Rust source currently targets the 64-bit host;
+`-m32`, C sanitizer flags, C property files, `-I` and `-D` are rejected.
+Cargo projects and external Rust crates are not built by this driver.
+
+The main verifier flags:
 
 | Flag | Meaning |
 |------|---------|

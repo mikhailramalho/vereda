@@ -6,6 +6,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
 #include <llvm/Analysis/ValueTracking.h>
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
@@ -988,6 +989,29 @@ static Error linkModels(Module &m, StringRef dir) {
   return Error::success();
 }
 
+// Rust's C main passes the source main to std::rt::lang_start. Verify that
+// function directly rather than the unavailable runtime's startup machinery.
+static void lowerRustMain(Module &m) {
+  Function *main = m.getFunction("main");
+  if (!main)
+    return;
+  for (BasicBlock &bb : *main)
+    for (Instruction &inst : make_early_inc_range(bb)) {
+      auto *call = dyn_cast<CallInst>(&inst);
+      Function *start = call ? call->getCalledFunction() : nullptr;
+      if (!start || !StringRef(llvm::demangle(start->getName().str())).starts_with("std::rt::lang_start::<") ||
+          call->arg_empty())
+        continue;
+      auto *entry = dyn_cast<Function>(call->getArgOperand(0)->stripPointerCasts());
+      if (!entry || !entry->arg_empty())
+        continue;
+      IRBuilder<> builder(call);
+      builder.CreateCall(entry);
+      call->replaceAllUsesWith(Constant::getNullValue(call->getType()));
+      call->eraseFromParent();
+    }
+}
+
 // Drops functions, globals, aliases and ifuncs not reachable from entry
 // (plus the module's constructor, destructor and used lists) before the
 // passes and model linking run.
@@ -1107,6 +1131,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  lowerRustMain(*module);
   nondetLocals(*module);
   lowerLongjmp(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))

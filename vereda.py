@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Front-end vereda.py: compiles C to LLVM bitcode with clang and runs the
+"""Front-end vereda.py: compiles C or Rust to LLVM bitcode and runs the
 verifier binary on it. Only front-end flags are defined here; every other
 argument is forwarded to the binary unchanged, so each flag lives in one
-place. Inputs are recognised by extension (.c .i .ll .bc)."""
+place. Inputs are recognised by extension (.c .i .rs .ll .bc)."""
 import argparse
 import os
 import re
@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SOURCE_EXTS = (".c", ".i")
+SOURCE_EXTS = (".c", ".i", ".rs")
 # A linemarker, '# 12 "foo.c" 1' or '#line 12 "foo.c"', as gcc -E and clang -E
 # write them.
 LINEMARKER = re.compile(rb"^[ \t]*#[ \t]*(?:line[ \t]+)?[0-9]+\b.*$", re.MULTILINE)
@@ -85,6 +85,15 @@ def find_binary():
     fail("vereda.py: verifier binary not found; pass --bin")
 
 
+def find_rustc(binary):
+    """Compiler selected by CMake, or rustc on PATH for an unpacked tool."""
+    path = os.path.join(os.path.dirname(os.path.abspath(binary)), "rustc-path.txt")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    return "rustc"
+
+
 def physical_lines(source, tmp):
     """The file to compile for a .i source, and the clang flags it needs.
     clang takes a linemarker's file and line as the location of what follows,
@@ -106,7 +115,7 @@ def physical_lines(source, tmp):
 
 
 def compile_and_link(args, flags, inputs, tmp, run):
-    """Compiles each C input with clang and links several modules with
+    """Compiles C with clang and Rust with rustc, and links several modules with
     llvm-link. Returns the IR file to verify, or None on failure."""
     tag = "\033[36m[PROGRESS]\033[0m" if sys.stdout.isatty() else "[PROGRESS]"
     ext = ".ll" if args.keep_ir else ".bc"
@@ -118,9 +127,14 @@ def compile_and_link(args, flags, inputs, tmp, run):
             continue
         print(tag, "Compiling", source)
         ir = os.path.join(tmp, os.path.basename(source) + ext)
-        compiled, mapping = physical_lines(source, tmp)
-        cmd = ([args.clang] + CLANG_FLAGS + flags + mapping + ["-I" + d for d in args.I]
-               + ["-D" + d for d in args.D] + textual + [compiled, "-o", ir])
+        if source.endswith(".rs"):
+            cmd = [args.rustc, "--edition=2024", "--crate-type=bin", "-C", "panic=abort",
+                   "-C", "opt-level=0", "-C", "overflow-checks=on", "-g",
+                   "--emit=" + ("llvm-ir" if args.keep_ir else "llvm-bc"), source, "-o", ir]
+        else:
+            compiled, mapping = physical_lines(source, tmp)
+            cmd = ([args.clang] + CLANG_FLAGS + flags + mapping + ["-I" + d for d in args.I]
+                   + ["-D" + d for d in args.D] + textual + [compiled, "-o", ir])
         if run(cmd) != 0:
             return None
         irs.append(ir)
@@ -141,6 +155,8 @@ def main():
     parser.add_argument("--bin", help="verifier binary (default: next to this script or build/)")
     parser.add_argument("--clang", default=os.environ.get("CLANG", "clang"),
                         help="clang matching the binary's LLVM (default: $CLANG or clang)")
+    parser.add_argument("--rustc", default=os.environ.get("RUSTC"),
+                        help="rustc 1.100.0 (default: $RUSTC, CMake's compiler, or rustc)")
     parser.add_argument("-m32", action="store_true", help="32-bit target, forwarded to clang")
     parser.add_argument("-m64", action="store_true", help="64-bit target, forwarded to clang")
     parser.add_argument("-I", action="append", default=[], help="include directory for clang")
@@ -196,7 +212,17 @@ def main():
     if not inputs and "--version" in forwarded:
         return subprocess.call([binary, "--version"])
     if not inputs:
-        fail("vereda.py: no input file (.c .i .ll .bc)")
+        fail("vereda.py: no input file (.c .i .rs .ll .bc)")
+    if any(i.endswith(".rs") for i in inputs):
+        if args.m32:
+            fail("vereda.py: Rust source currently supports the host 64-bit target only")
+        if args.sanitize or args.property_file or args.I or args.D:
+            fail("vereda.py: Rust source does not support C sanitizer, property-file, -I or -D flags")
+        args.rustc = args.rustc or find_rustc(binary)
+        version = subprocess.run([args.rustc, "--version"], capture_output=True, text=True,
+                                 check=False)
+        if version.returncode or not version.stdout.startswith("rustc 1.100.0 "):
+            fail("vereda.py: Rust input needs rustc 1.100.0; pass --rustc or reconfigure CMake")
     if any(f.startswith("-fsanitize=") for f in flags) and any(i.endswith(IR_EXTS) for i in inputs):
         fail("vereda.py: clang compiles the overflow checks in, so they need C inputs, "
              "not .ll or .bc")
