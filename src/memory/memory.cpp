@@ -279,10 +279,26 @@ void Memory::flushObject(State &st, uint64_t o) {
       std::vector<Term> elems;
       elems.reserve(numElems);
       for (uint64_t e = 0; e < numElems; ++e) {
-        Term elem = bytes[e << shift].data;
-        for (unsigned j = 1; j < elemBytes; ++j)
-          elem = t.concat(bytes[(e << shift) + j].data, elem);
-        elems.push_back(elem);
+        if (elemBytes == 1) {
+          elems.push_back(bytes[e].data);
+          continue;
+        }
+        uint64_t val = 0;
+        bool allConst = true;
+        for (unsigned j = 0; j < elemBytes; ++j) {
+          if (const APInt *c = t.constant(bytes[(e << shift) + j].data))
+            val |= c->getZExtValue() << (8 * j);
+          else
+            allConst = false;
+        }
+        if (allConst) {
+          elems.push_back(t.bv(APInt(8 * elemBytes, val)));
+        } else {
+          Term elem = bytes[e << shift].data;
+          for (unsigned j = 1; j < elemBytes; ++j)
+            elem = t.concat(bytes[(e << shift) + j].data, elem);
+          elems.push_back(elem);
+        }
       }
       struct Run {
         uint64_t lo, hi;
@@ -378,13 +394,31 @@ void Memory::flushObject(State &st, uint64_t o) {
       return;
     last = e;
     const State::Cell &own = *st.separate.find({e.first, 0});
-    Term i = index(e.first, ptr(e)), old, elem;
+    Term i = t.bv(APInt(ptrBits - shift, e.second >> shift));
+    // Assemble constant elements directly so flush does not intern
+    // intermediate 16/24/...-bit concat constants.
+    uint64_t val = 0;
+    bool allConst = true;
+    const State::Cell *bytes[8];
     for (unsigned j = 0; j < elemBytes; ++j) {
-      const State::Cell *b = st.known.find({e.first, e.second + j});
-      if (!b && !old)
-        old = t.select(own.data, i);
-      Term byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
-      elem = j ? t.concat(byte, elem) : byte;
+      bytes[j] = st.known.find({e.first, e.second + j});
+      const APInt *c = bytes[j] ? t.constant(bytes[j]->data) : nullptr;
+      if (c)
+        val |= c->getZExtValue() << (8 * j);
+      else
+        allConst = false;
+    }
+    Term elem;
+    if (allConst) {
+      elem = t.bv(APInt(8 * elemBytes, val));
+    } else {
+      Term old;
+      for (unsigned j = 0; j < elemBytes; ++j) {
+        if (!bytes[j] && !old)
+          old = t.select(own.data, i);
+        Term byte = bytes[j] ? bytes[j]->data : t.extract(old, 8 * j + 7, 8 * j);
+        elem = j ? t.concat(byte, elem) : byte;
+      }
     }
     st.separate.set({e.first, 0}, {t.store(own.data, i, elem), own.prov});
   });

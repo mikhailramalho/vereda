@@ -56,9 +56,29 @@ camada::SMTExprRef Terms::solverTerm(const Ref &e) {
           bits[w - 1 - i] = '1';
       c->term = s.mkBVFromBin(bits, w);
     }
-    made.try_emplace(c->term.get(), e);
+    if (!walkDone)
+      made.try_emplace(c->term.get(), e);
   }
   return c->term;
+}
+
+void Terms::releaseWalkTables() {
+  decltype(memo)().swap(memo);
+  decltype(nodes)().swap(nodes);
+  decltype(bvs)().swap(bvs);
+  decltype(made)().swap(made);
+  decltype(implied)().swap(implied);
+  decltype(arith)().swap(arith);
+  decltype(filled)().swap(filled);
+  decltype(lambdas)().swap(lambdas);
+  decltype(under)().swap(under);
+  decltype(reduced)().swap(reduced);
+  decltype(selects)().swap(selects);
+  decltype(scratch)().swap(scratch);
+  decltype(bounds)().swap(bounds);
+  decltype(ranges)().swap(ranges);
+  decltype(freeOf)().swap(freeOf);
+  walkDone = true;
 }
 
 Ref Terms::fromSolver(const camada::SMTExprRef &e) const {

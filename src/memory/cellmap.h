@@ -12,7 +12,6 @@
 #include "encode/terms.h"
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <utility>
 
 namespace vereda::memory {
@@ -26,18 +25,19 @@ template <class C> class Trie {
 public:
   using Key = std::pair<uint64_t, uint64_t>;
 
-  size_t size() const { return root ? root->size : 0; }
+  size_t size() const { return root ? nodeSize(root.get()) : 0; }
   bool same(const Trie &o) const { return root == o.root; }
 
   const C *find(Key k) const {
     U u = pack(k);
     const Node *n = root.get();
-    while (n && n->bit) {
-      if (!inside(u, n))
+    while (n && n->isBranch()) {
+      const auto *b = asBranch(n);
+      if (!inside(u, b))
         return nullptr;
-      n = (u & n->bit) ? n->right.get() : n->left.get();
+      n = (u & b->bit()) ? b->right.get() : b->left.get();
     }
-    return n && n->prefix == u ? &n->cell : nullptr;
+    return n && n->prefix() == u ? &asLeaf(n)->cell : nullptr;
   }
   void set(Key k, const C &c) { root = insert(root, pack(k), c); }
   void eraseObject(uint64_t o) { root = erase(root, pack({o, 0}), pack({o, ~uint64_t(0)})); }
@@ -59,91 +59,173 @@ public:
 
 private:
   using U = unsigned __int128;
-  struct Node;
-  using Ptr = std::shared_ptr<const Node>;
-  // A leaf has bit 0 and its key as prefix. A branch holds the keys whose
-  // bits above bit equal prefix's: those with bit clear on the left.
+  static constexpr uint8_t LeafBit = 255;
+
+  // Intrusively refcounted split Leaf/Branch nodes keep the per-byte footprint
+  // small (40/48 B instead of 128 B with std::shared_ptr). Vereda walks on one
+  // thread, so non-atomic counts suffice.
   struct Node {
-    U prefix, bit;
+    mutable uint32_t refs = 1;
+    uint8_t bitPos; // LeafBit for a leaf; 0..127 for a branch's distinguishing bit
+    uint64_t prefixHi, prefixLo;
+    Node(uint8_t b, U p) : bitPos(b), prefixHi(uint64_t(p >> 64)), prefixLo(uint64_t(p)) {}
+    bool isBranch() const { return bitPos != LeafBit; }
+    U prefix() const { return (U(prefixHi) << 64) | prefixLo; }
+    U bit() const { return U(1) << bitPos; }
+  };
+  struct Leaf;
+  struct Branch;
+
+  class Ptr {
+  public:
+    Ptr() = default;
+    explicit Ptr(const Node *p) : p(p) {}
+    Ptr(const Ptr &o) : p(o.p) {
+      if (p)
+        ++p->refs;
+    }
+    Ptr(Ptr &&o) noexcept : p(o.p) { o.p = nullptr; }
+    Ptr &operator=(const Ptr &o) {
+      if (p != o.p) {
+        if (o.p)
+          ++o.p->refs;
+        release();
+        p = o.p;
+      }
+      return *this;
+    }
+    Ptr &operator=(Ptr &&o) noexcept {
+      if (this != &o) {
+        release();
+        p = o.p;
+        o.p = nullptr;
+      }
+      return *this;
+    }
+    ~Ptr() { release(); }
+    void reset() {
+      release();
+      p = nullptr;
+    }
+    const Node *get() const { return p; }
+    explicit operator bool() const { return p != nullptr; }
+    bool operator==(const Ptr &o) const { return p == o.p; }
+
+  private:
+    void release() {
+      if (p && --p->refs == 0)
+        destroy(p);
+    }
+    const Node *p = nullptr;
+  };
+
+  struct Leaf : Node {
+    C cell;
+    Leaf(U k, const C &c) : Node(LeafBit, k), cell(c) {}
+  };
+  struct Branch : Node {
     size_t size;
     Ptr left, right;
-    C cell;
+    Branch(U p, uint8_t b, size_t n, Ptr l, Ptr r)
+        : Node(b, p), size(n), left(std::move(l)), right(std::move(r)) {}
   };
+
+  static const Leaf *asLeaf(const Node *n) { return static_cast<const Leaf *>(n); }
+  static const Branch *asBranch(const Node *n) { return static_cast<const Branch *>(n); }
+  static size_t nodeSize(const Node *n) { return n->isBranch() ? asBranch(n)->size : 1; }
+  static void destroy(const Node *n) {
+    if (n->isBranch())
+      delete asBranch(n);
+    else
+      delete asLeaf(n);
+  }
+
   Ptr root;
 
   static U pack(Key k) { return (U(k.first) << 64) | k.second; }
   static Key unpack(U u) { return {uint64_t(u >> 64), uint64_t(u)}; }
   static U above(U u, U bit) { return u & ~((bit << 1) - 1); } // the bits above bit
-  static bool inside(U u, const Node *n) { return above(u, n->bit) == n->prefix; }
-  static U last(const Node *n) { return n->bit ? n->prefix | ((n->bit << 1) - 1) : n->prefix; }
-  static U highest(U x) {
+  static bool inside(U u, const Node *n) { return above(u, n->bit()) == n->prefix(); }
+  static U last(const Node *n) {
+    return n->isBranch() ? n->prefix() | ((n->bit() << 1) - 1) : n->prefix();
+  }
+  static uint8_t highestPos(U x) {
     uint64_t hi = uint64_t(x >> 64);
-    return hi ? U(1) << (127 - __builtin_clzll(hi)) : U(1) << (63 - __builtin_clzll(uint64_t(x)));
+    return hi ? uint8_t(127 - __builtin_clzll(hi)) : uint8_t(63 - __builtin_clzll(uint64_t(x)));
   }
 
-  static Ptr leaf(U k, const C &c) { return std::make_shared<const Node>(Node{k, 0, 1, {}, {}, c}); }
-  static Ptr branch(U prefix, U bit, Ptr l, Ptr r) {
-    size_t n = l->size + r->size;
-    return std::make_shared<const Node>(Node{prefix, bit, n, std::move(l), std::move(r), {}});
+  static Ptr leaf(U k, const C &c) { return Ptr(new Leaf(k, c)); }
+  static Ptr branch(U prefix, uint8_t bitPos, Ptr l, Ptr r) {
+    size_t n = nodeSize(l.get()) + nodeSize(r.get());
+    return Ptr(new Branch(prefix, bitPos, n, std::move(l), std::move(r)));
   }
   // Two trees whose keys differ above both their branch bits.
   static Ptr join(U p0, Ptr t0, U p1, Ptr t1) {
-    U m = highest(p0 ^ p1);
-    return (p0 & m) ? branch(above(p0, m), m, std::move(t1), std::move(t0))
-                    : branch(above(p0, m), m, std::move(t0), std::move(t1));
+    uint8_t pos = highestPos(p0 ^ p1);
+    U m = U(1) << pos;
+    return (p0 & m) ? branch(above(p0, m), pos, std::move(t1), std::move(t0))
+                    : branch(above(p0, m), pos, std::move(t0), std::move(t1));
   }
 
   static Ptr insert(const Ptr &t, U k, const C &c) {
     if (!t)
       return leaf(k, c);
-    if (!t->bit) {
-      if (t->prefix != k)
-        return join(k, leaf(k, c), t->prefix, t);
-      return t->cell == c ? t : leaf(k, c);
+    const Node *n = t.get();
+    if (!n->isBranch()) {
+      if (n->prefix() != k)
+        return join(k, leaf(k, c), n->prefix(), t);
+      return asLeaf(n)->cell == c ? t : leaf(k, c);
     }
-    if (!inside(k, t.get()))
-      return join(k, leaf(k, c), t->prefix, t);
-    if (k & t->bit) {
-      Ptr r = insert(t->right, k, c);
-      return r == t->right ? t : branch(t->prefix, t->bit, t->left, std::move(r));
+    const Branch *b = asBranch(n);
+    if (!inside(k, b))
+      return join(k, leaf(k, c), b->prefix(), t);
+    if (k & b->bit()) {
+      Ptr r = insert(b->right, k, c);
+      return r == b->right ? t : branch(b->prefix(), b->bitPos, b->left, std::move(r));
     }
-    Ptr l = insert(t->left, k, c);
-    return l == t->left ? t : branch(t->prefix, t->bit, std::move(l), t->right);
+    Ptr l = insert(b->left, k, c);
+    return l == b->left ? t : branch(b->prefix(), b->bitPos, std::move(l), b->right);
   }
 
   // Removes the keys in [lo, hi].
   static Ptr erase(const Ptr &t, U lo, U hi) {
-    if (!t || last(t.get()) < lo || t->prefix > hi)
+    if (!t)
       return t;
-    if (lo <= t->prefix && last(t.get()) <= hi)
-      return nullptr;
-    Ptr l = erase(t->left, lo, hi), r = erase(t->right, lo, hi);
-    if (l == t->left && r == t->right)
+    const Node *n = t.get();
+    if (last(n) < lo || n->prefix() > hi)
+      return t;
+    if (lo <= n->prefix() && last(n) <= hi)
+      return {};
+    const Branch *b = asBranch(n);
+    Ptr l = erase(b->left, lo, hi), r = erase(b->right, lo, hi);
+    if (l == b->left && r == b->right)
       return t;
     if (!l || !r)
       return l ? l : r;
-    return branch(t->prefix, t->bit, std::move(l), std::move(r));
+    return branch(b->prefix(), b->bitPos, std::move(l), std::move(r));
   }
 
   template <class F> static void each(const Node *n, F &&f) {
     if (!n)
       return;
-    if (!n->bit) {
-      f(unpack(n->prefix), n->cell);
+    if (!n->isBranch()) {
+      f(unpack(n->prefix()), asLeaf(n)->cell);
       return;
     }
-    each(n->left.get(), f);
-    each(n->right.get(), f);
+    const Branch *b = asBranch(n);
+    each(b->left.get(), f);
+    each(b->right.get(), f);
   }
   template <class F> static void range(const Node *n, U lo, U hi, F &&f) {
-    if (!n || last(n) < lo || n->prefix > hi)
+    if (!n || last(n) < lo || n->prefix() > hi)
       return;
-    if (!n->bit) {
-      f(unpack(n->prefix), n->cell);
+    if (!n->isBranch()) {
+      f(unpack(n->prefix()), asLeaf(n)->cell);
       return;
     }
-    range(n->left.get(), lo, hi, f);
-    range(n->right.get(), lo, hi, f);
+    const Branch *b = asBranch(n);
+    range(b->left.get(), lo, hi, f);
+    range(b->right.get(), lo, hi, f);
   }
 
   template <class F> static void diffNodes(const Node *a, const Node *b, F &&f) {
@@ -160,9 +242,10 @@ private:
       return;
     }
     // A leaf on one side: look its key up on the other.
-    if (!a->bit || !b->bit) {
-      const Node *l = a->bit ? b : a, *t = a->bit ? a : b;
-      Key k = unpack(l->prefix);
+    if (!a->isBranch() || !b->isBranch()) {
+      const Leaf *l = a->isBranch() ? asLeaf(b) : asLeaf(a);
+      const Node *t = a->isBranch() ? a : b;
+      Key k = unpack(l->prefix());
       const C *other = nullptr;
       each(t, [&](Key kt, const C &c) {
         if (kt == k)
@@ -180,28 +263,29 @@ private:
       }
       return;
     }
-    if (a->bit == b->bit && a->prefix == b->prefix) {
-      diffNodes(a->left.get(), b->left.get(), f);
-      diffNodes(a->right.get(), b->right.get(), f);
-    } else if (a->bit > b->bit && inside(b->prefix, a)) { // b within one side of a
-      if (b->prefix & a->bit) {
-        onlyA(a->left.get());
-        diffNodes(a->right.get(), b, f);
+    const Branch *ba = asBranch(a), *bb = asBranch(b);
+    if (ba->bitPos == bb->bitPos && ba->prefix() == bb->prefix()) {
+      diffNodes(ba->left.get(), bb->left.get(), f);
+      diffNodes(ba->right.get(), bb->right.get(), f);
+    } else if (ba->bitPos > bb->bitPos && inside(bb->prefix(), ba)) { // b within one side of a
+      if (bb->prefix() & ba->bit()) {
+        onlyA(ba->left.get());
+        diffNodes(ba->right.get(), bb, f);
       } else {
-        diffNodes(a->left.get(), b, f);
-        onlyA(a->right.get());
+        diffNodes(ba->left.get(), bb, f);
+        onlyA(ba->right.get());
       }
-    } else if (b->bit > a->bit && inside(a->prefix, b)) {
-      if (a->prefix & b->bit) {
-        onlyB(b->left.get());
-        diffNodes(a, b->right.get(), f);
+    } else if (bb->bitPos > ba->bitPos && inside(ba->prefix(), bb)) {
+      if (ba->prefix() & bb->bit()) {
+        onlyB(bb->left.get());
+        diffNodes(ba, bb->right.get(), f);
       } else {
-        diffNodes(a, b->left.get(), f);
-        onlyB(b->right.get());
+        diffNodes(ba, bb->left.get(), f);
+        onlyB(bb->right.get());
       }
     } else {
-      onlyA(a);
-      onlyB(b);
+      onlyA(ba);
+      onlyB(bb);
     }
   }
 };

@@ -88,6 +88,9 @@ public:
     s.addConstraint(solverTerm(c));
     ++epoch;
   }
+  // Releases the hash-consing, folding and range caches once the walk is
+  // done; only constant entries and solverTerm() remain valid afterwards.
+  void releaseWalkTables();
   uint64_t constraintsEpoch() const { return epoch; }
 
   // The value of a constant term (width 1 for Bool), or null.
@@ -350,6 +353,7 @@ private:
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const void *, std::unordered_set<const void *>> freeOf;
   uint64_t epoch = 0;
+  bool walkDone = false;
 };
 
 } // namespace vereda::encode

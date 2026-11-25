@@ -64,17 +64,18 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       continue;
     if (step.kind == walker::Step::Check)
       break;
+    const ir::SourceLoc &loc = trace.loc(step);
     if (step.kind == walker::Step::Assumption) {
-      os << "\n/*\nAssumption:\n  " << step.loc.display() << "\n  " << step.text << "\n*/\n";
+      os << "\n/*\nAssumption:\n  " << loc.display() << "\n  " << trace.text(step) << "\n*/\n";
       continue;
     }
-    StringRef file = step.loc.file;
+    StringRef file = loc.file;
     if (!showLibraryStates && file.consume_front("/rustc/")) {
       auto [hash, rest] = file.split('/');
       if (!hash.empty() && rest.starts_with("library/"))
         continue;
     }
-    std::string text = step.text;
+    std::string text = trace.text(step);
     bool isUnsigned = step.isUnsigned;
     if (step.type) { // a store into memory: name the element or member written
       const APInt *off = model.value(step.offset);
@@ -87,11 +88,11 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       text += *path;
     }
     auto [stmt, bits] = assignment(model, step.value, text, isUnsigned);
-    std::string &prev = last[step.loc.function + "::" + text];
+    std::string &prev = last[loc.function + "::" + text];
     if (prev == stmt)
       continue;
     prev = stmt;
-    os << "\n// State " << ++n << " " << step.loc.display() << " thread 0\n  " << stmt;
+    os << "\n// State " << ++n << " " << loc.display() << " thread 0\n  " << stmt;
     if (!bits.empty())
       WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << bits;
     os << "\n";
