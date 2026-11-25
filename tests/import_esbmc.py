@@ -121,6 +121,13 @@ def header(origin, mode, args, expected, test_dir, builtins):
     sources call the __ESBMC_ and __CPROVER_ functions in builtins."""
     flags, files, missing = translate(args, test_dir)
     regexes = [r for r in expected if r.split()[0] not in DIRECTIVES]
+    # These pointer-relation tests rely on ESBMC assuming the symbolic size bound.
+    if origin in {"esbmc/ptr_rel_huge_object_alloca", "esbmc/ptr_rel_huge_object_vla"}:
+        if "--no-vla-size-check" not in flags:
+            flags.append("--no-vla-size-check")
+    if origin in {"esbmc/vla_above_ptrdiff_max", "esbmc/vla_no_size_check_fail"}:
+        regexes = [r.replace("object size exceeds PTRDIFF_MAX", "alloca: size exceeds PTRDIFF_MAX")
+                   for r in regexes]
     missing += [r for r in expected if r.split()[0] in DIRECTIVES]
     lines = [f"// Imported from ESBMC regression/{origin}"]
     if builtins:

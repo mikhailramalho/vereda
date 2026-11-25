@@ -1545,12 +1545,14 @@ private:
       uint64_t elemSize = dl.getTypeAllocSize(a->getAllocatedType());
       Term count = enc.value(a->getArraySize());
       Term ok = t.boolean(true);
+      bool zeroSize = elemSize == 0;
       if (elemSize) {
         // Compare before truncating or multiplying, so allocation-size
         // arithmetic cannot wrap an oversized request into a small one.
         unsigned width = std::max(64u, std::max(bits, count.width()));
         APInt limit = APInt::getSignedMaxValue(bits).zextOrTrunc(width);
         limit = limit.udiv(APInt(width, elemSize));
+        zeroSize = limit.isZero();
         ok = t.ule(enc.resize(count, width, false), t.bv(limit));
       }
       Term violated = t.land(guard, t.lnot(ok));
@@ -1564,7 +1566,8 @@ private:
         enc.bind(a, mem.null());
         return true;
       }
-      Term size = t.mul(enc.resize(count, bits, false), t.bv(elemSize, bits));
+      Term size = zeroSize ? t.bv(0, bits)
+                           : t.mul(enc.resize(count, bits, false), t.bv(elemSize, bits));
       Term p = mem.allocate(size, a->getAlign().value(), guard, exposed(a));
       if (unsigned bits = ownsArrays(a, dl))
         mem.own(st, p, bits);
