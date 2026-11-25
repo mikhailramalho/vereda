@@ -33,6 +33,8 @@ struct SourceLoc {
   std::string display() const {
     SourceLoc loc = *this;
     loc.function = llvm::demangle(function);
+    if (loc.file.empty() || loc.file == "<unknown>")
+      return "function " + loc.function;
     return loc.str();
   }
 };
