@@ -170,26 +170,30 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   progress("Walking " + entry);
   vereda::util::Stopwatch walkTime;
   vereda::encode::Terms terms(solver);
-  std::unique_ptr<vereda::memory::Memory> memory;
-  try {
-    memory = std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout());
-  } catch (const vereda::Unsupported &e) {
-    return unknown(Twine("unsupported: ") + e.what());
-  }
-  vereda::encode::Encoder enc(terms, *memory, fp2bv);
   vereda::checks::Checks checks;
   vereda::walker::Trace trace;
-  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
-                                   !incrementalBMC,
-                                   !noSummarizeArrayLoops,
-                                   !witnessFile.empty(),
-                                   !noPointerCheck};
-  if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
-    return finish(unknown(toString(std::move(e))));
+  unsigned symbols = 0;
+  {
+    std::unique_ptr<vereda::memory::Memory> memory;
+    try {
+      memory = std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout());
+    } catch (const vereda::Unsupported &e) {
+      return unknown(Twine("unsupported: ") + e.what());
+    }
+    vereda::encode::Encoder enc(terms, *memory, fp2bv);
+    vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
+                                     !incrementalBMC,
+                                     !noSummarizeArrayLoops,
+                                     !witnessFile.empty(),
+                                     !noPointerCheck};
+    if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
+      return finish(unknown(toString(std::move(e))));
+    symbols = enc.symbolCount();
+  }
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
   outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
-         << (checks.size() == 1 ? " check, " : " checks, ") << enc.symbolCount()
+         << (checks.size() == 1 ? " check, " : " checks, ") << symbols
          << " symbols, peak memory " << vereda::util::peakMemory() << ")\n";
   outs().flush(); // solving may run until a timeout kills the process
 
@@ -210,6 +214,8 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     if (dumpSMTOnly)
       return finish(0);
   }
+
+  terms.releaseWalkTables();
 
   progress("Solving with " + solver.getSolverNameAndVersion());
   vereda::util::Stopwatch solveTime;

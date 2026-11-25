@@ -672,8 +672,7 @@ private:
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
-            trace.push_back(
-                {Step::Assignment, guard, std::move(a->loc), std::move(a->name), v, a->isUnsigned});
+            trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned);
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
@@ -742,11 +741,11 @@ private:
       }
       Term c = enc.value(br->getCondition());
       Term taken[2] = {t.land(guard, c), t.land(guard, t.lnot(c))};
-      if (std::optional<ir::BranchSite> site = ir::branchSite(*br))
-        for (unsigned i = 0; i < 2; ++i)
-          if (site->taken[i] && !t.isFalse(taken[i]))
-            trace.push_back(
-                {Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false"});
+      if (opts.witness)
+        if (std::optional<ir::BranchSite> site = ir::branchSite(*br))
+          for (unsigned i = 0; i < 2; ++i)
+            if (site->taken[i] && !t.isFalse(taken[i]))
+              trace.add(Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false");
       arrive(frame, bb, br->getSuccessor(0), taken[0], st, c);
       arrive(frame, bb, br->getSuccessor(1), taken[1], st, t.lnot(c));
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
@@ -914,12 +913,12 @@ private:
       // for a call whose result type differs from it. One declared without
       // a prototype, as in many SV-COMP tasks, is variadic and called
       // without the "...", but returns the same type.
-      if (c.getType() == callee->getReturnType())
-        trace.push_back({Step::Call, guard, ir::location(c), name.str(), v});
+      if (opts.witness && c.getType() == callee->getReturnType())
+        trace.add(Step::Call, guard, ir::location(c), name, v);
       return guard;
     }
     if (name == "__VERIFIER_assume") {
-      trace.push_back({Step::Assumption, guard, ir::location(c), ir::callArgumentText(c), {}});
+      trace.add(Step::Assumption, guard, ir::location(c), ir::callArgumentText(c));
       Term holds = enc.isTrue(c.getArgOperand(0));
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
@@ -1299,8 +1298,8 @@ private:
              std::string expr, unsigned index, Term violated, ClaimKey key) {
     auto [it, inserted] = claims.try_emplace(key, checks.size());
     bool viaReachError = reachError || comment == "reach_error";
-    trace.push_back({Step::Check, violated, reachError ? ir::location(*reachError) : loc,
-                     viaReachError ? "reach_error" : "", {}, false, it->second});
+    trace.add(Step::Check, violated, reachError ? ir::location(*reachError) : loc,
+              viaReachError ? "reach_error" : "", {}, false, it->second);
     if (!inserted) {
       checks[it->second].violated = t.lor(checks[it->second].violated, violated);
       return;
@@ -1387,8 +1386,8 @@ private:
       Type *ty = v->getType();
       if (w->getDebugLoc() && ty->isIntegerTy() && !ty->isIntegerTy(1))
         if (auto var = namedObject(w->getPointerOperand()))
-          trace.push_back({Step::Assignment, guard, ir::location(*w), var->first, enc.value(v),
-                           false, 0, var->second, mem.offset(p)});
+          trace.add(Step::Assignment, guard, ir::location(*w), var->first, enc.value(v), false, 0,
+                    var->second, mem.offset(p));
       return true;
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {

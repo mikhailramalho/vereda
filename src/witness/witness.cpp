@@ -184,14 +184,16 @@ static std::string hex(const APFloat &x) {
 // The constraint a function_return waypoint puts on the model's value of a
 // call step, of the form \result <op> <constant> that format 2.0 allows, or
 // empty when none holds of that value alone.
-static std::string constraint(solver::Model &model, const walker::Step &step, const Module &m) {
+static std::string constraint(solver::Model &model, const walker::Trace &trace,
+                              const walker::Step &step, const Module &m) {
   const APInt *value = model.value(step.value);
   if (!value)
     return "";
   if (step.value.isBool()) // a _Bool
     return std::string("\\result == ") + (value->isOne() ? "1" : "0");
   const APInt &v = *value;
-  const Function *f = m.getFunction(step.text);
+  const std::string &stepText = trace.text(step);
+  const Function *f = m.getFunction(stepText);
   Type *ret = f->getReturnType();
   // A pointer is an object and an offset, and no constant names an object;
   // \result != 0 still keeps the waypoint at its call (#76).
@@ -210,7 +212,7 @@ static std::string constraint(solver::Model &model, const walker::Step &step, co
   }
   // The ABI returns an __int128 as { i64, i64 }, whose packed bits, the
   // first field lowest, are the integer's.
-  StringRef type = step.text;
+  StringRef type = stepText;
   type.consume_front("__VERIFIER_nondet_");
   if (!ret->isIntegerTy() && !signedTypes.contains(type) && !unsignedTypes.contains(type))
     return "";
@@ -267,30 +269,32 @@ Expected<std::string> violationWitness(solver::Model &model, const walker::Trace
       target = &step;
       break;
     }
-    auto file = files.find(step.loc.file);
-    if (file == files.end() || !step.loc.line)
+    const ir::SourceLoc &stepLoc = trace.loc(step);
+    auto file = files.find(stepLoc.file);
+    if (file == files.end() || !stepLoc.line)
       continue;
     if (step.kind == walker::Step::Branch) {
-      if (std::optional<ir::SourceLoc> loc = keyword(file->second, step.loc)) {
+      if (std::optional<ir::SourceLoc> loc = keyword(file->second, stepLoc)) {
         lastBranching = content.size();
-        waypoint(os, "branching", *loc, loc->col, step.text);
+        waypoint(os, "branching", *loc, loc->col, trace.text(step));
       }
       continue;
     }
-    std::string value = constraint(model, step, m);
+    std::string value = constraint(model, trace, step, m);
     if (!value.empty()) {
       lastBranching = std::string::npos;
-      waypoint(os, "function_return", step.loc,
-               returnColumn(file->second, step.loc, step.text), value);
+      waypoint(os, "function_return", stepLoc,
+               returnColumn(file->second, stepLoc, trace.text(step)), value);
     }
   }
   // The witness states unreach-call, which only a call to reach_error
   // violates.
-  if (!target || target->text != "reach_error")
+  if (!target || trace.text(*target) != "reach_error")
     return createStringError("the violation (" + checks[violated].comment +
                              ") is not a call to reach_error");
-  if (!files.count(target->loc.file))
-    return createStringError("the call to reach_error is in " + target->loc.file +
+  const ir::SourceLoc &targetLoc = trace.loc(*target);
+  if (!files.count(targetLoc.file))
+    return createStringError("the call to reach_error is in " + targetLoc.file +
                              ", not in an input file");
   // A branching waypoint right before the target says little the target
   // does not: mostly it is the if around the call to reach_error. With it,
@@ -298,7 +302,7 @@ Expected<std::string> violationWitness(solver::Model &model, const walker::Trace
   // (MathSAT cannot interpolate).
   if (lastBranching != std::string::npos)
     content.resize(lastBranching);
-  waypoint(os, "target", target->loc, target->loc.col, "");
+  waypoint(os, "target", targetLoc, targetLoc.col, "");
 
   char now[32];
   std::time_t t = std::time(nullptr);

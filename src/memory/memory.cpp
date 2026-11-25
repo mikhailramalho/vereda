@@ -207,13 +207,32 @@ void Memory::flush(State &st, std::optional<uint64_t> object) {
       return;
     last = e;
     const State::Cell &own = *st.separate.find({e.first, 0});
-    Term i = index(e.first, ptr(e)), old, elem;
-    for (unsigned j = 0; j < 1u << shift; ++j) {
-      const State::Cell *b = st.known.find({e.first, e.second + j});
-      if (!b && !old)
-        old = t.select(own.data, i);
-      Term byte = b ? b->data : t.extract(old, 8 * j + 7, 8 * j);
-      elem = j ? t.concat(byte, elem) : byte;
+    unsigned n = 1u << shift;
+    Term i = t.bv(APInt(ptrBits - shift, e.second >> shift));
+    // Assemble constant elements directly so flush does not intern
+    // intermediate 16/24/...-bit concat constants.
+    uint64_t val = 0;
+    bool allConst = true;
+    const State::Cell *bytes[8];
+    for (unsigned j = 0; j < n; ++j) {
+      bytes[j] = st.known.find({e.first, e.second + j});
+      const APInt *c = bytes[j] ? t.constant(bytes[j]->data) : nullptr;
+      if (c)
+        val |= c->getZExtValue() << (8 * j);
+      else
+        allConst = false;
+    }
+    Term elem;
+    if (allConst) {
+      elem = t.bv(APInt(8 * n, val));
+    } else {
+      Term old;
+      for (unsigned j = 0; j < n; ++j) {
+        if (!bytes[j] && !old)
+          old = t.select(own.data, i);
+        Term byte = bytes[j] ? bytes[j]->data : t.extract(old, 8 * j + 7, 8 * j);
+        elem = j ? t.concat(byte, elem) : byte;
+      }
     }
     st.separate.set({e.first, 0}, {t.store(own.data, i, elem), own.prov});
   };
