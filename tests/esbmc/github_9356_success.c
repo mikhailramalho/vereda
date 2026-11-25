@@ -21,5 +21,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9356_success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: over 300 s in CI
-// MODE: KNOWNBUG

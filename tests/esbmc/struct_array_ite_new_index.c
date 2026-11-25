@@ -17,5 +17,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/struct_array_ite_new_index
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: over 300 s in CI
-// MODE: KNOWNBUG
