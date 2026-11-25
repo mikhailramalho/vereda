@@ -4,6 +4,7 @@ describes it:
 
     // RUN: <flags for vereda.py>            optional, default none; %S is the
                                              directory of the test
+                                             repeat for independent executions
     // EXPECT: <regex>                       must match the output (re.MULTILINE)
     // EXPECT-NOT: <regex>                   must not match
     // MODE: CORE|THOROUGH|KNOWNBUG|FUTURE   optional, default CORE
@@ -32,7 +33,8 @@ The tool runs in a fresh temporary directory, so output files never land in
 the source tree.
 
 When the environment sets REGRESS_STATS to a directory, the run also writes
-<suite>__<name>.json there: the test's wall, walk and solve seconds, peak
+<suite>__<name>.json there (with @run2, @run3, ... for additional RUN lines):
+the execution's wall, walk and solve seconds, peak
 memory in MB and verdict, which the performance check compares between a
 pull request and its base."""
 import argparse
@@ -84,7 +86,18 @@ def numbers(out):
             max((m for _, m in walks + solves), default=None))
 
 
-def record(test, start, out, verdict=None):
+def run_name(name, index):
+    """Keep existing names for the first execution; number additional ones."""
+    return name if index == 1 else f"{name}@run{index}"
+
+
+def split_run(name):
+    """The source test name and its one-based RUN index."""
+    match = re.fullmatch(r"(.*)@run([2-9]|[1-9][0-9]+)", name)
+    return (match[1], int(match[2])) if match else (name, 1)
+
+
+def record(test, start, out, verdict=None, index=1):
     """Writes the numbers of the test's run, started at the monotonic time
     start (None for a run that timed out), to $REGRESS_STATS when it is set."""
     stats = os.environ.get("REGRESS_STATS")
@@ -94,6 +107,7 @@ def record(test, start, out, verdict=None):
     stem = os.path.dirname(test) if os.path.basename(test) == "main.c" else test
     name = (os.path.basename(os.path.dirname(stem)) + "/"
             + os.path.splitext(os.path.basename(stem))[0])
+    name = run_name(name, index)
     if verdict is None:
         verdicts = VERDICT.findall(out)
         verdict = verdicts[-1] if verdicts else "ERROR"
@@ -106,7 +120,7 @@ def record(test, start, out, verdict=None):
 
 def parse(path):
     """The header of the test at path, as a dict keyed by directive."""
-    desc = {"RUN": "", "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "", "CWD": "",
+    desc = {"RUN": [], "EXPECT": [], "EXPECT-NOT": [], "MODE": "CORE", "FILES": "", "CWD": "",
             "VERDICT": None, "BUILTIN": False}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -117,10 +131,12 @@ def parse(path):
             if not m:
                 continue
             key, value = m.groups()
-            if key in ("EXPECT", "EXPECT-NOT"):
+            if key in ("RUN", "EXPECT", "EXPECT-NOT"):
                 desc[key].append(value)
             else:
                 desc[key] = value
+    if not desc["RUN"]:
+        desc["RUN"].append("")
     return desc
 
 
@@ -225,17 +241,35 @@ def main():
     parser.add_argument("--timeout", type=float, help="seconds before the run is stopped")
     parser.add_argument("--memory-limit", type=int,
                         help="MB of address space for the run and what it starts")
+    parser.add_argument("--run-index", type=int, help="execute only this RUN line (one-based)")
     parser.add_argument("test")
     args = parser.parse_args()
 
     test = os.path.abspath(args.test)
     desc = parse(test)
+    if args.run_index is None and len(desc["RUN"]) > 1:
+        # Separate processes keep resource accounting and limits independent.
+        codes = []
+        for index in range(1, len(desc["RUN"]) + 1):
+            print(f"RUN {index}: {desc['RUN'][index - 1]}", flush=True)
+            codes.append(subprocess.run([sys.executable, os.path.abspath(__file__),
+                                         *sys.argv[1:], "--run-index", str(index)],
+                                        check=False).returncode)
+        # --mark must not rewrite a mode when any execution ran out of memory.
+        for special in (OUT_OF_MEMORY, VERDICT_CHANGED):
+            if special in codes:
+                return special
+        return next((code for code in codes if code not in (0, SKIPPED)),
+                    SKIPPED if SKIPPED in codes else 0)
+    index = 1 if args.run_index is None else args.run_index
+    if not 1 <= index <= len(desc["RUN"]):
+        parser.error(f"RUN index must be between 1 and {len(desc['RUN'])}")
     if desc["BUILTIN"]:
         print("needs an __ESBMC_ or __CPROVER_ builtin, which Vereda does not support; skipped")
         return SKIPPED
     files = [test] + [os.path.join(os.path.dirname(test), f) for f in desc["FILES"].split()]
     cmd = [sys.executable, args.vereda, "--bin", args.bin, "--clang", args.clang]
-    cmd += desc["RUN"].replace("%S", os.path.dirname(test)).split() + files
+    cmd += desc["RUN"][index - 1].replace("%S", os.path.dirname(test)).split() + files
     start = time.monotonic()
     out = execute(cmd, args.timeout, args.memory_limit,
                   desc["CWD"].replace("%S", os.path.dirname(test)) or None)
@@ -243,7 +277,7 @@ def main():
         why = (f"TIMEOUT after {args.timeout:g} s" if out is None
                else f"OUTPUT past {OUTPUT_LIMIT >> 20} MB, as a timeout")
         print(f"{why}; skipped")
-        record(test, None, "", "TIMEOUT")
+        record(test, None, "", "TIMEOUT", index)
         return SKIPPED
 
     # Peak resident memory, in KB, of the largest process the run waited for.
@@ -251,7 +285,7 @@ def main():
     near_limit = args.memory_limit and peak >= NEAR_LIMIT * (args.memory_limit << 10)
     no_verdict = not re.search(r"^VERIFICATION ", out, re.MULTILINE)
     if args.memory_limit and (NO_MEMORY.search(out) or (near_limit and no_verdict)):
-        record(test, start, out, "MEMOUT")
+        record(test, start, out, "MEMOUT", index)
         if desc["MODE"] == "KNOWNBUG":
             print(f"OUT OF MEMORY past {args.memory_limit} MB, a known bug; skipped")
             return SKIPPED
@@ -260,7 +294,7 @@ def main():
         print(f"OUT OF MEMORY: the run needed more than {args.memory_limit} MB")
         return OUT_OF_MEMORY
 
-    record(test, start, out)
+    record(test, start, out, index=index)
     print(f"verdict: {verdict_of(out)}")
     if not os.environ.get("REGRESS_REMARK") and changed(desc, out, cmd):
         return VERDICT_CHANGED

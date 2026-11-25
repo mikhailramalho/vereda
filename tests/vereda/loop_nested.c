@@ -1,5 +1,6 @@
 // Nested loops with a break out of the inner one.
 // RUN: --unwind 5
+// RUN: --unwind 5 --incremental-solver
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 
