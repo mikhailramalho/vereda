@@ -162,6 +162,10 @@ public:
   }
 
 private:
+  // LLVM's default capture-tracking cap (100 uses) is too small for an array
+  // written by an unrolled loop, where every store is a use of the alloca.
+  static constexpr unsigned MaxCaptureUses = 16384;
+
   // Whether the address of v, an alloca, a global or a function, may reach
   // code outside the program or an integer, or be compared with one
   // (memory.h, #137): any capture but a test against null (stored, passed to
@@ -176,7 +180,7 @@ private:
         auto *ce = dyn_cast<ConstantExpr>(u->getUser());
         if (ce && (isa<GEPOperator>(ce) || ce->getOpcode() == Instruction::BitCast ||
                    ce->getOpcode() == Instruction::AddrSpaceCast)) {
-          PointerMayBeCaptured(ce, this);
+          PointerMayBeCaptured(ce, this, MaxCaptureUses);
           return exposed ? Stop : ContinueIgnoringReturn;
         }
         exposed = !isa<Instruction>(u->getUser()) || !capturesAddressIsNullOnly(ci.UseCC);
@@ -186,7 +190,7 @@ private:
     auto [it, inserted] = exposes.try_emplace(v, true);
     if (inserted) {
       Tracker tracker;
-      PointerMayBeCaptured(v, &tracker);
+      PointerMayBeCaptured(v, &tracker, MaxCaptureUses);
       it->second = tracker.exposed;
     }
     return it->second;
@@ -202,7 +206,9 @@ private:
   unsigned ownsArrays(const Value *v, const DataLayout &dl) {
     auto [it, inserted] = owns.try_emplace(v, 0);
     if (!inserted ||
-        capturesAnything(PointerMayBeCaptured(v, CaptureComponents::Provenance).WithRet))
+        capturesAnything(
+            PointerMayBeCaptured(v, CaptureComponents::Provenance, capturesAnything, MaxCaptureUses)
+                .WithRet))
       return it->second;
     SmallVector<const Value *, 8> work{v};
     SmallPtrSet<const Value *, 8> seen;
