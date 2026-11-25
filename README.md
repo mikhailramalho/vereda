@@ -19,6 +19,8 @@ Supported today:
   bound was enough. With `--property-file`, one SV-COMP property: unreach-call,
   or no-overflow through clang's signed-overflow sanitizer.
 - SV-COMP's `__VERIFIER_nondet_*` and `__VERIFIER_assume`, and `abort`/`exit`.
+- Stack allocations and VLAs above the target's `PTRDIFF_MAX` are reported as
+  `alloca: size exceeds PTRDIFF_MAX`; exactly the limit remains valid.
 - Integers, pointers, structs and arrays in byte-addressed memory; `malloc`,
   `calloc`, `free`, `memcpy`, `memmove`, `memset`.
 - Several C files, linked with llvm-link.
@@ -111,6 +113,7 @@ The main verifier flags:
 | `--entry F` | Entry function (default `main`) |
 | `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
 | `--force-malloc-success` | `malloc` never returns null |
+| `--no-vla-size-check` | Do not report stack allocations above `PTRDIFF_MAX`; their paths still end at the allocation |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
 | `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve |

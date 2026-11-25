@@ -23,3 +23,14 @@ cases = [
 for original, output in cases:
     translated = import_esbmc.as_vereda(original)
     assert re.search(translated, output, re.MULTILINE), (original, translated, output)
+
+for name in ("ptr_rel_huge_object_alloca", "ptr_rel_huge_object_vla"):
+    lines = import_esbmc.header("esbmc/" + name, "CORE", "", [], ".", [])
+    assert "// RUN: --no-vla-size-check" in lines, lines
+
+for name, args, flags in (("vla_above_ptrdiff_max", "", []),
+                          ("vla_no_size_check_fail", "--32", ["// RUN: -m32"])):
+    lines = import_esbmc.header("esbmc/" + name, "CORE", args,
+                               ["object size exceeds PTRDIFF_MAX"], ".", [])
+    assert "// EXPECT: alloca: size exceeds PTRDIFF_MAX" in lines, lines
+    assert all(flag in lines for flag in flags), lines

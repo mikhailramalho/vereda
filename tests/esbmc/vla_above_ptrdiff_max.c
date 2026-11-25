@@ -16,7 +16,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_above_ptrdiff_max
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: object size exceeds PTRDIFF_MAX
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// EXPECT: alloca: size exceeds PTRDIFF_MAX

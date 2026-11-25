@@ -64,7 +64,7 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--overflow-check", "--unsigned-overflow-check",
         "--ub-shift-check", "--unlimited-k-steps", "--no-summarize-array-loops",
-        "--no-pointer-check"}
+        "--no-pointer-check", "--no-vla-size-check"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step"}
 RENAMED = {
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
@@ -76,7 +76,7 @@ RENAMED_WITH_VALUE = {"--function": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # and --summarize-array-loops, which Vereda does by default.
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
-           "--no-div-by-zero-check", "--no-align-check", "--no-vla-size-check", "--no-pointer-relation-check",
+           "--no-div-by-zero-check", "--no-align-check", "--no-pointer-relation-check",
            "--no-simplify", "--no-slice", "--floatbv"}
 
 
@@ -121,6 +121,13 @@ def header(origin, mode, args, expected, test_dir, builtins):
     sources call the __ESBMC_ and __CPROVER_ functions in builtins."""
     flags, files, missing = translate(args, test_dir)
     regexes = [r for r in expected if r.split()[0] not in DIRECTIVES]
+    # These pointer-relation tests rely on ESBMC assuming the symbolic size bound.
+    if origin in {"esbmc/ptr_rel_huge_object_alloca", "esbmc/ptr_rel_huge_object_vla"}:
+        if "--no-vla-size-check" not in flags:
+            flags.append("--no-vla-size-check")
+    if origin in {"esbmc/vla_above_ptrdiff_max", "esbmc/vla_no_size_check_fail"}:
+        regexes = [r.replace("object size exceeds PTRDIFF_MAX", "alloca: size exceeds PTRDIFF_MAX")
+                   for r in regexes]
     missing += [r for r in expected if r.split()[0] in DIRECTIVES]
     lines = [f"// Imported from ESBMC regression/{origin}"]
     if builtins:

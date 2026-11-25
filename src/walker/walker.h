@@ -38,6 +38,8 @@ struct Options {
   // A write into a string literal or an object defined const is a
   // violation, as ESBMC's pointer check has it (off with --no-pointer-check).
   bool pointerCheck = true;
+  // Report stack objects above PTRDIFF_MAX, unless --no-vla-size-check.
+  bool vlaSizeCheck = true;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

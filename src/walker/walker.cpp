@@ -824,8 +824,12 @@ private:
           break;
         mem.setContext(guard); // the callee's blocks set their own
       }
-      else if (!memoryAccess(inst, guard, st))
-        enc.encode(inst);
+      else {
+        if (!memoryAccess(inst, guard, st))
+          enc.encode(inst);
+        if (t.isFalse(guard))
+          break;
+      }
     }
   }
 
@@ -1534,29 +1538,40 @@ private:
 
   // alloca, load and store, and the atomics. Returns false for any other
   // instruction.
-  bool memoryAccess(Instruction &inst, Term guard, memory::State &st) {
+  bool memoryAccess(Instruction &inst, Term &guard, memory::State &st) {
     if (auto *a = dyn_cast<AllocaInst>(&inst)) {
       const DataLayout &dl = a->getDataLayout();
       unsigned bits = mem.pointerBits();
-      // A stack object that does not fit is a stack overflow, which the
-      // verifier assumes away: the path ends, like ESBMC. An element that
-      // does not fit even the pointer width (a constant-size VLA turned into
-      // one array by instcombine, #59) ends it before any term is built.
       uint64_t elemSize = dl.getTypeAllocSize(a->getAllocatedType());
-      if (!isUIntN(bits, elemSize)) {
-        t.addConstraint(t.lnot(guard));
+      Term count = enc.value(a->getArraySize());
+      Term ok = t.boolean(true);
+      bool zeroSize = elemSize == 0;
+      if (elemSize) {
+        // Compare before truncating or multiplying, so allocation-size
+        // arithmetic cannot wrap an oversized request into a small one.
+        unsigned width = std::max(64u, std::max(bits, count.width()));
+        APInt limit = APInt::getSignedMaxValue(bits).zextOrTrunc(width);
+        limit = limit.udiv(APInt(width, elemSize));
+        zeroSize = limit.isZero();
+        ok = t.ule(enc.resize(count, width, false), t.bv(limit));
+      }
+      Term violated = t.land(guard, t.lnot(ok));
+      if (opts.vlaSizeCheck && counts(false) && !t.isFalse(violated))
+        assertion(inst, violated, "alloca: size exceeds PTRDIFF_MAX", "");
+      // Do not assume ok globally: that would erase this violation and
+      // checks reached earlier on the same path.
+      guard = t.land(guard, ok);
+      mem.setContext(guard);
+      if (t.isFalse(guard)) {
         enc.bind(a, mem.null());
         return true;
       }
-      Term count = enc.resize(enc.value(a->getArraySize()), bits, false);
-      Term elem = t.bv(elemSize, bits);
-      Term ok = t.land(t.lnot(t.umulo(count, elem)),
-                              mem.fits(t.mul(count, elem)));
-      Term p = mem.allocate(t.mul(count, elem), a->getAlign().value(), guard, exposed(a));
+      Term size = zeroSize ? t.bv(0, bits)
+                           : t.mul(enc.resize(count, bits, false), t.bv(elemSize, bits));
+      Term p = mem.allocate(size, a->getAlign().value(), guard, exposed(a));
       if (unsigned bits = ownsArrays(a, dl))
         mem.own(st, p, bits);
       enc.bind(a, p);
-      t.addConstraint(t.implies(guard, ok));
       return true;
     }
     // Atomics: one thread, so each is a plain load and store and a fence

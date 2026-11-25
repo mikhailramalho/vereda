@@ -141,6 +141,3 @@ int main(int argc, char *argv[]){
 // Imported from ESBMC regression/esbmc/github_1533
 // RUN: --unwind 1 --no-unwinding-assertions --overflow-check --solver z3
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
