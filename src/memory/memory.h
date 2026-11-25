@@ -189,6 +189,7 @@ public:
 
 private:
   encode::Term bytePtr(encode::Term p, uint64_t i);
+  void ensureLayout(uint64_t id);
   encode::Term base(encode::Term obj);
   encode::Term isNull(encode::Term p);
   encode::Term isNullMemo(encode::Term p, llvm::DenseMap<const void *, encode::Term> &memo);
@@ -269,7 +270,9 @@ private:
 
   struct Object {
     encode::Term base, size, exists;
+    uint64_t align;
     bool exposed;
+    bool laidOut;
     // The constant global or the function the object is, if either, which
     // the program may not write.
     const llvm::GlobalValue *constant = nullptr;
@@ -280,7 +283,7 @@ private:
   const llvm::DataLayout &dl;
   unsigned ptrBits;
   std::vector<Object> objects; // index = object id; 0 is null
-  encode::Term bases;    // object id -> base address, as an uninterpreted array
+  encode::Term bases;    // object id -> base address, created lazily on symbolic base()
   encode::Term sizes;    // object id -> size in bytes, created lazily on symbolic size()
   encode::Term end;      // first address after the last object
   uint64_t reserved = 1; // upper bound on end while endBounded holds

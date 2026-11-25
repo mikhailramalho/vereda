@@ -1138,6 +1138,20 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   dropUninitialisedRecords(*module);
   if (Error e = linkModels(*module, models))
     return std::move(e);
+  // Vereda intercepts __assert_fail as an assertion check and never passes its
+  // string arguments outside; mark its pointer parameters non-capturing before
+  // function-attrs so callers do not appear to expose assert message literals.
+  if (Function *af = module->getFunction("__assert_fail"); af && af->isDeclaration()) {
+    Attribute noCap = Attribute::getWithCaptureInfo(module->getContext(), CaptureInfo::none());
+    for (Argument &arg : af->args())
+      if (arg.getType()->isPointerTy())
+        arg.addAttr(noCap);
+  }
+  // Infer captures(none) on defined functions and linked models (e.g. strcmp)
+  // so globals passed only to non-capturing calls are not marked exposed.
+  if (Error e = runPipeline(*module, "cgscc(function-attrs)"))
+    return std::move(e);
+  stripUBAssumptions(*module);
   return module;
 }
 
