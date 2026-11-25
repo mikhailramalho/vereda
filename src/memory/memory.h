@@ -218,6 +218,7 @@ private:
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> pointers(const State &st);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
+  void flushObject(State &st, uint64_t object);
   State::Cell readByte(const State &st, encode::Term at);
   // The byte at at from object's own arrays own, and those arrays with c
   // stored at at.

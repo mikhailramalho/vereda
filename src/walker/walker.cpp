@@ -163,6 +163,10 @@ public:
   }
 
 private:
+  // LLVM's default capture-tracking cap (100 uses) is too small for an array
+  // written by an unrolled loop, where every store is a use of the alloca.
+  static constexpr unsigned MaxCaptureUses = 16384;
+
   // Whether the address of v, an alloca, a global or a function, may reach
   // code outside the program or an integer, or be compared with one
   // (memory.h, #137): any capture but a test against null (stored, passed to
@@ -177,7 +181,7 @@ private:
         auto *ce = dyn_cast<ConstantExpr>(u->getUser());
         if (ce && (isa<GEPOperator>(ce) || ce->getOpcode() == Instruction::BitCast ||
                    ce->getOpcode() == Instruction::AddrSpaceCast)) {
-          PointerMayBeCaptured(ce, this);
+          PointerMayBeCaptured(ce, this, MaxCaptureUses);
           return exposed ? Stop : ContinueIgnoringReturn;
         }
         exposed = !isa<Instruction>(u->getUser()) || !capturesAddressIsNullOnly(ci.UseCC);
@@ -187,7 +191,7 @@ private:
     auto [it, inserted] = exposes.try_emplace(v, true);
     if (inserted) {
       Tracker tracker;
-      PointerMayBeCaptured(v, &tracker);
+      PointerMayBeCaptured(v, &tracker, MaxCaptureUses);
       it->second = tracker.exposed;
     }
     return it->second;
@@ -203,7 +207,9 @@ private:
   unsigned ownsArrays(const Value *v, const DataLayout &dl) {
     auto [it, inserted] = owns.try_emplace(v, 0);
     if (!inserted ||
-        capturesAnything(PointerMayBeCaptured(v, CaptureComponents::Provenance).WithRet))
+        capturesAnything(
+            PointerMayBeCaptured(v, CaptureComponents::Provenance, capturesAnything, MaxCaptureUses)
+                .WithRet))
       return it->second;
     SmallVector<const Value *, 8> work{v};
     SmallPtrSet<const Value *, 8> seen;
@@ -217,12 +223,94 @@ private:
     return 0;
   }
 
+  static bool containsPointer(const Type *ty) {
+    if (ty->isPointerTy())
+      return true;
+    if (auto *st = dyn_cast<StructType>(ty))
+      return any_of(st->elements(), containsPointer);
+    if (auto *at = dyn_cast<ArrayType>(ty))
+      return containsPointer(at->getElementType());
+    if (auto *vt = dyn_cast<VectorType>(ty))
+      return containsPointer(vt->getElementType());
+    return false;
+  }
+
+  static bool isMemoryCopyOrSet(const CallBase *c, bool &isCopy) {
+    const Function *callee = c->getCalledFunction();
+    if (!callee || c->arg_size() < 3 || !c->use_empty())
+      return false;
+    StringRef name = callee->getName();
+    isCopy = name.starts_with("llvm.memcpy") || name.starts_with("llvm.memmove") ||
+             name == "memcpy" || name == "memmove";
+    return isCopy || name.starts_with("llvm.memset") || name == "memset";
+  }
+
+  // Whether v, an alloca or global, can never hold a pointer with provenance:
+  // its address is not exposed and does not escape, any global initialiser has
+  // no pointer type, and every write reachable through getelementptrs from it
+  // stores a non-pointer value, is a memset, or copies from another such object.
+  bool holdsNoPointers(const Value *v, SmallPtrSetImpl<const Value *> &visiting) {
+    if (!isa<AllocaInst>(v) && !isa<GlobalVariable>(v))
+      return false;
+    if (!visiting.insert(v).second)
+      return true;
+    if (auto *gv = dyn_cast<GlobalVariable>(v))
+      if (!gv->hasInitializer() || containsPointer(gv->getInitializer()->getType()))
+        return false;
+    if (exposed(v) ||
+        capturesAnything(
+            PointerMayBeCaptured(v, CaptureComponents::Provenance, capturesAnything, MaxCaptureUses)
+                .WithRet))
+      return false;
+    SmallVector<const Value *, 8> work{v};
+    SmallPtrSet<const Value *, 8> seen{v};
+    while (!work.empty()) {
+      const Value *p = work.pop_back_val();
+      for (const User *u : p->users()) {
+        if (isa<ICmpInst>(u) || isa<LoadInst>(u))
+          continue;
+        if (auto *g = dyn_cast<GEPOperator>(u)) {
+          if (seen.insert(g).second)
+            work.push_back(g);
+          continue;
+        }
+        if (auto *s = dyn_cast<StoreInst>(u)) {
+          if (s->getValueOperand() == p || containsPointer(s->getValueOperand()->getType()))
+            return false;
+          continue;
+        }
+        if (auto *c = dyn_cast<CallBase>(u)) {
+          if (c->getCalledFunction() &&
+              c->getCalledFunction()->getName() == "__vereda_uninitialised")
+            continue;
+          bool isCopy = false;
+          if (isMemoryCopyOrSet(c, isCopy)) {
+            if (!isCopy && c->getArgOperand(0) == p)
+              continue;
+            if (isCopy && (c->getArgOperand(0) == p || c->getArgOperand(1) == p)) {
+              if (c->getArgOperand(0) == p &&
+                  !holdsNoPointers(getUnderlyingObject(c->getArgOperand(1)), visiting))
+                return false;
+              continue;
+            }
+          }
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
   // N for N = 16, 32 or 64 when every use of v and of the getelementptrs
   // from it is a load or store of iN at an offset that is a multiple of N/8,
-  // a comparison or the no-op __vereda_uninitialised (issue #107): its own
-  // arrays then hold whole elements. 8, for bytes, otherwise; so a call or
-  // intrinsic taking v (memset, memcpy) keeps it on bytes.
-  static unsigned elementBits(const Value *v, const DataLayout &dl) {
+  // a comparison, the no-op __vereda_uninitialised, or a memcpy/memmove/memset
+  // of a constant multiple of N/8 bytes (issue #107), with any copy into v
+  // coming from an object that holds no pointers: its own arrays then hold
+  // whole elements. 8, for bytes, otherwise.
+  unsigned elementBits(const Value *v, const DataLayout &dl) {
+    if (auto *gv = dyn_cast<GlobalVariable>(v);
+        gv && gv->hasInitializer() && containsPointer(gv->getInitializer()->getType()))
+      return 8;
     unsigned bits = 0;
     auto access = [&](Type *ty) {
       if (!ty->isIntegerTy() || (bits && !ty->isIntegerTy(bits)))
@@ -231,7 +319,9 @@ private:
       return true;
     };
     SmallVector<const Value *, 8> work{v};
+    SmallPtrSet<const Value *, 8> seen{v};
     SmallVector<const GEPOperator *, 8> geps;
+    SmallVector<const ConstantInt *, 4> lengths;
     while (!work.empty()) {
       const Value *p = work.pop_back_val();
       for (const User *u : p->users()) {
@@ -241,11 +331,30 @@ private:
         else if (auto *s = dyn_cast<StoreInst>(u))
           ok = s->getValueOperand() != p && access(s->getValueOperand()->getType());
         else if (auto *g = dyn_cast<GEPOperator>(u)) {
-          geps.push_back(g);
-          work.push_back(g);
-        } else if (auto *c = dyn_cast<CallBase>(u))
-          ok = c->getCalledFunction() &&
-               c->getCalledFunction()->getName() == "__vereda_uninitialised";
+          if (seen.insert(g).second) {
+            geps.push_back(g);
+            work.push_back(g);
+          }
+        } else if (auto *c = dyn_cast<CallBase>(u)) {
+          bool isCopy = false;
+          if (c->getCalledFunction() &&
+              c->getCalledFunction()->getName() == "__vereda_uninitialised") {
+            ok = true;
+          } else if (isMemoryCopyOrSet(c, isCopy)) {
+            auto *len = dyn_cast<ConstantInt>(c->getArgOperand(2));
+            bool isDst = c->getArgOperand(0) == p;
+            bool isSrc = isCopy && c->getArgOperand(1) == p;
+            if (len && (isDst || isSrc)) {
+              ok = true;
+              if (isCopy && isDst) {
+                SmallPtrSet<const Value *, 8> visiting{v};
+                ok = holdsNoPointers(getUnderlyingObject(c->getArgOperand(1)), visiting);
+              }
+              if (ok)
+                lengths.push_back(len);
+            }
+          }
+        }
         if (!ok)
           return 8;
       }
@@ -255,6 +364,9 @@ private:
     // Each getelementptr moves by a multiple of N/8: its constant offset
     // and the scale of each of its indices have that many low zero bits.
     unsigned shift = Log2_32(bits / 8);
+    for (const ConstantInt *len : lengths)
+      if (len->getValue().countr_zero() < shift)
+        return 8;
     for (const GEPOperator *g : geps) {
       SmallMapVector<Value *, APInt, 4> scales;
       APInt constant(dl.getIndexTypeSizeInBits(g->getType()), 0);
