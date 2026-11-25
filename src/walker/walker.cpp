@@ -36,10 +36,12 @@ namespace {
 
 // Per-function CFG facts, computed once.
 struct FunctionInfo {
-  FunctionInfo(Function &f, analysis::Counted counted) : dt(f), li(dt), loops(f, dt, li, counted) {
+  explicit FunctionInfo(Function &f) : dt(f), li(dt) {
+    SmallVector<BasicBlock *, 16> rpo;
     for (BasicBlock *bb : ReversePostOrderTraversal<Function *>(&f))
       rpo.push_back(bb);
     DenseMap<const BasicBlock *, unsigned> index;
+    index.reserve(rpo.size());
     for (unsigned i = 0; i < rpo.size(); ++i)
       index[rpo[i]] = i;
     // A retreating edge must be a loop back edge, or the CFG is irreducible.
@@ -47,15 +49,20 @@ struct FunctionInfo {
       for (BasicBlock *succ : successors(bb))
         if (index.lookup(succ) <= index.lookup(bb) && !dt.dominates(succ, bb))
           throw Unsupported("irreducible control flow in " + llvm::demangle(f.getName().str()));
-    for (BasicBlock *bb : rpo)
-      if (li.isLoopHeader(bb))
-        loopNumber[li.getLoopFor(bb)] = loopNumber.size();
+    for (BasicBlock *bb : rpo) {
+      Loop *in = li.getLoopFor(bb);
+      regionBlocks[in].push_back(bb);
+      if (in && in->getHeader() == bb) {
+        loopNumber[in] = loopNumber.size();
+        regionBlocks[in->getParentLoop()].push_back(bb);
+      }
+    }
   }
 
   DominatorTree dt;
   LoopInfo li;
-  analysis::Loops loops;
-  std::vector<BasicBlock *> rpo;
+  std::unique_ptr<analysis::Loops> loops;
+  DenseMap<const Loop *, SmallVector<BasicBlock *, 8>> regionBlocks;
   DenseMap<const Loop *, unsigned> loopNumber; // ESBMC's "loop N", per function
 };
 
@@ -131,9 +138,15 @@ struct VarArgs {
 
 class Walk {
 public:
-  Walk(const Options &opts, encode::Encoder &enc, memory::Memory &mem, checks::Checks &checks,
-       Trace &trace)
-      : opts(opts), enc(enc), mem(mem), t(enc.terms()), s(enc.solver()), checks(checks), trace(trace) {}
+  Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
+       checks::Checks &checks, Trace &trace)
+      : opts(opts), enc(enc), mem(mem), t(enc.terms()), s(enc.solver()), checks(checks),
+        trace(trace), tlii(m.getTargetTriple()) {
+    // A summary writes the whole array at once, which another thread could
+    // see half written.
+    const Function *create = m.getFunction("pthread_create");
+    threads = create && !create->use_empty();
+  }
 
   void entry(Function &f) {
     for (Argument &arg : f.args())
@@ -383,14 +396,24 @@ private:
   FunctionInfo &info(Function &f) {
     std::unique_ptr<FunctionInfo> &fi = infos[&f];
     if (!fi)
-      fi = std::make_unique<FunctionInfo>(
-          f, analysis::Counted{counts(false), counts(true), opts.property == Property::UnreachCall});
+      fi = std::make_unique<FunctionInfo>(f);
     return *fi;
+  }
+
+  analysis::Loops &loopsFor(FunctionInfo &fi, Function &f) {
+    if (!fi.loops)
+      fi.loops = std::make_unique<analysis::Loops>(
+          f, fi.dt, fi.li, tlii,
+          analysis::Counted{counts(false), counts(true), opts.property == Property::UnreachCall},
+          threads);
+    return *fi.loops;
   }
 
   // Walks f's body from a call guarded by guard with memory st. Returns the
   // frame's return arrivals.
   Frame function(Function &f, Term guard, const memory::State &st) {
+    if (t.isFalse(guard))
+      return Frame();
     Frame frame;
     frame.arrivals[&f.getEntryBlock()].push_back({guard, {}, st, enc.facts});
     stack.push_back(&f);
@@ -402,17 +425,14 @@ private:
   // Walks the blocks of loop l, or of the whole function when l is null, in
   // reverse post-order with each inner loop collapsed to its header.
   void region(Frame &frame, FunctionInfo &fi, Loop *l) {
-    for (BasicBlock *bb : fi.rpo) {
-      if (l && !l->contains(bb))
-        continue;
+    auto it = fi.regionBlocks.find(l);
+    if (it == fi.regionBlocks.end())
+      return;
+    for (BasicBlock *bb : it->second) {
       Loop *inner = fi.li.getLoopFor(bb);
-      if (inner == l) {
+      if (inner == l)
         block(frame, *bb);
-        continue;
-      }
-      while (inner->getParentLoop() != l)
-        inner = inner->getParentLoop();
-      if (inner->getHeader() == bb)
+      else
         loop(frame, fi, inner);
     }
   }
@@ -459,9 +479,13 @@ private:
     // did not settle the exit condition.
     uint64_t knownBackedges = 0;
     if (!opts.unwind)
-      if (auto *n = dyn_cast<SCEVConstant>(fi.loops.scev().getBackedgeTakenCount(l)))
+      if (auto *n = dyn_cast<SCEVConstant>(
+              loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
         if (n->getAPInt().ule(SmallConstantLoop))
           knownBackedges = n->getAPInt().getZExtValue();
+    std::string locDisplay;
+    if (opts.showIterations)
+      locDisplay = loopLocation(l).display();
     for (unsigned i = 0;; ++i) {
       auto it = frame.arrivals.find(header);
       if (it == frame.arrivals.end() || it->second.empty())
@@ -473,7 +497,8 @@ private:
           // Every path runs l past the bound: until its last iteration, a
           // larger bound only adds iterations of l.
           if (auto c = claims.find({l, nullptr}); c != claims.end() && t.isTrue(reached))
-            if (auto *n = dyn_cast<SCEVConstant>(fi.loops.scev().getBackedgeTakenCount(l)))
+            if (auto *n = dyn_cast<SCEVConstant>(
+                    loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
               checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
           it->second.clear();
           return;
@@ -485,8 +510,8 @@ private:
           return;
         }
         if (opts.showIterations)
-          outs() << "Unwinding loop " << number << " iteration " << i << "   "
-                 << loopLocation(l).display() << "\n";
+          outs() << "Unwinding loop " << number << " iteration " << i << "   " << locDisplay
+                 << "\n";
       }
       frame.iteration[l] = i;
       region(frame, fi, l);
@@ -507,13 +532,14 @@ private:
   bool summarise(Frame &frame, FunctionInfo &fi, Loop *l) {
     BasicBlock *header = l->getHeader();
     auto in = frame.arrivals.find(header);
-    const analysis::Summary *found = fi.loops.summary(l);
+    analysis::Loops &loops = loopsFor(fi, *header->getParent());
+    const analysis::Summary *found = loops.summary(l);
     // One summary at a time: a loop in a function the iteration calls is unrolled.
     if (summary || !found || in == frame.arrivals.end() || in->second.empty() ||
         (found->nondet && opts.witness))
       return false;
     analysis::Summary sum = *found;
-    ScalarEvolution &se = fi.loops.scev();
+    ScalarEvolution &se = loops.scev();
     // SCEV sees through the LCSSA phi that carries a value out of an
     // earlier loop, to an AddRec of that loop or a value in it: the phi's
     // term is what either holds as l is entered. A constant keeps its own
@@ -617,7 +643,7 @@ private:
   // that is not one of l's inputs, or an AddRec of l when k is null.
   Term evaluate(const Frame &frame, FunctionInfo &fi, const SCEV *e, const Loop *l,
                       const Term &k) {
-    ScalarEvolution &se = fi.loops.scev();
+    ScalarEvolution &se = fi.loops->scev();
     unsigned w = se.getTypeSizeInBits(e->getType()), ptrBits = mem.pointerBits();
     bool pointer = e->getType()->isPointerTy();
     if (w == 1) // an i1 is a Bool term
@@ -762,10 +788,11 @@ private:
   }
 
   void block(Frame &frame, BasicBlock &bb) {
-    SmallVector<Arrival, 2> arrivals = std::move(frame.arrivals[&bb]);
-    frame.arrivals.erase(&bb);
-    if (arrivals.empty()) // no edge into bb was taken in this pass
+    auto it = frame.arrivals.find(&bb);
+    if (it == frame.arrivals.end() || it->second.empty()) // no edge into bb was taken in this pass
       return;
+    SmallVector<Arrival, 2> arrivals = std::move(it->second);
+    frame.arrivals.erase(it);
     Term guard = anyGuard(arrivals);
     enc.facts = common(arrivals);
     memory::State st = merged(arrivals);
@@ -791,6 +818,8 @@ private:
         terminator(frame, inst, guard, st);
       else if (auto *c = dyn_cast<CallBase>(&inst)) {
         guard = call(*c, guard, st);
+        if (t.isFalse(guard))
+          break;
         mem.setContext(guard); // the callee's blocks set their own
       }
       else if (!memoryAccess(inst, guard, st))
@@ -862,6 +891,11 @@ private:
       arrive(frame, bb, br->getSuccessor(1), taken[1], st, t.lnot(c));
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       Term cond = enc.value(sw->getCondition());
+      if (const APInt *v = t.constant(cond)) {
+        auto *ci = ConstantInt::get(sw->getContext(), *v);
+        arrive(frame, bb, sw->findCaseValue(ci)->getCaseSuccessor(), guard, st);
+        return;
+      }
       Term anyCase = t.boolean(false);
       MapVector<BasicBlock *, Term> taken; // in case order, for a stable formula
       for (const auto &c : sw->cases()) {
@@ -920,7 +954,7 @@ private:
                           " with a mismatched signature at " + ir::location(c).display());
     }
     StringRef name = callee->getName();
-    std::string tag = name.str() + "@" + ir::location(c).str();
+    auto tag = [&] { return name.str() + "@" + ir::location(c).str(); };
 
     if (callee->isIntrinsic()) {
       if (enc.intrinsic(c) || memoryFunction(c, name, guard, st))
@@ -1014,12 +1048,12 @@ private:
       // two calls can share a location (a macro, IR without debug info).
       Term v =
           summary && summary->loop->contains(&c)
-              ? t.select(t.symbol(tag + "#" + std::to_string(summaryCount) + "." +
+              ? t.select(t.symbol(tag() + "#" + std::to_string(summaryCount) + "." +
                                       std::to_string(summary->nondets++),
                                   s.mkArraySort(s.mkBVSort(summary->index.width()),
                                                 enc.sort(c.getType()))),
                          summary->index)
-              : enc.fresh(c.getType(), tag);
+              : enc.fresh(c.getType(), tag());
       enc.bind(&c, v);
       // For the witness, which reads the value's type from the callee: not
       // for a call whose result type differs from it. One declared without
@@ -1119,9 +1153,9 @@ private:
         mem.havoc(st, enc.value(errnoObject));
     }
     if (scanf)
-      return scan(c, f, name, tag, guard, st);
+      return scan(c, f, name, tag(), guard, st);
     if (!c.getType()->isVoidTy())
-      enc.bind(&c, enc.fresh(c.getType(), tag));
+      enc.bind(&c, enc.fresh(c.getType(), tag()));
     return guard;
   }
 
@@ -1497,7 +1531,7 @@ private:
       // array, a local whose address is taken) is an assignment to show.
       Type *ty = v->getType();
       if (w->getDebugLoc() && ty->isIntegerTy() && !ty->isIntegerTy(1))
-        if (auto var = namedObject(w->getPointerOperand()))
+        if (auto *var = namedObject(w->getPointerOperand()))
           trace.add(Step::Assignment, guard, ir::location(*w), var->first, enc.value(v), false, 0,
                     var->second, mem.offset(p));
       return true;
@@ -1528,22 +1562,27 @@ private:
 
   // The source variable whose memory p points into, when it is a global or
   // a local kept in memory with a name in the debug info: name and type.
-  static std::optional<std::pair<std::string, const DIType *>> namedObject(Value *p) {
+  const std::pair<std::string, const DIType *> *namedObject(Value *p) {
     while (auto *g = dyn_cast<GEPOperator>(p))
       p = g->getPointerOperand();
     p = p->stripPointerCasts();
-    if (auto *gv = dyn_cast<GlobalVariable>(p)) {
-      SmallVector<DIGlobalVariableExpression *, 1> vars;
-      gv->getDebugInfo(vars);
-      if (!vars.empty())
-        return std::make_pair(vars[0]->getVariable()->getName().str(),
-                              vars[0]->getVariable()->getType());
+    auto [it, inserted] = namedObjects.try_emplace(p);
+    if (inserted) {
+      if (auto *gv = dyn_cast<GlobalVariable>(p)) {
+        SmallVector<DIGlobalVariableExpression *, 1> vars;
+        gv->getDebugInfo(vars);
+        if (!vars.empty())
+          it->second.emplace(vars[0]->getVariable()->getName().str(),
+                             vars[0]->getVariable()->getType());
+      } else if (auto *a = dyn_cast<AllocaInst>(p)) {
+        for (DbgVariableRecord *d : findDVRDeclares(a))
+          if (!d->getExpression()->getNumElements()) {
+            it->second.emplace(d->getVariable()->getName().str(), d->getVariable()->getType());
+            break;
+          }
+      }
     }
-    if (auto *a = dyn_cast<AllocaInst>(p))
-      for (DbgVariableRecord *d : findDVRDeclares(a))
-        if (!d->getExpression()->getNumElements())
-          return std::make_pair(d->getVariable()->getName().str(), d->getVariable()->getType());
-    return std::nullopt;
+    return it->second ? &*it->second : nullptr;
   }
 
   // Loads the old value, stores the operation's result and binds the old
@@ -1709,9 +1748,12 @@ private:
   camada::SMTSolver &s;
   checks::Checks &checks;
   Trace &trace;
+  TargetLibraryInfoImpl tlii;
+  bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
   DenseMap<const Value *, bool> exposes;  // exposed, per alloca, global and function
+  DenseMap<const Value *, std::optional<std::pair<std::string, const DIType *>>> namedObjects;
   SmallVector<const Function *, 8> stack;
   SmallVector<VarArgs, 2> varArgs; // of the variadic frames on the stack, innermost last
   // The call to the reach_error being walked, if any: the witness puts a
@@ -1755,7 +1797,7 @@ private:
 Error walk(Function &entry, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
            checks::Checks &checks, Trace &trace) {
   try {
-    Walk w(opts, enc, mem, checks, trace);
+    Walk w(*entry.getParent(), opts, enc, mem, checks, trace);
     w.entry(entry);
     w.report();
   } catch (const Unsupported &e) {

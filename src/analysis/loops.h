@@ -10,6 +10,7 @@
 // shape is unrolled as before.
 #pragma once
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/PointerIntPair.h>
 #include <llvm/Analysis/AssumptionCache.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/ScalarEvolutionExpressions.h>
@@ -43,24 +44,25 @@ struct Summary {
 
 class Loops {
 public:
-  Loops(llvm::Function &f, llvm::DominatorTree &dt, llvm::LoopInfo &li, Counted counted);
+  Loops(llvm::Function &f, llvm::DominatorTree &dt, llvm::LoopInfo &li,
+        const llvm::TargetLibraryInfoImpl &tlii, Counted counted, bool threads);
   llvm::ScalarEvolution &scev() { return se; }
   // l's summary, or null when l may not have the shape above.
   const Summary *summary(const llvm::Loop *l);
 
 private:
   std::optional<Summary> match(const llvm::Loop *l);
-  bool callOk(const llvm::CallBase &c, unsigned depth, bool reads) const;
-  bool sideEffectFree(const llvm::Instruction &inst, unsigned depth, bool reads) const;
+  bool callOk(const llvm::CallBase &c, unsigned depth, bool reads);
+  bool sideEffectFree(const llvm::Instruction &inst, unsigned depth, bool reads);
   const llvm::Value *base(const llvm::Value *pointer, const llvm::Loop *l);
 
-  llvm::TargetLibraryInfoImpl tlii;
   llvm::TargetLibraryInfo tli;
   llvm::AssumptionCache ac;
   llvm::ScalarEvolution se;
   Counted counted;
   bool threads; // the program creates threads: no summaries
   llvm::DenseMap<const llvm::Loop *, std::optional<Summary>> cache;
+  llvm::DenseMap<llvm::PointerIntPair<const llvm::Function *, 1, bool>, bool> calleeOk;
 };
 
 } // namespace vereda::analysis
