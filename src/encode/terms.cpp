@@ -668,7 +668,7 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
   if (auto u = under.find(arr.id()); fresh && u != under.end())
     for (const Ref &l : std::vector<Ref>(u->second))
       if (!memo.count({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
-        s.addConstraint(solverTerm(eq(make({Op::Select, l, index}), reduce(l, index))));
+        addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
   return r;
 }
 

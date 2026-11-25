@@ -80,6 +80,15 @@ public:
   explicit Terms(camada::SMTSolver &s);
   Terms(const Terms &) = delete; // its terms point into it
   camada::SMTSolver &solver() { return s; }
+  // Adds a global constraint to the solver and advances constraintsEpoch()
+  // so callers that cache SAT answers know to re-check them.
+  void addConstraint(const Ref &c) {
+    if (isTrue(c))
+      return;
+    s.addConstraint(solverTerm(c));
+    ++epoch;
+  }
+  uint64_t constraintsEpoch() const { return epoch; }
 
   // The value of a constant term (width 1 for Bool), or null.
   const llvm::APInt *constant(const Ref &e) const;
@@ -340,6 +349,7 @@ private:
   llvm::DenseMap<const void *, std::optional<Range>> ranges;
   // Per symbol, the terms found not to contain it.
   std::unordered_map<const void *, std::unordered_set<const void *>> freeOf;
+  uint64_t epoch = 0;
 };
 
 } // namespace vereda::encode

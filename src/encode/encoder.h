@@ -130,6 +130,10 @@ private:
   // (so -0 and +0 stay apart), and the bits of each such term.
   llvm::DenseMap<std::pair<const llvm::fltSemantics *, llvm::APInt>, Term> floatTerms;
   llvm::DenseMap<const void *, llvm::APInt> floatBits; // by Term id
+  // The floating-point term a bit-vector from toBits() came from, keyed by
+  // bit-vector Term id and IEEE format, so fromBits(toBits(v, ty), ty)
+  // returns v without a round-trip through mkBVToIEEEFP.
+  llvm::DenseMap<std::pair<const void *, const llvm::fltSemantics *>, Term> bitsFloat;
   unsigned freshCount = 0;
 };
 

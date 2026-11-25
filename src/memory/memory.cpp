@@ -30,7 +30,7 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
   // Constrained before the object is recorded, as allocate() does: after it,
   // base() of the constant 0 folds to objects[0].base and the constraint to
   // true, which left bases[0] free and a stored null read back non-null.
-  s.addConstraint(t.solverTerm(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits))));
+  t.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
   objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), false});
   end = t.bv(1, ptrBits); // no object at address 0
 }
@@ -88,9 +88,9 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   if (align > 1)
     layout = t.land(layout, t.eq(t.bvand(b, t.bv(align - 1, ptrBits)),
                                        t.bv(0, ptrBits)));
-  s.addConstraint(t.solverTerm(t.implies(exists, layout)));
+  t.addConstraint(t.implies(exists, layout));
   Term obj = t.bv(id, ObjBits);
-  s.addConstraint(t.solverTerm(t.eq(base(obj), b)));
+  t.addConstraint(t.eq(base(obj), b));
   objects.push_back({b, size, exists, exposed});
   end = t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
