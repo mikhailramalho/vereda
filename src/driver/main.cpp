@@ -68,6 +68,10 @@ static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremen
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
                                             "first violation"));
+static cl::opt<bool> incrementalSolver(
+    "incremental-solver",
+    cl::desc("Keep one incremental solver across checks (with bv-cnf-scope=permanent on Bitwuzla) "
+             "instead of fresh non-incremental solves"));
 static cl::opt<bool> showLibraryStates(
     "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
@@ -193,7 +197,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   std::unique_ptr<BMCState> local;
   auto &state = retained ? *retained : local;
   if (!state || !state->resumable()) {
-    Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
+    Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind, incrementalSolver);
     if (!created) {
       errs() << "vereda: " << toString(created.takeError()) << "\n";
       return ErrorExit;
@@ -259,15 +263,26 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
 
   if (!state->resumable())
     terms.releaseWalkTables();
-  if (releaseModule)
+
+  auto isAssertion = [](const vereda::checks::Check &c) {
+    return !c.isUnwinding();
+  };
+  bool hasNonConstAssert = false, hasNonConstUnwind = false;
+  for (const vereda::checks::Check &c : checks) {
+    if (terms.isFalse(c.violated))
+      continue;
+    if (isAssertion(c))
+      hasNonConstAssert = true;
+    else if (!(incrementalBMC && terms.isTrue(c.violated)))
+      hasNonConstUnwind = true;
+  }
+  bool mayRewalk = !incrementalSolver && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
+  if (releaseModule && !mayRewalk)
     releaseModule->reset();
 
   progress("Solving with " + solver.getSolverNameAndVersion());
   vereda::util::Stopwatch solveTime;
   using vereda::solver::Status;
-  auto isAssertion = [](const vereda::checks::Check &c) {
-    return !c.isUnwinding();
-  };
   // The time so far goes before each error trace, which is not solving
   // time, and after solving when there is no trace.
   bool traced = false, witnessWritten = false;
@@ -277,38 +292,89 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                             << vereda::util::peakMemory() << ")";
     info() << msg << "\n";
   };
+  auto onViolated = [&](vereda::encode::Terms &curTerms, const vereda::checks::Checks &curChecks,
+                        const vereda::walker::Trace &curTrace, size_t idx) {
+    const vereda::checks::Check &c = curChecks[idx];
+    // Under --incremental-bmc an unwound loop asks for a larger bound;
+    // it is not a bug to show.
+    if (incrementalBMC && !isAssertion(c))
+      return;
+    solvingTime();
+    traced = true;
+    progress("Building error trace");
+    // One reader for both, so the witness asks the solver for no value
+    // the counterexample has read.
+    vereda::solver::Model model(curTerms.solver(), curTerms);
+    model.assumeTrue(c.violated);
+    vereda::witness::printCounterexample(model, curTrace, curChecks, idx, outs(),
+                                           showLibraryStates);
+    if (witnessInfo && !witnessWritten) {
+      outs().flush(); // the file may be standard output too
+      Error err = vereda::witness::violationWitness(
+          model, curTrace, curChecks, idx, *witnessInfo, entry,
+          [&](function_ref<void(raw_ostream &)> write) {
+            witnessWritten = true;
+            std::error_code ec;
+            raw_fd_ostream os(witnessFile, ec);
+            if (ec)
+              errs() << "vereda: cannot write " << witnessFile << ": " << ec.message() << "\n";
+            else
+              write(os);
+          });
+      if (err)
+        errs() << "vereda: no witness: " << toString(std::move(err)) << "\n";
+    }
+  };
+  std::unique_ptr<BMCState> freshState;
+  bool initialSolverUsed = false;
   vereda::solver::Verdict verdict =
-      vereda::solver::decide(terms, checks, multiProperty, [&](const vereda::checks::Check &c) {
-        // Under --incremental-bmc an unwound loop asks for a larger bound;
-        // it is not a bug to show.
-        if (incrementalBMC && !isAssertion(c))
-          return;
-        solvingTime();
-        traced = true;
-        progress("Building error trace");
-        // One reader for both, so the witness asks the solver for no value
-        // the counterexample has read.
-        vereda::solver::Model model(solver, terms);
-        model.assumeTrue(c.violated);
-        vereda::witness::printCounterexample(model, trace, checks, &c - checks.data(), outs(),
-                                               showLibraryStates);
-        if (witnessInfo && !witnessWritten) {
-          outs().flush(); // the file may be standard output too
-          Error err = vereda::witness::violationWitness(
-              model, trace, checks, &c - checks.data(), *witnessInfo, entry,
-              [&](function_ref<void(raw_ostream &)> write) {
-                witnessWritten = true;
-                std::error_code ec;
-                raw_fd_ostream os(witnessFile, ec);
-                if (ec)
-                  errs() << "vereda: cannot write " << witnessFile << ": " << ec.message() << "\n";
-                else
-                  write(os);
-              });
-          if (err)
-            errs() << "vereda: no witness: " << toString(std::move(err)) << "\n";
-        }
-      });
+      incrementalSolver
+          ? vereda::solver::decide(terms, checks, multiProperty,
+                                   [&](const vereda::checks::Check &c) {
+                                     onViolated(terms, checks, trace, &c - checks.data());
+                                   })
+          : vereda::solver::decideNonIncremental(
+                terms, checks, multiProperty, incrementalBMC,
+                [&]() -> std::pair<vereda::encode::Terms *, const vereda::checks::Checks *> {
+                  freshState.reset();
+                  Expected<camada::SMTSolverRef> created =
+                      vereda::solver::create(solverKind, /*incremental=*/false);
+                  if (!created) {
+                    consumeError(created.takeError());
+                    return {nullptr, nullptr};
+                  }
+                  try {
+                    freshState = std::make_unique<BMCState>(std::move(*created), fn);
+                  } catch (const vereda::Unsupported &) {
+                    return {nullptr, nullptr};
+                  }
+                  vereda::walker::Options rewalkOpts{bound,
+                                                     !noUnwindingAssertions,
+                                                     forceMallocSuccess,
+                                                     property,
+                                                     /*showIterations=*/false,
+                                                     !noSummarizeArrayLoops,
+                                                     !witnessFile.empty(),
+                                                     !noPointerCheck,
+                                                     !noVLASizeCheck};
+                  if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
+                                                     *freshState->memory, freshState->checks,
+                                                     freshState->trace)) {
+                    consumeError(std::move(e));
+                    return {nullptr, nullptr};
+                  }
+                  freshState->encoder.reset();
+                  freshState->memory.reset();
+                  freshState->terms.releaseWalkTables();
+                  return {&freshState->terms, &freshState->checks};
+                },
+                [&](vereda::encode::Terms &curTerms, const vereda::checks::Checks &curChecks,
+                    size_t idx) {
+                  const vereda::walker::Trace &curTrace =
+                      (&curTerms == &terms) ? trace : freshState->trace;
+                  onViolated(curTerms, curChecks, curTrace, idx);
+                },
+                initialSolverUsed);
   if (!traced)
     solvingTime();
 
@@ -321,6 +387,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   if (incrementalBMC && verdict.check && !bug) {
     info() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
     *unwindsAt = verdict.check->unwindsAt;
+    if (!incrementalSolver && initialSolverUsed)
+      state.reset();
     return BoundTooSmall;
   }
 

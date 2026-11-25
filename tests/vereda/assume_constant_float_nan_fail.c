@@ -15,3 +15,4 @@ int main(void) {
   __VERIFIER_assert(x == x);
   return 0;
 }
+// RUN: --multi-property

@@ -115,6 +115,7 @@ The main verifier flags:
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-vla-size-check` | Do not report stack allocations above `PTRDIFF_MAX`; their paths still end at the allocation |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
+| `--incremental-solver` | Keep one incremental solver across checks (with `bv-cnf-scope=permanent` on Bitwuzla) instead of fresh non-incremental solves |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
 | `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve |
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |
