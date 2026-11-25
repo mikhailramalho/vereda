@@ -284,6 +284,7 @@ private:
   unsigned ptrBits;
   std::vector<Object> objects; // index = object id; 0 is null
   encode::Term bases;    // object id -> base address, as an uninterpreted array
+  encode::Term sizes;    // object id -> size in bytes, created lazily on symbolic size()
   encode::Term end;      // first address after the last object
   uint64_t reserved = 1; // upper bound on end while endBounded holds
   bool endBounded = true;

@@ -4,6 +4,7 @@
 #include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/MapVector.h>
 #include <llvm/ADT/SetVector.h>
+#include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <set>
 #include <vector>
@@ -82,10 +83,12 @@ Term Memory::size(Term obj) {
     return t.ite(c, size(x), size(y));
   if (const APInt *id = t.constant(obj); id && id->ult(objects.size()))
     return objects[id->getZExtValue()].size;
-  Term r = t.bv(0, ptrBits);
-  for (unsigned id = 1; id < objects.size(); ++id)
-    r = t.ite(t.eq(obj, t.bv(id, ObjBits)), objects[id].size, r);
-  return r;
+  if (!sizes) {
+    sizes = t.symbol("sizes", s.mkArraySort(s.mkBVSort(ObjBits), s.mkBVSort(ptrBits)));
+    for (unsigned id = 0; id < objects.size(); ++id)
+      t.addConstraint(t.eq(t.select(sizes, t.bv(id, ObjBits)), objects[id].size));
+  }
+  return t.select(sizes, obj);
 }
 
 Term Memory::fits(Term size) {
@@ -130,6 +133,8 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   t.addConstraint(unconditional ? layout : t.implies(exists, layout));
   Term obj = t.bv(id, ObjBits);
   t.addConstraint(t.eq(base(obj), b));
+  if (sizes)
+    t.addConstraint(t.eq(t.select(sizes, obj), size));
   objects.push_back({b, size, exists, align, exposed});
   end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
@@ -610,17 +615,38 @@ void Memory::storeArrays(State &st, uint64_t object, Term at, const State::Cell 
 }
 
 State::Cell Memory::readArrays(const State &st, Term at) {
-  const APInt *obj = t.constant(object(at));
-  if (obj)
+  Term objTerm = object(at);
+  if (const APInt *obj = t.constant(objTerm)) {
     if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
       return readOwn(obj->getZExtValue(), *own, at);
-  State::Cell r{t.select(st.data, at), t.select(st.prov, at)};
-  if (!obj)
-    st.separate.forEach([&](Key k, const State::Cell &own) {
-      Term is = t.eq(object(at), t.bv(k.first, ObjBits));
-      State::Cell b = readOwn(k.first, own, at);
+    return {t.select(st.data, at), t.select(st.prov, at)};
+  }
+  std::vector<uint64_t> objs = candidates(at);
+  bool allSeparate = !objs.empty();
+  llvm::SmallVector<std::pair<uint64_t, const State::Cell *>, 4> sep;
+  for (uint64_t o : objs) {
+    if (const State::Cell *own = st.separate.find({o, 0}))
+      sep.push_back({o, own});
+    else
+      allSeparate = false;
+  }
+  State::Cell r;
+  if (!allSeparate)
+    r = {t.select(st.data, at), t.select(st.prov, at)};
+  for (const auto &[o, own] : sep) {
+    Term is = t.eq(objTerm, t.bv(o, ObjBits));
+    if (t.isFalse(is))
+      continue;
+    State::Cell b = readOwn(o, *own, at);
+    if (t.isTrue(is))
+      return b;
+    if (!r.data)
+      r = b;
+    else
       r = {t.ite(is, b.data, r.data), t.ite(is, b.prov, r.prov)};
-    });
+  }
+  if (!r.data)
+    r = {t.select(st.data, at), t.select(st.prov, at)};
   return r;
 }
 
@@ -641,21 +667,17 @@ CellMap Memory::mergeSeparate(Term c, const State &a, const State &b) {
   // An object separate on one side only reads the other side's shared
   // arrays, which hold its bytes there under the same index; one given
   // arrays by own() on a path that has not created it yet, its initial ones.
-  auto arrays = [this](const State &st, uint64_t o) {
-    if (const State::Cell *own = st.separate.find({o, 0}))
-      return *own;
+  auto fallback = [this](const State &st, uint64_t o) {
     auto it = owned.find(o);
     return it != owned.end() ? it->second : State::Cell{st.data, st.prov};
   };
-  CellMap r;
-  auto add = [&](Key k, const State::Cell &) {
-    if (r.find(k))
-      return;
-    State::Cell x = arrays(a, k.first), y = arrays(b, k.first);
-    r.set(k, {t.ite(c, x.data, y.data), t.ite(c, x.prov, y.prov)});
-  };
-  a.separate.forEach(add);
-  b.separate.forEach(add);
+  CellMap r = a.separate;
+  CellMap::diff(a.separate, b.separate,
+                [&](Key k, const State::Cell *x, const State::Cell *y) {
+                  State::Cell xa = x ? *x : fallback(a, k.first);
+                  State::Cell yb = y ? *y : fallback(b, k.first);
+                  r.set(k, {t.ite(c, xa.data, yb.data), t.ite(c, xa.prov, yb.prov)});
+                });
   return r;
 }
 
@@ -670,6 +692,7 @@ void Memory::prepare(State &st, Term p) {
 std::vector<uint64_t> Memory::candidates(Term p, bool integers, bool *read) {
   std::vector<uint64_t> r;
   std::vector<Term> work{p};
+  llvm::SmallPtrSet<const void *, 16> seen;
   bool fromMemory = false;
   while (!work.empty()) {
     Term e = work.back(), c, x, y;
@@ -683,8 +706,10 @@ std::vector<uint64_t> Memory::candidates(Term p, bool integers, bool *read) {
     if (const APInt *id = t.constant(e)) {
       r.push_back(id->getZExtValue());
     } else if (t.choice(e, c, x, y)) {
-      work.push_back(x);
-      work.push_back(y);
+      if (seen.insert(e.id()).second) {
+        work.push_back(x);
+        work.push_back(y);
+      }
     } else {
       fromMemory = true;
     }
@@ -738,19 +763,25 @@ void Memory::writeByte(State &st, Term at, const State::Cell &c) {
   if (!k) {
     // The shared arrays take every write that may miss the separate
     // objects; reads of a separate object never look there.
-    const APInt *obj = t.constant(object(at));
-    bool shared = true;
-    CellMap separate = st.separate;
-    st.separate.forEach([&](Key k, const State::Cell &own) {
-      uint64_t o = k.first;
-      if (obj && obj->getZExtValue() != o)
-        return;
-      Term is = obj ? t.boolean(true) : t.eq(object(at), t.bv(o, ObjBits));
-      State::Cell stored = storeOwn(o, own, at, c);
-      separate.set(k, {t.ite(is, stored.data, own.data), t.ite(is, stored.prov, own.prov)});
-      shared = !obj;
-    });
-    st.separate = separate;
+    Term objTerm = object(at);
+    if (const APInt *obj = t.constant(objTerm)) {
+      storeArrays(st, obj->getZExtValue(), at, c);
+      return;
+    }
+    bool shared = false;
+    for (uint64_t o : candidates(at)) {
+      const State::Cell *own = st.separate.find({o, 0});
+      if (!own) {
+        shared = true;
+        continue;
+      }
+      Term is = t.eq(objTerm, t.bv(o, ObjBits));
+      if (t.isFalse(is))
+        continue;
+      State::Cell stored = storeOwn(o, *own, at, c);
+      st.separate.set({o, 0}, {t.ite(is, stored.data, own->data),
+                               t.ite(is, stored.prov, own->prov)});
+    }
     if (shared) {
       st.data = t.store(st.data, at, c.data);
       st.prov = t.store(st.prov, at, c.prov);
@@ -862,10 +893,26 @@ Term Memory::load(State &st, Term p, Type *ty) {
   if (std::optional<uint64_t> o = element(p, ty))
     return t.select(st.separate.find({*o, 0})->data, index(*o, p));
   unsigned n = storeBits(dl, ty) / 8;
-  State::Cell first = readByte(st, p);
-  Term bits = first.data;
-  for (unsigned i = 1; i < n; ++i)
-    bits = t.concat(readByte(st, bytePtr(p, i)).data, bits);
+  State::Cell first;
+  Term bits;
+  if (std::optional<Key> k = key(p)) {
+    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+    auto readAt = [&](uint64_t i) -> State::Cell {
+      Key ki{k->first, (k->second + i) & mask};
+      if (const State::Cell *c = st.known.find(ki))
+        return *c;
+      return readArrays(st, ptr(ki));
+    };
+    first = readAt(0);
+    bits = first.data;
+    for (unsigned i = 1; i < n; ++i)
+      bits = t.concat(readAt(i).data, bits);
+  } else {
+    first = readByte(st, p);
+    bits = first.data;
+    for (unsigned i = 1; i < n; ++i)
+      bits = t.concat(readByte(st, bytePtr(p, i)).data, bits);
+  }
   if (ty->isPointerTy()) {
     // The provenance of the first byte stands for the pointer.
     Term obj = first.prov;
@@ -873,7 +920,11 @@ Term Memory::load(State &st, Term p, Type *ty) {
     // which an object allocated since may now cover: the address is
     // converted now, as a fresh conversion would be (#75).
     Term isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
-    Term r = t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
+    if (t.isTrue(isInt))
+      return fromAddress(bits);
+    Term r = t.isFalse(isInt)
+                 ? ptr(obj, t.sub(bits, base(obj)))
+                 : t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
     // r == null() iff bits == 0 and (isInt || obj == 0): avoids both
     // fromAddress(bits) and select(bases, obj), while still distinguishing
     // a wild out-of-bounds pointer (obj != 0, bits == 0) from null.
@@ -1352,8 +1403,18 @@ void Memory::set(State &st, Term p, Term byte, uint64_t n) {
 }
 
 void Memory::setBytes(State &st, Term p, Term byte, uint64_t n) {
-  prepare(st, p);
   Term prov = t.bv(IntProvenance, ObjBits);
+  if (std::optional<Key> k = key(p)) {
+    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+    State::Cell cell{byte, prov};
+    for (uint64_t i = 0; i < n; ++i) {
+      st.known.set({k->first, (k->second + i) & mask}, cell);
+      if (st.known.size() > MaxKnown)
+        flush(st);
+    }
+    return;
+  }
+  prepare(st, p);
   for (uint64_t i = 0; i < n; ++i)
     writeByte(st, bytePtr(p, i), {byte, prov});
 }
@@ -1577,11 +1638,31 @@ void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   // Read everything first, so overlapping ranges copy as memmove does.
   prepare(st, src);
   prepare(st, dst);
+  uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
   std::vector<State::Cell> bytes;
-  for (uint64_t i = 0; i < n; ++i)
-    bytes.push_back(readByte(st, bytePtr(src, i)));
-  for (uint64_t i = 0; i < n; ++i)
-    writeByte(st, bytePtr(dst, i), bytes[i]);
+  bytes.reserve(n);
+  if (std::optional<Key> sk = key(src)) {
+    for (uint64_t i = 0; i < n; ++i) {
+      Key ki{sk->first, (sk->second + i) & mask};
+      if (const State::Cell *c = st.known.find(ki))
+        bytes.push_back(*c);
+      else
+        bytes.push_back(readArrays(st, ptr(ki)));
+    }
+  } else {
+    for (uint64_t i = 0; i < n; ++i)
+      bytes.push_back(readByte(st, bytePtr(src, i)));
+  }
+  if (std::optional<Key> dk = key(dst)) {
+    for (uint64_t i = 0; i < n; ++i) {
+      st.known.set({dk->first, (dk->second + i) & mask}, bytes[i]);
+      if (st.known.size() > MaxKnown)
+        flush(st);
+    }
+  } else {
+    for (uint64_t i = 0; i < n; ++i)
+      writeByte(st, bytePtr(dst, i), bytes[i]);
+  }
 }
 
 void Memory::initialise(State &st, const Module &m,
