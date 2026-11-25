@@ -45,6 +45,7 @@ public:
       return f ? f->bounds : std::nullopt;
     };
   }
+  ~Encoder() { mem.known = {}; }
   camada::SMTSolver &solver() { return s; }
   Terms &terms() { return t; }
   unsigned symbolCount() const { return freshCount; }
