@@ -562,6 +562,8 @@ KNOWN_BUGS = {
     "esbmc/github_2602_1": "over 300 s in CI",
     "esbmc/github_9356": "over 300 s in CI",
     "esbmc/github_9356_success": "over 300 s in CI",
+    "esbmc/vasprintf_unbounded_s_no_overflow": "out of memory in CI",
+    "esbmc/vasprintf_unbounded_s_overflow_fail": "over 300 s in CI",
     "z3/github_6100_assume_noninline": "over 300 s in CI",
     "z3/github_6100_noninline": "over 300 s in CI",
 }

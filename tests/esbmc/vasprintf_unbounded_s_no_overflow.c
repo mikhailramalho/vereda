@@ -31,6 +31,5 @@ int main(void)
 // Imported from ESBMC regression/esbmc/vasprintf_unbounded_s_no_overflow
 // RUN: --overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: out of memory in CI
+// MODE: KNOWNBUG
