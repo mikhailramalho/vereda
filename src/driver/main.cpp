@@ -23,6 +23,7 @@
 using namespace llvm;
 using vereda::util::progress;
 using vereda::util::info;
+using vereda::util::results;
 
 static cl::opt<std::string> inputFile(cl::Positional, cl::desc("<file.bc|file.ll>"),
                                       cl::Required);
@@ -141,7 +142,8 @@ static void svcomp(StringRef verdict) {
 static const int ErrorExit = 6;
 
 static int unknown(const Twine &reason) {
-  outs() << "\n[RESULTS]\n\nVERIFICATION UNKNOWN: " << reason << "\n";
+  results();
+  outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
   svcomp("UNKNOWN");
   return 2;
 }
@@ -393,7 +395,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   }
 
   {
-    outs() << "\n[RESULTS]\n";
+    results();
     std::string lastUnit;
     unsigned checked = 0, failed = 0;
     for (size_t i = 0; i < checks.size(); ++i) {

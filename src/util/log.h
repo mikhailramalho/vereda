@@ -1,4 +1,4 @@
-// Stage util: information, progress and warning lines, and stage timings.
+// Stage util: information, progress, warning and result tags, and stage timings.
 #pragma once
 #include <llvm/ADT/Twine.h>
 #include <string>
@@ -11,7 +11,7 @@
 namespace vereda::util {
 
 inline llvm::raw_ostream &info() {
-  llvm::WithColor(llvm::outs(), llvm::raw_ostream::CYAN) << "[INFO]";
+  llvm::WithColor(llvm::outs(), llvm::raw_ostream::BLUE, /*Bold=*/true) << "[INFO]";
   return llvm::outs() << " ";
 }
 
@@ -22,6 +22,12 @@ inline void progress(const llvm::Twine &msg) {
 inline void warning(const llvm::Twine &msg) {
   llvm::WithColor(llvm::outs(), llvm::raw_ostream::YELLOW, /*Bold=*/true) << "[WARNING]";
   llvm::outs() << " " << msg << "\n";
+}
+
+inline void results() {
+  llvm::outs() << "\n";
+  llvm::WithColor(llvm::outs(), llvm::raw_ostream::MAGENTA, /*Bold=*/true) << "[RESULTS]";
+  llvm::outs() << "\n";
 }
 
 class Stopwatch {
