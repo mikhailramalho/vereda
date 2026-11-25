@@ -68,6 +68,10 @@ configure.
 ./vereda.py --clang build/deps/llvm/LLVM-23.1.6-Linux-X64/bin/clang file.c --unwind 5
 ```
 
+The version banner comes before compilation and includes the executable's
+build commit immediately after the camada version. Rebuilding refreshes the
+short commit hash; builds without Git metadata report `commit unknown`.
+
 `vereda.py` takes C (`.c`, `.i`) or IR (`.ll`, `.bc`) inputs and its own
 flags (`--clang`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and ESBMC's `--overflow-check`,
