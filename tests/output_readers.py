@@ -34,3 +34,9 @@ for name, args, flags in (("vla_above_ptrdiff_max", "", []),
                                ["object size exceeds PTRDIFF_MAX"], ".", [])
     assert "// EXPECT: alloca: size exceeds PTRDIFF_MAX" in lines, lines
     assert all(flag in lines for flag in flags), lines
+
+for name in ("array_loop_summary_decrement", "array_loop_summary_decrement_fail"):
+    for args, flags in (("", ""), ("--32", "-m32")):
+        lines = import_esbmc.header("esbmc/" + name, "CORE", args, [], ".", [])
+        runs = [line.partition(":")[2].strip() for line in lines if line.startswith("// RUN:")]
+        assert runs == [flags, (flags + " --no-summarize-array-loops").strip()], runs

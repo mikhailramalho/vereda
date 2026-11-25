@@ -1,4 +1,5 @@
 #include "memory/memory.h"
+#include "memory/table.h"
 
 #include "util/unsupported.h"
 #include <llvm/ADT/DenseSet.h>
@@ -332,9 +333,8 @@ void Memory::flushObject(State &st, uint64_t o) {
   bool byOffset = owned.count(o);
   const APInt *size = o > 0 && o < objects.size() ? t.constant(objects[o].size) : nullptr;
   // When every byte of an object's constant size is in st.known, the prior
-  // array is never read: base the object's array on its dominant value (or a
-  // range lambda when a few contiguous runs cover the rest) instead of
-  // emitting a store chain over the nondet initial array.
+  // array is never read: use its dominant value or an exact compact function
+  // of the index instead of a store chain over the nondet initial array.
   if (size && !size->isZero() && size->ule(MaxKnown) &&
       (size->getZExtValue() & (elemBytes - 1)) == 0 &&
       (st.separate.find({o, 0}) || size->getZExtValue() >= MinSeparate)) {
@@ -408,7 +408,19 @@ void Memory::flushObject(State &st, uint64_t o) {
       Term data;
       constexpr size_t MaxLambdaRuns = 8;
       constexpr uint64_t MinLambdaElems = 8;
-      if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
+      encode::Terms::Def compact;
+      if (byOffset && elemBytes <= 8 && numElems >= MinLambdaElems && domCount != numElems)
+        compact = tableFunction(t, elems);
+      if (compact) {
+        // All elements have already been written: compress their exact values,
+        // including modular wrap, without relying on a loop summary.
+        data = t.lambda(
+            s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),
+            "flush#" + std::to_string(fresh++),
+            [this, compact = std::move(compact), dom, numElems](const Term &j) {
+              return t.ite(t.ult(j, t.bv(APInt(j.width(), numElems))), compact(j), dom);
+            });
+      } else if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
           otherElems >= MinLambdaElems && otherElems >= 2 * otherRuns.size()) {
         data = t.lambda(
             s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),

@@ -329,6 +329,25 @@ Ref Terms::sub(const Ref &a, const Ref &b) {
     return r;
   if (cb && cb->isZero()) return a;
   if (a == b) return bv(0, a.width());
+  if (!ca && !cb) {
+    const Node *x = node(a), *y = node(b);
+    if (x && x->op == Op::Sub && x->a == b)
+      return sub(bv(0, a.width()), x->b);
+    if (y && y->op == Op::Sub && y->a == a)
+      return y->b;
+    if (y && y->op == Op::Add) {
+      if (y->a == a) return sub(bv(0, a.width()), y->b);
+      if (y->b == a) return sub(bv(0, a.width()), y->a);
+    }
+    if (x && y && x->op == Op::Sub && y->op == Op::Sub && x->a == y->a)
+      return sub(y->b, x->b);
+    if (x && y && x->op == Op::Add && y->op == Op::Add) {
+      if (x->a == y->a) return sub(x->b, y->b);
+      if (x->a == y->b) return sub(x->b, y->a);
+      if (x->b == y->a) return sub(x->a, y->b);
+      if (x->b == y->b) return sub(x->a, y->a);
+    }
+  }
   unsigned budget = 32;
   if (Ref r = cancel(a, b, budget)) return r;
   return make({Op::Sub, a, b});
