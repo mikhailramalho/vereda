@@ -6,6 +6,7 @@
 #include "ir/source.h"
 #include "util/log.h"
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/MapVector.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
@@ -324,6 +325,10 @@ private:
     return true;
   }
 
+  // Back-edge count up to which a constant-count loop skips unreachable()
+  // during unrolling without --unwind, letting term folding end it instead.
+  static constexpr uint64_t SmallConstantLoop = 64;
+
   void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
     BasicBlock *header = l->getHeader();
     // The paths that reach an endless loop end there, as at unreachable,
@@ -335,6 +340,16 @@ private:
     if (opts.summarise && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
+    // When SCEV knows the loop takes its back edge a small constant number of
+    // times, folding alone normally ends the unrolling; asking the solver on
+    // each iteration up to that bound only wastes queries when the entry guard
+    // is symbolic. Past the bound, unreachable() still runs in case folding
+    // did not settle the exit condition.
+    uint64_t knownBackedges = 0;
+    if (!opts.unwind)
+      if (auto *n = dyn_cast<SCEVConstant>(fi.loops.scev().getBackedgeTakenCount(l)))
+        if (n->getAPInt().ule(SmallConstantLoop))
+          knownBackedges = n->getAPInt().getZExtValue();
     for (unsigned i = 0;; ++i) {
       auto it = frame.arrivals.find(header);
       if (it == frame.arrivals.end() || it->second.empty())
@@ -353,7 +368,7 @@ private:
         }
         // Without --unwind, whether another iteration is reachable; term
         // folding settles most of these without the solver.
-        if (!opts.unwind && unreachable(reached)) {
+        if (!opts.unwind && i > knownBackedges && unreachable(reached)) {
           it->second.clear();
           return;
         }
@@ -594,12 +609,30 @@ private:
 
   // Whether no path satisfies guard. A constant needs no solver call; a
   // counting loop whose condition folds would otherwise ask one per
-  // iteration.
+  // iteration. Answers are memoised by guard id: UNSAT stays valid as
+  // constraints are only added, while SAT is dropped whenever a new global
+  // constraint advances Terms::constraintsEpoch().
   bool unreachable(Term guard) {
     if (t.isTrue(guard))
       return false;
-    return t.isFalse(guard) ||
-           s.checkSatAssuming({t.solverTerm(guard)}) == camada::CheckResult::UNSAT;
+    if (t.isFalse(guard))
+      return true;
+    const void *id = guard.id();
+    if (unsatGuards.contains(id))
+      return true;
+    uint64_t epoch = t.constraintsEpoch();
+    if (epoch != satEpoch) {
+      satGuards.clear();
+      satEpoch = epoch;
+    } else if (satGuards.contains(id)) {
+      return false;
+    }
+    bool unsat = s.checkSatAssuming({t.solverTerm(guard)}) == camada::CheckResult::UNSAT;
+    if (unsat)
+      unsatGuards.insert(id);
+    else
+      satGuards.insert(id);
+    return unsat;
   }
 
   Term anyGuard(const SmallVectorImpl<Arrival> &arrivals) {
@@ -1240,7 +1273,7 @@ private:
       if (t.isFalse(violated))
         continue;
       if (!counts(false)) {
-        s.addConstraint(t.solverTerm(t.lnot(violated)));
+        t.addConstraint(t.lnot(violated));
         continue;
       }
       // Clang makes a string literal, and __func__, an unnamed_addr global.
@@ -1320,7 +1353,7 @@ private:
       // one array by instcombine, #59) ends it before any term is built.
       uint64_t elemSize = dl.getTypeAllocSize(a->getAllocatedType());
       if (!isUIntN(bits, elemSize)) {
-        s.addConstraint(t.solverTerm(t.lnot(guard)));
+        t.addConstraint(t.lnot(guard));
         enc.bind(a, mem.null());
         return true;
       }
@@ -1332,7 +1365,7 @@ private:
       if (unsigned bits = ownsArrays(a, dl))
         mem.own(st, p, bits);
       enc.bind(a, p);
-      s.addConstraint(t.solverTerm(t.implies(guard, ok)));
+      t.addConstraint(t.implies(guard, ok));
       return true;
     }
     // Atomics: one thread, so each is a plain load and store and a fence
@@ -1580,6 +1613,9 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
+  DenseSet<const void *> unsatGuards;
+  DenseSet<const void *> satGuards;
+  uint64_t satEpoch = 0;
   // The iteration of a summarised loop being walked: its index, its store,
   // and once walked, the store's guard and bits.
   struct Summarising {
