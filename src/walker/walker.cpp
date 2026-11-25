@@ -743,8 +743,8 @@ private:
       if ((!prev || !prev->doesNotReturn()) && counts(false))
         assertion(term, guard, "__builtin_unreachable", "");
     } else if (isa<InvokeInst>(term)) {
-      throw Unsupported("exception unwinding at " + ir::location(term).str() +
-                        "; compile Rust with -C panic=abort");
+      throw Unsupported("exception unwinding (invoke) is not supported at " + ir::location(term).str() +
+                        "; for Rust, compile with -C panic=abort");
     } else {
       throw Unsupported(std::string("terminator ") + term.getOpcodeName());
     }
@@ -824,13 +824,24 @@ private:
           name.substr(name.size() - 17, 16).find_first_not_of("0123456789abcdef") == StringRef::npos)
         demangled = llvm::demangle(name.str());
       StringRef symbol(demangled);
-      if (symbol.starts_with("core::panicking::panic") ||
+      bool library = symbol.starts_with("core::") || symbol.starts_with("alloc::") ||
+                     symbol.starts_with("std::");
+      StringRef entry = symbol.split("::h").first.split("::<").first;
+      bool exits = entry == "std::process::exit" || entry == "std::process::abort" ||
+                   entry == "core::intrinsics::abort";
+      bool stops = c.doesNotReturn() || isa_and_nonnull<UnreachableInst>(c.getNextNode());
+      if (exits)
+        return t.boolean(false);
+      if ((library && callee->isDeclaration() && stops) ||
+          symbol.starts_with("core::panicking::panic") ||
           symbol.starts_with("core::panicking::assert_failed") ||
           symbol.starts_with("std::panicking::begin_panic") ||
           symbol.starts_with("std::panicking::rust_panic_with_hook") ||
           symbol == "std::panicking::panic" || symbol.starts_with("std::panicking::panic::")) {
         bool overflow = symbol.contains("overflow");
-        bool bounds = symbol.contains("bounds_check");
+        bool bounds = symbol.contains("bounds_check") ||
+                      (symbol.contains("index") && symbol.contains("fail")) ||
+                      symbol.contains("slice_error_fail");
         const char *message = overflow ? "arithmetic overflow"
                               : bounds ? "array bounds violated" : "Rust panic";
         checks::Property kind = overflow ? checks::Property::ArithmeticOverflow
