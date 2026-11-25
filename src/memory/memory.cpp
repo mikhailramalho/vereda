@@ -145,10 +145,16 @@ Term Memory::fromAddress(Term a) {
       continue;
     // One past the end still belongs to the object: the gap keeps it unique.
     // Only an object the path allocated holds an address: elsewhere its base
-    // is free, and address 0 could land in it as a non-null pointer.
-    Term inside = t.land(o.exists, t.land(t.uge(a, o.base), t.ule(a, t.add(o.base, o.size))));
+    // is free, and address 0 could land in it as a non-null pointer. Where
+    // it exists its end does not wrap, so a is in it iff a - base <= size,
+    // which folds for a the base plus a constant (#224); where that is true
+    // no other object holds a.
+    Term x = t.sub(a, o.base);
+    Term inside = t.land(o.exists, t.ule(x, o.size));
+    if (t.isTrue(inside))
+      return ptr(t.bv(id, ObjBits), x);
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
-    off = t.ite(inside, t.sub(a, o.base), off);
+    off = t.ite(inside, x, off);
   }
   // What object() of the result folds to, which concat may have joined
   // with the offset's choices.
