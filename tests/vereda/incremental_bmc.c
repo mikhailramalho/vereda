@@ -1,8 +1,8 @@
 // --incremental-bmc stops at the first bound whose unwinding assertions
 // hold: the loop runs four times, so bound 5 unwinds it fully.
 // RUN: --incremental-bmc
-// EXPECT: ^Bound 4 too small: unwinding assertion loop 0$
-// EXPECT-NOT: ^Bound 5 too small
+// EXPECT: ^\[INFO\] Bound 4 too small: unwinding assertion loop 0$
+// EXPECT-NOT: ^\[INFO\] Bound 5 too small
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 

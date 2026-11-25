@@ -1,6 +1,6 @@
 // A loop that writes an affine value of its index to every element is
 // replaced by its effect: a read of the array reduces to the value.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT-NOT: Unwinding loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);

@@ -9,6 +9,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/multi_property_kstep_single_verdict_fail
 // RUN: --incremental-bmc --multi-property --max-k-step 5
-// EXPECT: ^\*\* 2 of 2 properties failed$
+// EXPECT: ^Properties: 2 checked, \d+ passed, 2 failed, \d+ not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED[\s\S]*VERIFICATION FAILED)[\s\S]*\Z

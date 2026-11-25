@@ -2,7 +2,7 @@
 // the transpose writes a column, elements a row apart. The checks read a
 // column at a nondet row, an offset as far from every other column's
 // elements, so they reach only that column's summary.
-// EXPECT: ^Summarised 3 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 3 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

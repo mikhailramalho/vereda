@@ -1,6 +1,6 @@
 // A loop that only checks is summarised too (ESBMC: --summarize-array-loops); the
 // element written between the loops fails its check.
-// EXPECT: ^Summarised 2 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 2 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 #define N 100000

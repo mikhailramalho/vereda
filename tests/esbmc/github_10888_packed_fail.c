@@ -22,6 +22,6 @@ int main(void)
 // Needs: --little-endian
 // RUN: --little-endian --multi-property
 // MODE: FUTURE
-// EXPECT: ^\*\* 1 of [0-9]+ properties failed
+// EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

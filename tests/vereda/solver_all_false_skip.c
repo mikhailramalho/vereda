@@ -4,7 +4,7 @@
 // EXPECT: SUCCESS +\[main\.assertion\.2\]
 // EXPECT: SUCCESS +\[main\.assertion\.3\]
 // EXPECT: SUCCESS +\[main\.assertion\.4\]
-// EXPECT: \*\* 0 of 4 properties failed
+// EXPECT: Properties: 4 checked, 4 passed, 0 failed, 0 not checked
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 int main(void) {

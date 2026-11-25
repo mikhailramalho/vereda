@@ -3,7 +3,7 @@
 // it, whose own term is the one of the last iteration unrolled. The terms of
 // the LCSSA phis that carry them out hold the values each way out leaves.
 // RUN: --unwind 3 --no-unwinding-assertions
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern unsigned __VERIFIER_nondet_uint(void);

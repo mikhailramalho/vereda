@@ -20,5 +20,5 @@ int main()
 // Needs: __ESBMC_forall
 // RUN: --solver z3
 // MODE: FUTURE
-// EXPECT: ^Unwinding loop .* function f$
+// EXPECT: ^\[PROGRESS\] Unwinding loop .* function f$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

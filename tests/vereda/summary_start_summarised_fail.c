@@ -1,6 +1,6 @@
 // A loop whose values start where a summarised loop before it left them
 // keeps the counts the claim gets wrong.
-// EXPECT: ^Summarised 2 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 2 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern unsigned __VERIFIER_nondet_uint(void);

@@ -1,6 +1,6 @@
 // A loop that only checks is summarised too (ESBMC: --summarize-array-loops): one
 // iteration at a nondet index covers all of them.
-// EXPECT: ^Summarised 2 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 2 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 #define N 100000

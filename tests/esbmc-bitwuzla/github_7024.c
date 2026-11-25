@@ -13,4 +13,4 @@ int main()
 // RUN: --solver bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\[Counterexample\]$
+// EXPECT: ^\[COUNTEREXAMPLE\]$

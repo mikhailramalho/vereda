@@ -1,6 +1,6 @@
 // RUN: --multi-property
-// EXPECT: ^Summarised 2 array loop\(s\)$
-// EXPECT: ^Walk time: .*\(3 checks,
+// EXPECT: ^\[INFO\] Summarised 2 array loop\(s\)$
+// EXPECT: ^\[INFO\] Walk time: .*\(3 checks,
 // EXPECT: ^  SUCCESS +\[main\.assertion\.2\] +line 25
 // EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 27
 // EXPECT: ^  FAILED +\[main\.assertion\.3\] +line 30

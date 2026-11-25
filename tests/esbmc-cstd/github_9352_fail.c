@@ -19,5 +19,5 @@ int main(void)
 // RUN: --std c11
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of \d+ properties failed
+// EXPECT: ^Properties: \d+ checked, \d+ passed, 1 failed, \d+ not checked
 // Vereda: verdict none

@@ -1,7 +1,7 @@
 // --dump-dir writes the dumps to files instead of printing them.
 // RUN: --dump-ir-too --dump-smt-too --dump-dir out
-// EXPECT: ^Wrote out/ir\.ll$
-// EXPECT: ^Wrote out/formula\.smt2$
+// EXPECT: ^\[INFO\] Wrote out/ir\.ll$
+// EXPECT: ^\[INFO\] Wrote out/formula\.smt2$
 // EXPECT: VERIFICATION SUCCESSFUL
 // EXPECT-NOT: ^define|^\(assert
 extern void __VERIFIER_assert(int);
