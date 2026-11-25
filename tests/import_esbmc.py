@@ -138,6 +138,12 @@ def header(origin, mode, args, expected, test_dir, builtins):
         lines += ["// Needs: " + " ".join(missing), "// RUN: " + args]
     elif flags:
         lines.append("// RUN: " + " ".join(flags))
+    # Keep both the summarized and unrolled decrement performance regressions.
+    if origin in {"esbmc/array_loop_summary_decrement", "esbmc/array_loop_summary_decrement_fail"} \
+            and not (missing or builtins) and "--no-summarize-array-loops" not in flags:
+        if not flags:
+            lines.append("// RUN:")
+        lines.append("// RUN: " + " ".join(flags + ["--no-summarize-array-loops"]))
     if files:
         lines.append("// FILES: " + " ".join(files))
     if mode != "CORE":
