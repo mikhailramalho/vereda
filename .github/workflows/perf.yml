@@ -3,6 +3,7 @@
 # records each test's time and memory), then the base's from the Tests run
 # on main, and screens them for tests whose numbers differ. Those are measured
 # again side by side on this runner with both binaries (tests/bench.py),
+# including new tests and RUN configurations using head's fixture on base,
 # since two suite runs on different machines are too noisy to compare
 # alone. It builds both binaries first, while those Tests runs are still
 # going, so the wait costs no extra time. When main has no numbers, it runs
@@ -154,8 +155,8 @@ jobs:
             break
           done
 
-      # No benchmark unless the screen finds a test whose numbers differ, or
-      # main had no numbers for the base.
+      # Benchmark changed numbers and head-only tests/configurations, or run
+      # the base's suite first when main had no numbers.
       - name: Screen the numbers
         id: screen
         if: github.event_name == 'pull_request'
