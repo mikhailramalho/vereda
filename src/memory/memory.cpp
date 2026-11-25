@@ -244,10 +244,21 @@ Term Memory::equal(Term p, Term q) {
 }
 
 Term Memory::fromAddress(Term a) {
+  unsigned budget = 32;
+  return fromAddress(a, budget);
+}
+
+Term Memory::fromAddress(Term a, unsigned &budget) {
   // Address 0 is null: objects start above 0 (end starts at 1), so no
   // allocated object can hold 0.
   if (const APInt *v = t.constant(a); v && v->isZero())
     return null();
+  Term c, left, right;
+  if (budget && t.sumChoice(a, c, left, right)) {
+    --budget;
+    Term x = fromAddress(left, budget), y = fromAddress(right, budget);
+    return t.ite(c, x, y);
+  }
   // One comparison per exposed object created so far. The object and the
   // offset are built apart, so that object() of the result is a choice
   // among constants.
@@ -261,11 +272,17 @@ Term Memory::fromAddress(Term a) {
     // Only an object the path allocated holds an address: elsewhere its base
     // is free, and address 0 could land in it as a non-null pointer. Where
     // it exists its end does not wrap, so a is in it iff a - base <= size,
-    // which folds for a the base plus a constant (#224); where that is true
+    // which folds for a base plus a bounded offset; where that is true
     // no other object holds a.
     Term x = t.sub(a, o.base);
-    Term inside = t.land(o.exists, t.ule(x, o.size));
-    if (t.isTrue(inside))
+    Term within = t.ule(x, o.size);
+    if (known) {
+      int d = t.decide(within, known);
+      if (d >= 0)
+        within = t.boolean(d);
+    }
+    Term inside = t.land(o.exists, within);
+    if (t.isTrue(inside) || (context && t.entails(context, inside)))
       return ptr(t.bv(id, ObjBits), x);
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
     off = t.ite(inside, x, off);

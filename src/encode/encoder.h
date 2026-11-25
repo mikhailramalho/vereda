@@ -39,7 +39,12 @@ class Encoder {
 public:
   Encoder(Terms &t, memory::Memory &mem, bool fp2bv = false)
       : t(t), s(t.solver()), mem(mem),
-        fpEncoding(fp2bv ? camada::FPEncoding::BV : camada::FPEncoding::Native) {}
+        fpEncoding(fp2bv ? camada::FPEncoding::BV : camada::FPEncoding::Native) {
+    mem.known = [this](const Term &x) -> std::optional<Terms::Bounds> {
+      const Fact *f = facts.find(key(x));
+      return f ? f->bounds : std::nullopt;
+    };
+  }
   camada::SMTSolver &solver() { return s; }
   Terms &terms() { return t; }
   unsigned symbolCount() const { return freshCount; }

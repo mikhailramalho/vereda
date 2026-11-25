@@ -126,9 +126,11 @@ public:
   encode::Term equal(encode::Term p, encode::Term q);
   // inttoptr: the exposed object that holds a, else object 0 at offset a
   // (null, or the memory outside the program). An a that can be in one
-  // object only, its base plus a constant within it, gives an ordinary
+  // object only, its base plus an offset proved within it, gives an ordinary
   // pointer into it, not one made from an integer.
   encode::Term fromAddress(encode::Term a);
+  // Bounds of the current path, supplied by the encoder; never cached here.
+  std::function<std::optional<encode::Terms::Bounds>(const encode::Term &)> known;
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
   // or not c it implies goes to one side only.
@@ -190,6 +192,7 @@ public:
   static constexpr uint64_t MinSeparate = 1024;
 
 private:
+  encode::Term fromAddress(encode::Term a, unsigned &budget);
   encode::Term bytePtr(encode::Term p, uint64_t i);
   void ensureLayout(uint64_t id);
   encode::Term base(encode::Term obj);
