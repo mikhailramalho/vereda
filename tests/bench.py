@@ -2,7 +2,9 @@
 """Compares the time and memory of two vereda binaries, a base and a head, on
 a list of regression tests (bench.txt next to this script by default). Each
 test runs with its own // RUN: flags, as run.py runs it, once with each
-binary; the two runs go side by side, so a busy machine slows both alike.
+binary; @run2, @run3, ... select additional RUN lines. The two runs go side
+by side, so a busy machine slows both alike. A new test or configuration
+uses head's fixture with both binaries, including its extra source files.
 
 A test regresses when head's wall time is above RATIO times base's and at
 least MIN_SECONDS more, when its peak memory is above RATIO times base's and
@@ -11,7 +13,7 @@ killed for lack of memory and base was not, or when head ends without a
 verdict (a crash, a bad flag). A test that regresses on time or memory runs
 once more and counts only if it regresses again, since shared CI machines
 are noisy. Head's time limit is max(SLOWDOWN times base's wall time,
-MIN_LIMIT seconds). A test missing from the base tree is skipped.
+MIN_LIMIT seconds).
 
 A test improves by the same margins the other way, or when base timed out or
 was killed and head was not; an improvement is also measured twice.
@@ -23,8 +25,10 @@ tests that regressed or improved, and nothing when none did.
 --stats BASE HEAD picks the tests instead of --list: each directory holds the
 numbers run.py records under $REGRESS_STATS for a whole suite run, and the
 tests whose numbers regress or improve between the two by the margins above
-are measured again here, side by side, at most MAX_CANDIDATES of them,
-largest change first. Two suite runs on different machines and loads are
+and tests/configurations recorded only on head are measured again here,
+side by side, at most MAX_CANDIDATES of them. Potential regressions come
+first, then new cases, then improvements. Changes within each category are
+ranked by their relative size. Two suite runs on different machines and loads are
 too noisy to report on their own; the side-by-side run decides. When the
 base's suite run timed out or ran out of memory, head runs alone, with the
 base's time limit, and the base's result is the suite run's, marked so in
@@ -63,16 +67,21 @@ STOPPED = {TIMEOUT: "head timed out", KILLED: "head was killed, out of memory"}
 
 
 def test_files(root, name):
-    """The flags and source files of test suite/name in the tree at root,
+    """The flags, source files and working directory of suite/name at root,
     or None when it has no such test."""
+    name, index = run.split_run(name)
     # tests/ since fcf278ec, regression/ in a base from before.
     for stem in (os.path.join(root, d, name) for d in ("tests", "regression")):
-        for path in (stem + ".c", stem + ".ll", stem + ".rs", os.path.join(stem, "main.c")):
+        for path in (stem + ".c", stem + ".i", stem + ".ll", stem + ".rs", os.path.join(stem, "main.c")):
             if not os.path.isfile(path):
                 continue
             desc = run.parse(path)
+            if index > len(desc["RUN"]):
+                return None
             extra = [os.path.join(os.path.dirname(path), f) for f in desc["FILES"].split()]
-            return desc["RUN"].split(), [path] + extra
+            flags = desc["RUN"][index - 1].replace("%S", os.path.dirname(path)).split()
+            cwd = desc["CWD"].replace("%S", os.path.dirname(path)) or None
+            return flags, [path] + extra, cwd
     return None
 
 
@@ -83,7 +92,7 @@ def started(root, binary, clang, test, tmp, memory_limit):
     the waiter puts the end time in the list as the process ends, so that
     a run is timed right while the other one is waited for. Stops the run
     on exit."""
-    flags, files = test
+    flags, files, cwd = test
     cmd = [sys.executable, os.path.join(root, "vereda.py"), "--bin", binary,
            "--clang", clang] + flags + files
     os.mkdir(tmp)
@@ -101,7 +110,7 @@ def started(root, binary, clang, test, tmp, memory_limit):
     # nothing but setrlimit before exec, cannot block on a lock they hold.
     # pylint: disable=subprocess-popen-preexec-fn
     with open(os.path.join(tmp, "out"), "w+", encoding="utf-8", errors="replace") as out, \
-         subprocess.Popen(cmd, cwd=tmp, stdout=out, stderr=subprocess.STDOUT,
+         subprocess.Popen(cmd, cwd=cwd or tmp, stdout=out, stderr=subprocess.STDOUT,
                           start_new_session=True, preexec_fn=limit_memory,
                           env={**os.environ, "TMPDIR": tmp}) as proc:
         start, ended = time.monotonic(), []
@@ -214,11 +223,12 @@ def load(stats):
 
 
 def candidates(base_dir, head_dir):
-    """The tests whose recorded numbers changed between two suite runs,
-    largest relative change in wall time or memory first, at most
-    MAX_CANDIDATES of them."""
+    """Potential regressions, new cases, then improvements, capped at MAX_CANDIDATES."""
     base, head = load(base_dir), load(head_dir)
     found = []
+    for name in head.keys() - base.keys():
+        if head[name][4] in {"SUCCESSFUL", "FAILED", "UNKNOWN", TIMEOUT, KILLED}:
+            found.append((1, 0, name))
     for name in base.keys() & head.keys():
         b, h = base[name], head[name]
         if b[4] == h[4] and not b[4].startswith(("SUCCESSFUL", "FAILED", "UNKNOWN")) \
@@ -226,11 +236,12 @@ def candidates(base_dir, head_dir):
             continue  # no verdict on either side: a test of an error, not of speed
         if b[4] != h[4] and b[4] not in STOPPED and h[4] not in STOPPED:
             continue  # a changed verdict is tests.yml's to judge, often on purpose
-        if regressions(b, h) or improvements(b, h):
+        why = regressions(b, h)
+        if why or improvements(b, h):
             pairs = ((h[0], b[0]), (b[0], h[0]), (h[3], b[3]), (b[3], h[3]))
             ratio = max(((x or 0) + 0.1) / ((y or 0) + 0.1) for x, y in pairs)
-            found.append((ratio, name))
-    return [name for _, name in sorted(found, reverse=True)[:MAX_CANDIDATES]]
+            found.append((2 if why else 0, ratio, name))
+    return [name for _, _, name in sorted(found, reverse=True)[:MAX_CANDIDATES]]
 
 
 def cell(b, h, fmt):
@@ -290,25 +301,36 @@ def main():  # pylint: disable=too-many-locals
         if head_test is None:
             sys.exit(f"bench.py: no test {name}")
         base_test = test_files(args.base_root, name)
-        if base_test is None:
-            lines.append(f"| {name} | | | | | | not in base; skipped |")
-            print(lines[-1], flush=True)
-            continue
-        b, h = measure(args, base_test, head_test, suite.get(name))
-        why, better = regressions(b, h), improvements(b, h)
+        new_fixture = base_test is None or base_test[0] != head_test[0]
+        if new_fixture:
+            base_test = head_test
+        # A recorded timeout for an older configuration is not its baseline.
+        previous = None if new_fixture else suite.get(name)
+        b, h = measure(args, base_test, head_test, previous)
+        # A new feature regression may be unsupported by base. Verdict changes
+        # are Tests' job; comparing timing is meaningful only for like outcomes.
+        incomparable = (new_fixture and b[4] != h[4] and b[4] not in STOPPED
+                        and h[4] in {"SUCCESSFUL", "FAILED", "UNKNOWN"})
+        why, better = ([], []) if incomparable else (regressions(b, h), improvements(b, h))
         if (why or better) and b[4] == h[4] and not h[4].startswith("ERROR"):
-            b, h = measure(args, base_test, head_test, suite.get(name))
+            b, h = measure(args, base_test, head_test, previous)
             why, better = regressions(b, h), improvements(b, h)
         if why:
             failed.append(name)
         verdict = b[4] if b[4] == h[4] else f"{b[4]} → {h[4]}"
-        if name in suite:
+        if previous:
             verdict = f"{b[4]} in the suite run → {h[4]}"
+        fixture_note = "base uses head fixture" if new_fixture else ""
+        comparison_note = "verdict differs; performance not compared" if incomparable else ""
+        change = ', '.join(why) if why else ', '.join(better)
+        if why:
+            change = f"**{change}**"
+        change = '; '.join(filter(None, (change, fixture_note, comparison_note)))
         row = (f"| {name} | {cell(b[1], h[1], '{:.2f}')} | {cell(b[2], h[2], '{:.2f}')} "
                f"| {cell(b[0], h[0], '{:.2f}')} | {cell(b[3], h[3], '{}')} "
                f"| {verdict} "
-               f"| {'**' + ', '.join(why) + '**' if why else ', '.join(better)} |")
-        if why or better:
+               f"| {change} |")
+        if why or better or incomparable:
             changed.append(row)
         lines.append(row)
         print(row, flush=True)
