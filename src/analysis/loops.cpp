@@ -8,14 +8,9 @@ using namespace llvm;
 
 namespace vereda::analysis {
 
-Loops::Loops(Function &f, DominatorTree &dt, LoopInfo &li, Counted counted)
-    : tlii(f.getParent()->getTargetTriple()), tli(tlii, &f), ac(f), se(f, tli, ac, dt, li),
-      counted(counted) {
-  // A summary writes the whole array at once, which another thread could
-  // see half written.
-  const Function *create = f.getParent()->getFunction("pthread_create");
-  threads = create && !create->use_empty();
-}
+Loops::Loops(Function &f, DominatorTree &dt, LoopInfo &li, const TargetLibraryInfoImpl &tlii,
+             Counted counted, bool threads)
+    : tli(tlii, &f), ac(f), se(f, tli, ac, dt, li), counted(counted), threads(threads) {}
 
 const Summary *Loops::summary(const Loop *l) {
   auto it = cache.find(l);
@@ -47,7 +42,7 @@ static bool isErrorCall(const Instruction *inst) {
 // Whether a call in a loop body is a check, a nondet value (depth 0, the
 // body itself), or a call to a function that is itself free of effects:
 // reads says whether it may read memory.
-bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) const {
+bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   const Function *f = callee(&c);
   if (!f)
     return false;
@@ -59,13 +54,20 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) const {
   // A loop in the callee may not end, which would stop the loop being
   // summarised part way.
   if (!f->isDeclaration()) {
+    if (depth >= 4 || f->isVarArg())
+      return false;
+    llvm::PointerIntPair<const Function *, 1, bool> key(f, reads);
+    auto [it, inserted] = calleeOk.try_emplace(key, false);
+    if (!inserted)
+      return it->second;
     SmallVector<std::pair<const BasicBlock *, const BasicBlock *>, 1> backEdges;
     FindFunctionBackedges(*f, backEdges);
-    if (depth >= 4 || f->isVarArg() || !backEdges.empty())
+    if (!backEdges.empty())
       return false;
     for (const Instruction &inst : instructions(*f))
       if (!sideEffectFree(inst, depth + 1, reads))
         return false;
+    calleeOk[key] = true;
     return true;
   }
   if (name.starts_with("__VERIFIER_nondet_"))
@@ -84,7 +86,7 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) const {
   return false;
 }
 
-bool Loops::sideEffectFree(const Instruction &inst, unsigned depth, bool reads) const {
+bool Loops::sideEffectFree(const Instruction &inst, unsigned depth, bool reads) {
   // Undef is a fresh value per use, which one iteration would fix for all.
   if (floating(inst) || any_of(inst.operands(), [](const Use &u) { return isa<UndefValue>(u); }))
     return false;
