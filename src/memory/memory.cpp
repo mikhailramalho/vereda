@@ -32,7 +32,7 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
   // base() of the constant 0 folds to objects[0].base and the constraint to
   // true, which left bases[0] free and a stored null read back non-null.
   t.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
-  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), false});
+  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), 0, false});
   end = t.bv(1, ptrBits); // no object at address 0
 }
 
@@ -45,6 +45,25 @@ Term Memory::object(Term p) {
 Term Memory::offset(Term p) { return t.extract(p, ptrBits - 1, 0); }
 Term Memory::advance(Term p, Term delta) {
   return ptr(object(p), t.add(offset(p), delta));
+}
+Term Memory::mask(Term p, Term m) {
+  if (const APInt *mv = t.constant(m); mv && mv->isAllOnes())
+    return p;
+  Term c, x, y;
+  if (t.split(p, c, x, y))
+    return t.ite(c, mask(x, m), mask(y, m));
+  Term obj = object(p);
+  if (const APInt *id = t.constant(obj); id && id->ult(objects.size())) {
+    uint64_t o = id->getZExtValue();
+    if (o == 0)
+      return ptr(obj, t.bvand(offset(p), m));
+    // When m only clears bits already zero in base(o), ((base + off) & m) - base == off & m.
+    uint64_t a = objects[o].align;
+    if (const APInt *mv = t.constant(m);
+        mv && a > 1 && isPowerOf2_64(a) && (~*mv).ult(a))
+      return ptr(obj, t.bvand(offset(p), m));
+  }
+  return ptr(obj, t.sub(t.bvand(address(p), m), base(obj)));
 }
 Term Memory::bytePtr(Term p, uint64_t i) {
   return i ? advance(p, t.bv(i, ptrBits)) : p;
@@ -116,7 +135,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   t.addConstraint(t.eq(base(obj), b));
   if (sizes)
     t.addConstraint(t.eq(t.select(sizes, obj), size));
-  objects.push_back({b, size, exists, exposed});
+  objects.push_back({b, size, exists, align, exposed});
   end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
