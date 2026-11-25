@@ -92,43 +92,41 @@ void Terms::equalities(const Ref &cond, bool holds,
   // Conditions share subterms, so a walk without a bound can take
   // exponential time; equalities sit near the top.
   unsigned budget = 64;
-  equalities(cond, holds, f, budget);
+  literals(cond, holds, [&](const Node &n, bool h) {
+    if (n.op != Op::Eq || !h || n.a.isBool())
+      return;
+    if (constant(n.b) && !constant(n.a))
+      f(n.a, n.b);
+    else if (constant(n.a) && !constant(n.b))
+      f(n.b, n.a);
+  }, budget);
 }
 
-void Terms::equalities(const Ref &cond, bool holds,
-                       llvm::function_ref<void(const Ref &, const Ref &)> f,
-                       unsigned &budget) const {
+void Terms::literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
+                     unsigned &budget) const {
   const Node *n = node(cond);
   if (!n || !budget)
     return;
   --budget;
   switch (n->op) {
-  case Op::Not: equalities(n->a, !holds, f, budget); return;
+  case Op::Not: literals(n->a, !holds, f, budget); return;
   case Op::And:
   case Op::Or:
     if ((n->op == Op::And) == holds) { // both sides hold, or both fail
-      equalities(n->a, holds, f, budget);
-      equalities(n->b, holds, f, budget);
+      literals(n->a, holds, f, budget);
+      literals(n->b, holds, f, budget);
     }
     return;
   case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
     if (constant(n->b) && constant(n->b)->isZero() == holds) {
-      equalities(n->a, false, f, budget);
-      equalities(n->c, holds, f, budget);
+      literals(n->a, false, f, budget);
+      literals(n->c, holds, f, budget);
     } else if (constant(n->c) && constant(n->c)->isZero() == holds) {
-      equalities(n->a, true, f, budget);
-      equalities(n->b, holds, f, budget);
+      literals(n->a, true, f, budget);
+      literals(n->b, holds, f, budget);
     }
     return;
-  case Op::Eq:
-    if (!holds || n->a.isBool())
-      return;
-    if (constant(n->b) && !constant(n->a))
-      f(n->a, n->b);
-    else if (constant(n->a) && !constant(n->b))
-      f(n->b, n->a);
-    return;
-  default: return;
+  default: f(*n, holds); return;
   }
 }
 
@@ -819,21 +817,55 @@ bool Terms::arithmetic(const Ref &e) {
   return value(e.id());
 }
 
-std::optional<Terms::Range> Terms::range(const Ref &e, unsigned depth) {
+// The greatest unsigned and the least and greatest signed value of w bits,
+// a w-bit value read as signed, and a signed one as its w bits.
+static uint64_t umax(unsigned w) { return ~uint64_t(0) >> (64 - w); }
+static int64_t smin(unsigned w) { return int64_t(~uint64_t(0) << (w - 1)); }
+static int64_t smax(unsigned w) { return int64_t(umax(w) >> 1); }
+static int64_t toSigned(uint64_t u, unsigned w) { return int64_t(u << (64 - w)) >> (64 - w); }
+static uint64_t toUnsigned(int64_t v, unsigned w) { return uint64_t(v) & umax(w); }
+// Whether lo and hi, lo <= hi, are on one side of the sign bit, where
+// the unsigned and the signed order agree.
+static bool oneSide(uint64_t lo, uint64_t hi, unsigned w) { return lo >> (w - 1) == hi >> (w - 1); }
+
+std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned depth) {
   if (!e.isBV() || e.width() > 64)
     return std::nullopt;
   if (const APInt *c = constant(e))
     return Range{c->getZExtValue(), c->getZExtValue(), 0};
+  std::optional<Range> r;
   if (auto b = bounds.find(e.id()); b != bounds.end())
-    return Range{0, b->second.second - 1, 1};
-  const Node *n = node(e);
+    r = Range{0, b->second.second - 1, 1};
   // A deep term (a long ite chain) is left unknown.
-  if (!n || depth > 32)
-    return std::nullopt;
-  if (auto it = ranges.find(e.id()); it != ranges.end())
-    return it->second;
+  else if (const Node *n = node(e); n && depth <= 32) {
+    auto &cache = known ? scratch : ranges;
+    if (auto it = cache.find(e.id()); it != cache.end())
+      r = it->second;
+    else
+      cache.try_emplace(e.id(), r = shape(*n, e.width(), known, depth));
+  }
+  std::optional<Bounds> f = known ? known(e) : std::nullopt;
+  if (!f)
+    return r;
+  // Narrowed to [ulo, uhi], keeping its stride; empty only on a path that
+  // no execution takes, which says nothing.
   using U = unsigned __int128;
-  U max = (U(1) << e.width()) - 1;
+  if (!r)
+    return Range{f->ulo, f->uhi, f->ulo != f->uhi};
+  U s = r->stride ? r->stride : 1, lo = r->lo, hi = r->hi;
+  if (lo < f->ulo)
+    lo += (f->ulo - lo + s - 1) / s * s;
+  if (hi > f->uhi)
+    hi -= (hi - f->uhi + s - 1) / s * s; // below 0, it wraps past r->hi
+  if (lo > hi || hi > r->hi)
+    return std::nullopt;
+  return Range{uint64_t(lo), uint64_t(hi), lo == hi ? 0 : r->stride};
+}
+
+std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known known,
+                                         unsigned depth) {
+  using U = unsigned __int128;
+  U max = (U(1) << width) - 1;
   // lo + stride * i up to hi, with hi moved down onto that lattice, so
   // that every value, hi among them, is lo modulo the stride.
   auto make = [&](U lo, U hi, U stride) -> std::optional<Range> {
@@ -842,63 +874,173 @@ std::optional<Terms::Range> Terms::range(const Ref &e, unsigned depth) {
     hi = stride ? lo + (hi - lo) / stride * stride : lo;
     return Range{uint64_t(lo), uint64_t(hi), hi == lo ? 0 : uint64_t(stride)};
   };
-  auto get = [&](const Ref &x) { return range(x, depth + 1); };
+  auto get = [&](const Ref &x) { return range(x, known, depth + 1); };
   // x >> by, exact when the stride is a multiple of 2^by.
   auto right = [&](const Range &v, uint64_t by) {
     uint64_t s = by >= 64 || v.stride % (uint64_t(1) << by) ? 1 : v.stride >> by;
     return by >= 64 ? make(0, 0, 0) : make(v.lo >> by, v.hi >> by, s);
   };
   std::optional<Range> r, a, b;
-  switch (n->op) {
+  switch (n.op) {
   case Op::Add:
   case Op::Sub:
   case Op::Mul:
   case Op::Concat:
-    if (!(a = get(n->a)) || !(b = get(n->b)))
+    if (!(a = get(n.a)) || !(b = get(n.b)))
       break;
-    if (n->op == Op::Add)
+    if (n.op == Op::Add)
       r = make(U(a->lo) + b->lo, U(a->hi) + b->hi, std::gcd(a->stride, b->stride));
-    else if (n->op == Op::Sub && a->lo >= b->hi)
+    else if (n.op == Op::Sub && a->lo >= b->hi)
       r = make(a->lo - b->hi, a->hi - b->lo, std::gcd(a->stride, b->stride));
-    else if (n->op == Op::Mul && (!a->stride || !b->stride)) {
+    else if (n.op == Op::Mul && (!a->stride || !b->stride)) {
       const Range &x = a->stride ? *a : *b;
       U k = a->stride ? b->lo : a->lo;
       r = make(x.lo * k, x.hi * k, x.stride * k);
-    } else if (n->op == Op::Concat) {
-      unsigned low = n->b.width();
+    } else if (n.op == Op::Concat) {
+      unsigned low = n.b.width();
       r = make((U(a->lo) << low) + b->lo, (U(a->hi) << low) + b->hi,
                std::gcd(uint64_t(U(a->stride) << low), b->stride));
     }
     break;
   case Op::LShr:
-    if (const APInt *c = constant(n->b); c && (a = get(n->a)))
+    if (const APInt *c = constant(n.b); c && (a = get(n.a)))
       r = right(*a, c->getLimitedValue(64));
     break;
   case Op::Extract:
-    if ((a = get(n->a)))
-      r = right(*a, n->y);
+    if ((a = get(n.a)))
+      r = right(*a, n.y);
     break;
   case Op::ZExt:
   case Op::SExt: // below the sign bit, as zext
-    if ((a = get(n->a)) && (n->op == Op::ZExt || !(a->hi >> (n->a.width() - 1))))
+    if ((a = get(n.a)) && (n.op == Op::ZExt || !(a->hi >> (n.a.width() - 1))))
       r = a;
     break;
   default:
     break;
   }
-  ranges.emplace(e.id(), r);
   return r;
 }
 
-int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign) {
-  std::optional<Range> x = range(a), y = x ? range(b) : std::nullopt;
-  if (!x || !y || (sign && std::max(x->hi, y->hi) >> (a.width() - 1)))
+std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known known,
+                                                         unsigned depth) {
+  if (!e.isBV() || e.width() > 64)
+    return std::nullopt;
+  unsigned w = e.width();
+  int64_t lo = smin(w), hi = smax(w);
+  auto meet = [&](int64_t l, int64_t h) {
+    lo = std::max(lo, l);
+    hi = std::min(hi, h);
+  };
+  if (std::optional<Range> r = range(e, known, depth); r && oneSide(r->lo, r->hi, w))
+    meet(toSigned(r->lo, w), toSigned(r->hi, w));
+  if (std::optional<Bounds> f = known ? known(e) : std::nullopt)
+    meet(f->slo, f->shi);
+  if (const Node *n = node(e); n && n->op == Op::SExt && depth <= 32)
+    if (auto a = srange(n->a, known, depth + 1))
+      meet(a->first, a->second);
+  if (lo > hi)
+    return std::nullopt;
+  return std::make_pair(lo, hi);
+}
+
+int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known) {
+  auto settle = [orEqual](auto xlo, auto xhi, auto ylo, auto yhi) {
+    if (orEqual ? xhi <= ylo : xhi < ylo)
+      return 1;
+    if (orEqual ? xlo > yhi : xlo >= yhi)
+      return 0;
     return -1;
-  if (orEqual ? x->hi <= y->lo : x->hi < y->lo)
-    return 1;
-  if (orEqual ? x->lo > y->hi : x->lo >= y->hi)
-    return 0;
-  return -1;
+  };
+  if (sign) {
+    auto x = srange(a, known, 0), y = x ? srange(b, known, 0) : std::nullopt;
+    return x && y ? settle(x->first, x->second, y->first, y->second) : -1;
+  }
+  std::optional<Range> x = range(a, known, 0), y = x ? range(b, known, 0) : std::nullopt;
+  return x && y ? settle(x->lo, x->hi, y->lo, y->hi) : -1;
+}
+
+int Terms::decide(const Ref &cmp, Known known) {
+  const Node *n = node(cmp);
+  if (!n)
+    return -1;
+  scratch.clear();
+  switch (n->op) {
+  case Op::Not: {
+    int d = decide(n->a, known);
+    return d < 0 ? d : !d;
+  }
+  case Op::Ult:
+  case Op::Ule:
+  case Op::Slt:
+  case Op::Sle:
+    return order(n->a, n->b, n->op == Op::Ule || n->op == Op::Sle,
+                 n->op == Op::Slt || n->op == Op::Sle, known);
+  case Op::Eq: { // unequal when the ranges, or the signed ones, are apart
+    std::optional<Range> x = range(n->a, known, 0), y = range(n->b, known, 0);
+    if (x && y && (x->hi < y->lo || y->hi < x->lo))
+      return 0;
+    auto sx = srange(n->a, known, 0), sy = srange(n->b, known, 0);
+    if (sx && sy && (sx->second < sy->first || sy->second < sx->first))
+      return 0;
+    return -1;
+  }
+  default:
+    return -1;
+  }
+}
+
+void Terms::narrow(const Ref &cond, bool holds, Known known,
+                   llvm::function_ref<void(const Ref &, const Bounds &)> set) {
+  unsigned budget = 64;
+  literals(cond, holds, [&](const Node &n, bool h) {
+    bool sign = n.op == Op::Slt || n.op == Op::Sle;
+    if ((!sign && n.op != Op::Ult && n.op != Op::Ule) || n.a.width() > 64)
+      return;
+    // x < y, or x <= y; when the literal fails, its sides swap: !(a < b) is
+    // b <= a.
+    bool strict = (n.op == Op::Ult || n.op == Op::Slt) == h;
+    const Ref &x = h ? n.a : n.b, &y = h ? n.b : n.a;
+    unsigned w = x.width();
+    scratch.clear();
+    auto now = [&](const Ref &e) {
+      Bounds b{0, umax(w), smin(w), smax(w)};
+      if (std::optional<Range> r = range(e, known, 0))
+        b.ulo = r->lo, b.uhi = r->hi;
+      if (auto s = srange(e, known, 0))
+        b.slo = s->first, b.shi = s->second;
+      return b;
+    };
+    Bounds bx = now(x), by = now(y), nx = bx, ny = by;
+    // x <= max(y) - strict and y >= min(x) + strict; past the type's
+    // limits, no execution takes the path.
+    if (sign) {
+      if (strict && (by.shi == smin(w) || bx.slo == smax(w)))
+        return;
+      nx.shi = std::min(bx.shi, by.shi - strict);
+      ny.slo = std::max(by.slo, bx.slo + strict);
+    } else {
+      if (strict && (by.uhi == 0 || bx.ulo == umax(w)))
+        return;
+      nx.uhi = std::min(bx.uhi, by.uhi - strict);
+      ny.ulo = std::max(by.ulo, bx.ulo + strict);
+    }
+    auto update = [&](const Ref &e, const Bounds &was, Bounds b) {
+      // Each order bounds the other on one side of the sign bit; twice
+      // carries a bound across both ways.
+      for (int i = 0; i < 2; ++i) {
+        if (b.ulo > b.uhi || b.slo > b.shi)
+          return;
+        if (oneSide(b.ulo, b.uhi, w))
+          b.slo = std::max(b.slo, toSigned(b.ulo, w)), b.shi = std::min(b.shi, toSigned(b.uhi, w));
+        if ((b.slo < 0) == (b.shi < 0))
+          b.ulo = std::max(b.ulo, toUnsigned(b.slo, w)), b.uhi = std::min(b.uhi, toUnsigned(b.shi, w));
+      }
+      if (b.ulo <= b.uhi && b.slo <= b.shi && !(b == was) && !constant(e))
+        set(e, b);
+    };
+    update(x, bx, nx);
+    update(y, by, ny);
+  }, budget);
 }
 
 unsigned Terms::zeros(const Ref &e, unsigned depth) {

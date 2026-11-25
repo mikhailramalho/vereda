@@ -13,6 +13,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/nextafter_from_infinity
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

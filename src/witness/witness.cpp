@@ -3,8 +3,8 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/IR/DebugInfoMetadata.h>
-#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/Path.h>
 #include <llvm/Support/SHA256.h>
 #include <algorithm>
 #include <ctime>
@@ -66,7 +66,7 @@ static std::map<std::string, Source> inputFiles(const Module &m) {
   std::map<std::string, Source> files;
   for (const DICompileUnit *cu : m.debug_compile_units()) {
     SmallString<128> path(cu->getFilename());
-    sys::fs::make_absolute(cu->getDirectory(), path);
+    sys::path::make_absolute(cu->getDirectory(), path);
     if (auto buf = MemoryBuffer::getFile(path))
       files.insert_or_assign(cu->getFilename().str(), Source(std::move(*buf)));
   }

@@ -47,7 +47,7 @@ struct FunctionInfo {
     for (BasicBlock *bb : rpo)
       for (BasicBlock *succ : successors(bb))
         if (index.lookup(succ) <= index.lookup(bb) && !dt.dominates(succ, bb))
-          throw Unsupported("irreducible control flow in " + f.getName().str());
+          throw Unsupported("irreducible control flow in " + llvm::demangle(f.getName().str()));
     for (BasicBlock *bb : rpo)
       if (li.isLoopHeader(bb))
         loopNumber[li.getLoopFor(bb)] = loopNumber.size();
@@ -203,8 +203,8 @@ private:
   // elements (elementBits), or 0 for none.
   unsigned ownsArrays(const Value *v, const DataLayout &dl) {
     auto [it, inserted] = owns.try_emplace(v, 0);
-    if (!inserted || capturesAnything(PointerMayBeCaptured(v, /*ReturnCaptures=*/true,
-                                                           CaptureComponents::Provenance)))
+    if (!inserted ||
+        capturesAnything(PointerMayBeCaptured(v, CaptureComponents::Provenance).WithRet))
       return it->second;
     SmallVector<const Value *, 8> work{v};
     SmallPtrSet<const Value *, 8> seen;
@@ -314,8 +314,8 @@ private:
   // `while (1);`, into assume(0).
   static bool endless(const Loop *l) {
     for (BasicBlock *bb : l->blocks()) {
-      auto *br = dyn_cast<BranchInst>(bb->getTerminator());
-      auto *c = br && br->isConditional() ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
+      auto *br = dyn_cast<CondBrInst>(bb->getTerminator());
+      auto *c = br ? dyn_cast<ConstantInt>(br->getCondition()) : nullptr;
       for (BasicBlock *succ : successors(bb))
         if (!l->contains(succ) && (!c || br->getSuccessor(c->isZero()) == succ))
           return false;
@@ -361,7 +361,7 @@ private:
         }
         if (opts.showIterations)
           outs() << "Unwinding loop " << number << " iteration " << i << "   "
-                 << loopLocation(l).str() << "\n";
+                 << loopLocation(l).display() << "\n";
       }
       frame.iteration[l] = i;
       region(frame, fi, l);
@@ -442,15 +442,16 @@ private:
     Term guard = anyGuard(arrivals);
     memory::State st = merged(arrivals);
     // The iteration's facts hold only in it, and the loop may not run.
-    encode::Encoder::Facts facts = common(arrivals);
-    Term body = t.land(guard, t.ult(k, trips));
+    encode::Encoder::Facts facts = common(arrivals), inside = facts;
+    Term inRange = t.ult(k, trips), body = t.land(guard, inRange);
+    enc.learn(inRange, inside); // k < trips holds in the iteration
     // Built after body, which keeps k < trips: every term with k counts only
     // under body, or as an element the loop wrote, n < trips, once
     // substitute puts n for k; there, terms fold as if it held.
     if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
       t.bound(k, n->getZExtValue());
     if (!t.isFalse(body)) {
-      frame.arrivals[header].push_back({body, first, st, facts});
+      frame.arrivals[header].push_back({body, first, st, inside});
       summary = Summarising{l, k, sum.store, {}, 0};
       region(frame, fi, l);
       // Drop the back edge and the iteration's own exit.
@@ -522,6 +523,7 @@ private:
       return isa<Instruction>(v) || isa<Argument>(v) ? enc.bound(v) : enc.value(v);
     }
     case scPtrToInt:
+    case scPtrToAddr:
       return enc.resize(mem.address(ops[0]), w, false);
     case scTruncate:
     case scZeroExtend:
@@ -667,21 +669,20 @@ private:
 
   // The facts (encoder.h) that hold on every one of paths: what a join keeps.
   template <typename Paths> static encode::Encoder::Facts common(const Paths &paths) {
-    encode::Encoder::Facts f = paths[0].facts;
-    for (const auto &p : drop_begin(paths))
-      encode::Encoder::Facts::diff(paths[0].facts, p.facts,
-                                   [&](auto k, const memory::Cell *first, const memory::Cell *) {
-                                     if (first)
-                                       f.eraseObject(k.first);
-                                   });
+    using encode::Encoder;
+    Encoder::Facts f = paths[0].facts;
+    for (const auto &p : drop_begin(paths)) {
+      Encoder::Facts was = f; // keeps the nodes diff walks while f changes
+      Encoder::Facts::diff(was, p.facts, [&](auto k, const Encoder::Fact *a, const Encoder::Fact *b) {
+        if (!a)
+          return;
+        if (std::optional<Encoder::Fact> both = b ? Encoder::join(*a, *b) : std::nullopt)
+          f.set(k, *both);
+        else
+          f.eraseObject(k.first);
+      });
+    }
     return f;
-  }
-
-  // Adds to facts what cond, which holds on the path, makes equal to a constant.
-  void learn(Term cond, encode::Encoder::Facts &facts) {
-    t.equalities(cond, true, [&](const Term &x, const Term &c) {
-      facts.set(encode::Encoder::key(x), {c, x});
-    });
   }
 
   // Takes the edge from pred to succ, on which edge holds when it is given.
@@ -691,7 +692,7 @@ private:
       return;
     Arrival a{guard, {}, st, enc.facts};
     if (edge)
-      learn(edge, a.facts);
+      enc.learn(edge, a.facts);
     std::swap(enc.facts, a.facts); // the phis take their values on the edge
     for (PHINode &phi : succ->phis())
       a.phiValues.push_back(enc.value(phi.getIncomingValueForBlock(pred)));
@@ -701,8 +702,10 @@ private:
 
   void terminator(Frame &frame, Instruction &term, Term guard, const memory::State &st) {
     BasicBlock *bb = term.getParent();
-    if (auto *br = dyn_cast<BranchInst>(&term)) {
-      if (br->isUnconditional() || br->getSuccessor(0) == br->getSuccessor(1)) {
+    if (auto *br = dyn_cast<UncondBrInst>(&term)) {
+      arrive(frame, bb, br->getSuccessor(), guard, st);
+    } else if (auto *br = dyn_cast<CondBrInst>(&term)) {
+      if (br->getSuccessor(0) == br->getSuccessor(1)) {
         arrive(frame, bb, br->getSuccessor(0), guard, st);
         return;
       }
@@ -759,7 +762,7 @@ private:
       for (const InlineAsm::ConstraintInfo &ci : ia->ParseConstraints())
         if ((ci.Type == InlineAsm::isOutput && ci.isIndirect) ||
             (ci.Type == InlineAsm::isClobber && ci.Codes[0] == "{memory}"))
-          throw Unsupported("inline asm that may write memory at " + ir::location(c).str());
+          throw Unsupported("inline asm that may write memory at " + ir::location(c).display());
       if (!c.getType()->isVoidTy())
         enc.bind(&c, enc.fresh(c.getType(), "asm@" + ir::location(c).str()));
       return guard;
@@ -772,10 +775,10 @@ private:
     if (!callee) {
       callee = dyn_cast<Function>(c.getCalledOperand()->stripPointerCasts());
       if (!callee)
-        throw Unsupported("indirect call at " + ir::location(c).str());
+        throw Unsupported("indirect call at " + ir::location(c).display());
       if (!callee->isDeclaration())
-        throw Unsupported("call to " + callee->getName().str() +
-                          " with a mismatched signature at " + ir::location(c).str());
+        throw Unsupported("call to " + llvm::demangle(callee->getName().str()) +
+                          " with a mismatched signature at " + ir::location(c).display());
     }
     StringRef name = callee->getName();
     std::string tag = name.str() + "@" + ir::location(c).str();
@@ -853,16 +856,19 @@ private:
     if (name == "setjmp" || name == "_setjmp" || name == "__sigsetjmp" || name == "sigsetjmp" ||
         name == "longjmp" || name == "_longjmp" || name == "siglongjmp" ||
         name == "__longjmp_chk")
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // Threads are not modelled yet (#49): the thread function would never
     // run, so a violation only it reaches would be missed.
     if (name == "pthread_create")
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // These write a formatted string, or what they scan, through a va_list,
     // which a bodyless call does not do (models/printf.c has the ones that
     // print to memory), so they refuse too.
     if (writesThroughVaList(name))
-      throw Unsupported("call to " + name.str() + " at " + ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " at " +
+                        ir::location(c).display());
     // From ir's lowering of longjmp: a jump no frame on the stack resumes.
     // Inner frames return for their caller to try; the outermost has none.
     if (name == "__vereda_longjmp_unmatched") {
@@ -874,7 +880,7 @@ private:
     }
     if (name == "__vereda_longjmp_unsupported")
       throw Unsupported("longjmp back past a value its setjmp needs in " +
-                        c.getFunction()->getName().str());
+                        llvm::demangle(c.getFunction()->getName().str()));
     if (name == "malloc" || name == "calloc") {
       allocateHeap(c, name, guard, st);
       return guard;
@@ -916,7 +922,7 @@ private:
     if (name == "__VERIFIER_assume") {
       trace.push_back({Step::Assumption, guard, ir::location(c), ir::callArgumentText(c), {}});
       Term holds = enc.isTrue(c.getArgOperand(0));
-      learn(holds, enc.facts);
+      enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
     if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
@@ -929,7 +935,7 @@ private:
       // front end treats it as the assertion it was meant to be.
       Term holds = enc.isTrue(c.getArgOperand(0));
       if (!counts(false)) {
-        learn(holds, enc.facts);
+        enc.learn(holds, enc.facts);
         return t.land(guard, holds);
       }
       assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
@@ -954,8 +960,8 @@ private:
     // one are mostly libgcc's complex arithmetic (__muldc3), whose result C
     // defines, so a nondet one would give wrong FAILEDs.
     if (c.getType()->isStructTy())
-      throw Unsupported("call to " + name.str() + " returning a struct at " +
-                        ir::location(c).str());
+      throw Unsupported("call to " + llvm::demangle(name.str()) + " returning a struct at " +
+                        ir::location(c).display());
     // An unknown external returns an unconstrained value and may write all
     // of each object it gets a pointer to (read, fgets, ioctl), except a
     // constant and what its attributes, which LLVM infers for the C library,
@@ -972,7 +978,7 @@ private:
     // does not read, so they write nothing here and keep the rest of an
     // object holding one.
     if (warned.insert(callee).second)
-      util::warning("no body for function " + name);
+      util::warning("no body for function " + llvm::demangle(name.str()));
     unsigned params = c.getFunctionType()->getNumParams(), end = c.arg_size();
     StringRef f;
     bool format = c.getFunctionType()->isVarArg() && params &&
@@ -1165,7 +1171,7 @@ private:
     bool x64 = isX86_64(c);
     if (c.getCallingConv() != CallingConv::C)
       throw Unsupported("variadic call with another calling convention at " +
-                        ir::location(c).str());
+                        ir::location(c).display());
     const DataLayout &dl = mem.layout();
     unsigned bits = mem.pointerBits(), slot = x64 ? 8 : 4, gp = 0, fp = 48;
     uint64_t onStack = 0, named = 0;
@@ -1180,7 +1186,7 @@ private:
           !(byval || isFP || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
-                          " at " + ir::location(c).str());
+                          " at " + ir::location(c).display());
       if (x64 && !byval && isFP && fp < 176) {
         where.push_back({true, fp});
         fp += 16;
@@ -1225,7 +1231,7 @@ private:
   // first variadic argument on the stack.
   void vaStart(CallBase &c, memory::State &st) {
     if (varArgs.empty() || varArgs.back().callee != stack.back())
-      throw Unsupported("va_start outside a variadic call at " + ir::location(c).str());
+      throw Unsupported("va_start outside a variadic call at " + ir::location(c).display());
     const VarArgs &va = varArgs.back();
     Term ap = enc.value(c.getArgOperand(0));
     Type *ptr = c.getArgOperand(0)->getType(), *i32 = Type::getInt32Ty(c.getContext());
@@ -1394,16 +1400,17 @@ private:
     }
     if (auto *cx = dyn_cast<AtomicCmpXchgInst>(&inst)) {
       Type *ty = cx->getNewValOperand()->getType();
-      if (!ty->isIntegerTy() || ty->isIntegerTy(1))
+      if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) && !ty->isPointerTy())
         throw Unsupported("instruction " + encode::describe(&inst));
       Term p = enc.value(cx->getPointerOperand());
-      Term old = mem.load(st, p, ty);
-      Term ok = t.eq(old, enc.value(cx->getCompareOperand()));
+      Term old = mem.load(st, p, ty), expected = enc.value(cx->getCompareOperand());
+      // Pointers compare as icmp eq compares them.
+      Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(old, expected);
       if (cx->isWeak()) // may fail even when equal
         ok = t.land(ok, enc.fresh(Type::getInt1Ty(inst.getContext()), "cmpxchg_weak"));
       writes(inst, t.land(guard, ok), p);
       mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()), old), ty);
-      // {old, success}: a struct of integers packs field 0 into the low bits.
+      // {old, success}: a packed struct holds field 0 in the low bits.
       enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), old));
       return true;
     }
