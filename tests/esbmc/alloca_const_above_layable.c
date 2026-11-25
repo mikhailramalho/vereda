@@ -15,6 +15,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/alloca_const_above_layable
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: alloca: size exceeds PTRDIFF_MAX
-// Vereda: unmet EXPECT: alloca: size exceeds PTRDIFF_MAX
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

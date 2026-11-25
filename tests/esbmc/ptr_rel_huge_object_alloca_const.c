@@ -22,6 +22,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/ptr_rel_huge_object_alloca_const
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: alloca: size exceeds PTRDIFF_MAX
-// Vereda: unmet EXPECT: alloca: size exceeds PTRDIFF_MAX
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

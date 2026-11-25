@@ -15,5 +15,5 @@ int main(void)
   return a[0][0][0] - 1;
 }
 // Imported from ESBMC regression/esbmc/vla_no_size_check
-// RUN: -m32
+// RUN: --no-vla-size-check -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

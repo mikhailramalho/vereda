@@ -142,6 +142,6 @@ int main(int argc, char *argv[]){
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: !overflow
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: !overflow
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict FAILED

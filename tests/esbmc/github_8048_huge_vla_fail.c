@@ -14,7 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8048_huge_vla_fail
-// RUN: -m32
+// RUN: --no-vla-size-check -m32
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

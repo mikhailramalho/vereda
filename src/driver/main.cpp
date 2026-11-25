@@ -53,6 +53,8 @@ static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> noPointerCheck(
     "no-pointer-check", cl::desc("Do not check writes into string literals and const objects"));
+static cl::opt<bool> noVLASizeCheck(
+    "no-vla-size-check", cl::desc("Do not report stack allocations above PTRDIFF_MAX"));
 static cl::opt<bool> incrementalBMC(
     "incremental-bmc",
     cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
@@ -193,7 +195,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
-                                     !noPointerCheck};
+                                     !noPointerCheck, !noVLASizeCheck};
     if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
       return finish(unknown(toString(std::move(e))));
     symbols = enc.symbolCount();
