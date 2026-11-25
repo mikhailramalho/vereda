@@ -651,6 +651,18 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
     return it->second.second;
   if (lambdas.count(arr.id()))
     return reduce(arr, index);
+  // A read of a non-nested ite whose arms include a lambda (or two constant
+  // arrays) reduces each arm directly instead of constraining the lambda
+  // array symbol at every read index.
+  if (const Node *n = node(arr); n && n->op == Op::Ite) {
+    const Node *nb = node(n->b), *nc = node(n->c);
+    bool flat = (!nb || nb->op != Op::Ite) && (!nc || nc->op != Op::Ite);
+    if (flat && (lambdas.count(n->b.id()) || lambdas.count(n->c.id()) ||
+                 (filled.count(n->b.id()) && filled.count(n->c.id())))) {
+      Ref c = n->a, b = n->b, d = n->c;
+      return ite(c, select(b, index), select(d, index));
+    }
+  }
   bool fresh = !memo.count({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
   Ref r = make({Op::Select, arr, index});
   if (auto u = under.find(arr.id()); fresh && u != under.end())

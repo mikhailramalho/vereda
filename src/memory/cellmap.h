@@ -41,6 +41,9 @@ public:
   }
   void set(Key k, const C &c) { root = insert(root, pack(k), c); }
   void eraseObject(uint64_t o) { root = erase(root, pack({o, 0}), pack({o, ~uint64_t(0)})); }
+  void eraseRange(uint64_t o, uint64_t lo, uint64_t hi) {
+    root = erase(root, pack({o, lo}), pack({o, hi}));
+  }
   void clear() { root.reset(); }
 
   // f(key, cell) in key order.

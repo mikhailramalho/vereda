@@ -15,5 +15,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9356
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: over 300 s in CI
+// Vereda: unmet EXPECT: ^  dereference failure: array bounds violated$
 // MODE: KNOWNBUG
+// Vereda: verdict SUCCESSFUL
