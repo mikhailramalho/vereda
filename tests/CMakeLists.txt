@@ -18,6 +18,10 @@ if(TARGET libvereda)
   target_link_libraries(vereda-table-patterns PRIVATE libvereda)
   add_test(NAME vereda/table_patterns COMMAND vereda-table-patterns)
   set_tests_properties(vereda/table_patterns PROPERTIES LABELS vereda TIMEOUT 60)
+  add_executable(vereda-store-reads store_reads.cpp)
+  target_link_libraries(vereda-store-reads PRIVATE libvereda)
+  add_test(NAME vereda/store_reads COMMAND vereda-store-reads)
+  set_tests_properties(vereda/store_reads PROPERTIES LABELS vereda TIMEOUT 60)
   add_test(NAME vereda/banner
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")

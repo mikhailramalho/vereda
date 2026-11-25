@@ -225,7 +225,7 @@ Ref Terms::filledWith(const Ref &e) const {
 }
 
 Ref Terms::make(Node n) {
-  Key k{n.op, n.a.id(), n.b.id(), n.c.id(), n.x, n.y};
+  Key k{n.op, n.a.id(), n.b.id(), n.c.id(), n.op == Op::Store ? 0 : n.x, n.y};
   uint32_t h = hashKey(k);
   if (!memoBuckets.empty()) {
     size_t mask = memoBuckets.size() - 1;
@@ -238,6 +238,11 @@ Ref Terms::make(Node n) {
     }
   }
   Ref r(build(n));
+  // Constant stores cache a parent entry; this metadata is not part of the key.
+  if (n.op == Op::Store && constant(n.b)) {
+    auto it = nodes.find(n.a.id());
+    n.x = it == nodes.end() ? 0 : it->second + 1;
+  }
   if (!lambdas.empty() && (n.op == Op::Store || n.op == Op::Ite)) {
     std::vector<Ref> reads;
     auto add = [&](const Ref &l) {
@@ -892,8 +897,8 @@ Ref Terms::rebuild(const Node &n, const Ref &a, const Ref &b, const Ref &c) {
 }
 
 Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
+  const Node *n = steps ? node(arr) : nullptr;
   for (; steps > 0; --steps) {
-    const Node *n = node(arr);
     if (n && n->op == Op::Ite) { // a join: both sides must hold the same value
       --steps;
       Ref a = n->b, b = n->c, x = read(a, i, steps), y = x ? read(b, i, steps) : Ref();
@@ -907,6 +912,7 @@ Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
     if (*cs == i)
       return n->c;
     arr = n->a;
+    n = n->x ? &entries[n->x - 1].n : node(arr);
   }
   auto it = filled.find(arr.id());
   return it != filled.end() ? it->second.second : Ref();
