@@ -190,6 +190,8 @@ public:
 private:
   encode::Term bytePtr(encode::Term p, uint64_t i);
   encode::Term base(encode::Term obj);
+  encode::Term isNull(encode::Term p);
+  encode::Term isNullMemo(encode::Term p, llvm::DenseMap<const void *, encode::Term> &memo);
   bool hasPadding(llvm::Type *ty) const;
   using Key = std::pair<uint64_t, uint64_t>;
   std::optional<Key> key(encode::Term p) const;
@@ -280,6 +282,8 @@ private:
   std::vector<Object> objects; // index = object id; 0 is null
   encode::Term bases;    // object id -> base address, as an uninterpreted array
   encode::Term end;      // first address after the last object
+  uint64_t reserved = 1; // upper bound on end while endBounded holds
+  bool endBounded = true;
   llvm::DenseMap<const llvm::GlobalValue *, encode::Term> globals;
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
@@ -298,6 +302,9 @@ private:
   llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
+  // Pointers whose null comparison simplifies without expanding fromAddress()
+  // or reading bases: pointer (kept alive) -> equivalent (p == null()).
+  llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> nullEq;
   unsigned fresh = 0;
   encode::Term context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
