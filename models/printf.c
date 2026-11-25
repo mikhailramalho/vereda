@@ -239,13 +239,24 @@ static size_t format(char *s, size_t cap, const char *f, va_list ap) {
                       : (prec < 0 ? 16 : digits) + 12;
       if (most < (unsigned)width)
         most = width;
+      unsigned lo = (unsigned)width > 1 ? (unsigned)width : 1;
       unsigned k = __VERIFIER_nondet_uint();
-      __VERIFIER_assume(k >= 1 && k >= (unsigned)width && k <= most);
-      for (unsigned i = 0; i < k; ++i) {
-        char c = __VERIFIER_nondet_char();
-        __VERIFIER_assume(c != 0);
-        PUT(c);
+      if (k < lo)
+        k = lo;
+      if (k > most)
+        k = lo;
+      if (len < cap) {
+        size_t avail = cap - len;
+        for (unsigned i = 0; i < most; ++i) {
+          if ((i < k) & (i < avail)) {
+            char c = __VERIFIER_nondet_char();
+            if (!c)
+              c = 1;
+            s[len + i] = c;
+          }
+        }
       }
+      len += k;
     }
   }
   return len;
