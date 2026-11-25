@@ -81,18 +81,38 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   Term b = t.symbol("base#" + std::to_string(id), s.mkBVSort(ptrBits));
   Term e = t.add(b, size);
   // Ordered with a gap, aligned, not wrapping: objects never overlap, and a
-  // one-past-the-end address belongs to its own object only. These bind
-  // only where the object exists, or a size on one path would remove
-  // inputs from every path.
+  // one-past-the-end address belongs to its own object only. A constant-size
+  // object that fits within a quarter of the address space alongside earlier
+  // reserved objects gets its layout unconditionally so path guards stay out
+  // of the global solver context; objects.back().exists still records exists
+  // so fromAddress() never maps an address into an unallocated object.
+  // Symbolic or huge allocations bind layout only where exists holds, or a
+  // size on one path would remove inputs from every path.
+  bool unconditional = t.isTrue(exists);
+  if (!t.isFalse(exists)) {
+    using U = unsigned __int128;
+    U limit = U(1) << (ptrBits - 2);
+    if (const APInt *sz = t.constant(size); sz && sz->getActiveBits() <= 64) {
+      U need = U(sz->getZExtValue()) + std::max<uint64_t>(align, 1);
+      if (endBounded && U(reserved) + need <= limit) {
+        reserved += static_cast<uint64_t>(need);
+        unconditional = true;
+      } else {
+        endBounded = false;
+      }
+    } else {
+      endBounded = false;
+    }
+  }
   Term layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
   if (align > 1)
     layout = t.land(layout, t.eq(t.bvand(b, t.bv(align - 1, ptrBits)),
                                        t.bv(0, ptrBits)));
-  t.addConstraint(t.implies(exists, layout));
+  t.addConstraint(unconditional ? layout : t.implies(exists, layout));
   Term obj = t.bv(id, ObjBits);
   t.addConstraint(t.eq(base(obj), b));
   objects.push_back({b, size, exists, exposed});
-  end = t.ite(exists, e, end); // an object not allocated takes no space
+  end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
 
@@ -123,9 +143,39 @@ Term Memory::global(const GlobalValue *g) const {
 
 Term Memory::address(Term p) { return t.add(base(object(p)), offset(p)); }
 
+Term Memory::isNullMemo(Term p, DenseMap<const void *, Term> &memo) {
+  if (auto it = nullEq.find(p.id()); it != nullEq.end())
+    return it->second.second;
+  if (auto it = memo.find(p.id()); it != memo.end())
+    return it->second;
+  Term c, x, y;
+  if (!t.choice(p, c, x, y))
+    return {};
+  Term lx = isNullMemo(x, memo), ly = isNullMemo(y, memo);
+  Term r;
+  if (lx || ly)
+    r = t.ite(c, lx ? lx : t.eq(x, null()), ly ? ly : t.eq(y, null()));
+  memo[p.id()] = r;
+  return r;
+}
+
+Term Memory::isNull(Term p) {
+  if (!nullEq.empty()) {
+    DenseMap<const void *, Term> memo;
+    if (Term r = isNullMemo(p, memo))
+      return r;
+  }
+  return t.eq(p, null());
+}
+
 Term Memory::equal(Term p, Term q) {
-  // Null is equal by both measures, so only a nonzero offset in object 0
-  // needs the addresses; a test against null stays a test on the bits.
+  // Null is equal by both measures: no allocated object holds address 0, and
+  // an outside pointer in object 0 has nonzero offset (address != 0).
+  Term z = null();
+  if (p == z)
+    return isNull(q);
+  if (q == z)
+    return isNull(p);
   auto out = [&](Term x) {
     return t.land(t.eq(object(x), t.bv(0, ObjBits)), t.lnot(t.eq(offset(x), t.bv(0, ptrBits))));
   };
@@ -135,6 +185,10 @@ Term Memory::equal(Term p, Term q) {
 }
 
 Term Memory::fromAddress(Term a) {
+  // Address 0 is null: objects start above 0 (end starts at 1), so no
+  // allocated object can hold 0.
+  if (const APInt *v = t.constant(a); v && v->isZero())
+    return null();
   // One comparison per exposed object created so far. The object and the
   // offset are built apart, so that object() of the result is a choice
   // among constants.
@@ -161,6 +215,9 @@ Term Memory::fromAddress(Term a) {
   Term r = ptr(obj, off);
   if (Term o = object(r); !t.constant(o))
     fromInteger[o.id()] = o;
+  // No allocated object holds address 0, so fromAddress(a) == null() iff a == 0.
+  if (!t.constant(r))
+    nullEq[r.id()] = {r, t.eq(a, t.bv(0, ptrBits))};
   return r;
 }
 
@@ -640,7 +697,14 @@ Term Memory::load(State &st, Term p, Type *ty) {
     // which an object allocated since may now cover: the address is
     // converted now, as a fresh conversion would be (#75).
     Term isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
-    return t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
+    Term r = t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
+    // r == null() iff bits == 0 and (isInt || obj == 0): avoids both
+    // fromAddress(bits) and select(bases, obj), while still distinguishing
+    // a wild out-of-bounds pointer (obj != 0, bits == 0) from null.
+    if (!t.constant(r) && !nullEq.count(r.id()))
+      nullEq[r.id()] = {r, t.land(t.eq(bits, t.bv(0, ptrBits)),
+                                  t.lor(isInt, t.eq(obj, t.bv(0, ObjBits))))};
+    return r;
   }
   if (ty->isIntegerTy(1))
     return t.eq(t.extract(bits, 0, 0), t.bv(1, 1));
