@@ -13,5 +13,5 @@ int main()
 // Needs: --parallel-solving --k-induction
 // RUN: --parallel-solving --k-induction
 // MODE: FUTURE
-// EXPECT: ^\*\* 2 of 2 properties failed$
+// EXPECT: ^Properties: 2 checked, \d+ passed, 2 failed, \d+ not checked$
 // Vereda: verdict none

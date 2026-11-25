@@ -15,6 +15,6 @@ int main()
 // Needs: --falsification
 // RUN: --falsification --multi-property --max-k-step 10
 // MODE: FUTURE
-// EXPECT: ^\*\* 2 of 2 properties failed$
+// EXPECT: ^Properties: 2 checked, \d+ passed, 2 failed, \d+ not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

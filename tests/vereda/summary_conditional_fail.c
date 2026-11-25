@@ -1,5 +1,5 @@
 // A conditional write of a nondet value: two written elements may differ.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

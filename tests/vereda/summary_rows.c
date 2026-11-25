@@ -3,7 +3,7 @@
 // outer loop, and is summarised in each outer iteration. The checks read a
 // row at the nondet index of their own summary; a read reaches only that
 // row's summary, and the copy's element folds to the one it was copied from.
-// EXPECT: ^Summarised 3 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 3 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

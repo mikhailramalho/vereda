@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_verifier_assert
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

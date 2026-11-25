@@ -17,6 +17,6 @@ int main()
 // Needs: --smt-during-symex
 // RUN: --multi-property --smt-during-symex
 // MODE: FUTURE
-// EXPECT: ^\[Counterexample\]$
+// EXPECT: ^\[COUNTEREXAMPLE\]$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

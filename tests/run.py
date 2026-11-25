@@ -68,8 +68,8 @@ NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|
 NEAR_LIMIT = 0.9
 
 VERDICT = re.compile(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", re.MULTILINE)
-WALK = re.compile(r"^Walk time: ([\d.]+)s .*peak memory (\d+) MB", re.MULTILINE)
-SOLVE = re.compile(r"^(?:\[PROGRESS\] )?Solving time: ([\d.]+)s \(peak memory (\d+) MB",
+WALK = re.compile(r"^(?:\[INFO\] )?Walk time: ([\d.]+)s .*peak memory (\d+) MB", re.MULTILINE)
+SOLVE = re.compile(r"^(?:\[(?:INFO|PROGRESS)\] )?Solving time: ([\d.]+)s \(peak memory (\d+) MB",
                    re.MULTILINE)
 
 

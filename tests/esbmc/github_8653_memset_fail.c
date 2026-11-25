@@ -20,5 +20,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8653_memset_fail
 // RUN: --no-pointer-check --multi-property
-// EXPECT: ^\*\* 1 of 1 properties failed$
+// EXPECT: ^Properties: 1 checked, \d+ passed, 1 failed, \d+ not checked$
 // EXPECT: ^VERIFICATION FAILED$

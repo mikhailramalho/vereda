@@ -16,5 +16,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/vla_pointer_to_pointer_fail
 // RUN: --multi-property
-// EXPECT: ^\*\* 1 of [0-9]+ properties failed
+// EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$

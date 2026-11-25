@@ -172,21 +172,21 @@ def assert_messages(src):
     return messages
 
 
-def as_c(regex):
-    """An expectation on ESBMC's counterexample made one on Vereda's, which
-    prints it as C: the separator line goes, a State header becomes a
-    comment, an assignment 'x = 7 (bits)' becomes 'x = 7; // bits' and
-    bits alone '(bits)' become '// bits'
-    ('x = &y' becomes 'x = &y;'; an aggregate value stays as it is). The
-    Assumption and Violated property blocks, now inside a block comment,
-    keep their lines."""
+def as_vereda(regex):
+    """Translate ESBMC trace separators, values and summary to Vereda's layout."""
     regex = regex.replace(r"\n-+\n", r"\n")
-    regex = re.sub(r"\\n(Assumption:|Violated property:)", r"\\n/\\*\\n\1", regex)
-    regex = re.sub(r"(^\^?|\\n)State ", r"\1// State ", regex)
+    regex = regex.replace(r"\[Counterexample\]", r"\[COUNTEREXAMPLE\]")
+    regex = regex.replace(r"\*\* Results:", r"\[RESULTS\]")
+    regex = regex.replace(r"\*\* ", "")
+    count = r"(?:[0-9]+|\\d\+|\[0-9\]\+)"
+    regex = re.sub("(" + count + ") of (" + count + ") properties failed",
+                   lambda m: "Properties: " + m[2] + r" checked, \d+ passed, " + m[1]
+                   + r" failed, \d+ not checked", regex)
+    if regex.startswith("^Unwinding loop"):
+        regex = regex.replace("^Unwinding loop", r"^\[PROGRESS\] Unwinding loop", 1)
     value = r"( = (?:\\.|[^\s\\])+)"
     regex = re.sub(value + r" \\\(([^\\]*)(?:\\\))?",
-                   lambda m: f"{m[1]}; //" + (f" {m[2]}" if m[2] else ""), regex)
-    # The bits alone, '(01100011)': the comment after the statement.
+                   lambda m: m[1] + "; //" + (f" {m[2]}" if m[2] else ""), regex)
     regex = re.sub(r"\\\(((?:[01]{8} )*[01]{8})\\\)", r"// \1", regex)
     if "\\{" not in regex:
         regex = re.sub(r"^(\^(?:  |\\s\+)\S+)" + value + r"\$$", r"\1\2;$", regex)
@@ -195,9 +195,9 @@ def as_c(regex):
 
 def expectations(lines, src):
     """The output regexes of a test.desc, without the ones only ESBMC's
-    output matches, made to match Vereda's counterexample (as_c)."""
+    output matches, made to match Vereda's counterexample."""
     messages = assert_messages(src)
-    return [as_c(r.strip()) for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
+    return [as_vereda(r.strip()) for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
 
 
 def outside(test_dir, path):
@@ -543,6 +543,8 @@ ESBMC_ONLY = [
 
 # Single tests left out, by ESBMC path, with the reason.
 SKIPPED_TESTS = {
+    "esbmc/vasprintf_unbounded_s_no_overflow": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
+    "esbmc/vasprintf_unbounded_s_overflow_fail": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
     "z3/github_10316": "rounds ties away from zero, which C cannot set",
     "z3/github_10316_fail": "rounds ties away from zero, which C cannot set",
 }

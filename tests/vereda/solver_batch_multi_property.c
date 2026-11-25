@@ -2,13 +2,13 @@
 // checks, mutually exclusive failing checks (needing multiple SAT rounds),
 // duplicate failing conditions, and a safe check.
 // RUN: --multi-property
-// EXPECT: (\[Counterexample\][\s\S]*){3}
+// EXPECT: (\[COUNTEREXAMPLE\][\s\S]*){3}
 // EXPECT: SUCCESS +\[main\.assertion\.1\]
 // EXPECT: FAILED +\[main\.assertion\.2\]
 // EXPECT: FAILED +\[main\.assertion\.3\]
 // EXPECT: SUCCESS +\[main\.assertion\.4\]
 // EXPECT: FAILED +\[main\.assertion\.5\]
-// EXPECT: \*\* 3 of 5 properties failed
+// EXPECT: Properties: 5 checked, 2 passed, 3 failed, 0 not checked
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

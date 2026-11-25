@@ -27,7 +27,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/nondet_union_slot_const_prop_fail
 // RUN: --unwind 3
-// EXPECT: ^// State 1 file .*nondet_union_slot_const_prop_fail\.c line 25 column 3 function main thread 0$
+// EXPECT: ^State 1 file .*nondet_union_slot_const_prop_fail\.c line 25 column 3 function main thread 0$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^State 1 file .*nondet_union_slot_const_prop_fail\.c line 25 column 3 function main thread 0$
 // MODE: FUTURE

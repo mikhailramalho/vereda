@@ -40,8 +40,8 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
                          const checks::Checks &checks, unsigned violated, raw_ostream &os,
                          bool showLibraryStates) {
   os << "\n";
-  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[Counterexample]";
-  os << "\n\n";
+  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[COUNTEREXAMPLE]";
+  os << "\n";
   unsigned n = 0;
   StringMap<std::string> demangled;
   auto demangleFn = [&](StringRef fn) -> StringRef {
@@ -78,9 +78,9 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       break;
     const ir::SourceLoc &loc = trace.loc(step);
     if (step.kind == walker::Step::Assumption) {
-      os << "\n/*\nAssumption:\n  ";
+      os << "\nAssumption:\n  ";
       writeLoc(loc);
-      os << "\n  " << trace.text(step) << "\n*/\n";
+      os << "\n  " << trace.text(step) << "\n";
       continue;
     }
     StringRef file = loc.file;
@@ -150,18 +150,18 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     else
       prev.wide.clear();
 
-    os << "\n// State " << ++n << " ";
+    os << "\nState " << ++n << " ";
     writeLoc(loc);
     os << " thread 0\n  ";
     switch (kind) {
     case LastValue::Unknown:
-      os << "// " << text << " = ?";
+      os << text << " = ?";
       break;
     case LastValue::Bool:
       os << text << " = " << (val ? "true;" : "false;");
       break;
     case LastValue::Wide:
-      os << "// " << text << " = 0b" << prev.wide;
+      os << text << " = 0b" << prev.wide;
       break;
     case LastValue::UInt64:
       // An unsuffixed decimal constant past LLONG_MAX has no type.
@@ -184,15 +184,11 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     os << "\n";
   }
   const checks::Check &c = checks[violated];
-  os << "\n// State " << ++n << " ";
-  writeLoc(c.loc);
-  os << " thread 0\n"
-     << "/*\nViolated property:\n  ";
+  os << "\nViolated property:\n  ";
   writeLoc(c.loc);
   os << "\n  " << c.comment << "\n";
   if (!c.expr.empty())
     os << "  " << c.expr << "\n";
-  os << "*/\n\n";
 }
 
 } // namespace vereda::witness

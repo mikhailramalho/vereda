@@ -1,6 +1,6 @@
 // A store at a symbolic index after a summarised loop: a read below it
 // goes through the store to the summary.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern unsigned __VERIFIER_nondet_uint(void);

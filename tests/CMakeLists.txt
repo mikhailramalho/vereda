@@ -8,6 +8,9 @@ set(REGRESS_TIMEOUT 300 CACHE STRING "Per-test timeout in seconds")
 # stops answering instead of failing the job.
 set(REGRESS_MEMORY_LIMIT 4096 CACHE STRING "Per-test memory limit in MB (address space)")
 
+add_test(NAME vereda/output_readers COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/output_readers.py")
+set_tests_properties(vereda/output_readers PROPERTIES LABELS vereda)
+
 file(GLOB suites LIST_DIRECTORIES true RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
      "${CMAKE_CURRENT_SOURCE_DIR}/*")
 foreach(suite IN LISTS suites)

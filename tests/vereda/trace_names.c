@@ -6,7 +6,7 @@
 // EXPECT: ^  u\.i = 300; //
 // EXPECT-NOT: u\.c =|bf\.
 // EXPECT: ^  v = 2; //
-// EXPECT: ^  x = \S+; // [01 ]+\n\n// State \d+ file \S+ line 16 column \d+ function main thread 0\n  g = 
+// EXPECT: ^  x = \S+; // [01 ]+\n\nState \d+ file \S+ line 16 column \d+ function main thread 0\n  g =
 extern void __VERIFIER_assert(int);
 union U { char c; int i; } u;
 struct B { unsigned a : 3, b : 5; } bf;

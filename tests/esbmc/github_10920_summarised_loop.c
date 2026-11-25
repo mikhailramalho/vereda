@@ -14,7 +14,7 @@ int main()
 // Needs: --all-witnesses
 // RUN: --all-witnesses
 // MODE: FUTURE
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 4 witnesses
 // EXPECT: ^VERIFICATION FAILED$
