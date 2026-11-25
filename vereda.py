@@ -207,13 +207,15 @@ def main():
         sys.stdout.flush()
         return subprocess.call(cmd)
 
+    if subprocess.call([binary, "--version"]) != 0:
+        return ERROR_EXIT
     with tempfile.TemporaryDirectory() as tmp:
         ir = compile_and_link(args, flags, inputs, tmp, run)
         if ir is None:
             return ERROR_EXIT
         if args.keep_ir:
             shutil.copy(ir, inputs[0] + ".ll")
-        return run([binary] + forwarded + [ir])
+        return run([binary, "--no-banner"] + forwarded + [ir])
 
 
 if __name__ == "__main__":

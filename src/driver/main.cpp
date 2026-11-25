@@ -7,6 +7,7 @@
 #include "walker/walker.h"
 #include "witness/counterexample.h"
 #include "witness/witness.h"
+#include "vereda-version.h"
 
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
@@ -25,6 +26,8 @@ using vereda::util::info;
 
 static cl::opt<std::string> inputFile(cl::Positional, cl::desc("<file.bc|file.ll>"),
                                       cl::Required);
+static cl::opt<bool> noBanner("no-banner", cl::Hidden,
+                             cl::desc("Banner already printed by the front end"));
 static cl::opt<bool> dumpIROnly("dump-ir-only", cl::desc("Print the IR after the pass list and exit"));
 static cl::opt<bool> dumpIRToo("dump-ir-too", cl::desc("Print the IR after the pass list, then verify"));
 static cl::opt<bool> dumpSMTOnly("dump-smt-only",
@@ -91,7 +94,8 @@ static cl::opt<camada::SolverKind> solverKind(
 
 static void printVersion(raw_ostream &os) {
   os << "Vereda " VEREDA_VERSION " (LLVM " LLVM_VERSION_STRING ", camada " VEREDA_CAMADA_VERSION
-        ")\n";
+        ", commit " VEREDA_COMMIT ")\n";
+  os.flush();
 }
 
 // Prints a dump, or writes it to name in --dump-dir. Returns false on a
@@ -341,7 +345,7 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": --dump-dir needs a --dump-* flag\n";
     return ErrorExit;
   }
-  if (!((dumpIROnly || dumpSMTOnly) && dumpDir.empty()))
+  if (!noBanner && !((dumpIROnly || dumpSMTOnly) && dumpDir.empty()))
     printVersion(outs());
 
   progress("Loading " + inputFile);
