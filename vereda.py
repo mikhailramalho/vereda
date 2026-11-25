@@ -96,11 +96,12 @@ def physical_lines(source, tmp):
         return source, []
     with open(source, "rb") as f:
         text = f.read()
-    if not LINEMARKER.search(text):
+    stripped, count = LINEMARKER.subn(b"", text)
+    if not count:
         return source, []
     copy = os.path.join(tmp, os.path.basename(source))
     with open(copy, "wb") as f:
-        f.write(LINEMARKER.sub(b"", text))
+        f.write(stripped)
     return copy, ["-fdebug-prefix-map=" + copy + "=" + source]
 
 
@@ -206,7 +207,6 @@ def main():
         sys.stdout.flush()
         return subprocess.call(cmd)
 
-    run([binary, "--version"])
     with tempfile.TemporaryDirectory() as tmp:
         ir = compile_and_link(args, flags, inputs, tmp, run)
         if ir is None:
