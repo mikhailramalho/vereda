@@ -51,6 +51,7 @@ public:
   auto begin() const { return steps.begin(); }
   auto end() const { return steps.end(); }
   size_t size() const { return steps.size(); }
+  void truncate(size_t n) { steps.resize(n); }
   bool empty() const { return steps.empty(); }
 
 private:

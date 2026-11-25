@@ -141,9 +141,9 @@ struct VarArgs {
 class Walk {
 public:
   Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
-       checks::Checks &checks, Trace &trace)
+       checks::Checks &checks, Trace &trace, bool incremental = false)
       : opts(opts), enc(enc), mem(mem), t(enc.terms()), s(enc.solver()), checks(checks),
-        trace(trace), tlii(m.getTargetTriple()) {
+        trace(trace), tlii(m.getTargetTriple()), incremental(incremental) {
     // A summary writes the whole array at once, which another thread could
     // see half written.
     const Function *create = m.getFunction("pthread_create");
@@ -175,6 +175,39 @@ public:
   void report() const {
     if (!summarised.empty())
       util::info() << "Summarised " << summarised.size() << " array loop(s)\n";
+  }
+
+  bool resumable() const { return stopped.has_value(); }
+
+  void advance(Function &f, unsigned bound) {
+    opts.unwind = bound;
+    if (!stopped) {
+      entry(f);
+      return;
+    }
+    Stopped saved = std::move(*stopped);
+    stopped.reset();
+    checks.resize(saved.checks);
+    trace.truncate(saved.trace);
+    claims.erase({saved.loop, nullptr});
+    stack.push_back(&f);
+    FunctionInfo &fi = info(f);
+    loop(saved.frame, fi, saved.loop, saved.iteration);
+    if (!stopped) {
+      bool after = false;
+      for (BasicBlock *bb : fi.regionBlocks[nullptr]) {
+        if (after) {
+          if (Loop *l = fi.li.getLoopFor(bb))
+            loop(saved.frame, fi, l);
+          else
+            block(saved.frame, *bb);
+          if (stopped)
+            break;
+        }
+        after |= bb == saved.loop->getHeader();
+      }
+    }
+    stack.pop_back();
   }
 
 private:
@@ -436,6 +469,8 @@ private:
         block(frame, *bb);
       else
         loop(frame, fi, inner);
+      if (stopped)
+        return;
     }
   }
 
@@ -463,7 +498,7 @@ private:
   // during unrolling without --unwind, letting term folding end it instead.
   static constexpr uint64_t SmallConstantLoop = 64;
 
-  void loop(Frame &frame, FunctionInfo &fi, Loop *l) {
+  void loop(Frame &frame, FunctionInfo &fi, Loop *l, unsigned start = 0) {
     BasicBlock *header = l->getHeader();
     // The paths that reach an endless loop end there, as at unreachable,
     // and its header keeps the IR, debug info and loop numbers as they were.
@@ -471,7 +506,7 @@ private:
       frame.arrivals.erase(header);
       return;
     }
-    if (opts.summarise && summarise(frame, fi, l))
+    if (!start && opts.summarise && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
     // When SCEV knows the loop takes its back edge a small constant number of
@@ -488,13 +523,14 @@ private:
     std::string locDisplay;
     if (opts.showIterations)
       locDisplay = loopLocation(l).display();
-    for (unsigned i = 0;; ++i) {
+    for (unsigned i = start;; ++i) {
       auto it = frame.arrivals.find(header);
       if (it == frame.arrivals.end() || it->second.empty())
         return;
       if (i > 0) {
         Term reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
+          size_t beforeChecks = checks.size(), beforeTrace = trace.size();
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
           // Every path runs l past the bound: until its last iteration, a
           // larger bound only adds iterations of l.
@@ -502,6 +538,14 @@ private:
             if (auto *n = dyn_cast<SCEVConstant>(
                     loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
               checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
+          // Nothing after this prefix has been walked. Keep its live header
+          // instead of rebuilding it at the next bound; exits need fresh walks.
+          if (incremental && !l->getParentLoop() && stack.size() == 1 &&
+              frame.arrivals.size() == 1 && frame.returns.empty() && t.isTrue(reached) &&
+              checks.size() == beforeChecks + 1) {
+            stopped = Stopped{std::move(frame), l, i, beforeChecks, beforeTrace};
+            return;
+          }
           it->second.clear();
           return;
         }
@@ -1802,7 +1846,7 @@ private:
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
 
-  const Options &opts;
+  Options opts;
   encode::Encoder &enc;
   memory::Memory &mem;
   encode::Terms &t;
@@ -1810,6 +1854,14 @@ private:
   checks::Checks &checks;
   Trace &trace;
   TargetLibraryInfoImpl tlii;
+  bool incremental;
+  struct Stopped {
+    Frame frame;
+    Loop *loop;
+    unsigned iteration;
+    size_t checks, trace;
+  };
+  std::optional<Stopped> stopped;
   bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
@@ -1854,6 +1906,32 @@ private:
 };
 
 } // namespace
+
+struct Incremental::Impl {
+  Function &entry;
+  Walk walk;
+  Impl(Function &entry, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
+       checks::Checks &checks, Trace &trace)
+      : entry(entry), walk(*entry.getParent(), opts, enc, mem, checks, trace, true) {}
+};
+
+Incremental::Incremental(Function &entry, const Options &opts, encode::Encoder &enc,
+                         memory::Memory &mem, checks::Checks &checks, Trace &trace)
+    : impl(std::make_unique<Impl>(entry, opts, enc, mem, checks, trace)) {}
+
+Incremental::~Incremental() = default;
+
+bool Incremental::resumable() const { return impl->walk.resumable(); }
+
+Error Incremental::advance(unsigned bound) {
+  try {
+    impl->walk.advance(impl->entry, bound);
+    impl->walk.report();
+  } catch (const Unsupported &e) {
+    return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
+  }
+  return Error::success();
+}
 
 Error walk(Function &entry, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
            checks::Checks &checks, Trace &trace) {
