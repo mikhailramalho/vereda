@@ -263,7 +263,8 @@ private:
   struct Node {
     Op op;
     Ref a, b, c;
-    unsigned x = 0, y = 0; // extract bounds, extension width
+    // Extract bounds or extension width; Store x is its parent entry plus one.
+    unsigned x = 0, y = 0;
   };
   struct Entry {
     Node n;
@@ -282,7 +283,7 @@ private:
   static uint32_t hashKey(const Key &k);
   static bool matches(const Node &n, const Key &k) {
     return n.op == k.op && n.a.id() == k.a && n.b.id() == k.b && n.c.id() == k.c &&
-           n.x == k.x && n.y == k.y;
+           (n.op == Op::Store || n.x == k.x) && n.y == k.y;
   }
   Ref memoFind(const Key &k) const;
   void memoGrow();
