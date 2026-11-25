@@ -543,11 +543,12 @@ static Term byteShift(encode::Terms &t, Term off, unsigned shift, unsigned n) {
   return t.shl(t.zext(t.extract(off, shift - 1, 0), n - shift), t.bv(3, n));
 }
 
-State::Cell Memory::readOwn(uint64_t object, const State::Cell &own, Term at) {
+State::Cell Memory::readOwn(uint64_t object, const State::Cell &own, Term at,
+                            bool withProvenance) {
   Term i = index(object, at);
   unsigned shift = shifts.lookup(object);
   if (!shift)
-    return {t.select(own.data, i), t.select(own.prov, i)};
+    return {t.select(own.data, i), withProvenance ? t.select(own.prov, i) : Term()};
   Term elem = t.select(own.data, i);
   if (const APInt *j = t.constant(t.extract(offset(at), shift - 1, 0))) {
     unsigned lo = 8 * j->getZExtValue();
@@ -667,12 +668,12 @@ void Memory::storeArrays(State &st, uint64_t object, Term at, const State::Cell 
   st.prov = t.store(st.prov, at, c.prov);
 }
 
-State::Cell Memory::readArrays(const State &st, Term at) {
+State::Cell Memory::readArrays(const State &st, Term at, bool withProvenance) {
   Term objTerm = object(at);
   if (const APInt *obj = t.constant(objTerm)) {
     if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
-      return readOwn(obj->getZExtValue(), *own, at);
-    return {t.select(st.data, at), t.select(st.prov, at)};
+      return readOwn(obj->getZExtValue(), *own, at, withProvenance);
+    return {t.select(st.data, at), withProvenance ? t.select(st.prov, at) : Term()};
   }
   std::vector<uint64_t> objs = candidates(at);
   bool allSeparate = !objs.empty();
@@ -685,21 +686,21 @@ State::Cell Memory::readArrays(const State &st, Term at) {
   }
   State::Cell r;
   if (!allSeparate)
-    r = {t.select(st.data, at), t.select(st.prov, at)};
+    r = {t.select(st.data, at), withProvenance ? t.select(st.prov, at) : Term()};
   for (const auto &[o, own] : sep) {
     Term is = t.eq(objTerm, t.bv(o, ObjBits));
     if (t.isFalse(is))
       continue;
-    State::Cell b = readOwn(o, *own, at);
+    State::Cell b = readOwn(o, *own, at, withProvenance);
     if (t.isTrue(is))
       return b;
     if (!r.data)
       r = b;
     else
-      r = {t.ite(is, b.data, r.data), t.ite(is, b.prov, r.prov)};
+      r = {t.ite(is, b.data, r.data), withProvenance ? t.ite(is, b.prov, r.prov) : Term()};
   }
   if (!r.data)
-    r = {t.select(st.data, at), t.select(st.prov, at)};
+    r = {t.select(st.data, at), withProvenance ? t.select(st.prov, at) : Term()};
   return r;
 }
 
@@ -786,18 +787,18 @@ int Memory::side(const Term &c) {
   return t.entails(context, t.lnot(c)) ? 0 : -1;
 }
 
-State::Cell Memory::readByte(const State &st, Term at) {
+State::Cell Memory::readByte(const State &st, Term at, bool withProvenance) {
   Term c, x, y;
   if (t.split(at, c, x, y)) { // one of two constant pointers
     if (int pick = side(c); pick >= 0)
-      return readByte(st, pick ? x : y);
-    State::Cell a = readByte(st, x), b = readByte(st, y);
-    return {t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov)};
+      return readByte(st, pick ? x : y, withProvenance);
+    State::Cell a = readByte(st, x, withProvenance), b = readByte(st, y, withProvenance);
+    return {t.ite(c, a.data, b.data), withProvenance ? t.ite(c, a.prov, b.prov) : Term()};
   }
   if (std::optional<Key> k = key(at))
     if (const State::Cell *c = st.known.find(*k))
       return *c;
-  return readArrays(st, at);
+  return readArrays(st, at, withProvenance);
 }
 
 void Memory::writeByte(State &st, Term at, const State::Cell &c) {
@@ -954,17 +955,17 @@ Term Memory::load(State &st, Term p, Type *ty) {
       Key ki{k->first, (k->second + i) & mask};
       if (const State::Cell *c = st.known.find(ki))
         return *c;
-      return readArrays(st, ptr(ki));
+      return readArrays(st, ptr(ki), ty->isPointerTy() && i == 0);
     };
     first = readAt(0);
     bits = first.data;
     for (unsigned i = 1; i < n; ++i)
       bits = t.concat(readAt(i).data, bits);
   } else {
-    first = readByte(st, p);
+    first = readByte(st, p, ty->isPointerTy());
     bits = first.data;
     for (unsigned i = 1; i < n; ++i)
-      bits = t.concat(readByte(st, bytePtr(p, i)).data, bits);
+      bits = t.concat(readByte(st, bytePtr(p, i), false).data, bits);
   }
   if (ty->isPointerTy()) {
     // The provenance of the first byte stands for the pointer.
@@ -1630,9 +1631,9 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
         if (directSrcData) {
           srcVal = t.select(directSrcData, index(directSrcObj, srcAt));
         } else {
-          srcVal = readArrays(srcState, srcAt).data;
+          srcVal = readArrays(srcState, srcAt, false).data;
           for (unsigned b = 1; b < elemBytes; ++b)
-            srcVal = t.concat(readArrays(srcState, bytePtr(srcAt, b)).data, srcVal);
+            srcVal = t.concat(readArrays(srcState, bytePtr(srcAt, b), false).data, srcVal);
         }
         return t.isTrue(in) ? srcVal : t.ite(in, srcVal, t.select(below.data, j));
       },

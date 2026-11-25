@@ -227,17 +227,19 @@ private:
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   void flushObject(State &st, uint64_t object);
-  State::Cell readByte(const State &st, encode::Term at);
+  // Data-only reads may leave prov null; state updates and copies need both.
+  State::Cell readByte(const State &st, encode::Term at, bool withProvenance = true);
   // The byte at at from object's own arrays own, and those arrays with c
   // stored at at.
-  State::Cell readOwn(uint64_t object, const State::Cell &own, encode::Term at);
+  State::Cell readOwn(uint64_t object, const State::Cell &own, encode::Term at,
+                      bool withProvenance);
   State::Cell storeOwn(uint64_t object, const State::Cell &own, encode::Term at,
                        const State::Cell &c);
   // The object of p when its elements are of type ty and p is at a symbolic
   // offset, where an access is one select or store once prepare(st, p) ran.
   std::optional<uint64_t> element(encode::Term p, llvm::Type *ty);
   // The arrays' bytes at a pointer that is not a known byte.
-  State::Cell readArrays(const State &st, encode::Term at);
+  State::Cell readArrays(const State &st, encode::Term at, bool withProvenance = true);
   // Stores c at at in the arrays that hold object's bytes in st: its own or
   // the shared ones.
   void storeArrays(State &st, uint64_t object, encode::Term at, const State::Cell &c);
