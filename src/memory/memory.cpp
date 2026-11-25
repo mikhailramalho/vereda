@@ -332,9 +332,8 @@ void Memory::flushObject(State &st, uint64_t o) {
   bool byOffset = owned.count(o);
   const APInt *size = o > 0 && o < objects.size() ? t.constant(objects[o].size) : nullptr;
   // When every byte of an object's constant size is in st.known, the prior
-  // array is never read: base the object's array on its dominant value (or a
-  // range lambda when a few contiguous runs cover the rest) instead of
-  // emitting a store chain over the nondet initial array.
+  // array is never read: use its dominant value or an exact compact function
+  // of the index instead of a store chain over the nondet initial array.
   if (size && !size->isZero() && size->ule(MaxKnown) &&
       (size->getZExtValue() & (elemBytes - 1)) == 0 &&
       (st.separate.find({o, 0}) || size->getZExtValue() >= MinSeparate)) {
@@ -408,7 +407,35 @@ void Memory::flushObject(State &st, uint64_t o) {
       Term data;
       constexpr size_t MaxLambdaRuns = 8;
       constexpr uint64_t MinLambdaElems = 8;
-      if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
+      Term stride;
+      if (byOffset && elemBytes <= 8 && numElems >= MinLambdaElems) {
+        const APInt *first = t.constant(elems[0]), *second = t.constant(elems[1]);
+        if (first && second) {
+          APInt step = *second - *first, expected = *first;
+          if (!step.isZero() && llvm::all_of(elems, [&](const Term &v) {
+                const APInt *c = t.constant(v);
+                bool matches = c && *c == expected;
+                expected += step;
+                return matches;
+              }))
+            stride = t.bv(step);
+        }
+      }
+      if (stride) {
+        // All elements have already been written: compress their exact values,
+        // including modular wrap, without relying on a loop summary.
+        Term first = elems[0];
+        data = t.lambda(
+            s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),
+            "flush#" + std::to_string(fresh++),
+            [this, first, stride, dom, numElems](const Term &j) {
+              unsigned w = first.width();
+              Term k = j.width() > w ? t.extract(j, w - 1, 0)
+                       : j.width() < w ? t.zext(j, w - j.width()) : j;
+              Term value = t.add(first, t.mul(stride, k));
+              return t.ite(t.ult(j, t.bv(APInt(j.width(), numElems))), value, dom);
+            });
+      } else if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
           otherElems >= MinLambdaElems && otherElems >= 2 * otherRuns.size()) {
         data = t.lambda(
             s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),
