@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 option(DOWNLOAD_DEPENDENCIES
-       "Use an installed LLVM 23 in /usr/lib/llvm-23, else download the pinned LLVM; download camada"
+       "Use installed LLVM 23 and rustc 1.100.0, else download them; download camada and mimalloc"
        OFF)
 # Before project(): it chooses the compiler and linker (LLVM's own clang and
 # lld).
@@ -27,6 +27,7 @@ endif()
 message(STATUS "Using LLVM ${LLVM_PACKAGE_VERSION} from ${LLVM_DIR}")
 find_package(camada CONFIG REQUIRED)
 message(STATUS "Using camada from ${camada_DIR}")
+include(cmake/Rust.cmake)
 
 llvm_map_components_to_libnames(llvm_libs core irreader support passes linker)
 

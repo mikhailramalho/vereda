@@ -18,7 +18,7 @@ ctest --test-dir build -j$(nproc)                         # everything, incl. ~6
 ctest --test-dir build -R 'vereda/loop_nested$' --output-on-failure   # one test
 ```
 
-Vereda builds with LLVM 23 only. With `DOWNLOAD_DEPENDENCIES`, a given `LLVM_DIR`, else an
+Vereda builds with LLVM 23 and rustc 1.100.0 only. With `DOWNLOAD_DEPENDENCIES`, a given `LLVM_DIR`, else an
 LLVM 23 in `/usr/lib/llvm-23`, else the pinned release (downloaded) is used, its own
 clang/lld becoming the compiler and linker (the release is an LTO build). camada is
 downloaded unless `camada_DIR` is given, and mimalloc's sources (built in place of glibc's
@@ -26,6 +26,14 @@ malloc) unless `MIMALLOC_SOURCE_DIR` is. Set
 `VEREDA_DEPS_DIR` to share downloads between build directories and worktrees. Without
 `DOWNLOAD_DEPENDENCIES`, set `LLVM_DIR` (LLVM 23) and `camada_DIR`. A build directory
 configured with an older LLVM fails to configure; reconfigure it with `cmake --fresh`.
+
+Rust uses `RUSTC_EXECUTABLE` when given, else rustc 1.100.0 on PATH, else (with
+`DOWNLOAD_DEPENDENCIES`) the pinned compiler and standard library installed under
+the dependency directory. CMake saves the selected path beside the binary;
+`vereda.py file.rs` uses it, or `--rustc`/`RUSTC` to override it. Rust compiles at
+opt-level 0 with debug info, overflow checks and panic=abort. Ordinary Rust main
+is called directly, bypassing runtime startup. Source verification currently
+supports the 64-bit host only; C sanitizer/property-file flags are rejected.
 
 Run the verifier through the front end, which compiles C with clang (and llvm-link for
 several files) and forwards every flag it does not know to the binary:
@@ -42,7 +50,7 @@ The binary (`build/vereda`) takes only `.bc`/`.ll`; its flags are `cl::opt`s in
 
 ## Regression tests
 
-A test is a `.c`, `.i` or `.ll` file directly under `tests/<suite>/`, or
+A test is a `.c`, `.i`, `.rs` or `.ll` file directly under `tests/<suite>/`, or
 `tests/<suite>/<name>/main.c` for multi-file tests. Its comment header (`;` in IR)
 drives `tests/run.py`:
 

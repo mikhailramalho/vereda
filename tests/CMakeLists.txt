@@ -1,4 +1,4 @@
-# Every *.c or *.ll directly under a suite directory is a test, and so is
+# Every *.c, *.i, *.rs or *.ll directly under a suite directory is a test, and so is
 # every <suite>/<name>/main.c for tests with several files. The test's comment
 # header describes it; see run.py. The suite name is the ctest label, so
 # `ctest -L vereda` runs one suite.
@@ -18,6 +18,7 @@ foreach(suite IN LISTS suites)
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.c"
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.i"
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.ll"
+       "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*.rs"
        "${CMAKE_CURRENT_SOURCE_DIR}/${suite}/*/main.c")
   foreach(test IN LISTS tests)
     # The last extension only: some test names hold dots.

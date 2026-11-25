@@ -67,7 +67,7 @@ def test_files(root, name):
     or None when it has no such test."""
     # tests/ since fcf278ec, regression/ in a base from before.
     for stem in (os.path.join(root, d, name) for d in ("tests", "regression")):
-        for path in (stem + ".c", stem + ".ll", os.path.join(stem, "main.c")):
+        for path in (stem + ".c", stem + ".ll", stem + ".rs", os.path.join(stem, "main.c")):
             if not os.path.isfile(path):
                 continue
             desc = run.parse(path)
