@@ -32,11 +32,11 @@ struct Bitwuzla : camada::BitwuzlaSolver {
 } // namespace
 #endif
 
-Expected<camada::SMTSolverRef> create(camada::SolverKind kind) {
+Expected<camada::SMTSolverRef> create(camada::SolverKind kind, bool incremental) {
   switch (kind) {
 #if CAMADA_HAVE_BITWUZLA
   case camada::SolverKind::Bitwuzla:
-    return camada::SMTSolverRef(new Bitwuzla());
+    return incremental ? camada::SMTSolverRef(new Bitwuzla()) : camada::createBitwuzlaSolver();
 #endif
 #if CAMADA_HAVE_Z3
   case camada::SolverKind::Z3:
@@ -199,6 +199,148 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
           return v;
         groups.clear();
         break;
+      }
+    }
+  }
+  return v;
+}
+
+Verdict decideNonIncremental(
+    encode::Terms &t, const checks::Checks &checks, bool all, bool skipUnwindModel,
+    function_ref<std::pair<encode::Terms *, const checks::Checks *>()> freshWalk,
+    function_ref<void(encode::Terms &, const checks::Checks &, size_t)> violated,
+    bool &solverUsed) {
+  Verdict v;
+  v.status.assign(checks.size(), Status::NotChecked);
+  solverUsed = false;
+
+  encode::Terms *curT = &t;
+  const checks::Checks *curChecks = &checks;
+  bool currentDirty = false;
+
+  auto ensureFresh = [&]() -> bool {
+    if (!currentDirty)
+      return true;
+    auto [nt, nc] = freshWalk();
+    if (!nt || !nc)
+      return false;
+    curT = nt;
+    curChecks = nc;
+    currentDirty = false;
+    return true;
+  };
+
+  struct Group {
+    camada::SMTExprRef expr;
+    SmallVector<size_t, 1> indices;
+  };
+
+  for (bool unwinding : {false, true}) {
+    auto reportFirst = [&](size_t idx, bool callViolated) {
+      v.status[idx] = Status::Fails;
+      v.kind = Verdict::Violated;
+      v.check = &checks[idx];
+      for (size_t j = idx + 1; j < checks.size(); ++j)
+        if (checks[j].isUnwinding() == unwinding)
+          v.status[j] = Status::NotChecked;
+      if (callViolated)
+        violated(*curT, *curChecks, idx);
+    };
+
+    std::vector<size_t> pending;
+    for (size_t i = 0; i < checks.size(); ++i) {
+      if (checks[i].isUnwinding() != unwinding)
+        continue;
+      if (curT->isFalse((*curChecks)[i].violated)) {
+        v.status[i] = Status::Holds;
+        continue;
+      }
+      if (unwinding && skipUnwindModel && curT->isTrue((*curChecks)[i].violated)) {
+        if (!all) {
+          reportFirst(i, /*callViolated=*/false);
+          return v;
+        }
+        v.status[i] = Status::Fails;
+        if (!v.check) {
+          v.kind = Verdict::Violated;
+          v.check = &checks[i];
+        }
+        continue;
+      }
+      pending.push_back(i);
+    }
+
+    while (!pending.empty()) {
+      if (!ensureFresh()) {
+        v.kind = Verdict::Unknown;
+        v.check = &checks[pending[0]];
+        v.detail = "failed to create fresh solver";
+        return v;
+      }
+      camada::SMTSolver &s = curT->solver();
+      std::vector<Group> groups;
+      DenseMap<const void *, size_t> byId;
+      for (size_t idx : pending) {
+        const checks::Check &check = (*curChecks)[idx];
+        auto [it, fresh] = byId.try_emplace(check.violated.id(), groups.size());
+        if (fresh)
+          groups.push_back({curT->solverTerm(check.violated), {idx}});
+        else
+          groups[it->second].indices.push_back(idx);
+      }
+      std::vector<camada::SMTExprRef> exprs;
+      exprs.reserve(groups.size());
+      for (const Group &g : groups)
+        exprs.push_back(g.expr);
+      s.addConstraint(disjunction(s, exprs));
+      currentDirty = true;
+      if (curT == &t)
+        solverUsed = true;
+
+      switch (s.check()) {
+      case camada::CheckResult::UNSAT:
+        for (size_t idx : pending)
+          v.status[idx] = Status::Holds;
+        pending.clear();
+        break;
+      case camada::CheckResult::SAT: {
+        std::vector<size_t> failed, next;
+        if (groups.size() == 1) {
+          failed.assign(groups[0].indices.begin(), groups[0].indices.end());
+        } else {
+          for (const Group &g : groups) {
+            if (auto b = s.getBool(g.expr); b && b.value())
+              failed.insert(failed.end(), g.indices.begin(), g.indices.end());
+            else
+              next.insert(next.end(), g.indices.begin(), g.indices.end());
+          }
+          if (failed.empty()) {
+            // Defensive fallback if the solver did not evaluate any disjunct.
+            failed.push_back(pending[0]);
+            next.assign(pending.begin() + 1, pending.end());
+          }
+        }
+        std::sort(failed.begin(), failed.end());
+        if (!all) {
+          reportFirst(failed[0], /*callViolated=*/true);
+          return v;
+        }
+        for (size_t idx : failed) {
+          v.status[idx] = Status::Fails;
+          if (!v.check) {
+            v.kind = Verdict::Violated;
+            v.check = &checks[idx];
+          }
+          violated(*curT, *curChecks, idx);
+        }
+        pending = std::move(next);
+        break;
+      }
+      case camada::CheckResult::UNKNOWN:
+        v.kind = Verdict::Unknown;
+        v.check = &checks[pending[0]];
+        v.detail = "solver answered unknown: " + s.reasonUnknownDetail();
+        return v;
       }
     }
   }
