@@ -1,5 +1,5 @@
 // The transpose of summary_columns.c writes each column one row short.
-// EXPECT: ^Summarised 3 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 3 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

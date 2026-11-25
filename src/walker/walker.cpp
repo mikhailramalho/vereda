@@ -159,7 +159,7 @@ public:
   // The number of loops summarised, as ESBMC prints it.
   void report() const {
     if (!summarised.empty())
-      outs() << "Summarised " << summarised.size() << " array loop(s)\n";
+      util::info() << "Summarised " << summarised.size() << " array loop(s)\n";
   }
 
 private:
@@ -485,8 +485,8 @@ private:
           return;
         }
         if (opts.showIterations)
-          outs() << "Unwinding loop " << number << " iteration " << i << "   "
-                 << loopLocation(l).display() << "\n";
+          util::progress(Twine("Unwinding loop ") + Twine(number) + " iteration " + Twine(i) +
+                         "   " + loopLocation(l).display());
       }
       frame.iteration[l] = i;
       region(frame, fi, l);

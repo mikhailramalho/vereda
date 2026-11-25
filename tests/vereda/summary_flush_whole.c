@@ -2,7 +2,7 @@
 // constant index, which moves to the array when a[m] is read. The element
 // is written whole, so the move reads nothing below it, and the summary is
 // constrained only where a read reaches it.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

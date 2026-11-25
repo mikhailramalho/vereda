@@ -2,7 +2,7 @@
 // comparison, and each of these checks fails at the bound.
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: \*\* 8 of 8 properties failed
+// EXPECT: Properties: 8 checked, \d+ passed, 8 failed, \d+ not checked
 extern unsigned __VERIFIER_nondet_uint(void);
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);

@@ -17,6 +17,6 @@ int main()
 // RUN: --k-induction --multi-property --max-k-step 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 1 of 2 properties failed, 1 unknown$
+// EXPECT: ^Properties: 2 checked, \d+ passed, 1 failed, \d+ not checked, 1 unknown$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z
 // Vereda: verdict none

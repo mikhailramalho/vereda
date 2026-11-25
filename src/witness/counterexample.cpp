@@ -10,22 +10,21 @@ namespace vereda::witness {
 
 // The assignment of value to text as a C statement and the value's grouped
 // bits, e.g. {"x = 99;", "00000000 ... 01100011"}; bits are empty for
-// Booleans. A value C has no constant for (none in the model, or wider than
-// 64 bits) makes the statement a comment.
+// Booleans. Unknown values use ?, and values wider than 64 bits use binary.
 static std::pair<std::string, std::string> assignment(solver::Model &model,
                                                       const encode::Term &value,
                                                       const std::string &text, bool isUnsigned) {
   std::string lhs = text + " = ";
   const APInt *v = model.value(value);
   if (!v)
-    return {"// " + lhs + "?", ""};
+    return {lhs + "?", ""};
   if (value.isBool())
     return {lhs + (v->isOne() ? "true;" : "false;"), ""};
   std::string bits; // by hand: APInt::toString in base 2 cost more than the rest
   for (unsigned i = v->getBitWidth(); i-- > 0;)
     bits += (*v)[i] ? '1' : '0';
   if (v->getBitWidth() > 64)
-    return {"// " + lhs + "0b" + bits, ""};
+    return {lhs + "0b" + bits, ""};
   std::string decimal;
   if (isUnsigned) {
     uint64_t u = v->getZExtValue();
@@ -49,8 +48,8 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
                          const checks::Checks &checks, unsigned violated, raw_ostream &os,
                          bool showLibraryStates) {
   os << "\n";
-  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[Counterexample]";
-  os << "\n\n";
+  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[COUNTEREXAMPLE]";
+  os << "\n";
   unsigned n = 0;
   // Merge points (loop heads, joins) repeat a variable's value under their
   // own debug record; print a variable only when its value changes.
@@ -66,7 +65,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       break;
     const ir::SourceLoc &loc = trace.loc(step);
     if (step.kind == walker::Step::Assumption) {
-      os << "\n/*\nAssumption:\n  " << loc.display() << "\n  " << trace.text(step) << "\n*/\n";
+      os << "\nAssumption:\n  " << loc.display() << "\n  " << trace.text(step) << "\n";
       continue;
     }
     StringRef file = loc.file;
@@ -92,17 +91,15 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     if (prev == stmt)
       continue;
     prev = stmt;
-    os << "\n// State " << ++n << " " << loc.display() << " thread 0\n  " << stmt;
+    os << "\nState " << ++n << " " << loc.display() << " thread 0\n  " << stmt;
     if (!bits.empty())
-      WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << bits;
+      WithColor(os, raw_ostream::BRIGHT_BLACK) << "\n  bits: " << bits;
     os << "\n";
   }
   const checks::Check &c = checks[violated];
-  os << "\n// State " << ++n << " " << c.loc.display() << " thread 0\n"
-     << "/*\nViolated property:\n  " << c.loc.display() << "\n  " << c.comment << "\n";
+  os << "\nViolated property:\n  " << c.loc.display() << "\n  " << c.comment << "\n";
   if (!c.expr.empty())
     os << "  " << c.expr << "\n";
-  os << "*/\n\n";
 }
 
 } // namespace vereda::witness

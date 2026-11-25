@@ -1,5 +1,5 @@
 // RUN: --multi-property
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 21
 // EXPECT: ^VERIFICATION FAILED$
 // A summarised loop walks one iteration, where only n == 5 goes on past

@@ -19,11 +19,11 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_9350
-// EXPECT: ^  a = 1\.250000e\+0f; //
-// EXPECT: ^  s = -7\.500000e-1f; //
-// EXPECT: ^  m = 2\.500000e-1f; //
-// EXPECT: ^  d = 5\.000000e-1f; //
-// EXPECT: ^  e = 2\.250000e\+0; //
+// EXPECT: ^  a = 1\.250000e\+0f;\n  bits:
+// EXPECT: ^  s = -7\.500000e-1f;\n  bits:
+// EXPECT: ^  m = 2\.500000e-1f;\n  bits:
+// EXPECT: ^  d = 5\.000000e-1f;\n  bits:
+// EXPECT: ^  e = 2\.250000e\+0;\n  bits:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  a = 1\.250000e\+0f \(
 // MODE: FUTURE

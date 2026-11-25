@@ -13,7 +13,7 @@ int main()
 // RUN: --all-witnesses --boolector
 // MODE: FUTURE
 // EXPECT: ^\[Counterexamples - 1 witnesses\]$
-// EXPECT: x = 5; //
+// EXPECT: x = 5;\n  bits:
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

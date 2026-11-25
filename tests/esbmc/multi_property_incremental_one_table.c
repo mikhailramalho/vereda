@@ -14,5 +14,5 @@ int main()
 // Imported from ESBMC regression/esbmc/multi_property_incremental_one_table
 // RUN: --incremental-bmc --multi-property --max-k-step 10
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 2 of 2 properties failed$
+// EXPECT: ^Properties: 2 checked, \d+ passed, 2 failed, \d+ not checked$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z

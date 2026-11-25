@@ -22,6 +22,6 @@ int main(void)
 // Needs: --field-sensitive-ssa
 // RUN: --field-sensitive-ssa --no-slice
 // MODE: FUTURE
-// EXPECT: ^  v\.un\.i = 9; //
+// EXPECT: ^  v\.un\.i = 9;\n  bits:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

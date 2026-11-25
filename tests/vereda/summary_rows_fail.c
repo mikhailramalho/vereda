@@ -1,6 +1,6 @@
 // The copy of summary_rows.c leaves out the last row, which the checks
 // still compare.
-// EXPECT: ^Summarised 3 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 3 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

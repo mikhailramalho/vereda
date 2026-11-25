@@ -11,6 +11,6 @@ int main()
 // Needs: --no-propagation
 // RUN: --no-propagation
 // MODE: FUTURE
-// EXPECT: ^  x = 4; //
+// EXPECT: ^  x = 4;\n  bits:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/counterexample_unresolved_component_fail
 // EXPECT: ^  h\.p = \{ \.p=&x, \.t=0 \}$
-// EXPECT: ^  h\.t = 3; // 00000000 00000000 00000000 00000011$
+// EXPECT: ^  h\.t = 3;\n  bits: 00000000 00000000 00000000 00000011$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  h\.p = \{ \.p=&x, \.t=0 \}$
 // MODE: FUTURE

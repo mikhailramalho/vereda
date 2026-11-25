@@ -22,8 +22,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/counterexample_component_value_fail
 // RUN: --unwind 5 --no-unwinding-assertions
-// EXPECT: ^  s\.reading\[1\] = 3; // 00000000 00000000 00000000 00000011$
-// EXPECT: ^  s\.total = 3; // 00000000 00000000 00000000 00000011$
-// EXPECT: ^  s\.reading\[3\] = 9; // 00000000 00000000 00000000 00001001$
-// EXPECT: ^  s\.total = 18; // 00000000 00000000 00000000 00010010$
+// EXPECT: ^  s\.reading\[1\] = 3;\n  bits: 00000000 00000000 00000000 00000011$
+// EXPECT: ^  s\.total = 3;\n  bits: 00000000 00000000 00000000 00000011$
+// EXPECT: ^  s\.reading\[3\] = 9;\n  bits: 00000000 00000000 00000000 00001001$
+// EXPECT: ^  s\.total = 18;\n  bits: 00000000 00000000 00000000 00010010$
 // EXPECT: ^VERIFICATION FAILED$

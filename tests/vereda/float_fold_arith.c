@@ -2,7 +2,7 @@
 // guard folds, as an integer loop's does (loop_const.c). Fused multiply-add
 // on constants rounds once, as the encoder fuses it, and square roots fold
 // correctly rounded.
-// EXPECT: ^Unwinding loop 0 iteration 30
+// EXPECT: ^\[PROGRESS\] Unwinding loop 0 iteration 30
 // EXPECT-NOT: iteration 31
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <math.h>

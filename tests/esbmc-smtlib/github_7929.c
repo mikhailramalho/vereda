@@ -14,7 +14,7 @@ int main(void)
 // Needs: --smtlib --smtlib-solver-prog z3 -in REQUIRES z3_binary
 // RUN: --smtlib --smtlib-solver-prog "z3 -in"
 // MODE: FUTURE
-// EXPECT: ^  a = -4; // 11111111 11111111 11111111 11111100$
-// EXPECT: ^  f = 1; // 00000000 00000000 00000000 00000001$
+// EXPECT: ^  a = -4;\n  bits: 11111111 11111111 11111111 11111100$
+// EXPECT: ^  f = 1;\n  bits: 00000000 00000000 00000000 00000001$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

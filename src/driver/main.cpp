@@ -21,6 +21,7 @@
 
 using namespace llvm;
 using vereda::util::progress;
+using vereda::util::info;
 
 static cl::opt<std::string> inputFile(cl::Positional, cl::desc("<file.bc|file.ll>"),
                                       cl::Required);
@@ -112,7 +113,7 @@ static bool dump(StringRef name, function_ref<void(raw_ostream &)> write) {
     errs() << "vereda: cannot write " << path << ": " << ec.message() << "\n";
     return false;
   }
-  outs() << "Wrote " << path << "\n";
+  info() << "Wrote " << path << "\n";
   return true;
 }
 
@@ -130,7 +131,7 @@ static void svcomp(StringRef verdict) {
 static const int ErrorExit = 6;
 
 static int unknown(const Twine &reason) {
-  outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
+  outs() << "\n[RESULTS]\n\nVERIFICATION UNKNOWN: " << reason << "\n";
   svcomp("UNKNOWN");
   return 2;
 }
@@ -192,7 +193,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   }
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
-  outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
+  info() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
          << (checks.size() == 1 ? " check, " : " checks, ") << symbols
          << " symbols, peak memory " << vereda::util::peakMemory() << ")\n";
   outs().flush(); // solving may run until a timeout kills the process
@@ -230,7 +231,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     std::string msg;
     raw_string_ostream(msg) << "Solving time: " << solveTime.elapsed() << " (peak memory "
                             << vereda::util::peakMemory() << ")";
-    progress(msg);
+    info() << msg << "\n";
   };
   vereda::solver::Verdict verdict =
       vereda::solver::decide(terms, checks, multiProperty, [&](const vereda::checks::Check &c) {
@@ -273,13 +274,13 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   for (size_t i = 0; i < checks.size(); ++i)
     bug |= verdict.status[i] == Status::Fails && isAssertion(checks[i]);
   if (incrementalBMC && verdict.check && !bug) {
-    outs() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
+    info() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
     *unwindsAt = verdict.check->unwindsAt;
     return BoundTooSmall;
   }
 
-  if (!checks.empty()) {
-    outs() << "\n** Results:\n";
+  {
+    outs() << "\n[RESULTS]\n";
     std::string lastUnit;
     unsigned checked = 0, failed = 0;
     for (size_t i = 0; i < checks.size(); ++i) {
@@ -298,7 +299,8 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
           << (fails ? "FAILED" : "SUCCESS");
       outs() << (fails ? "       [" : "      [") << c.id() << "]  line " << c.loc.line << "  " << c.comment << "\n";
     }
-    outs() << "\n** " << failed << " of " << checked << " properties failed\n";
+    outs() << "\nProperties: " << checked << " checked, " << checked - failed
+           << " passed, " << failed << " failed, " << checks.size() - checked << " not checked\n";
   }
   outs() << "\n";
   if (verdict.check) {
@@ -345,10 +347,10 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
   }
-  outs() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
+  info() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
          << ((*module)->getDataLayout().isLittleEndian() ? "little" : "big") << "-endian "
          << (*module)->getTargetTriple().str() << "\n";
-  outs() << "IR preparation time: " << loadTime.elapsed() << "\n";
+  info() << "IR preparation time: " << loadTime.elapsed() << "\n";
   if (dumpIROnly || dumpIRToo) {
     if (!dump("ir.ll", [&](raw_ostream &os) { (*module)->print(os, nullptr); }))
       return ErrorExit;

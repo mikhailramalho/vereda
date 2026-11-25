@@ -1,7 +1,7 @@
 // A constant loop needs no --unwind: unrolling stops when the solver finds
 // the next iteration unreachable.
 // RUN: --no-summarize-array-loops
-// EXPECT: ^Unwinding loop 0 iteration 10 
+// EXPECT: ^\[PROGRESS\] Unwinding loop 0 iteration 10\s
 // EXPECT-NOT: iteration 11
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);

@@ -21,5 +21,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/nested_array_row_read_trace_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\[Counterexample\]$
-// EXPECT: ^  v = 4; //
+// EXPECT: ^\[COUNTEREXAMPLE\]$
+// EXPECT: ^  v = 4;\n  bits:
