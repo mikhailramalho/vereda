@@ -543,6 +543,8 @@ ESBMC_ONLY = [
 
 # Single tests left out, by ESBMC path, with the reason.
 SKIPPED_TESTS = {
+    "esbmc/vasprintf_unbounded_s_no_overflow": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
+    "esbmc/vasprintf_unbounded_s_overflow_fail": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
     "z3/github_10316": "rounds ties away from zero, which C cannot set",
     "z3/github_10316_fail": "rounds ties away from zero, which C cannot set",
 }
@@ -562,8 +564,6 @@ KNOWN_BUGS = {
     "esbmc/github_2602_1": "over 300 s in CI",
     "esbmc/github_9356": "over 300 s in CI",
     "esbmc/github_9356_success": "over 300 s in CI",
-    "esbmc/vasprintf_unbounded_s_no_overflow": "out of memory in CI",
-    "esbmc/vasprintf_unbounded_s_overflow_fail": "over 300 s in CI",
     "z3/github_6100_assume_noninline": "over 300 s in CI",
     "z3/github_6100_noninline": "over 300 s in CI",
 }
