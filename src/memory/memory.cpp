@@ -1294,21 +1294,35 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
     }
   }
 
+  unsigned shift = shifts.lookup(dstObj);
+  unsigned elemBytes = 1u << shift;
+
   // Fast path 2: whole-object copy from a constant-filled object becomes a
   // constant-array fill of dst.
-  if (wholeDst && srcObjs.size() == 1 && !shifts.count(srcObjs[0])) {
+  if (wholeDst && srcObjs.size() == 1) {
     if (const State::Cell *srcOwn = st.separate.find({srcObjs[0], 0})) {
-      if (Term fillByte = t.filledWith(srcOwn->data);
-          fillByte && t.filledWith(srcOwn->prov) == intProv) {
-        fill(st, dstObj, fillByte);
-        return true;
+      unsigned srcShift = shifts.lookup(srcObjs[0]);
+      if (!srcShift) {
+        if (Term fillByte = t.filledWith(srcOwn->data);
+            fillByte && t.filledWith(srcOwn->prov) == intProv) {
+          fill(st, dstObj, fillByte);
+          return true;
+        }
+      } else if (srcShift == shift) {
+        if (Term fillElem = t.filledWith(srcOwn->data)) {
+          st.known.eraseObject(dstObj);
+          st.separate.set({dstObj, 0},
+                          {t.constArray(s.mkBVSort(ptrBits - shift), fillElem), intProv});
+          return true;
+        }
       }
     }
   }
 
-  // Element-width arrays (shift > 0) are only created for objects never passed
-  // to memcpy/memmove; if one is reached here, fall back to byte-by-byte.
-  if (shifts.count(dstObj))
+  // An element-width destination array requires element-aligned offset and
+  // length; unaligned copies fall back to byte-by-byte.
+  if (shift && ((n & (elemBytes - 1)) != 0 ||
+                !t.isTrue(t.eq(t.extract(dstOff, shift - 1, 0), t.bv(0, shift)))))
     return false;
 
   // For a partial copy, dstObj's bytes outside [dstOff, dstOff + n) must be in
@@ -1328,10 +1342,12 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
   const State::Cell *own = st.separate.find({dstObj, 0});
   State::Cell below = own ? *own : State::Cell{st.data, st.prov};
   bool byOffset = owned.count(dstObj);
-  SMTSortRef indexSort = byOffset ? s.mkBVSort(ptrBits) : pointerSort();
+  SMTSortRef indexSort = byOffset ? s.mkBVSort(ptrBits - shift) : pointerSort();
   Term dstObjTerm = t.bv(dstObj, ObjBits);
 
-  auto offsetOf = [=, this](const Term &j) { return byOffset ? j : offset(j); };
+  auto offsetOf = [=, this](const Term &j) {
+    return !byOffset ? offset(j) : shift ? t.concat(j, t.bv(0, shift)) : j;
+  };
 
   // True when j is definitely outside the copied range [dstOff, dstOff + n),
   // so select forwards straight to below without instantiating the lambda.
@@ -1351,6 +1367,17 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
     };
   }
 
+  // When dst is an element array and src is a single owned element array of
+  // the same width at an aligned offset, read elements directly with one select.
+  const State::Cell *directSrc = nullptr;
+  uint64_t directSrcObj = 0;
+  if (shift && srcObjs.size() == 1 && shifts.lookup(srcObjs[0]) == shift &&
+      t.isTrue(t.eq(t.extract(offset(src), shift - 1, 0), t.bv(0, shift)))) {
+    directSrcObj = srcObjs[0];
+    directSrc = srcState.separate.find({directSrcObj, 0});
+  }
+  Term directSrcData = directSrc ? directSrc->data : Term();
+
   Term len = t.bv(n, ptrBits);
   auto inRange = [=, this](const Term &j) -> std::pair<Term, Term> {
     Term off = offsetOf(j);
@@ -1362,15 +1389,28 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
 
   std::string id = std::to_string(fresh++);
   Term newData = t.lambda(
-      s.mkArraySort(indexSort, s.mkBVSort(8)), "copy#" + id,
+      s.mkArraySort(indexSort, s.mkBVSort(8u << shift)), "copy#" + id,
       [=, this](const Term &j) {
         auto [in, d] = inRange(j);
         if (t.isFalse(in))
           return t.select(below.data, j);
-        Term srcVal = readArrays(srcState, advance(src, d)).data;
+        Term srcAt = advance(src, d);
+        Term srcVal;
+        if (directSrcData) {
+          srcVal = t.select(directSrcData, index(directSrcObj, srcAt));
+        } else {
+          srcVal = readArrays(srcState, srcAt).data;
+          for (unsigned b = 1; b < elemBytes; ++b)
+            srcVal = t.concat(readArrays(srcState, bytePtr(srcAt, b)).data, srcVal);
+        }
         return t.isTrue(in) ? srcVal : t.ite(in, srcVal, t.select(below.data, j));
       },
       wholeDst ? Term() : below.data, misses);
+
+  if (shift) {
+    st.separate.set({dstObj, 0}, {newData, intProv});
+    return true;
+  }
 
   // If no src candidate can hold a pointer and below.prov holds none (or is
   // overwritten whole), the destination's provenance stays a constant array.

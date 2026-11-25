@@ -99,3 +99,18 @@ Measured side by side against base `/home/mgadelha/tools/vereda/build/vereda`:
 solve, 755 → 175 MB peak) from compressed flushes and ownership. Full suite
 (`ctest -j12`): 6,901 tests, 0 failures, 4,192 skipped, 383.53 s wall, with no
 verdict changes on any KNOWNBUG or FUTURE test.
+
+## Element-array support in `Memory::copyArray` (after merging #228 and #229)
+
+Merging `main` brought in `Memory::copyArray` (#228), which originally returned
+`false` when `shifts.count(dstObj) > 0`. With `Walk::elementBits` accepting
+aligned `memcpy`/`memmove`, `vereda/mem_copy_overlap` and
+`vereda/mem_copy_partial` gained element-width destination arrays and fell back
+to byte-by-byte copying (33.5 s and 11.1 s solve). Extending `Memory::copyArray`
+to build element-width `Terms::lambda` arrays for aligned element-array
+destinations (using a direct element `select` when `src` is a matching aligned
+element array, or packing `elemBytes` bytes from `readArrays(srcState, ...)`
+otherwise, and keeping `IntProvenance` as the scalar provenance) restores both
+to 0.009 s / 39 MB and 0.008 s / 39 MB, and keeps
+`esbmc/nested_array_row_memcpy_at_cap` at 0.003 s / 38 MB and
+`esbmc/struct_array_ite_new_index{,_fail}` at 0.004 s / 39 MB.
