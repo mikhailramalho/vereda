@@ -94,6 +94,8 @@ public:
   encode::Term ptr(encode::Term obj, encode::Term off);
   // p moved by delta bytes, a pointer-width bitvector.
   encode::Term advance(encode::Term p, encode::Term delta);
+  // p with its address masked by m (llvm.ptrmask), keeping p's object.
+  encode::Term mask(encode::Term p, encode::Term m);
 
   // Whether an allocator accepts an object of size bytes: at most
   // PTRDIFF_MAX, as glibc's malloc. It depends on the size alone, so the
@@ -269,6 +271,7 @@ private:
 
   struct Object {
     encode::Term base, size, exists;
+    uint64_t align;
     bool exposed;
     // The constant global or the function the object is, if either, which
     // the program may not write.

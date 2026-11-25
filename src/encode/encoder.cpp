@@ -738,6 +738,11 @@ bool Encoder::intrinsic(CallBase &c) {
     bind(&c, t.boolean(false));
     return true;
   }
+  if (f->getIntrinsicID() == Intrinsic::ptrmask && c.getType()->isPointerTy()) {
+    bind(&c, mem.mask(value(c.getArgOperand(0)),
+                      resize(value(c.getArgOperand(1)), mem.pointerBits(), false)));
+    return true;
+  }
   if (f->getIntrinsicID() == Intrinsic::bswap) { // the low byte goes highest
     Term a = value(c.getArgOperand(0)), r = t.extract(a, 7, 0);
     for (unsigned lo = 8; lo < a.width(); lo += 8)
