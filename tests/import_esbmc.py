@@ -558,7 +558,6 @@ KNOWN_BUGS = {
     "esbmc/array_loop_summary_stride": "over 300 s",
     "esbmc/array_loop_summary_stride_fail": "over 300 s",
     "esbmc/github_9785_int_base_stores": "out of memory, needs 9.5 GB",
-    "esbmc-unix2/23_picosat-846_01": "over 300 s",
     "esbmc/github_123": "over 300 s in CI",
     "esbmc/github_2602_1": "over 300 s in CI",
     "esbmc/github_9356": "over 300 s in CI",

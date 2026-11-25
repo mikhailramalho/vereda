@@ -123,7 +123,9 @@ public:
   // was converted.
   encode::Term equal(encode::Term p, encode::Term q);
   // inttoptr: the exposed object that holds a, else object 0 at offset a
-  // (null, or the memory outside the program).
+  // (null, or the memory outside the program). An a that can be in one
+  // object only, its base plus a constant within it, gives an ordinary
+  // pointer into it, not one made from an integer.
   encode::Term fromAddress(encode::Term a);
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
