@@ -236,20 +236,26 @@ Term Encoder::bits(const camada::SMTExprRef &f) {
 Term Encoder::toBits(Term v, Type *ty) {
   if (!native() || !ieee(ty))
     return v;
+  const fltSemantics *sem = ieee(ty);
   // A constant's bits, except a NaN's, which are any NaN's as for every NaN term.
   if (auto it = floatBits.find(v.id());
-      it != floatBits.end() && !APFloat(*ieee(ty), it->second).isNaN())
+      it != floatBits.end() && !APFloat(*sem, it->second).isNaN())
     return t.bv(it->second);
-  return t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
+  Term b = t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
+  bitsFloat.try_emplace({b.id(), sem}, v);
+  return b;
 }
 
 Term Encoder::fromBits(Term b, Type *ty) {
   if (!native() || !ieee(ty))
     return b;
+  const fltSemantics *sem = ieee(ty);
+  if (auto it = bitsFloat.find({b.id(), sem}); it != bitsFloat.end())
+    return it->second;
   const APInt *c = t.constant(b);
   if (!c)
     return t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
-  Term &f = floatTerms[{ieee(ty), *c}];
+  Term &f = floatTerms[{sem, *c}];
   if (!f) {
     f = t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
     floatBits.try_emplace(f.id(), *c);
