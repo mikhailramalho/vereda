@@ -17,18 +17,20 @@
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/STLFunctionalExtras.h>
+#include <llvm/ADT/SmallVector.h>
 #include <llvm/ADT/Twine.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <bit>
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace vereda::encode {
@@ -261,17 +263,28 @@ private:
     Ref a, b, c;
     unsigned x = 0, y = 0; // extract bounds, extension width
   };
+  struct Entry {
+    Node n;
+    Ref self;
+  };
   struct Key {
     Op op;
     const void *a, *b, *c; // ids
     unsigned x, y;
-    bool operator==(const Key &o) const {
-      return op == o.op && a == o.a && b == o.b && c == o.c && x == o.x && y == o.y;
-    }
   };
-  struct KeyHash {
-    size_t operator()(const Key &k) const;
+  struct MemoBucket {
+    static constexpr uint32_t Empty = ~uint32_t(0);
+    uint32_t idx = Empty;
+    uint32_t hash = 0;
   };
+  static uint32_t hashKey(const Key &k);
+  static bool matches(const Node &n, const Key &k) {
+    return n.op == k.op && n.a.id() == k.a && n.b.id() == k.b && n.c.id() == k.c &&
+           n.x == k.x && n.y == k.y;
+  }
+  Ref memoFind(const Key &k) const;
+  void memoGrow();
+  void memoInsert(uint32_t idx, uint32_t h);
 
   const Node *node(const Ref &e) const;
   Ref make(Node n);
@@ -282,8 +295,20 @@ private:
   // each; null when no operand is one, or two have different conditions.
   // Pointers from an allocation that may fail, ite(ok, p, null), stay
   // constant on each side through offsets, comparisons and memory.
-  Ref lift(const Ref &a, const std::function<Ref(const Ref &)> &f);
-  Ref lift(const Ref &a, const Ref &b, const std::function<Ref(const Ref &, const Ref &)> &f);
+  template <typename F>
+  Ref lift(const Ref &a, F &&f) {
+    Ref c, x, y;
+    return split(a, c, x, y) ? ite(c, f(x), f(y)) : Ref();
+  }
+  template <typename F>
+  Ref lift(const Ref &a, const Ref &b, F &&f) {
+    Ref ca, cb, ax = a, ay = a, bx = b, by = b;
+    bool sa = split(a, ca, ax, ay), sb = split(b, cb, bx, by);
+    if ((!sa && !sb) || (sa && sb && ca != cb) || (!sa && !constant(a)) ||
+        (!sb && !constant(b)))
+      return {};
+    return ite(sa ? ca : cb, f(ax, bx), f(ay, by));
+  }
   camada::SMTExprRef build(const Node &n);
   // n's operation applied to other operands.
   Ref rebuild(const Node &n, const Ref &a, const Ref &b, const Ref &c);
@@ -291,10 +316,12 @@ private:
   Ref reduce(const Ref &l, const Ref &index);
 
   camada::SMTSolver &s;
-  std::unordered_map<Key, Ref, KeyHash> memo;
-  // The maps below key a term by its id. Node-based maps: folding recurses
-  // while holding references into them.
-  std::unordered_map<const void *, Node> nodes;
+  // Pointer-stable storage for built nodes, indexed by memoBuckets (open-
+  // addressed hash-consing table) and nodes (id -> entry index).
+  std::deque<Entry> entries;
+  std::vector<MemoBucket> memoBuckets;
+  uint32_t memoCount = 0;
+  llvm::DenseMap<const void *, uint32_t> nodes;
   // The constants' entries, which stay where they are, and each by value.
   std::deque<Term::Constant> constants;
   llvm::DenseMap<llvm::APInt, const Term::Constant *> bvs;
@@ -302,17 +329,12 @@ private:
   llvm::DenseMap<const camada::SMTExpr *, Ref> made;
   Ref bools[2];
   unsigned joinDepth = 0; // nesting of the concat join, bounded
-  struct PairHash {
-    size_t operator()(const std::pair<const void *, const void *> &p) const {
-      return std::hash<const void *>()(p.first) * 31 + std::hash<const void *>()(p.second);
-    }
-  };
-  std::unordered_map<std::pair<const void *, const void *>, bool, PairHash> implied;
+  llvm::DenseMap<std::pair<const void *, const void *>, bool> implied;
   bool entails(const Ref &guard, const Ref &lit, unsigned depth);
-  std::unordered_map<const void *, bool> arith;
+  llvm::DenseMap<const void *, bool> arith;
   // Constant arrays built here (kept alive, so the key stays theirs) and
   // the value each holds.
-  std::unordered_map<const void *, std::pair<Ref, Ref>> filled;
+  llvm::DenseMap<const void *, std::pair<Ref, Ref>> filled;
   struct Lambda {
     Def def;
     Ref below;
@@ -323,12 +345,10 @@ private:
   // passing another one.
   std::unordered_map<const void *, std::vector<Ref>> under;
   // Per lambda and index, the index (kept alive) and the definition there.
-  std::unordered_map<std::pair<const void *, const void *>, std::pair<Ref, Ref>, PairHash>
-      reduced;
+  llvm::DenseMap<std::pair<const void *, const void *>, std::pair<Ref, Ref>> reduced;
   // Per array and constant index, what select gave: a read walks up to 256
   // stores, and a load of an element reads it once per byte.
-  std::unordered_map<std::pair<const void *, const void *>, Ref, PairHash>
-      selects;
+  llvm::DenseMap<std::pair<const void *, const void *>, Ref> selects;
   // range, with each term also narrowed to the bounds known gives it. Such
   // a range holds only on known's path, so it is not kept, and nothing
   // folds by it but decide.
@@ -348,10 +368,11 @@ private:
   llvm::DenseMap<const void *, std::optional<Range>> scratch;
   // How many low bits of e, a sum or product, are known to be zero.
   unsigned zeros(const Ref &e, unsigned depth = 0);
-  std::unordered_map<const void *, std::pair<Ref, uint64_t>> bounds;
+  llvm::DenseMap<const void *, std::pair<Ref, uint64_t>> bounds;
   llvm::DenseMap<const void *, std::optional<Range>> ranges;
-  // Per symbol, the terms found not to contain it.
-  std::unordered_map<const void *, std::unordered_set<const void *>> freeOf;
+  // Per symbol, the terms found not to contain it (unique_ptr keeps each
+  // set stable across recursive substitute calls).
+  llvm::DenseMap<const void *, std::unique_ptr<llvm::DenseSet<const void *>>> freeOf;
   uint64_t epoch = 0;
   bool walkDone = false;
 };

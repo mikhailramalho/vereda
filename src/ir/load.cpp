@@ -2,6 +2,7 @@
 
 #include <llvm/ADT/DepthFirstIterator.h>
 #include <llvm/ADT/SetVector.h>
+#include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
 #include <llvm/Analysis/ValueTracking.h>
@@ -175,6 +176,10 @@ static void lowerCalls(Module &m) {
       if (auto *c = dyn_cast<CallInst>(&inst))
         if (!c->isInlineAsm() && !c->getCalledFunction())
           calls.push_back(c);
+  if (calls.empty())
+    return;
+  SmallVector<Function *, 16> addressTaken;
+  bool collectedAddressTaken = false;
   for (CallInst *c : calls) {
     IRBuilder<> b(c);
     if (auto *f = dyn_cast<Function>(c->getCalledOperand()->stripPointerCasts())) {
@@ -185,6 +190,12 @@ static void lowerCalls(Module &m) {
         c->replaceAllUsesWith(r ? r : PoisonValue::get(c->getType()));
       c->eraseFromParent();
       continue;
+    }
+    if (!collectedAddressTaken) {
+      for (Function &f : m)
+        if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true))
+          addressTaken.push_back(&f);
+      collectedAddressTaken = true;
     }
     BasicBlock *head = c->getParent();
     BasicBlock *tail = head->splitBasicBlock(c, head->getName() + ".called");
@@ -205,13 +216,13 @@ static void lowerCalls(Module &m) {
         result->addIncoming(r ? r : PoisonValue::get(c->getType()), b.GetInsertBlock());
     };
     LLVMContext &ctx = m.getContext();
-    for (Function &f : m) {
-      if (!f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true) || !compatible(*c, f, dl))
+    for (Function *f : addressTaken) {
+      if (!compatible(*c, *f, dl))
         continue;
-      BasicBlock *call = BasicBlock::Create(ctx, "call." + f.getName(), head->getParent(), tail);
+      BasicBlock *call = BasicBlock::Create(ctx, "call." + f->getName(), head->getParent(), tail);
       BasicBlock *next = BasicBlock::Create(ctx, "", head->getParent(), tail);
-      b.CreateCondBr(b.CreateICmpEQ(c->getCalledOperand(), &f), call, next);
-      branch(f, call);
+      b.CreateCondBr(b.CreateICmpEQ(c->getCalledOperand(), f), call, next);
+      branch(*f, call);
       b.SetInsertPoint(next);
     }
     Function *&none = unknown[c->getFunctionType()];
@@ -977,7 +988,111 @@ static Error linkModels(Module &m, StringRef dir) {
   return Error::success();
 }
 
-Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models) {
+// Drops functions, globals, aliases and ifuncs not reachable from entry
+// (plus the module's constructor, destructor and used lists) before the
+// passes and model linking run.
+static void pruneUnreachable(Module &m, StringRef entry) {
+  if (entry.empty())
+    return;
+  Function *root = m.getFunction(entry);
+  if (!root || root->isDeclaration())
+    return;
+
+  SmallPtrSet<const GlobalValue *, 32> reachable;
+  SmallPtrSet<const Constant *, 32> seenConsts;
+  SmallVector<const GlobalValue *, 64> work;
+  auto mark = [&](auto &self, const Value *v) -> void {
+    if (auto *gv = dyn_cast<GlobalValue>(v)) {
+      if (reachable.insert(gv).second)
+        work.push_back(gv);
+    } else if (auto *c = dyn_cast<Constant>(v)) {
+      if (!isa<ConstantData>(c) && seenConsts.insert(c).second)
+        for (const Use &u : c->operands())
+          self(self, u.get());
+    }
+  };
+
+  mark(mark, root);
+  for (StringRef special :
+       {"llvm.global_ctors", "llvm.global_dtors", "llvm.used", "llvm.compiler.used"})
+    if (GlobalVariable *g = m.getNamedGlobal(special))
+      mark(mark, g);
+
+  while (!work.empty()) {
+    const GlobalValue *gv = work.pop_back_val();
+    if (auto *f = dyn_cast<Function>(gv)) {
+      if (f->hasPersonalityFn())
+        mark(mark, f->getPersonalityFn());
+      if (f->hasPrefixData())
+        mark(mark, f->getPrefixData());
+      if (f->hasPrologueData())
+        mark(mark, f->getPrologueData());
+      for (const Instruction &inst : instructions(*f))
+        for (const Use &u : inst.operands())
+          mark(mark, u.get());
+    } else if (auto *g = dyn_cast<GlobalVariable>(gv)) {
+      if (g->hasInitializer())
+        mark(mark, g->getInitializer());
+    } else if (auto *a = dyn_cast<GlobalAlias>(gv)) {
+      if (const Constant *aliasee = a->getAliasee())
+        mark(mark, aliasee);
+    } else if (auto *ifunc = dyn_cast<GlobalIFunc>(gv)) {
+      if (const Constant *resolver = ifunc->getResolver())
+        mark(mark, resolver);
+    }
+  }
+
+  SmallVector<Function *, 32> deadFns;
+  SmallVector<GlobalVariable *, 32> deadGlobals;
+  SmallVector<GlobalAlias *, 8> deadAliases;
+  SmallVector<GlobalIFunc *, 4> deadIFuncs;
+  for (Function &f : m)
+    if (!reachable.contains(&f))
+      deadFns.push_back(&f);
+  for (GlobalVariable &g : m.globals())
+    if (!reachable.contains(&g))
+      deadGlobals.push_back(&g);
+  for (GlobalAlias &a : m.aliases())
+    if (!reachable.contains(&a))
+      deadAliases.push_back(&a);
+  for (GlobalIFunc &ifunc : m.ifuncs())
+    if (!reachable.contains(&ifunc))
+      deadIFuncs.push_back(&ifunc);
+
+  for (Function *f : deadFns)
+    f->dropAllReferences();
+  for (GlobalVariable *g : deadGlobals)
+    if (g->hasInitializer())
+      g->setInitializer(nullptr);
+  for (GlobalAlias *a : deadAliases)
+    a->setAliasee(nullptr);
+  for (GlobalIFunc *ifunc : deadIFuncs)
+    ifunc->setResolver(nullptr);
+
+  for (GlobalAlias *a : deadAliases) {
+    a->removeDeadConstantUsers();
+    if (a->use_empty())
+      a->eraseFromParent();
+  }
+  for (GlobalIFunc *ifunc : deadIFuncs) {
+    ifunc->removeDeadConstantUsers();
+    if (ifunc->use_empty())
+      ifunc->eraseFromParent();
+  }
+  for (Function *f : deadFns) {
+    f->removeDeadConstantUsers();
+    if (f->use_empty())
+      f->eraseFromParent();
+  }
+  for (GlobalVariable *g : deadGlobals) {
+    g->removeDeadConstantUsers();
+    if (g->use_empty())
+      g->eraseFromParent();
+  }
+}
+
+Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
+                                       StringRef entry) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -990,6 +1105,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return createStringError(inconvertibleErrorCode(),
                              path + " carries mustprogress; compile with -fno-finite-loops");
 
+  pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
   nondetLocals(*module);
   lowerLongjmp(*module);

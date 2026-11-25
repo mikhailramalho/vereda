@@ -351,21 +351,36 @@ Term Encoder::fcmp(CmpInst::Predicate p, const Value *lhs, const Value *rhs) {
   if (auto a = constFloat(lhs), b = constFloat(rhs); a && b)
     return t.boolean(FCmpInst::compare(*a, *b, p));
   camada::SMTExprRef a = fp(lhs), b = fp(rhs);
-  Term unordered = t.lor(t.fromSolver(s.mkFPIsNaN(a)), t.fromSolver(s.mkFPIsNaN(b)));
-  if (p == CmpInst::FCMP_UNO || p == CmpInst::FCMP_ORD)
-    return p == CmpInst::FCMP_UNO ? unordered : t.lnot(unordered);
-  Term r;
-  switch (CmpInst::getOrderedPredicate(p)) {
-  case CmpInst::FCMP_OEQ: r = t.fromSolver(s.mkFPEqual(a, b)); break;
-  case CmpInst::FCMP_ONE: r = t.lnot(t.fromSolver(s.mkFPEqual(a, b))); break;
-  case CmpInst::FCMP_OGT: r = t.fromSolver(s.mkFPGt(a, b)); break;
-  case CmpInst::FCMP_OGE: r = t.fromSolver(s.mkFPGe(a, b)); break;
-  case CmpInst::FCMP_OLT: r = t.fromSolver(s.mkFPLt(a, b)); break;
-  case CmpInst::FCMP_OLE: r = t.fromSolver(s.mkFPLe(a, b)); break;
-  default: throw Unsupported("predicate " + std::string(CmpInst::getPredicateName(p)));
+  // SMT-LIB's fp.eq, fp.lt, fp.leq, fp.gt and fp.geq all return false on a
+  // NaN, so ordered predicates hold directly and unordered ones are their
+  // negations; only UNO, ORD, ONE and UEQ need explicit NaN checks.
+  switch (p) {
+  case CmpInst::FCMP_OEQ: return t.fromSolver(s.mkFPEqual(a, b));
+  case CmpInst::FCMP_OGT: return t.fromSolver(s.mkFPGt(a, b));
+  case CmpInst::FCMP_OGE: return t.fromSolver(s.mkFPGe(a, b));
+  case CmpInst::FCMP_OLT: return t.fromSolver(s.mkFPLt(a, b));
+  case CmpInst::FCMP_OLE: return t.fromSolver(s.mkFPLe(a, b));
+  case CmpInst::FCMP_UNE: return t.lnot(t.fromSolver(s.mkFPEqual(a, b)));
+  case CmpInst::FCMP_UGT: return t.lnot(t.fromSolver(s.mkFPLe(a, b)));
+  case CmpInst::FCMP_UGE: return t.lnot(t.fromSolver(s.mkFPLt(a, b)));
+  case CmpInst::FCMP_ULT: return t.lnot(t.fromSolver(s.mkFPGe(a, b)));
+  case CmpInst::FCMP_ULE: return t.lnot(t.fromSolver(s.mkFPGt(a, b)));
+  case CmpInst::FCMP_UNO:
+  case CmpInst::FCMP_ORD:
+  case CmpInst::FCMP_ONE:
+  case CmpInst::FCMP_UEQ: {
+    Term unordered = t.lor(t.fromSolver(s.mkFPIsNaN(a)), t.fromSolver(s.mkFPIsNaN(b)));
+    if (p == CmpInst::FCMP_UNO)
+      return unordered;
+    if (p == CmpInst::FCMP_ORD)
+      return t.lnot(unordered);
+    Term eq = t.fromSolver(s.mkFPEqual(a, b));
+    return p == CmpInst::FCMP_ONE ? t.land(t.lnot(unordered), t.lnot(eq))
+                                  : t.lor(unordered, eq);
   }
-  // Ordered: false on a NaN; unordered: true on one.
-  return CmpInst::isOrdered(p) ? t.land(t.lnot(unordered), r) : t.lor(unordered, r);
+  default:
+    throw Unsupported("predicate " + std::string(CmpInst::getPredicateName(p)));
+  }
 }
 
 Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {

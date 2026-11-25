@@ -186,8 +186,8 @@ def as_vereda(regex):
         regex = regex.replace("^Unwinding loop", r"^\[PROGRESS\] Unwinding loop", 1)
     value = r"( = (?:\\.|[^\s\\])+)"
     regex = re.sub(value + r" \\\(([^\\]*)(?:\\\))?",
-                   lambda m: m[1] + r";\n  bits:" + (f" {m[2]}" if m[2] else ""), regex)
-    regex = re.sub(r"\\\(((?:[01]{8} )*[01]{8})\\\)", r"bits: \1", regex)
+                   lambda m: m[1] + "; //" + (f" {m[2]}" if m[2] else ""), regex)
+    regex = re.sub(r"\\\(((?:[01]{8} )*[01]{8})\\\)", r"// \1", regex)
     if "\\{" not in regex:
         regex = re.sub(r"^(\^(?:  |\\s\+)\S+)" + value + r"\$$", r"\1\2;$", regex)
     return regex

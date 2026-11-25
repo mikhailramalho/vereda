@@ -17,4 +17,4 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8524_fail
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\s+r = 5;\n  bits:
+// EXPECT: ^\s+r = 5; //

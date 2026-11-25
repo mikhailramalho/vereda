@@ -108,7 +108,7 @@ VERIFICATION FAILED
 
 Stage activity and loop unwinding use `[PROGRESS]`; target, timings and memory
 use `[INFO]`; warnings use `[WARNING]`. A `[COUNTEREXAMPLE]` contains plain
-assumption and state blocks, with binary values on a separate `bits:` line,
+assumption and state blocks, with binary values as inline comments,
 followed by the violated property. `[RESULTS]` always appears for a verdict,
 including successful runs with no remaining checks. Its counts describe
 properties decided by the solver; checks resolved during the walk do not

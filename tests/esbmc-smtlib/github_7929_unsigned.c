@@ -16,7 +16,7 @@ int main(void)
 // Needs: --smtlib --smtlib-solver-prog z3 -in REQUIRES z3_binary
 // RUN: --smtlib --smtlib-solver-prog "z3 -in"
 // MODE: FUTURE
-// EXPECT: ^  u = 4294967292;\n  bits: 11111111 11111111 11111111 11111100$
-// EXPECT: ^  q = 1431655764;\n  bits: 01010101 01010101 01010101 01010100$
+// EXPECT: ^  u = 4294967292; // 11111111 11111111 11111111 11111100$
+// EXPECT: ^  q = 1431655764; // 01010101 01010101 01010101 01010100$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

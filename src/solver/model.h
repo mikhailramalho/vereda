@@ -36,6 +36,13 @@ public:
     return it->second ? &*it->second : nullptr;
   }
 
+  // Records that e is known to be true in this model, avoiding a solver
+  // evaluation of a large violated-check term during trace building.
+  void assumeTrue(const encode::Term &e) {
+    if (!terms.constant(e))
+      values.insert_or_assign(e.id(), llvm::APInt(1, 1));
+  }
+
   // Whether the model reaches a step with this guard.
   bool reaches(const encode::Term &guard) {
     const llvm::APInt *v = value(guard);

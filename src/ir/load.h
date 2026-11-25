@@ -15,6 +15,7 @@ namespace vereda::ir {
 // (models-<pointer bits>.bc in models, a directory; none when empty or
 // missing) for the functions the module still calls without defining.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
-                                                   llvm::StringRef models = "");
+                                                   llvm::StringRef models = "",
+                                                   llvm::StringRef entry = "");
 
 } // namespace vereda::ir
