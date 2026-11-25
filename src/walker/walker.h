@@ -7,6 +7,7 @@
 #include "walker/trace.h"
 #include <llvm/IR/Function.h>
 #include <llvm/Support/Error.h>
+#include <memory>
 
 namespace vereda::walker {
 
@@ -47,5 +48,21 @@ struct Options {
 // handle yet.
 llvm::Error walk(llvm::Function &entry, const Options &opts, encode::Encoder &enc,
                  memory::Memory &mem, checks::Checks &checks, Trace &trace);
+
+// Keeps a prefix stopped inside an unconditional outer loop. Other walks
+// finish normally and cannot be extended; their next bound starts afresh.
+class Incremental {
+public:
+  Incremental(llvm::Function &entry, const Options &opts, encode::Encoder &enc,
+              memory::Memory &mem, checks::Checks &checks, Trace &trace);
+  ~Incremental();
+  // Bounds must increase while the walk is resumable.
+  llvm::Error advance(unsigned bound);
+  bool resumable() const;
+
+private:
+  struct Impl;
+  std::unique_ptr<Impl> impl;
+};
 
 } // namespace vereda::walker

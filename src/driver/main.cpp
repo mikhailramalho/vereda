@@ -163,42 +163,74 @@ static int finish(int code) {
 // a larger bound.
 static const int BoundTooSmall = -1;
 
+struct BMCState {
+  camada::SMTSolverRef solver;
+  vereda::encode::Terms terms;
+  vereda::checks::Checks checks;
+  vereda::walker::Trace trace;
+  std::unique_ptr<vereda::memory::Memory> memory;
+  std::unique_ptr<vereda::encode::Encoder> encoder;
+  std::unique_ptr<vereda::walker::Incremental> walk;
+
+  BMCState(camada::SMTSolverRef solver, Function &fn)
+      : solver(std::move(solver)), terms(*this->solver),
+        memory(std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout())),
+        encoder(std::make_unique<vereda::encode::Encoder>(terms, *memory, fp2bv)) {}
+
+  bool resumable() const { return walk && walk->resumable(); }
+};
+
 // Walks fn with the given bound, solves and prints the verdict; returns the
 // exit code. Under --incremental-bmc, a failed unwinding or recursion
 // assertion is not a verdict but BoundTooSmall, with unwindsAt set to its
 // (checks.h); an unknown from the solver still ends the run, as in ESBMC.
 // When releaseModule is non-null (single-walk mode), the IR module is freed
 // right after the walk, before solving, to keep peak memory down.
+// retained keeps a resumable prefix and its solver alive between bounds.
 static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModuleInfo *witnessInfo,
-               std::unique_ptr<Module> *releaseModule = nullptr, unsigned *unwindsAt = nullptr) {
-  Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
-  if (!created) {
-    errs() << "vereda: " << toString(created.takeError()) << "\n";
-    return ErrorExit;
-  }
-  camada::SMTSolver &solver = **created;
-  progress("Walking " + entry);
-  vereda::util::Stopwatch walkTime;
-  vereda::encode::Terms terms(solver);
-  vereda::checks::Checks checks;
-  vereda::walker::Trace trace;
-  unsigned symbols = 0;
-  {
-    std::unique_ptr<vereda::memory::Memory> memory;
+               std::unique_ptr<Module> *releaseModule = nullptr, unsigned *unwindsAt = nullptr,
+               std::unique_ptr<BMCState> *retained = nullptr) {
+  std::unique_ptr<BMCState> local;
+  auto &state = retained ? *retained : local;
+  if (!state || !state->resumable()) {
+    Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
+    if (!created) {
+      errs() << "vereda: " << toString(created.takeError()) << "\n";
+      return ErrorExit;
+    }
     try {
-      memory = std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout());
+      state = std::make_unique<BMCState>(std::move(*created), fn);
     } catch (const vereda::Unsupported &e) {
       return unknown(Twine("unsupported: ") + e.what());
     }
-    vereda::encode::Encoder enc(terms, *memory, fp2bv);
+  }
+  camada::SMTSolver &solver = *state->solver;
+  progress((state->resumable() ? "Resuming " : "Walking ") + entry);
+  vereda::util::Stopwatch walkTime;
+  auto &terms = state->terms;
+  auto &checks = state->checks;
+  auto &trace = state->trace;
+  unsigned symbols = 0;
+  {
+    auto &enc = *state->encoder;
+    auto &memory = *state->memory;
     vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
                                      !noPointerCheck, !noVLASizeCheck};
-    if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
+    if (retained && !state->walk)
+      state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
+                                                               checks, trace);
+    if (Error e = state->walk ? state->walk->advance(bound)
+                             : vereda::walker::walk(fn, walkOpts, enc, memory, checks, trace))
       return finish(unknown(toString(std::move(e))));
     symbols = enc.symbolCount();
+  }
+  if (!state->resumable()) {
+    state->walk.reset();
+    state->encoder.reset();
+    state->memory.reset();
   }
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
@@ -225,7 +257,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
       return finish(0);
   }
 
-  terms.releaseWalkTables();
+  if (!state->resumable())
+    terms.releaseWalkTables();
   if (releaseModule)
     releaseModule->reset();
 
@@ -411,16 +444,16 @@ int main(int argc, char **argv) {
   // iteration of a long loop does not wait for a walk of all of it. The
   // largest bound is never skipped.
   unsigned unwindsAt = 0, walked = 0;
+  std::unique_ptr<BMCState> retained;
   for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k += kStep) {
     if ((unlimitedKSteps || k + kStep <= maxKStep) && k < std::min(unwindsAt, 2 * walked))
       continue;
     walked = k;
-    // A new walk and solver per bound, as ESBMC: the walk merges the paths
-    // leaving a loop, so a larger bound changes everything after it. (One
-    // solver with a scope per bound was measured and not kept; see
-    // docs/survey/2026-11-22-incremental-bmc.md.)
+    // Extend a prefix stopped in an unconditional outer loop. Otherwise
+    // start afresh: extending a loop changes the state at its merged exits
+    // and everything walked after them.
     progress("Checking bound k = " + std::to_string(k));
-    if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt); r != BoundTooSmall)
+    if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt, &retained); r != BoundTooSmall)
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
