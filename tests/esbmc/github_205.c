@@ -31,8 +31,7 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/github_205
-// Needs: REQUIRES arch32
-// RUN: --max-k-step 5 --32 -Wno-error=implicit-function-declaration --no-unwinding-assertions --unwind 1
+// RUN: --max-k-step 5 -m32 --no-unwinding-assertions --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

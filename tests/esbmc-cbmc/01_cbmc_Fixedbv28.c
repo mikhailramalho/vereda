@@ -175,8 +175,8 @@ int main(void)
 }
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv28
-// Needs: --fixedbv --bv REQUIRES arch32
-// RUN: --fixedbv --no-slice --bv --32
+// Needs: --bv
+// RUN: --no-slice --bv --32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

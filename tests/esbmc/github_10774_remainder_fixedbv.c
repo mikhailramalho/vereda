@@ -7,8 +7,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10774_remainder_fixedbv
-// Needs: --fixedbv
-// RUN: --fixedbv --no-div-by-zero-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

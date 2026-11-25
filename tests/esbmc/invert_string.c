@@ -26,8 +26,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/invert_string
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

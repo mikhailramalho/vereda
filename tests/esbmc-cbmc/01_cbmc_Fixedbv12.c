@@ -12,8 +12,5 @@ int main()
 }
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv12
-// Needs: --fixedbv REQUIRES arch32
-// RUN: --fixedbv --no-slice --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

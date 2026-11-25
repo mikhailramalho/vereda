@@ -14,8 +14,4 @@ int main()
   assert(c==a+b || c==a-b);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv7
-// Needs: --fixedbv
-// RUN: --fixedbv -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

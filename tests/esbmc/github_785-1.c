@@ -21,7 +21,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_785-1
 // Needs: __ESBMC_get_object_size
-// Needs: REQUIRES arch32
-// RUN: --32 --force-malloc-success
+// RUN: -m32 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

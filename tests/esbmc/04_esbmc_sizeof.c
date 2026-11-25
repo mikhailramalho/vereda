@@ -51,8 +51,5 @@ main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/04_esbmc_sizeof
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

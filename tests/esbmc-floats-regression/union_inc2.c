@@ -11,8 +11,8 @@ int main(void)
 }
 
 // Imported from ESBMC regression/floats-regression/union_inc2
-// Needs: --big-endian --interval-analysis REQUIRES arch32
-// RUN: --floatbv --32 --big-endian --interval-analysis -Wno-error=implicit-function-declaration
+// Needs: --big-endian --interval-analysis
+// RUN: --32 --big-endian --interval-analysis -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -7856,8 +7856,8 @@ void ldv_check_final_state(void)
 }
 }
 // Imported from ESBMC regression/esbmc/github_243
-// Needs: REQUIRES arch32
-// RUN: --incremental-bmc --force-malloc-success --32
-// MODE: FUTURE
+// RUN: --incremental-bmc --force-malloc-success -m32
+// MODE: KNOWNBUG
+// Vereda: solver exceeds the 4 GiB regression limit with the 32-bit target
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
 }
 // Imported from ESBMC regression/esbmc/github_1064-3-32
 // Needs: __ESBMC_POINTER_OBJECT
-// Needs: REQUIRES arch32
-// RUN: --32
+// RUN: -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

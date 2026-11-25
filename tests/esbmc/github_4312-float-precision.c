@@ -26,7 +26,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4312-float-precision
 // Needs: --all-witnesses --max-witnesses 6
-// RUN: --all-witnesses --max-witnesses 6 --floatbv --no-unwinding-assertions --unwind 1
+// RUN: --all-witnesses --max-witnesses 6  --no-unwinding-assertions --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 6 witnesses\]

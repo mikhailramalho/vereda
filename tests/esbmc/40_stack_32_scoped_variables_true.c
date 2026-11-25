@@ -6,7 +6,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/esbmc/40_stack_32_scoped_variables_true
-// Needs: --stack-limit 128 REQUIRES arch32
+// Needs: --stack-limit 128
 // RUN: --32 --stack-limit 128
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

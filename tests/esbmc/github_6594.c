@@ -58,7 +58,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6594
-// Needs: --state-hashing --add-symex-value-sets --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null REQUIRES arch32
+// Needs: --state-hashing --add-symex-value-sets --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null
 // RUN: --32 --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

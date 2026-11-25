@@ -74,10 +74,12 @@ RENAMED = {
 }
 RENAMED_WITH_VALUE = {"--function": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
-# and --summarize-array-loops, which Vereda does by default.
+# --summarize-array-loops, which Vereda does by default, and numeric encoding
+# selectors: floating-point values always use Vereda's supported encoding.
+ENCODING_FLAGS = {"--floatbv", "--fixedbv"}
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
            "--no-div-by-zero-check", "--no-align-check", "--no-pointer-relation-check",
-           "--no-simplify", "--no-slice", "--floatbv"}
+           "--no-simplify", "--no-slice"} | ENCODING_FLAGS
 
 
 def translate(args, test_dir):
@@ -128,14 +130,27 @@ def header(origin, mode, args, expected, test_dir, builtins):
     if origin in {"esbmc/vla_above_ptrdiff_max", "esbmc/vla_no_size_check_fail"}:
         regexes = [r.replace("object size exceeds PTRDIFF_MAX", "alloca: size exceeds PTRDIFF_MAX")
                    for r in regexes]
-    missing += [r for r in expected if r.split()[0] in DIRECTIVES]
+    # Explicit target flags satisfy these requirements independently of the host.
+    target = "-m64" if "-m64" in flags else "-m32" if "-m32" in flags else None
+    architectures = {"REQUIRES arch32": "-m32", "REQUIRES arch64": "-m64"}
+    missing += [r for r in expected if r.split()[0] in DIRECTIVES
+                and not (r in architectures and architectures[r] == target)]
     lines = [f"// Imported from ESBMC regression/{origin}"]
     if builtins:
         lines.append("// Needs: " + ", ".join(builtins))
     if missing or builtins:
         mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     if missing:
-        lines += ["// Needs: " + " ".join(missing), "// RUN: " + args]
+        # Keep unsupported options visible without restoring discarded encodings.
+        lexer = shlex.shlex(args, posix=True)
+        lexer.whitespace_split, lexer.commenters = True, ""
+        raw_args, start = [], 0
+        for token in lexer:
+            end = lexer.instream.tell()
+            if token not in ENCODING_FLAGS:
+                raw_args.append(args[start:end])
+            start = end
+        lines += ["// Needs: " + " ".join(missing), "// RUN: " + "".join(raw_args).strip()]
     elif flags:
         lines.append("// RUN: " + " ".join(flags))
     # Keep both the summarized and unrolled decrement performance regressions.
@@ -187,6 +202,14 @@ def assert_messages(src):
 
 def as_vereda(regex):
     """Translate ESBMC trace separators, values and summary to Vereda's layout."""
+    if re.match(r"\^?(?: |\\s[+*]?)*PASSED\b", regex) and \
+            (r"\[" in regex or re.search(r"line(?: |\\s)", regex)):
+        regex = regex.replace("PASSED", "SUCCESS", 1)
+    regex = re.sub(r"\bline +(?=[0-9])", "line +", regex)
+    overflow = re.fullmatch(r'\^  !overflow\\\("([^" ]+)", (\w+), (\w+)\\\)\$', regex)
+    operations = {r"\+": "add", "-": "sub", r"\-": "sub", r"\*": "mul"}
+    if overflow and overflow[1] in operations:
+        regex = "^  arithmetic overflow on " + operations[overflow[1]] + "$"
     regex = regex.replace(r"\n-+\n", r"\n")
     regex = regex.replace(r"\[Counterexample\]", r"\[COUNTEREXAMPLE\]")
     regex = regex.replace(r"\*\* Results:", r"\[RESULTS\]")
@@ -566,6 +589,7 @@ SKIPPED_TESTS = {
 # Tests Vereda gets wrong in a way to fix, by ESBMC path: they are imported
 # as KNOWNBUG, with the reason.
 KNOWN_BUGS = {
+    "esbmc/github_243": "solver exceeds the 4 GiB regression limit with the 32-bit target",
     "esbmc/array_loop_summary_counter": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_decrement": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_store": "out of memory, over 16 GB",

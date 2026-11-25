@@ -16,8 +16,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/multi_dimensional_array_1-success
-// Needs: REQUIRES arch32
-// RUN: --32
+// RUN: -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

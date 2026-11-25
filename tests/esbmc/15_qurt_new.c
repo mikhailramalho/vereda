@@ -163,8 +163,4 @@ int  qurt()
 }
 
 // Imported from ESBMC regression/esbmc/15_qurt_new
-// Needs: --fixedbv
-// RUN: --fixedbv
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

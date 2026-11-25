@@ -94,7 +94,7 @@ for(counter=0; counter<argc; counter++)
   return res;
 }
 // Imported from ESBMC regression/esbmc-unix2/23_picosat-846_05
-// Needs: --partial-loops REQUIRES arch32
+// Needs: --partial-loops
 // RUN: app.c picosat.c --unwind 1 --partial-loops --function picosat_add --32
 // FILES: app.c picosat.c
 // MODE: FUTURE

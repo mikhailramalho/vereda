@@ -18,8 +18,8 @@ int main(void)
 }
 
 // Imported from ESBMC regression/floats-regression/union_inc
-// Needs: --interval-analysis REQUIRES arch32
-// RUN: --floatbv --32 --interval-analysis
+// Needs: --interval-analysis
+// RUN: --32 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

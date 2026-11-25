@@ -11,8 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/llvm/static_assert_fail
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

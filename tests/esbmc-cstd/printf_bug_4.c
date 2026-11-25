@@ -9,8 +9,5 @@ int main()
   assert(x != 20);
 }
 // Imported from ESBMC regression/cstd/printf_bug_4
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

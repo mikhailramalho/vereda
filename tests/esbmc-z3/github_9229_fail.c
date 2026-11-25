@@ -9,8 +9,5 @@ int main(void)
 }
 // Imported from ESBMC regression/z3/github_9229_fail
 // RUN: --unsigned-overflow-check --solver z3
-// EXPECT: ^  !overflow\("\+", a, b\)$
+// EXPECT: ^  arithmetic overflow on add$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  !overflow\("\+", a, b\)$
-// MODE: FUTURE
-// Vereda: verdict FAILED

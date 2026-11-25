@@ -23,7 +23,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/k-induction-parallel/insertion_sort
-// Needs: --k-induction-parallel REQUIRES arch32
+// Needs: --k-induction-parallel
 // RUN: --k-induction-parallel --32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

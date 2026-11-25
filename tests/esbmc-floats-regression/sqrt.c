@@ -27,7 +27,7 @@ int main(void)
 
 // Imported from ESBMC regression/floats-regression/sqrt
 // Needs: --interval-analysis
-// RUN: --floatbv --interval-analysis
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

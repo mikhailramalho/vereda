@@ -9,8 +9,4 @@ int main() {
         assert(b==1.25);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv2
-// Needs: --fixedbv
-// RUN: --fixedbv -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

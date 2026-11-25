@@ -16,8 +16,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/int-to-float-prec-boundary
-// Needs: REQUIRES arch32
-// RUN: --floatbv --z3 --32
-// MODE: FUTURE
+// RUN: --solver z3 -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

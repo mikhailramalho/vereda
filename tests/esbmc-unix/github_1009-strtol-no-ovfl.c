@@ -9,8 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009-strtol-no-ovfl
-// Needs: REQUIRES arch32
-// RUN: --overflow-check --32
-// MODE: FUTURE
+// RUN: --overflow-check -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

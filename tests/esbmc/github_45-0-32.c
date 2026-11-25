@@ -31,9 +31,8 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/github_45-0-32
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration --no-unwinding-assertions --unwind 1
+// RUN: -m32 --no-unwinding-assertions --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \barray size in bytes overflows address space size$
-// Vereda: verdict none
+// Vereda: verdict FAILED

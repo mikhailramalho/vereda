@@ -12,8 +12,7 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_j_modifier
-// Needs: REQUIRES arch32
-// RUN: --overflow-check --32
+// RUN: --overflow-check -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

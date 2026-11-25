@@ -9,9 +9,8 @@ int main()
     assert(y == 3);   
 }
 // Imported from ESBMC regression/cstd/printf_bug_1
-// Needs: REQUIRES arch32
-// RUN: --overflow-check --32
+// RUN: --overflow-check -m32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: NULL pointer\b
-// Vereda: verdict none
+// Vereda: verdict FAILED

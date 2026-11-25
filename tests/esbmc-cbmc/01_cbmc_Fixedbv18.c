@@ -7,8 +7,4 @@ int main()
 	assert(temp==12);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv18
-// Needs: --fixedbv
-// RUN: --fixedbv --no-slice -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

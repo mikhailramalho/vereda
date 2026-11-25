@@ -13,8 +13,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats-regression/github_10774_fail
-// Needs: --interval-analysis --fixedbv
-// RUN: --interval-analysis --fixedbv --no-div-by-zero-check
+// Needs: --interval-analysis
+// RUN: --interval-analysis  --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none
