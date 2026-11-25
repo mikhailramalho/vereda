@@ -27,12 +27,7 @@ Memory::Memory(encode::Terms &t, const DataLayout &dl)
     : t(t), s(t.solver()), dl(dl), ptrBits(dl.getPointerSizeInBits(0)) {
   if (dl.isBigEndian())
     throw Unsupported("big-endian targets");
-  bases = t.symbol("bases", s.mkArraySort(s.mkBVSort(ObjBits), s.mkBVSort(ptrBits)));
-  // Constrained before the object is recorded, as allocate() does: after it,
-  // base() of the constant 0 folds to objects[0].base and the constraint to
-  // true, which left bases[0] free and a stored null read back non-null.
-  t.addConstraint(t.eq(base(t.bv(0, ObjBits)), t.bv(0, ptrBits)));
-  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), 0, false});
+  objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), 0, false, true});
   end = t.bv(1, ptrBits); // no object at address 0
 }
 
@@ -68,12 +63,39 @@ Term Memory::mask(Term p, Term m) {
 Term Memory::bytePtr(Term p, uint64_t i) {
   return i ? advance(p, t.bv(i, ptrBits)) : p;
 }
+void Memory::ensureLayout(uint64_t id) {
+  if (id == 0 || id >= objects.size() || objects[id].laidOut)
+    return;
+  Object &o = objects[id];
+  o.laidOut = true;
+  Term layout = t.land(t.ugt(o.base, end), t.lnot(t.uaddo(o.base, o.size)));
+  if (o.align > 1)
+    layout = t.land(layout, t.eq(t.bvand(o.base, t.bv(o.align - 1, ptrBits)),
+                                 t.bv(0, ptrBits)));
+  t.addConstraint(layout);
+  end = t.add(o.base, o.size);
+  if (bases && o.exposed)
+    t.addConstraint(t.eq(t.select(bases, t.bv(id, ObjBits)), o.base));
+}
+
 Term Memory::base(Term obj) {
   Term c, x, y;
   if (t.split(obj, c, x, y))
     return t.ite(c, base(x), base(y));
-  if (const APInt *id = t.constant(obj); id && id->ult(objects.size()))
-    return objects[id->getZExtValue()].base;
+  if (const APInt *id = t.constant(obj); id && id->ult(objects.size())) {
+    uint64_t idx = id->getZExtValue();
+    ensureLayout(idx);
+    return objects[idx].base;
+  }
+  if (!bases) {
+    for (unsigned id = 1; id < objects.size(); ++id)
+      if (objects[id].exposed)
+        ensureLayout(id);
+    bases = t.symbol("bases", s.mkArraySort(s.mkBVSort(ObjBits), s.mkBVSort(ptrBits)));
+    for (unsigned id = 0; id < objects.size(); ++id)
+      if (id == 0 || objects[id].exposed)
+        t.addConstraint(t.eq(t.select(bases, t.bv(id, ObjBits)), objects[id].base));
+  }
   return t.select(bases, obj);
 }
 
@@ -111,6 +133,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   // Symbolic or huge allocations bind layout only where exists holds, or a
   // size on one path would remove inputs from every path.
   bool unconditional = t.isTrue(exists);
+  bool defer = false;
   if (!t.isFalse(exists)) {
     using U = unsigned __int128;
     U limit = U(1) << (ptrBits - 2);
@@ -119,6 +142,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
       if (endBounded && U(reserved) + need <= limit) {
         reserved += static_cast<uint64_t>(need);
         unconditional = true;
+        defer = true;
       } else {
         endBounded = false;
       }
@@ -126,16 +150,25 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
       endBounded = false;
     }
   }
+  Term obj = t.bv(id, ObjBits);
+  if (sizes)
+    t.addConstraint(t.eq(t.select(sizes, obj), size));
+  if (defer && (!bases || !exposed)) {
+    // Layout constraints are asserted on demand by ensureLayout() when this
+    // object's base address is first observed. Because all deferred objects
+    // fit within a quarter of the address space, laying out any subset in any
+    // order remains satisfiable and non-overlapping.
+    objects.push_back({b, size, exists, align, exposed, false});
+    return ptr(obj, t.bv(0, ptrBits));
+  }
   Term layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
   if (align > 1)
     layout = t.land(layout, t.eq(t.bvand(b, t.bv(align - 1, ptrBits)),
                                        t.bv(0, ptrBits)));
   t.addConstraint(unconditional ? layout : t.implies(exists, layout));
-  Term obj = t.bv(id, ObjBits);
-  t.addConstraint(t.eq(base(obj), b));
-  if (sizes)
-    t.addConstraint(t.eq(t.select(sizes, obj), size));
-  objects.push_back({b, size, exists, align, exposed});
+  if (bases && exposed)
+    t.addConstraint(t.eq(t.select(bases, obj), b));
+  objects.push_back({b, size, exists, align, exposed, true});
   end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
@@ -204,6 +237,8 @@ Term Memory::equal(Term p, Term q) {
     return t.land(t.eq(object(x), t.bv(0, ObjBits)), t.lnot(t.eq(offset(x), t.bv(0, ptrBits))));
   };
   Term outside = t.lor(out(p), out(q));
+  if (t.isFalse(outside))
+    return t.eq(p, q);
   return t.lor(t.land(outside, t.eq(address(p), address(q))),
                t.land(t.lnot(outside), t.eq(p, q)));
 }
@@ -218,9 +253,10 @@ Term Memory::fromAddress(Term a) {
   // among constants.
   Term obj = t.bv(0, ObjBits), off = a; // null, or outside the program
   for (unsigned id = 1; id < objects.size(); ++id) {
-    const Object &o = objects[id];
-    if (!o.exposed)
+    if (!objects[id].exposed)
       continue;
+    ensureLayout(id);
+    const Object &o = objects[id];
     // One past the end still belongs to the object: the gap keeps it unique.
     // Only an object the path allocated holds an address: elsewhere its base
     // is free, and address 0 could land in it as a non-null pointer. Where
