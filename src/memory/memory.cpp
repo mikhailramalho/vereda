@@ -1,4 +1,5 @@
 #include "memory/memory.h"
+#include "memory/table.h"
 
 #include "util/unsupported.h"
 #include <llvm/ADT/DenseSet.h>
@@ -407,33 +408,17 @@ void Memory::flushObject(State &st, uint64_t o) {
       Term data;
       constexpr size_t MaxLambdaRuns = 8;
       constexpr uint64_t MinLambdaElems = 8;
-      Term stride;
-      if (byOffset && elemBytes <= 8 && numElems >= MinLambdaElems) {
-        const APInt *first = t.constant(elems[0]), *second = t.constant(elems[1]);
-        if (first && second) {
-          APInt step = *second - *first, expected = *first;
-          if (!step.isZero() && llvm::all_of(elems, [&](const Term &v) {
-                const APInt *c = t.constant(v);
-                bool matches = c && *c == expected;
-                expected += step;
-                return matches;
-              }))
-            stride = t.bv(step);
-        }
-      }
-      if (stride) {
+      encode::Terms::Def compact;
+      if (byOffset && elemBytes <= 8 && numElems >= MinLambdaElems && domCount != numElems)
+        compact = tableFunction(t, elems);
+      if (compact) {
         // All elements have already been written: compress their exact values,
         // including modular wrap, without relying on a loop summary.
-        Term first = elems[0];
         data = t.lambda(
             s.mkArraySort(indexSort, s.mkBVSort(8u << shift)),
             "flush#" + std::to_string(fresh++),
-            [this, first, stride, dom, numElems](const Term &j) {
-              unsigned w = first.width();
-              Term k = j.width() > w ? t.extract(j, w - 1, 0)
-                       : j.width() < w ? t.zext(j, w - j.width()) : j;
-              Term value = t.add(first, t.mul(stride, k));
-              return t.ite(t.ult(j, t.bv(APInt(j.width(), numElems))), value, dom);
+            [this, compact = std::move(compact), dom, numElems](const Term &j) {
+              return t.ite(t.ult(j, t.bv(APInt(j.width(), numElems))), compact(j), dom);
             });
       } else if (!otherRuns.empty() && otherRuns.size() <= MaxLambdaRuns &&
           otherElems >= MinLambdaElems && otherElems >= 2 * otherRuns.size()) {

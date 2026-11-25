@@ -10,6 +10,10 @@ set(REGRESS_MEMORY_LIMIT 4096 CACHE STRING "Per-test memory limit in MB (address
 
 add_test(NAME vereda/output_readers COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/output_readers.py")
 set_tests_properties(vereda/output_readers PROPERTIES LABELS vereda)
+add_executable(vereda-table-patterns table_patterns.cpp)
+target_link_libraries(vereda-table-patterns PRIVATE libvereda)
+add_test(NAME vereda/table_patterns COMMAND vereda-table-patterns)
+set_tests_properties(vereda/table_patterns PROPERTIES LABELS vereda TIMEOUT 60)
 add_test(NAME vereda/banner
   COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
           "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
