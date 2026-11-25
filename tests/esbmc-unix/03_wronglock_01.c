@@ -59,7 +59,7 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/03_wronglock_01
-// Needs: --context-bound 2 REQUIRES arch32
+// Needs: --context-bound 2
 // RUN: --context-bound 2 --32 -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

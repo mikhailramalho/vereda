@@ -6,9 +6,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_562_fail
-// Needs: --fixedbv
-// RUN: --fixedbv
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: assertion
-// Vereda: verdict none

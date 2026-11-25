@@ -7,8 +7,6 @@ int main()
 	assert(v == 1 << 16);
 }
 // Imported from ESBMC regression/esbmc/fixedbv-bitcast
-// Needs: --fixedbv
-// RUN: --fixedbv -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

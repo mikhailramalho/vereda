@@ -113,7 +113,7 @@ void unlock(pthread_mutex_t *lock) {
     }
 }
 // Imported from ESBMC regression/esbmc-unix/03_wronglock_03
-// Needs: --context-bound 4 REQUIRES arch32
+// Needs: --context-bound 4
 // RUN: --context-bound 4 --32 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

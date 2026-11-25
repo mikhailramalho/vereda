@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/termination/termination8
 // Needs: --state-hashing --add-symex-value-sets --no-assertions --termination --max-inductive-step 3
-// RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --floatbv --no-vla-size-check --64 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
+// RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2  --no-vla-size-check --64 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

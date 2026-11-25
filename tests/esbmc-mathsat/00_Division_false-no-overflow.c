@@ -13,7 +13,7 @@ int main() {
 }
 // Imported from ESBMC regression/mathsat/00_Division_false-no-overflow
 // Needs: --mathsat
-// RUN: --floatbv --overflow-check --mathsat
+// RUN: --overflow-check --mathsat
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

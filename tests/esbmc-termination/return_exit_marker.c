@@ -28,7 +28,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/termination/return_exit_marker
-// Needs: --termination --goto-functions-only REQUIRES arch32
+// Needs: --termination --goto-functions-only
 // RUN: --termination --32 --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ASSERT 0 // termination per-loop marker\n.*\n.*RETURN: 0

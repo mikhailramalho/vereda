@@ -21,8 +21,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7548_getline_ilp32
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

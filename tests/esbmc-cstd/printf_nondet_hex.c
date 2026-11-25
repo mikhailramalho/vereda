@@ -16,8 +16,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_nondet_hex
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

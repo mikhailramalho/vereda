@@ -16,8 +16,5 @@ int main()
 	assert(0);
 }
 // Imported from ESBMC regression/esbmc/github_775-1
-// Needs: REQUIRES arch32
-// RUN: --32 --force-malloc-success
-// MODE: FUTURE
+// RUN: -m32 --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

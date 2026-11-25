@@ -17,7 +17,7 @@ int main(void)
 
 // Imported from ESBMC regression/floats-regression/trunc
 // Needs: --interval-analysis
-// RUN: --floatbv --interval-analysis
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

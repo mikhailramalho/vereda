@@ -8,8 +8,4 @@ int main()
 }
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv17
-// Needs: --fixedbv
-// RUN: --fixedbv --no-slice -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

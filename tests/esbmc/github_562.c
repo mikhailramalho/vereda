@@ -23,8 +23,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_562
-// Needs: --fixedbv
-// RUN: --fixedbv
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

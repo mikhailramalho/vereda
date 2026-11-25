@@ -54,8 +54,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/k-induction/interval_transitive_bound
-// Needs: --force-realloc-success --state-hashing --add-symex-value-sets --no-assertions --termination --max-inductive-step 3 --interval-analysis --goto-functions-only REQUIRES arch32
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --floatbv --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis --goto-functions-only
+// Needs: --force-realloc-success --state-hashing --add-symex-value-sets --no-assertions --termination --max-inductive-step 3 --interval-analysis --goto-functions-only
+// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2  --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis --goto-functions-only
 // MODE: FUTURE
 // EXPECT: ASSUME state <= 2 && 0 <= state
 // Vereda: verdict none

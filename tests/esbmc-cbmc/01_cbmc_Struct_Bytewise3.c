@@ -33,8 +33,5 @@ int main()
  
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Struct_Bytewise3
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

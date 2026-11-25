@@ -279,8 +279,5 @@ int checkLimitCycle(void)
 	return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv11
-// Needs: --fixedbv REQUIRES arch32
-// RUN: --function checkOverflow --fixedbv --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --entry checkOverflow -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

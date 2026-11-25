@@ -8,9 +8,9 @@ int main() {
   return s;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/verification_branch_havoc_fail
-// Needs: --k-induction --validate-correctness-witness --witness witness.yml REQUIRES arch32
+// Needs: --k-induction --validate-correctness-witness --witness witness.yml
 // RUN: --32 --overflow-check --k-induction --validate-correctness-witness --witness witness.yml
 // MODE: FUTURE
-// EXPECT: FAILED +\[main\.arithmetic-overflow\.2\] +line 5 +arithmetic overflow on add$
+// EXPECT: FAILED +\[main\.arithmetic-overflow\.2\] +line +5 +arithmetic overflow on add$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

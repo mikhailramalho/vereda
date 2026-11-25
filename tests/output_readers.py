@@ -10,6 +10,11 @@ for walk_tag, solve_tag in (("", ""), ("", "[PROGRESS] "), ("[INFO] ", "[INFO] "
     assert run.numbers(output) == (0.125, 0.25, 60)
 
 cases = [
+    (r"^  PASSED .*line   7  arithmetic overflow on add$",
+     "  SUCCESS      [main.assertion.1]  line 7  arithmetic overflow on add"),
+    (r"^\s*PASSED\s+\[main.assertion.1\]", "  SUCCESS      [main.assertion.1]"),
+    (r'^  !overflow\("\+", a, b\)$', "  arithmetic overflow on add"),
+    (r'^  !overflow\("-", x, y\)$', "  arithmetic overflow on sub"),
     (r"^\[Counterexample\]$", "[COUNTEREXAMPLE]"),
     (r"^\*\* Results:$", "[RESULTS]"),
     (r"^\*\* 1 of 2 properties failed$",
@@ -27,6 +32,40 @@ for original, output in cases:
 for name in ("ptr_rel_huge_object_alloca", "ptr_rel_huge_object_vla"):
     lines = import_esbmc.header("esbmc/" + name, "CORE", "", [], ".", [])
     assert "// RUN: --no-vla-size-check" in lines, lines
+
+for args, requirement, resolved in (("--32", "arch32", True), ("--64", "arch64", True),
+                                    ("--64", "arch32", False), ("", "arch32", False),
+                                    ("--32", "uchar_h", False)):
+    lines = import_esbmc.header("suite/target", "CORE", args, ["REQUIRES " + requirement], ".", [])
+    assert ("// MODE: FUTURE" not in lines) == resolved, lines
+    if resolved:
+        assert "// RUN: -m" + requirement[-2:] in lines, lines
+    else:
+        assert "// Needs: REQUIRES " + requirement in lines, lines
+
+assert import_esbmc.as_vereda("PASSED message") == "PASSED message"
+
+assert import_esbmc.translate("--floatbv --fixedbv --z3 --32", ".") == (
+    ["--solver", "z3", "-m32"], [], [])
+lines = import_esbmc.header("suite/unsupported", "CORE", "--floatbv --fixedbv --k-induction",
+                           [], ".", [])
+assert "// RUN: --k-induction" in lines, lines
+lines = import_esbmc.header("suite/macro", "CORE", "-DMSG='keep --floatbv text' --k-induction",
+                           [], ".", [])
+assert "// RUN: -DMSG='keep --floatbv text' --k-induction" in lines, lines
+assert "// Needs: --k-induction" in lines, lines
+lines = import_esbmc.header("suite/quoted", "CORE", "'--floatbv' \"--fixedbv\" --k-induction",
+                           [], ".", [])
+assert "// RUN: --k-induction" in lines, lines
+lines = import_esbmc.header("floats/precision", "CORE", "--floatbv --z3 --32",
+                           ["REQUIRES arch32"], ".", [])
+assert "// RUN: --solver z3 -m32" in lines, lines
+assert not any(line.startswith(("// Needs:", "// MODE:")) for line in lines), lines
+lines = import_esbmc.header("z3/quantified", "CORE", "--floatbv --z3", [], ".",
+                           ["__ESBMC_forall"])
+assert "// Needs: __ESBMC_forall" in lines, lines
+assert "// MODE: FUTURE" in lines, lines
+assert "// RUN: --solver z3" in lines, lines
 
 for name, args, flags in (("vla_above_ptrdiff_max", "", []),
                           ("vla_no_size_check_fail", "--32", ["// RUN: -m32"])):

@@ -18,8 +18,5 @@ main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/38_nondet_int_ptr_casts
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration -Wno-error=int-conversion
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -25,8 +25,6 @@ int main()
   float z9 = x == 2? z5 : z8;
 }
 // Imported from ESBMC regression/llvm/ternary
-// Needs: --fixedbv
-// RUN: --fixedbv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

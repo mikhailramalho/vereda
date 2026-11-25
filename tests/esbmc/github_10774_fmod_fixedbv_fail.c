@@ -6,8 +6,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10774_fmod_fixedbv_fail
-// Needs: --fixedbv
-// RUN: --fixedbv --no-div-by-zero-check
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

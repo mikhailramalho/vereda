@@ -12,8 +12,7 @@ int main()
   x += 1;
 }
 // Imported from ESBMC regression/cstd/printf_3
-// Needs: REQUIRES arch32
-// RUN: --32
+// RUN: -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

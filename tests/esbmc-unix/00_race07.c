@@ -84,8 +84,7 @@ void *checkThread(void *param) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/00_race07
-// Needs: REQUIRES arch32
-// RUN: --unwind 2 --32
+// RUN: --unwind 2 -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

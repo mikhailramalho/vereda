@@ -54,8 +54,8 @@ int main(void)
     printf ("first representable value less than zero: %e\n", nextafter(0.0,-1.0));
 }
 // Imported from ESBMC regression/floats-regression/nextafter
-// Needs: --interval-analysis REQUIRES arch32
-// RUN: --floatbv --32 --interval-analysis
+// Needs: --interval-analysis
+// RUN: --32 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

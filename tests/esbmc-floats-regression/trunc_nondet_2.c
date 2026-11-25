@@ -22,7 +22,7 @@ int main(void)
 
 // Imported from ESBMC regression/floats-regression/trunc_nondet_2
 // Needs: --interval-analysis
-// RUN: --floatbv --interval-analysis
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

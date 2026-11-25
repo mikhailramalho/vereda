@@ -18,8 +18,5 @@ int main()
   assert(linear_search(a, SIZE, 3));
 }
 // Imported from ESBMC regression/esbmc/github_192
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration --no-unwinding-assertions --unwind 1
-// MODE: FUTURE
+// RUN: -m32 --no-unwinding-assertions --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

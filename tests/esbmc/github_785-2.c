@@ -8,8 +8,5 @@ int main()
 		assert(!malloc(2 * GiB));
 }
 // Imported from ESBMC regression/esbmc/github_785-2
-// Needs: REQUIRES arch32
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

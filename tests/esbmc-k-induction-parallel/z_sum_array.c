@@ -18,7 +18,7 @@ main()
 }
 
 // Imported from ESBMC regression/k-induction-parallel/z_sum_array
-// Needs: --k-induction-parallel REQUIRES arch32
+// Needs: --k-induction-parallel
 // RUN: --k-induction-parallel --32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

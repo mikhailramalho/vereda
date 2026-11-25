@@ -18,7 +18,7 @@ main()
 }
 
 // Imported from ESBMC regression/k-induction/z_sum_array
-// Needs: --k-induction REQUIRES arch32
+// Needs: --k-induction
 // RUN: --k-induction --32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

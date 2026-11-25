@@ -10,8 +10,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10853_fixedbv
 // Needs: __ESBMC_loop_invariant
-// Needs: --loop-invariant-check --fixedbv --witness-output-yaml -
-// RUN: --loop-invariant-check --fixedbv --witness-output-yaml -
+// Needs: --loop-invariant-check --witness-output-yaml -
+// RUN: --loop-invariant-check  --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$

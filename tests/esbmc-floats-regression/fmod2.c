@@ -27,7 +27,7 @@ int main()
 }
 // Imported from ESBMC regression/floats-regression/fmod2
 // Needs: --interval-analysis
-// RUN: --floatbv --interval-analysis
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

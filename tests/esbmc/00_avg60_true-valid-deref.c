@@ -52,7 +52,7 @@ int main ()
 }
 // Imported from ESBMC regression/esbmc/00_avg60_true-valid-deref
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --z3 --floatbv --unwind 64
+// RUN: --memory-leak-check --z3  --unwind 64
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

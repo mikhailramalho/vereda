@@ -6,8 +6,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10774_interval_fixedbv
-// Needs: --interval-analysis --fixedbv
-// RUN: --interval-analysis --fixedbv --no-div-by-zero-check
+// Needs: --interval-analysis
+// RUN: --interval-analysis  --no-div-by-zero-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

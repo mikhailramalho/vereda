@@ -131,8 +131,5 @@ int main() {
     return 0;
 } 
 // Imported from ESBMC regression/esbmc/github_1198-32bit
-// Needs: REQUIRES arch32
-// RUN: --unwind 1 --32
-// MODE: FUTURE
+// RUN: --unwind 1 -m32
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

@@ -13,7 +13,7 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_7
-// Needs: --k-induction REQUIRES arch32
+// Needs: --k-induction
 // RUN: --32 --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

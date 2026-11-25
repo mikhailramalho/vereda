@@ -31,8 +31,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc2
-// Needs: REQUIRES arch32
-// RUN: --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
