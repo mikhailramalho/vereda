@@ -68,65 +68,72 @@ Bitwuzla only because Vereda's encoding left the outside case in. Bitwuzla
 Where an object exists its layout says `base + size` does not wrap, so
 `base <= a <= base + size` holds exactly when `a - base <= size`, for any
 `a`. If `a < base`, then `a - base` wraps to `a - base + 2^n`, and that
-being at most `size` would put `a + 2^n` at most `base + size < 2^n`.
-`fromAddress` builds `a - base` (the offset) first. `Terms::sub` folds
-`(base + x) - base` to `x`. When the offset is a constant, the inside test
-becomes `exists && x <= size`, which folds; for an object that exists on
-every path and `x` within it, it folds to true. Where it does, the closed
-ranges of existing objects are disjoint (each base is above the previous
-end plus a gap), so no other object holds `a`, and `fromAddress` returns
-the object at offset `x` without the chain. The pointer is then an
-ordinary pointer to that object, not one made from an integer. When the
-offset is not a constant, the test is main's two comparisons, unchanged.
+being at most `size` would put `a + 2^n` at most `base + size < 2^n`. So
+`fromAddress` now tests `exists && a - base <= size`, with `a - base` the
+offset it already built. `Terms::sub` folds `(base + x) - base` to `x`. For
+a constant `x` within an object that exists on every path, the test folds
+to true. Where it does, the closed ranges of existing objects are disjoint
+(each base is above the previous end plus a gap), so no other object holds
+`a`, and `fromAddress` returns the object at offset `x` without the chain.
+The pointer is then an ordinary pointer to that object, not one made from
+an integer. An address that does not fold gets one comparison per object
+instead of two.
 
 ## Measurements
 
-Three binaries: main at 2263b0d3, the general form (`a - base <= size`
-for every address, this PR's first version) and the change above.
-
-Formulas. Every test `ctest -R 'esbmc.*(9785|int|ptr|pointer)'` selects
-(861, of which 40 call an `__ESBMC_` or `__CPROVER_` builtin) was dumped
-with `--dump-smt-only` under its `RUN` flags. An `--incremental-bmc` test
-was dumped at `--unwind 3` in place of its bound flags, and a test whose
-flags Vereda rejects (most FUTURE ones) without them, at `--unwind 3`. 745
-gave a formula; the other 76 give none on main either (an unsupported
-construct such as `pthread_create`, or an error). With the change, 741 of
-the 745 are byte for byte main's. The other four are the ones where the
-offset is a constant and folds: `github_9785_int_base_stores` and its
-`_fail`, `intptr_struct_store_merged` (`base + 8` and `base + 40` into a
-struct, 20,439 bytes to 2,674) and
-`esbmc-k-induction/pointer_write_aggregate_arg_fail` (an address passed as
-an integer and converted back, 6,176 bytes to 1,169). The general form
-changed 65.
-
-Times. The same 861 tests with main's binary and the change, 6 jobs
-each: 328 pass and 533 are skipped as KNOWNBUG, FUTURE or `Needs:`, and no
-verdict changes but the promoted test's, from out of memory to SUCCESSFUL.
-Over the 383 tests that report a solve time with both, it sums to 30.0 s
-on main and 21.1 s here, the difference being the `_fail` test.
-`tests/bench.py`, side by side with main:
+Times. The 861 tests `ctest -R 'esbmc.*(9785|int|ptr|pointer)'` selects,
+with main's binary (2263b0d3) and this branch's run on the same machine,
+6 jobs each. 328 pass and 533 are skipped as KNOWNBUG, FUTURE or `Needs:`;
+no verdict changes except the promoted test, which goes from out of memory
+to SUCCESSFUL. Over the 383 tests that report a solve time with both, it
+sums to 30.0 s on main and 15.0 s here. `tests/bench.py`, side by side,
+finds no regression. The tests that changed:
 
 | Test | Solve, main → branch | Peak |
 |---|---|---|
 | `github_9785_int_base_stores` | out of memory → 0.00 s | 36 MB |
-| `github_9785_int_base_stores_fail` | 7.18 → 0.00 s | 458 → 38 MB |
-| `github_9785_two_targets` | 0.68 → 0.69 s | 48 MB |
-| `github_9785_two_targets_fail` | 0.64 → 0.66 s | 50 MB |
-| `ptr_int_mul_unknown_alias` | 2.54 → 2.56 s | 45 MB |
-| `pointer_repr_branch_store` | 6.79 → 6.82 s | 56 → 57 MB |
+| `github_9785_int_base_stores_fail` | 7.18 → 0.00 s | 456 → 38 MB |
+| `pointer_repr_branch_store` | 6.84 → 0.93 s | 56 → 55 MB |
+| `pointer_repr_symbolic_byte_keep` | 1.78 → 0.80 s | 54 → 52 MB |
+| `vasprintf_unbounded_s_no_overflow` | 2.59 → 2.01 s | 82 → 51 MB |
+| `intptr_struct_store_pointer` | 0.74 → 0.48 s | 54 → 48 MB |
+| `intptr_struct_store_nested_union` | 0.58 → 0.20 s | 50 → 46 MB |
+| `vereda/mem_inttoptr` | 2.34 → 1.81 s | 78 → 62 MB |
+| `github_9785_two_targets` | 0.69 → 0.94 s | 48 → 46 MB |
+| `github_9785_two_targets_fail` | 0.66 → 1.61 s | 50 → 46 MB |
+| `ptr_int_mul_unknown_alias` | 2.55 → 3.73 s | 46 → 48 MB |
 
-On its own (12 GB limit) main takes 108.1 s and 9,312 MB on
-`int_base_stores`, and 127.0 s and 9,308 MB with pointer checks on; with
-the change every check folds during the walk either way.
+The last three got slower, by 2.4 s together, within bench.py's margins.
+In `two_targets` the address is `ite(c, base_a, base_b) + 4k`, which folds
+for neither object, and the solver takes longer on one comparison per
+object than on two. On its own (12 GB limit) main takes 108.1 s and 9,312
+MB on `int_base_stores`, and 127.0 s and 9,308 MB with pointer checks on;
+with the change every check folds during the walk either way.
 
-The general form was faster overall (15.0 s summed over the same 383
-tests), mostly through `pointer_repr_branch_store` (6.95 s to 1.01 s) and
-a few tests gaining 0.3 to 1 s, but slower on three, side by side:
-`github_9785_two_targets` 0.69 to 0.95 s, its `_fail` 0.66 to 1.67 s and
-`ptr_int_mul_unknown_alias` 2.63 to 3.75 s. In `two_targets` the address
-is `ite(c, base_a, base_b) + 4k`, which folds for neither object, and the
-solver took longer on one comparison per object than on two. It was not
-adopted, so that a formula changes only where the test folds.
+Formulas. Every test of the 861 (of which 40 call an `__ESBMC_` or
+`__CPROVER_` builtin) was dumped with `--dump-smt-only` under its `RUN`
+flags. An `--incremental-bmc` test was dumped at `--unwind 3` in place of
+its bound flags, and a test whose flags Vereda rejects (most FUTURE ones)
+without them, at `--unwind 3`. 745 gave a formula; the other 76 give none
+on main either (an unsupported construct such as `pthread_create`, or an
+error). The change alters 65 of the 745.
+
+## Not adopted: the new test for constant offsets only
+
+A hybrid builds `a - base` first and uses `exists && a - base <= size`
+only when that folds to a constant, with main's two comparisons
+otherwise. Measured the same ways, it keeps the three slower tests at
+main's times (side by side: 0.68 → 0.69 s, 0.64 → 0.66 s, 2.54 → 2.56 s),
+and 741 of the 745 formulas are byte for byte main's. The other four are
+those where the offset folds: the two `int_base_stores` tests,
+`intptr_struct_store_merged` (20,439 bytes to 2,674) and
+`esbmc-k-induction/pointer_write_aggregate_arg_fail` (6,176 to 1,169). It
+fixes `int_base_stores` as well, but gives back the rest:
+`pointer_repr_branch_store` stays at main's time (6.79 → 6.82 s against
+the general form's 0.93 s), and the 383 tests' solve time sums to 21.1 s
+against the general form's 15.0 s (main 30.0 s). The general form changes
+65 formulas and slows those three tests by 2.4 s together, within bench's
+margins, and was kept for its larger gain.
 
 ## Not done
 
@@ -134,6 +141,4 @@ The fold needs `a - base` to be a constant. A symbolic offset
 (`base + 4k` with `k` bounded only on the path) still leaves the outside
 case to the solver, since Terms does not fold by a path's ranges. Nor does
 it reach an address that chooses between objects (`two_targets`) or a sum
-nested deeper than `(base + x) - base`, such as `(base + 128i) + 8`. The
-general form's gain on `pointer_repr_branch_store` is left for a change
-that can keep it without the slowdowns.
+nested deeper than `(base + x) - base`, such as `(base + 128i) + 8`.
