@@ -24,7 +24,7 @@ int main()
 // Imported from ESBMC regression/esbmc/array_loop_summary_rejected
 // RUN: --unwind 12 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // Vereda: unmet EXPECT: ^Summarised 1 array loop\(s\)$
 // MODE: FUTURE
 // Vereda: verdict SUCCESSFUL

@@ -85,3 +85,84 @@ time_t time(time_t *t) {
     *t = now;
   return now;
 }
+
+static const char wday_name[7][3] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const char mon_name[12][3] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static char asctime_buf[26];
+
+// C17 7.27.3.1 and POSIX asctime_r: formats tm into the 26-byte buffer as
+// "Www Mmm dd hh:mm:ss yyyy\n\0". Out-of-range fields are wrapped so the
+// model writes 25 non-NUL bytes and a NUL without an internal bounds failure.
+char *asctime_r(const struct tm *tm, char *buf) {
+  unsigned wday = (unsigned)tm->tm_wday < 7 ? (unsigned)tm->tm_wday : 0;
+  unsigned mon = (unsigned)tm->tm_mon < 12 ? (unsigned)tm->tm_mon : 0;
+  unsigned mday = (unsigned)tm->tm_mday % 100;
+  unsigned hour = (unsigned)tm->tm_hour % 100;
+  unsigned min = (unsigned)tm->tm_min % 100;
+  unsigned sec = (unsigned)tm->tm_sec % 100;
+  unsigned year = (unsigned)(1900 + tm->tm_year) % 10000;
+
+  buf[0] = wday_name[wday][0];
+  buf[1] = wday_name[wday][1];
+  buf[2] = wday_name[wday][2];
+  buf[3] = ' ';
+  buf[4] = mon_name[mon][0];
+  buf[5] = mon_name[mon][1];
+  buf[6] = mon_name[mon][2];
+  buf[7] = ' ';
+  buf[8] = mday >= 10 ? (char)('0' + mday / 10) : ' ';
+  buf[9] = (char)('0' + mday % 10);
+  buf[10] = ' ';
+  buf[11] = (char)('0' + hour / 10);
+  buf[12] = (char)('0' + hour % 10);
+  buf[13] = ':';
+  buf[14] = (char)('0' + min / 10);
+  buf[15] = (char)('0' + min % 10);
+  buf[16] = ':';
+  buf[17] = (char)('0' + sec / 10);
+  buf[18] = (char)('0' + sec % 10);
+  buf[19] = ' ';
+  buf[20] = (char)('0' + year / 1000);
+  buf[21] = (char)('0' + (year / 100) % 10);
+  buf[22] = (char)('0' + (year / 10) % 10);
+  buf[23] = (char)('0' + year % 10);
+  buf[24] = '\n';
+  buf[25] = '\0';
+  return buf;
+}
+
+char *asctime(const struct tm *tm) { return asctime_r(tm, asctime_buf); }
+
+// C17 7.27.3.2 and POSIX ctime_r: formats *timer in UTC (the C locale's
+// timezone), breaking down the epoch timestamp with Hinnant's civil-from-days
+// formula so there are no loops to unroll.
+char *ctime_r(const time_t *timer, char *buf) {
+  long long t = *timer;
+  long long days = t / 86400;
+  long long rem = t % 86400;
+  if (rem < 0) {
+    rem += 86400;
+    --days;
+  }
+  struct tm tm;
+  tm.tm_sec = (int)(rem % 60);
+  rem /= 60;
+  tm.tm_min = (int)(rem % 60);
+  tm.tm_hour = (int)(rem / 60);
+  tm.tm_wday = (int)(((days + 4) % 7 + 7) % 7);
+
+  long long z = days + 719468;
+  long long era = (z >= 0 ? z : z - 146096) / 146097;
+  unsigned long long doe = (unsigned long long)(z - era * 146097);
+  unsigned long long yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  long long y = (long long)yoe + era * 400;
+  unsigned long long doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  unsigned long long mp = (5 * doy + 2) / 153;
+  tm.tm_mday = (int)(doy - (153 * mp + 2) / 5 + 1);
+  tm.tm_mon = (int)(mp < 10 ? mp + 2 : mp - 10);
+  tm.tm_year = (int)(y + (tm.tm_mon <= 1) - 1900);
+  return asctime_r(&tm, buf);
+}
+
+char *ctime(const time_t *timer) { return ctime_r(timer, asctime_buf); }

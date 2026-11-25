@@ -1,6 +1,10 @@
 #include "solver/solver.h"
 
+#include <algorithm>
 #include <camada/camadafeatures.h>
+#include <llvm/ADT/ArrayRef.h>
+#include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/SmallVector.h>
 #if CAMADA_HAVE_BITWUZLA
 #include <camada/solvers/bitwuzlasolver.h>
 #endif
@@ -48,6 +52,14 @@ Expected<camada::SMTSolverRef> create(camada::SolverKind kind) {
   }
 }
 
+// Balanced tree of ORs so a phase with many checks stays logarithmic in depth.
+static camada::SMTExprRef disjunction(camada::SMTSolver &s, ArrayRef<camada::SMTExprRef> exprs) {
+  if (exprs.size() == 1)
+    return exprs[0];
+  size_t mid = exprs.size() / 2;
+  return s.mkOr(disjunction(s, exprs.take_front(mid)), disjunction(s, exprs.drop_front(mid)));
+}
+
 Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
                function_ref<void(const checks::Check &)> violated) {
   camada::SMTSolver &s = t.solver();
@@ -55,32 +67,141 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
   // a bug within the bound is reported even where a loop is not unwound.
   Verdict v;
   v.status.assign(checks.size(), Status::NotChecked);
-  for (bool unwinding : {false, true})
+
+  struct Group {
+    camada::SMTExprRef expr;
+    SmallVector<size_t, 1> indices;
+  };
+
+  for (bool unwinding : {false, true}) {
+    auto reportFirst = [&](size_t idx) {
+      v.status[idx] = Status::Fails;
+      v.kind = Verdict::Violated;
+      v.check = &checks[idx];
+      // Clear any constant-false checks after idx in this phase so !all
+      // reports the exact same checked prefix as sequential solving.
+      for (size_t j = idx + 1; j < checks.size(); ++j)
+        if ((checks[j].property != checks::Property::Assertion) == unwinding)
+          v.status[j] = Status::NotChecked;
+      violated(checks[idx]);
+    };
+
+    std::vector<Group> groups;
+    DenseMap<const void *, size_t> byId;
     for (size_t i = 0; i < checks.size(); ++i) {
       const checks::Check &check = checks[i];
       if (check.isUnwinding() != unwinding)
         continue;
-      switch (s.checkSatAssuming({t.solverTerm(check.violated)})) {
-      case camada::CheckResult::SAT:
-        v.status[i] = Status::Fails;
-        if (!v.check) {
-          v.kind = Verdict::Violated;
-          v.check = &check;
-        }
-        violated(check);
-        if (!all)
-          return v;
-        break;
-      case camada::CheckResult::UNSAT:
+      if (t.isFalse(check.violated)) {
         v.status[i] = Status::Holds;
-        break;
-      case camada::CheckResult::UNKNOWN:
-        if (v.check) // a violation found stands
+        continue;
+      }
+      auto [it, fresh] = byId.try_emplace(check.violated.id(), groups.size());
+      if (fresh)
+        groups.push_back({t.solverTerm(check.violated), {i}});
+      else
+        groups[it->second].indices.push_back(i);
+    }
+
+    auto checkIndividuallyPhase = [&](ArrayRef<Group> rem) -> bool {
+      for (const Group &g : rem) {
+        switch (s.checkSatAssuming({g.expr})) {
+        case camada::CheckResult::SAT:
+          if (!all) {
+            reportFirst(g.indices[0]);
+            return true;
+          }
+          for (size_t idx : g.indices) {
+            v.status[idx] = Status::Fails;
+            if (!v.check) {
+              v.kind = Verdict::Violated;
+              v.check = &checks[idx];
+            }
+            violated(checks[idx]);
+          }
+          break;
+        case camada::CheckResult::UNSAT:
+          for (size_t idx : g.indices)
+            v.status[idx] = Status::Holds;
+          break;
+        case camada::CheckResult::UNKNOWN:
+          if (!v.check) {
+            v.kind = Verdict::Unknown;
+            v.check = &checks[g.indices[0]];
+            v.detail = "solver answered unknown: " + s.reasonUnknownDetail();
+          }
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // In single-property mode (!all), solve deduplicated groups in order:
+    // combining unrelated checks into one OR forces Bitwuzla to bit-blast
+    // every check's cone of influence at once, which hurts both early failures
+    // (e.g. 23_picosat-846_01: 2.5x slower, 1.9x memory) and multi-check UNSAT
+    // proofs (e.g. lib_strtok) where bv-cnf-scope=permanent already shares
+    // common clauses across sequential queries.
+    if (!all) {
+      if (checkIndividuallyPhase(groups))
+        return v;
+      continue;
+    }
+
+    while (!groups.empty()) {
+      if (groups.size() == 1) {
+        if (checkIndividuallyPhase(groups))
           return v;
-        return {Verdict::Unknown, &check, "solver answered unknown: " + s.reasonUnknownDetail(),
-                std::move(v.status)};
+        groups.clear();
+        break;
+      }
+      std::vector<camada::SMTExprRef> exprs;
+      exprs.reserve(groups.size());
+      for (const Group &g : groups)
+        exprs.push_back(g.expr);
+      switch (s.checkSatAssuming({disjunction(s, exprs)})) {
+      case camada::CheckResult::UNSAT:
+        for (const Group &g : groups)
+          for (size_t idx : g.indices)
+            v.status[idx] = Status::Holds;
+        groups.clear();
+        break;
+      case camada::CheckResult::SAT: {
+        std::vector<size_t> failed;
+        std::vector<Group> next;
+        for (Group &g : groups) {
+          if (auto b = s.getBool(g.expr); b && b.value()) {
+            failed.insert(failed.end(), g.indices.begin(), g.indices.end());
+          } else {
+            next.push_back(std::move(g));
+          }
+        }
+        if (failed.empty()) {
+          if (checkIndividuallyPhase(next))
+            return v;
+          groups.clear();
+          break;
+        }
+        std::sort(failed.begin(), failed.end());
+        for (size_t idx : failed) {
+          v.status[idx] = Status::Fails;
+          if (!v.check) {
+            v.kind = Verdict::Violated;
+            v.check = &checks[idx];
+          }
+          violated(checks[idx]);
+        }
+        groups = std::move(next);
+        break;
+      }
+      case camada::CheckResult::UNKNOWN:
+        if (checkIndividuallyPhase(groups))
+          return v;
+        groups.clear();
+        break;
       }
     }
+  }
   return v;
 }
 

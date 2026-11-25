@@ -236,20 +236,26 @@ Term Encoder::bits(const camada::SMTExprRef &f) {
 Term Encoder::toBits(Term v, Type *ty) {
   if (!native() || !ieee(ty))
     return v;
+  const fltSemantics *sem = ieee(ty);
   // A constant's bits, except a NaN's, which are any NaN's as for every NaN term.
   if (auto it = floatBits.find(v.id());
-      it != floatBits.end() && !APFloat(*ieee(ty), it->second).isNaN())
+      it != floatBits.end() && !APFloat(*sem, it->second).isNaN())
     return t.bv(it->second);
-  return t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
+  Term b = t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
+  bitsFloat.try_emplace({b.id(), sem}, v);
+  return b;
 }
 
 Term Encoder::fromBits(Term b, Type *ty) {
   if (!native() || !ieee(ty))
     return b;
+  const fltSemantics *sem = ieee(ty);
+  if (auto it = bitsFloat.find({b.id(), sem}); it != bitsFloat.end())
+    return it->second;
   const APInt *c = t.constant(b);
   if (!c)
     return t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
-  Term &f = floatTerms[{ieee(ty), *c}];
+  Term &f = floatTerms[{sem, *c}];
   if (!f) {
     f = t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
     floatBits.try_emplace(f.id(), *c);
@@ -345,21 +351,36 @@ Term Encoder::fcmp(CmpInst::Predicate p, const Value *lhs, const Value *rhs) {
   if (auto a = constFloat(lhs), b = constFloat(rhs); a && b)
     return t.boolean(FCmpInst::compare(*a, *b, p));
   camada::SMTExprRef a = fp(lhs), b = fp(rhs);
-  Term unordered = t.lor(t.fromSolver(s.mkFPIsNaN(a)), t.fromSolver(s.mkFPIsNaN(b)));
-  if (p == CmpInst::FCMP_UNO || p == CmpInst::FCMP_ORD)
-    return p == CmpInst::FCMP_UNO ? unordered : t.lnot(unordered);
-  Term r;
-  switch (CmpInst::getOrderedPredicate(p)) {
-  case CmpInst::FCMP_OEQ: r = t.fromSolver(s.mkFPEqual(a, b)); break;
-  case CmpInst::FCMP_ONE: r = t.lnot(t.fromSolver(s.mkFPEqual(a, b))); break;
-  case CmpInst::FCMP_OGT: r = t.fromSolver(s.mkFPGt(a, b)); break;
-  case CmpInst::FCMP_OGE: r = t.fromSolver(s.mkFPGe(a, b)); break;
-  case CmpInst::FCMP_OLT: r = t.fromSolver(s.mkFPLt(a, b)); break;
-  case CmpInst::FCMP_OLE: r = t.fromSolver(s.mkFPLe(a, b)); break;
-  default: throw Unsupported("predicate " + std::string(CmpInst::getPredicateName(p)));
+  // SMT-LIB's fp.eq, fp.lt, fp.leq, fp.gt and fp.geq all return false on a
+  // NaN, so ordered predicates hold directly and unordered ones are their
+  // negations; only UNO, ORD, ONE and UEQ need explicit NaN checks.
+  switch (p) {
+  case CmpInst::FCMP_OEQ: return t.fromSolver(s.mkFPEqual(a, b));
+  case CmpInst::FCMP_OGT: return t.fromSolver(s.mkFPGt(a, b));
+  case CmpInst::FCMP_OGE: return t.fromSolver(s.mkFPGe(a, b));
+  case CmpInst::FCMP_OLT: return t.fromSolver(s.mkFPLt(a, b));
+  case CmpInst::FCMP_OLE: return t.fromSolver(s.mkFPLe(a, b));
+  case CmpInst::FCMP_UNE: return t.lnot(t.fromSolver(s.mkFPEqual(a, b)));
+  case CmpInst::FCMP_UGT: return t.lnot(t.fromSolver(s.mkFPLe(a, b)));
+  case CmpInst::FCMP_UGE: return t.lnot(t.fromSolver(s.mkFPLt(a, b)));
+  case CmpInst::FCMP_ULT: return t.lnot(t.fromSolver(s.mkFPGe(a, b)));
+  case CmpInst::FCMP_ULE: return t.lnot(t.fromSolver(s.mkFPGt(a, b)));
+  case CmpInst::FCMP_UNO:
+  case CmpInst::FCMP_ORD:
+  case CmpInst::FCMP_ONE:
+  case CmpInst::FCMP_UEQ: {
+    Term unordered = t.lor(t.fromSolver(s.mkFPIsNaN(a)), t.fromSolver(s.mkFPIsNaN(b)));
+    if (p == CmpInst::FCMP_UNO)
+      return unordered;
+    if (p == CmpInst::FCMP_ORD)
+      return t.lnot(unordered);
+    Term eq = t.fromSolver(s.mkFPEqual(a, b));
+    return p == CmpInst::FCMP_ONE ? t.land(t.lnot(unordered), t.lnot(eq))
+                                  : t.lor(unordered, eq);
   }
-  // Ordered: false on a NaN; unordered: true on one.
-  return CmpInst::isOrdered(p) ? t.land(t.lnot(unordered), r) : t.lor(unordered, r);
+  default:
+    throw Unsupported("predicate " + std::string(CmpInst::getPredicateName(p)));
+  }
 }
 
 Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
@@ -730,6 +751,11 @@ bool Encoder::intrinsic(CallBase &c) {
   }
   if (f->getIntrinsicID() == Intrinsic::is_constant) {
     bind(&c, t.boolean(false));
+    return true;
+  }
+  if (f->getIntrinsicID() == Intrinsic::ptrmask && c.getType()->isPointerTy()) {
+    bind(&c, mem.mask(value(c.getArgOperand(0)),
+                      resize(value(c.getArgOperand(1)), mem.pointerBits(), false)));
     return true;
   }
   if (f->getIntrinsicID() == Intrinsic::bswap) { // the low byte goes highest

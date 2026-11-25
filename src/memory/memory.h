@@ -94,6 +94,8 @@ public:
   encode::Term ptr(encode::Term obj, encode::Term off);
   // p moved by delta bytes, a pointer-width bitvector.
   encode::Term advance(encode::Term p, encode::Term delta);
+  // p with its address masked by m (llvm.ptrmask), keeping p's object.
+  encode::Term mask(encode::Term p, encode::Term m);
 
   // Whether an allocator accepts an object of size bytes: at most
   // PTRDIFF_MAX, as glibc's malloc. It depends on the size alone, so the
@@ -123,7 +125,9 @@ public:
   // was converted.
   encode::Term equal(encode::Term p, encode::Term q);
   // inttoptr: the exposed object that holds a, else object 0 at offset a
-  // (null, or the memory outside the program).
+  // (null, or the memory outside the program). An a that can be in one
+  // object only, its base plus a constant within it, gives an ordinary
+  // pointer into it, not one made from an integer.
   encode::Term fromAddress(encode::Term a);
 
   // The guard of the code being walked: an access at ite(c, p, q) whose c
@@ -136,8 +140,9 @@ public:
   encode::Term load(State &st, encode::Term p, llvm::Type *ty);
   void store(State &st, encode::Term p, encode::Term v, llvm::Type *ty);
   // Writes byte to the n bytes at p. A fill of a whole object of at least
-  // MinSeparate bytes is one constant array; anything else goes byte by
-  // byte, which past MaxBytes is unsupported.
+  // MinSeparate bytes is one constant array; a partial fill of at least
+  // MinSeparate bytes in a known object is a lambda over the arrays below;
+  // anything else goes byte by byte, which past MaxBytes is unsupported.
   void set(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // Writes byte to every byte of the object p starts, whatever its size,
   // as one constant array: calloc with a size that is not constant.
@@ -186,7 +191,10 @@ public:
 
 private:
   encode::Term bytePtr(encode::Term p, uint64_t i);
+  void ensureLayout(uint64_t id);
   encode::Term base(encode::Term obj);
+  encode::Term isNull(encode::Term p);
+  encode::Term isNullMemo(encode::Term p, llvm::DenseMap<const void *, encode::Term> &memo);
   bool hasPadding(llvm::Type *ty) const;
   using Key = std::pair<uint64_t, uint64_t>;
   std::optional<Key> key(encode::Term p) const;
@@ -215,6 +223,7 @@ private:
   llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> pointers(const State &st);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
+  void flushObject(State &st, uint64_t object);
   State::Cell readByte(const State &st, encode::Term at);
   // The byte at at from object's own arrays own, and those arrays with c
   // stored at at.
@@ -236,11 +245,23 @@ private:
   encode::Term index(uint64_t object, encode::Term at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  // An array-level copy of n bytes from src to dst, if handled without
+  // byte-by-byte stores: true when done.
+  bool copyArray(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  // A partial-range lambda over the arrays below for n >= MinSeparate bytes
+  // at p in constant object o: returns true when handled.
+  bool applyRange(State &st, uint64_t o, encode::Term p, uint64_t n, const char *name,
+                  const std::function<encode::Term(const encode::Term &j,
+                                                   const encode::Term &d)> &valueAt);
+  bool fillRange(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  bool fillElementRange(State &st, encode::Term p, encode::Term elem, uint64_t stride,
+                        uint64_t count);
+  bool havocRange(State &st, uint64_t o, encode::Term p, uint64_t n);
   void fill(State &st, uint64_t object, encode::Term byte);
   void setBytes(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // set for initialisers: no limit, as they were written byte by byte before.
   void fillOrSet(State &st, encode::Term p, encode::Term byte, uint64_t n) {
-    if (!fillObject(st, p, byte, n))
+    if (!fillObject(st, p, byte, n) && !fillRange(st, p, byte, n))
       setBytes(st, p, byte, n);
   }
   void writeByte(State &st, encode::Term at, const State::Cell &c);
@@ -251,7 +272,9 @@ private:
 
   struct Object {
     encode::Term base, size, exists;
+    uint64_t align;
     bool exposed;
+    bool laidOut;
     // The constant global or the function the object is, if either, which
     // the program may not write.
     const llvm::GlobalValue *constant = nullptr;
@@ -262,17 +285,32 @@ private:
   const llvm::DataLayout &dl;
   unsigned ptrBits;
   std::vector<Object> objects; // index = object id; 0 is null
-  encode::Term bases;    // object id -> base address, as an uninterpreted array
+  encode::Term bases;    // object id -> base address, created lazily on symbolic base()
+  encode::Term sizes;    // object id -> size in bytes, created lazily on symbolic size()
   encode::Term end;      // first address after the last object
+  uint64_t reserved = 1; // upper bound on end while endBounded holds
+  bool endBounded = true;
   llvm::DenseMap<const llvm::GlobalValue *, encode::Term> globals;
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
   llvm::DenseMap<uint64_t, unsigned> shifts;
-  // A summarised loop's provenance array (kept alive) -> the one it reads
-  // below, which holds every pointer it does.
-  llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> provBelow;
+  // Provenance array source for a lambda provenance array: when fromObject is
+  // set, only bytes belonging to *fromObject are read from array (indexed by
+  // offset if byOffset, else by whole pointer); otherwise array is the same
+  // object's own array below.
+  struct ProvEdge {
+    encode::Term array;
+    std::optional<uint64_t> fromObject;
+    bool byOffset;
+  };
+  // A lambda's provenance array (kept alive) -> the arrays it reads from,
+  // which together hold every pointer it may hold.
+  llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
+  // Pointers whose null comparison simplifies without expanding fromAddress()
+  // or reading bases: pointer (kept alive) -> equivalent (p == null()).
+  llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> nullEq;
   unsigned fresh = 0;
   encode::Term context;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.

@@ -1,6 +1,6 @@
 // A conditional write of a nondet value: the summary writes element n
 // where iteration n would, a fresh value each, and leaves the others.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

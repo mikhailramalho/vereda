@@ -1,5 +1,5 @@
 // As summary_flush_whole, with a[3] left out of the expected values.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);

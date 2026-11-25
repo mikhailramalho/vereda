@@ -1,61 +1,73 @@
 #include "witness/counterexample.h"
 
 #include <cstdint>
+#include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/StringMap.h>
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/Support/WithColor.h>
 
 using namespace llvm;
 
 namespace vereda::witness {
 
-// The assignment of value to text as a C statement and the value's grouped
-// bits, e.g. {"x = 99;", "00000000 ... 01100011"}; bits are empty for
-// Booleans. A value C has no constant for (none in the model, or wider than
-// 64 bits) makes the statement a comment.
-static std::pair<std::string, std::string> assignment(solver::Model &model,
-                                                      const encode::Term &value,
-                                                      const std::string &text, bool isUnsigned) {
-  std::string lhs = text + " = ";
-  const APInt *v = model.value(value);
-  if (!v)
-    return {"// " + lhs + "?", ""};
-  if (value.isBool())
-    return {lhs + (v->isOne() ? "true;" : "false;"), ""};
-  std::string bits; // by hand: APInt::toString in base 2 cost more than the rest
-  for (unsigned i = v->getBitWidth(); i-- > 0;)
-    bits += (*v)[i] ? '1' : '0';
-  if (v->getBitWidth() > 64)
-    return {"// " + lhs + "0b" + bits, ""};
-  std::string decimal;
-  if (isUnsigned) {
-    uint64_t u = v->getZExtValue();
-    // An unsuffixed decimal constant past LLONG_MAX has no type.
-    decimal = std::to_string(u) + (u > INT64_MAX ? "u" : "");
-  } else {
-    int64_t i = v->getSExtValue();
-    // -9223372036854775808 negates a constant that has no type.
-    decimal = i == INT64_MIN ? "-9223372036854775807 - 1" : std::to_string(i);
+namespace {
+// Last printed value of a variable, keyed by what makes the printed statement
+// identical: checking this before formatting avoids string allocations on
+// unchanged values at merge points and loop headers.
+struct LastValue {
+  enum Kind : uint8_t { Unset, Unknown, Bool, Int64, UInt64, Wide } kind = Unset;
+  const void *termId = nullptr;
+  bool isUnsigned = false;
+  uint64_t val = 0;
+  std::string wide; // > 64-bit binary string, only when kind == Wide
+};
+} // namespace
+
+static void writeGroupedBits(raw_ostream &os, const APInt &v) {
+  unsigned w = v.getBitWidth();
+  char buf[72]; // at most 64 bits + 7 spaces
+  size_t len = 0;
+  uint64_t raw = v.getZExtValue();
+  for (unsigned i = w; i-- > 0;) {
+    if (len && (i + 1) % 8 == 0)
+      buf[len++] = ' ';
+    buf[len++] = ((raw >> i) & 1) ? '1' : '0';
   }
-  std::string grouped;
-  for (size_t i = 0; i < bits.size(); ++i) {
-    if (i && (bits.size() - i) % 8 == 0)
-      grouped += ' ';
-    grouped += bits[i];
-  }
-  return {lhs + decimal + ";", grouped};
+  WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << StringRef(buf, len);
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
                          const checks::Checks &checks, unsigned violated, raw_ostream &os,
                          bool showLibraryStates) {
   os << "\n";
-  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[Counterexample]";
-  os << "\n\n";
+  WithColor(os, raw_ostream::RED, /*Bold=*/true) << "[COUNTEREXAMPLE]";
+  os << "\n";
   unsigned n = 0;
+  StringMap<std::string> demangled;
+  auto demangleFn = [&](StringRef fn) -> StringRef {
+    auto [it, fresh] = demangled.try_emplace(fn);
+    if (fresh)
+      it->second = llvm::demangle(fn);
+    return it->second;
+  };
+  auto writeLoc = [&](const ir::SourceLoc &loc) {
+    StringRef fn = demangleFn(loc.function);
+    if (loc.file.empty() || loc.file == "<unknown>") {
+      os << "function " << fn;
+      return;
+    }
+    os << "file " << loc.file << " line " << loc.line;
+    if (loc.col)
+      os << " column " << loc.col;
+    os << " function " << fn;
+  };
+
   // Merge points (loop heads, joins) repeat a variable's value under their
   // own debug record; print a variable only when its value changes.
   // This also hides a source assignment of the same value.
-  StringMap<std::string> last;
+  StringMap<LastValue> last;
+  SmallString<128> keyBuf;
+  std::string textBuf;
   for (const walker::Step &step : trace) {
     if (step.kind == walker::Step::Call || step.kind == walker::Step::Branch ||
         (step.kind == walker::Step::Check && step.check != violated))
@@ -64,44 +76,119 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       continue;
     if (step.kind == walker::Step::Check)
       break;
+    const ir::SourceLoc &loc = trace.loc(step);
     if (step.kind == walker::Step::Assumption) {
-      os << "\n/*\nAssumption:\n  " << step.loc.display() << "\n  " << step.text << "\n*/\n";
+      os << "\nAssumption:\n  ";
+      writeLoc(loc);
+      os << "\n  " << trace.text(step) << "\n";
       continue;
     }
-    StringRef file = step.loc.file;
+    StringRef file = loc.file;
     if (!showLibraryStates && file.consume_front("/rustc/")) {
       auto [hash, rest] = file.split('/');
       if (!hash.empty() && rest.starts_with("library/"))
         continue;
     }
-    std::string text = step.text;
+    StringRef text = trace.text(step);
     bool isUnsigned = step.isUnsigned;
     if (step.type) { // a store into memory: name the element or member written
       const APInt *off = model.value(step.offset);
       std::optional<std::string> path;
       if (off)
-        path = ir::memberPath(step.type, off->getZExtValue(), step.value.width() / 8,
-                              isUnsigned);
+        path = ir::memberPath(step.type, off->getZExtValue(), step.value.width() / 8, isUnsigned);
       if (!path) // no single scalar to name (a bitfield's unit, a partial write)
         continue;
-      text += *path;
+      textBuf.assign(text.data(), text.size());
+      textBuf += *path;
+      text = textBuf;
     }
-    auto [stmt, bits] = assignment(model, step.value, text, isUnsigned);
-    std::string &prev = last[step.loc.function + "::" + text];
-    if (prev == stmt)
+    keyBuf.clear();
+    keyBuf.append(loc.function);
+    keyBuf.append("::");
+    keyBuf.append(text);
+    LastValue &prev = last[keyBuf];
+    if (prev.kind != LastValue::Unset && prev.termId == step.value.id() &&
+        prev.isUnsigned == isUnsigned)
       continue;
-    prev = stmt;
-    os << "\n// State " << ++n << " " << step.loc.display() << " thread 0\n  " << stmt;
-    if (!bits.empty())
-      WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << bits;
+
+    const APInt *v = model.value(step.value);
+    LastValue::Kind kind;
+    uint64_t val = 0;
+    std::string wideBits;
+    if (!v) {
+      kind = LastValue::Unknown;
+    } else if (step.value.isBool()) {
+      kind = LastValue::Bool;
+      val = v->isOne();
+    } else if (v->getBitWidth() > 64) {
+      kind = LastValue::Wide;
+      wideBits.reserve(v->getBitWidth());
+      for (unsigned i = v->getBitWidth(); i-- > 0;)
+        wideBits += (*v)[i] ? '1' : '0';
+    } else if (isUnsigned) {
+      uint64_t u = v->getZExtValue();
+      kind = u > INT64_MAX ? LastValue::UInt64 : LastValue::Int64;
+      val = u;
+    } else {
+      kind = LastValue::Int64;
+      val = static_cast<uint64_t>(v->getSExtValue());
+    }
+
+    bool same = prev.kind == kind &&
+                (kind == LastValue::Wide ? prev.wide == wideBits : prev.val == val);
+    if (same) {
+      prev.termId = step.value.id();
+      prev.isUnsigned = isUnsigned;
+      continue;
+    }
+    prev.kind = kind;
+    prev.termId = step.value.id();
+    prev.isUnsigned = isUnsigned;
+    prev.val = val;
+    if (kind == LastValue::Wide)
+      prev.wide = std::move(wideBits);
+    else
+      prev.wide.clear();
+
+    os << "\nState " << ++n << " ";
+    writeLoc(loc);
+    os << " thread 0\n  ";
+    switch (kind) {
+    case LastValue::Unknown:
+      os << text << " = ?";
+      break;
+    case LastValue::Bool:
+      os << text << " = " << (val ? "true;" : "false;");
+      break;
+    case LastValue::Wide:
+      os << text << " = 0b" << prev.wide;
+      break;
+    case LastValue::UInt64:
+      // An unsuffixed decimal constant past LLONG_MAX has no type.
+      os << text << " = " << val << "u;";
+      writeGroupedBits(os, *v);
+      break;
+    case LastValue::Int64: {
+      int64_t i = static_cast<int64_t>(val);
+      // -9223372036854775808 negates a constant that has no type.
+      if (i == INT64_MIN)
+        os << text << " = -9223372036854775807 - 1;";
+      else
+        os << text << " = " << i << ";";
+      writeGroupedBits(os, *v);
+      break;
+    }
+    case LastValue::Unset:
+      break;
+    }
     os << "\n";
   }
   const checks::Check &c = checks[violated];
-  os << "\n// State " << ++n << " " << c.loc.display() << " thread 0\n"
-     << "/*\nViolated property:\n  " << c.loc.display() << "\n  " << c.comment << "\n";
+  os << "\nViolated property:\n  ";
+  writeLoc(c.loc);
+  os << "\n  " << c.comment << "\n";
   if (!c.expr.empty())
     os << "  " << c.expr << "\n";
-  os << "*/\n\n";
 }
 
 } // namespace vereda::witness

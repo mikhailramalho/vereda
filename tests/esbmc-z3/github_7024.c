@@ -13,4 +13,4 @@ int main()
 // RUN: --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\[Counterexample\]$
+// EXPECT: ^\[COUNTEREXAMPLE\]$

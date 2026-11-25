@@ -21,6 +21,6 @@ int main(void)
 // RUN: --printf-check --32
 // MODE: FUTURE
 // EXPECT: ^  FAILED       \[main\.assertion\.[0-9]+\]  line 16  printf has more format specifiers than arguments$
-// EXPECT: ^\*\* 1 of [0-9]+ properties failed
+// EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

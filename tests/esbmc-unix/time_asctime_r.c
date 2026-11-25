@@ -23,6 +23,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/time_asctime_r
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

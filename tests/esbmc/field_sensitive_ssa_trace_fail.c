@@ -22,6 +22,6 @@ int main(void)
 // Needs: --field-sensitive-ssa
 // RUN: --field-sensitive-ssa --no-slice
 // MODE: FUTURE
-// EXPECT: ^  u = \{ \.a = 0 \}\n\n// State 5 file [^\n]*field_sensitive_ssa_trace_fail\.c line 17 [^\n]*\n  u = \{ \.a=1, \.b=2 \}\n\n// State 6 file
+// EXPECT: ^  u = \{ \.a = 0 \}\n\nState 5 file [^\n]*field_sensitive_ssa_trace_fail\.c line 17 [^\n]*\n  u = \{ \.a=1, \.b=2 \}\n\nState 6 file
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

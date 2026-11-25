@@ -10,7 +10,7 @@
 // EXPECT: ^  g\[3\] = 4; //
 // EXPECT: ^  local = 6; //
 // EXPECT-NOT: local = 0
-// EXPECT: ^// State \d+ file \S+ line \d+ function bump thread 0\n  v = 2; //
+// EXPECT: ^State \d+ file \S+ line \d+ function bump thread 0\n  v = 2; //
 // EXPECT-NOT: function bump thread 0\n  v = 1; //
 extern void __VERIFIER_assert(int);
 extern void __VERIFIER_assume(int);

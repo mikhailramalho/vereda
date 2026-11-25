@@ -1,6 +1,6 @@
 // A loop that writes an affine value of its index to every element is
 // replaced by its effect, which keeps the element the claim gets wrong.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern unsigned __VERIFIER_nondet_uint(void);

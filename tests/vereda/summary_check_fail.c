@@ -1,6 +1,6 @@
 // A summarised loop still checks its body: one iteration at a nondet index
 // stands for all of them, and this one fails at i == 77777.
-// EXPECT: ^Summarised 1 array loop\(s\)$
+// EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^Violated property:\n  file \S*summary_check_fail\.c line 12 column 5 function main\n  __VERIFIER_assert\n  i != 77777$
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);

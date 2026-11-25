@@ -14,8 +14,49 @@ static const APInt False(1, 0), True(1, 1);
 
 Terms::Terms(camada::SMTSolver &s) : s(s), bools{Ref(s.mkBool(false)), Ref(s.mkBool(true))} {}
 
-size_t Terms::KeyHash::operator()(const Key &k) const {
-  return llvm::hash_combine(static_cast<uint8_t>(k.op), k.a, k.b, k.c, k.x, k.y);
+uint32_t Terms::hashKey(const Key &k) {
+  return static_cast<uint32_t>(
+      llvm::hash_combine(static_cast<uint8_t>(k.op), k.a, k.b, k.c, k.x, k.y));
+}
+
+Ref Terms::memoFind(const Key &k) const {
+  if (memoBuckets.empty())
+    return {};
+  uint32_t h = hashKey(k);
+  size_t mask = memoBuckets.size() - 1;
+  for (size_t i = h & mask;; i = (i + 1) & mask) {
+    const MemoBucket &b = memoBuckets[i];
+    if (b.idx == MemoBucket::Empty)
+      return {};
+    if (b.hash == h && matches(entries[b.idx].n, k))
+      return entries[b.idx].self;
+  }
+}
+
+void Terms::memoGrow() {
+  size_t newSize = memoBuckets.empty() ? 64 : memoBuckets.size() * 2;
+  std::vector<MemoBucket> next(newSize);
+  size_t mask = newSize - 1;
+  for (const MemoBucket &b : memoBuckets) {
+    if (b.idx == MemoBucket::Empty)
+      continue;
+    size_t i = b.hash & mask;
+    while (next[i].idx != MemoBucket::Empty)
+      i = (i + 1) & mask;
+    next[i] = b;
+  }
+  memoBuckets.swap(next);
+}
+
+void Terms::memoInsert(uint32_t idx, uint32_t h) {
+  if ((memoCount + 1) * 3 >= memoBuckets.size() * 2)
+    memoGrow();
+  size_t mask = memoBuckets.size() - 1;
+  size_t i = h & mask;
+  while (memoBuckets[i].idx != MemoBucket::Empty)
+    i = (i + 1) & mask;
+  memoBuckets[i] = {idx, h};
+  ++memoCount;
 }
 
 const APInt *Terms::constant(const Ref &e) const {
@@ -25,8 +66,10 @@ const APInt *Terms::constant(const Ref &e) const {
 }
 
 const Terms::Node *Terms::node(const Ref &e) const {
+  if (!e || e.entry())
+    return nullptr;
   auto it = nodes.find(e.id());
-  return it == nodes.end() ? nullptr : &it->second;
+  return it == nodes.end() ? nullptr : &entries[it->second].n;
 }
 
 Ref Terms::bv(const APInt &v) {
@@ -56,9 +99,31 @@ camada::SMTExprRef Terms::solverTerm(const Ref &e) {
           bits[w - 1 - i] = '1';
       c->term = s.mkBVFromBin(bits, w);
     }
-    made.try_emplace(c->term.get(), e);
+    if (!walkDone)
+      made.try_emplace(c->term.get(), e);
   }
   return c->term;
+}
+
+void Terms::releaseWalkTables() {
+  decltype(entries)().swap(entries);
+  decltype(memoBuckets)().swap(memoBuckets);
+  memoCount = 0;
+  decltype(nodes)().swap(nodes);
+  decltype(bvs)().swap(bvs);
+  decltype(made)().swap(made);
+  decltype(implied)().swap(implied);
+  decltype(arith)().swap(arith);
+  decltype(filled)().swap(filled);
+  decltype(lambdas)().swap(lambdas);
+  decltype(under)().swap(under);
+  decltype(reduced)().swap(reduced);
+  decltype(selects)().swap(selects);
+  decltype(scratch)().swap(scratch);
+  decltype(bounds)().swap(bounds);
+  decltype(ranges)().swap(ranges);
+  decltype(freeOf)().swap(freeOf);
+  walkDone = true;
 }
 
 Ref Terms::fromSolver(const camada::SMTExprRef &e) const {
@@ -159,28 +224,24 @@ Ref Terms::filledWith(const Ref &e) const {
   return it == filled.end() ? Ref() : it->second.second;
 }
 
-Ref Terms::lift(const Ref &a, const std::function<Ref(const Ref &)> &f) {
-  Ref c, x, y;
-  return split(a, c, x, y) ? ite(c, f(x), f(y)) : Ref();
-}
-
-Ref Terms::lift(const Ref &a, const Ref &b, const std::function<Ref(const Ref &, const Ref &)> &f) {
-  Ref ca, cb, ax = a, ay = a, bx = b, by = b;
-  bool sa = split(a, ca, ax, ay), sb = split(b, cb, bx, by);
-  if ((!sa && !sb) || (sa && sb && ca != cb) || (!sa && !constant(a)) ||
-      (!sb && !constant(b)))
-    return {};
-  return ite(sa ? ca : cb, f(ax, bx), f(ay, by));
-}
-
 Ref Terms::make(Node n) {
   Key k{n.op, n.a.id(), n.b.id(), n.c.id(), n.x, n.y};
-  auto [it, fresh] = memo.try_emplace(k);
-  if (fresh) {
-    it->second = Ref(build(n));
+  uint32_t h = hashKey(k);
+  if (!memoBuckets.empty()) {
+    size_t mask = memoBuckets.size() - 1;
+    for (size_t i = h & mask;; i = (i + 1) & mask) {
+      const MemoBucket &b = memoBuckets[i];
+      if (b.idx == MemoBucket::Empty)
+        break;
+      if (b.hash == h && matches(entries[b.idx].n, k))
+        return entries[b.idx].self;
+    }
+  }
+  Ref r(build(n));
+  if (!lambdas.empty() && (n.op == Op::Store || n.op == Op::Ite)) {
     std::vector<Ref> reads;
     auto add = [&](const Ref &l) {
-      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &r) { return r == l; }))
+      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &x) { return x == l; }))
         reads.push_back(l);
     };
     auto through = [&](const Ref &array) {
@@ -192,13 +253,16 @@ Ref Terms::make(Node n) {
     };
     if (n.op == Op::Store)
       through(n.a);
-    else if (n.op == Op::Ite)
+    else
       through(n.b), through(n.c);
     if (!reads.empty())
-      under.emplace(it->second.id(), std::move(reads));
-    nodes.try_emplace(it->second.id(), std::move(n));
+      under.emplace(r.id(), std::move(reads));
   }
-  return it->second;
+  uint32_t idx = static_cast<uint32_t>(entries.size());
+  entries.push_back(Entry{std::move(n), r});
+  memoInsert(idx, h);
+  nodes.try_emplace(r.id(), idx);
+  return r;
 }
 
 camada::SMTExprRef Terms::build(const Node &n) {
@@ -375,13 +439,17 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
   if (nh && nl && nh->op == Op::Ite && nl->op == Op::Ite && nh->a == nl->a &&
       joinDepth < 1000) {
     Key k{Op::Concat, hi.id(), lo.id(), nullptr, 0, 0};
-    if (auto it = memo.find(k); it != memo.end())
-      return it->second;
+    if (Ref cached = memoFind(k))
+      return cached;
     Ref c = nh->a, ha = nh->b, hb = nh->c, la = nl->b, lb = nl->c;
     ++joinDepth;
     Ref r = ite(c, concat(ha, la), concat(hb, lb));
     --joinDepth;
-    memo.emplace(k, r);
+    if (!memoFind(k)) {
+      uint32_t idx = static_cast<uint32_t>(entries.size());
+      entries.push_back(Entry{Node{Op::Concat, hi, lo}, r});
+      memoInsert(idx, hashKey(k));
+    }
     return r;
   }
   // y[w-1:k] ++ 0^k is y when y's low k bits are zero: an offset made
@@ -438,11 +506,11 @@ Ref Terms::sext(const Ref &a, unsigned n) {
 }
 
 Ref Terms::eq(const Ref &a, const Ref &b) {
-  if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return eq(x, y); }))
-    return r;
   if (a == b) return boolean(true);
   const APInt *ca = constant(a), *cb = constant(b);
   if (ca && cb) return boolean(*ca == *cb);
+  if (Ref r = lift(a, b, [this](const Ref &x, const Ref &y) { return eq(x, y); }))
+    return r;
   if (a.isBool()) {
     if (ca) return ca->isOne() ? b : lnot(b);
     if (cb) return cb->isOne() ? a : lnot(a);
@@ -544,9 +612,11 @@ Ref Terms::lor(const Ref &a, const Ref &b) {
 static constexpr unsigned SpineBound = 64;
 
 int Terms::conjunct(const Ref &g, const Ref &c) const {
-  auto find = [this](const void *e) {
+  auto find = [this](const void *e) -> const Node * {
+    if (!e || (reinterpret_cast<uintptr_t>(e) & 1))
+      return nullptr;
     auto it = nodes.find(e);
-    return it == nodes.end() ? nullptr : &it->second;
+    return it == nodes.end() ? nullptr : &entries[it->second].n;
   };
   const Node *nc = find(c.id());
   const void *e = g.id();
@@ -627,21 +697,24 @@ Ref Terms::smulo(const Ref &a, const Ref &b) {
 Ref Terms::select(const Ref &array, const Ref &index) {
   if (!constant(index))
     return uncached(array, index);
-  // A reference into the map stays valid while the select below adds to it.
-  Ref &r = selects[{array.id(), index.id()}];
-  if (!r)
-    r = uncached(array, index);
+  auto key = std::make_pair(array.id(), index.id());
+  if (auto it = selects.find(key); it != selects.end())
+    return it->second;
+  Ref r = uncached(array, index);
+  selects.try_emplace(key, r);
   return r;
 }
 
 Ref Terms::uncached(const Ref &array, const Ref &index) {
   Ref arr = array;
-  for (auto l = lambdas.find(arr.id()); l != lambdas.end() && l->second.misses &&
-                                         l->second.misses(index);
-       l = lambdas.find(arr.id()))
-    arr = l->second.below;
-  if (arr != array)
-    return select(arr, index);
+  if (!lambdas.empty()) {
+    for (auto l = lambdas.find(arr.id()); l != lambdas.end() && l->second.misses &&
+                                           l->second.misses(index);
+         l = lambdas.find(arr.id()))
+      arr = l->second.below;
+    if (arr != array)
+      return select(arr, index);
+  }
   // A read of a constant array is its value, at any index.
   unsigned steps = 256;
   if (const APInt *ci = constant(index))
@@ -649,14 +722,27 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
       return v;
   if (auto it = filled.find(arr.id()); it != filled.end())
     return it->second.second;
-  if (lambdas.count(arr.id()))
+  if (!lambdas.empty() && lambdas.count(arr.id()))
     return reduce(arr, index);
-  bool fresh = !memo.count({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
+  // A read of a non-nested ite whose arms include a lambda (or two constant
+  // arrays) reduces each arm directly instead of constraining the lambda
+  // array symbol at every read index.
+  if (const Node *n = node(arr); n && n->op == Op::Ite) {
+    const Node *nb = node(n->b), *nc = node(n->c);
+    bool flat = (!nb || nb->op != Op::Ite) && (!nc || nc->op != Op::Ite);
+    if (flat && ((!lambdas.empty() && (lambdas.count(n->b.id()) || lambdas.count(n->c.id()))) ||
+                 (filled.count(n->b.id()) && filled.count(n->c.id())))) {
+      Ref c = n->a, b = n->b, d = n->c;
+      return ite(c, select(b, index), select(d, index));
+    }
+  }
+  bool fresh = !memoFind({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
   Ref r = make({Op::Select, arr, index});
-  if (auto u = under.find(arr.id()); fresh && u != under.end())
-    for (const Ref &l : std::vector<Ref>(u->second))
-      if (!memo.count({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
-        s.addConstraint(solverTerm(eq(make({Op::Select, l, index}), reduce(l, index))));
+  if (!lambdas.empty())
+    if (auto u = under.find(arr.id()); fresh && u != under.end())
+      for (const Ref &l : std::vector<Ref>(u->second))
+        if (!memoFind({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
+          addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
   return r;
 }
 
@@ -676,8 +762,11 @@ Ref Terms::reduce(const Ref &l, const Ref &index) {
 }
 
 Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
-  std::unordered_set<const void *> &same = freeOf[from.id()];
-  std::unordered_map<const void *, Ref> done;
+  auto &slot = freeOf[from.id()];
+  if (!slot)
+    slot = std::make_unique<llvm::DenseSet<const void *>>();
+  llvm::DenseSet<const void *> &same = *slot;
+  llvm::DenseMap<const void *, Ref> done;
   // What x becomes, or null while its operands are pending.
   auto known = [&](const Ref &x) -> Ref {
     if (x == from)
@@ -688,7 +777,7 @@ Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
     return it == done.end() ? Ref() : it->second;
   };
   // Iterative, as a guard can be deeper than the stack.
-  std::vector<Ref> stack{e};
+  llvm::SmallVector<Ref, 32> stack{e};
   while (!stack.empty()) {
     Ref x = stack.back();
     if (known(x)) {
@@ -709,7 +798,7 @@ Ref Terms::substitute(const Ref &e, const Ref &from, const Ref &to) {
     if (now[0] == kids[0] && now[1] == kids[1] && now[2] == kids[2])
       same.insert(x.id());
     else
-      done[x.id()] = rebuild(n, now[0], now[1], now[2]);
+      done.try_emplace(x.id(), rebuild(n, now[0], now[1], now[2]));
   }
   return known(e);
 }
@@ -778,19 +867,26 @@ Ref Terms::read(Ref &arr, const APInt &i, unsigned &steps) {
 }
 
 bool Terms::arithmetic(const Ref &e) {
+  if (!e || e.entry())
+    return false;
   // Iterative, as an ite chain can be deeper than the stack. A read from an
   // array is a leaf: what was stored there is the solver's business only
   // when the read needs it.
   auto inner = [this](const void *p) -> const Node * {
+    if (!p || (reinterpret_cast<uintptr_t>(p) & 1))
+      return nullptr;
     auto it = nodes.find(p);
-    return it == nodes.end() || it->second.op == Op::Select ? nullptr : &it->second;
+    if (it == nodes.end())
+      return nullptr;
+    const Node &n = entries[it->second].n;
+    return n.op == Op::Select ? nullptr : &n;
   };
   auto own = [](Op op) {
     return op == Op::Mul || op == Op::UDiv || op == Op::SDiv || op == Op::URem || op == Op::SRem;
   };
   auto known = [&](const void *p) { return !inner(p) || arith.count(p); };
-  auto value = [&](const void *p) { return inner(p) && arith.at(p); };
-  std::vector<const void *> stack{e.id()};
+  auto value = [&](const void *p) { return inner(p) && arith.lookup(p); };
+  llvm::SmallVector<const void *, 32> stack{e.id()};
   while (!stack.empty()) {
     const void *p = stack.back();
     if (known(p)) {
@@ -812,7 +908,7 @@ bool Terms::arithmetic(const Ref &e) {
     bool r = own(n.op);
     for (const void *k : kids)
       r = r || (k && value(k));
-    arith.emplace(p, r);
+    arith.try_emplace(p, r);
   }
   return value(e.id());
 }
@@ -1064,7 +1160,7 @@ Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
 
 Ref Terms::constArray(const camada::SMTSortRef &index, const Ref &value) {
   Ref r(s.mkArrayConst(index, solverTerm(value)));
-  filled.emplace(r.id(), std::make_pair(r, value));
+  filled.try_emplace(r.id(), r, value);
   return r;
 }
 

@@ -3,7 +3,7 @@
 // is never decided and must not be listed.
 // RUN: --unwind 3
 // EXPECT: FAILED +\[main\.assertion\.1\]
-// EXPECT: 1 of 1 properties failed
+// EXPECT: Properties: 1 checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT-NOT: main\.unwind\.0
 extern void __VERIFIER_assert(int);
 extern int nondet(void);

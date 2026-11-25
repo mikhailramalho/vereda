@@ -1,7 +1,7 @@
 // Under --incremental-bmc, each bound's formula gets its own file.
 // RUN: --dump-smt-too --incremental-bmc --dump-dir out
-// EXPECT: ^Wrote out/formula-k1\.smt2$
-// EXPECT: ^Wrote out/formula-k3\.smt2$
+// EXPECT: ^\[INFO\] Wrote out/formula-k1\.smt2$
+// EXPECT: ^\[INFO\] Wrote out/formula-k3\.smt2$
 // EXPECT: VERIFICATION SUCCESSFUL
 extern void __VERIFIER_assert(int);
 int main(void) {

@@ -7,6 +7,7 @@
 #include "walker/walker.h"
 #include "witness/counterexample.h"
 #include "witness/witness.h"
+#include "vereda-version.h"
 
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
@@ -21,9 +22,12 @@
 
 using namespace llvm;
 using vereda::util::progress;
+using vereda::util::info;
 
 static cl::opt<std::string> inputFile(cl::Positional, cl::desc("<file.bc|file.ll>"),
                                       cl::Required);
+static cl::opt<bool> noBanner("no-banner", cl::Hidden,
+                             cl::desc("Banner already printed by the front end"));
 static cl::opt<bool> dumpIROnly("dump-ir-only", cl::desc("Print the IR after the pass list and exit"));
 static cl::opt<bool> dumpIRToo("dump-ir-too", cl::desc("Print the IR after the pass list, then verify"));
 static cl::opt<bool> dumpSMTOnly("dump-smt-only",
@@ -90,7 +94,8 @@ static cl::opt<camada::SolverKind> solverKind(
 
 static void printVersion(raw_ostream &os) {
   os << "Vereda " VEREDA_VERSION " (LLVM " LLVM_VERSION_STRING ", camada " VEREDA_CAMADA_VERSION
-        ")\n";
+        ", commit " VEREDA_COMMIT ")\n";
+  os.flush();
 }
 
 // Prints a dump, or writes it to name in --dump-dir. Returns false on a
@@ -112,7 +117,7 @@ static bool dump(StringRef name, function_ref<void(raw_ostream &)> write) {
     errs() << "vereda: cannot write " << path << ": " << ec.message() << "\n";
     return false;
   }
-  outs() << "Wrote " << path << "\n";
+  info() << "Wrote " << path << "\n";
   return true;
 }
 
@@ -130,7 +135,7 @@ static void svcomp(StringRef verdict) {
 static const int ErrorExit = 6;
 
 static int unknown(const Twine &reason) {
-  outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
+  outs() << "\n[RESULTS]\n\nVERIFICATION UNKNOWN: " << reason << "\n";
   svcomp("UNKNOWN");
   return 2;
 }
@@ -160,7 +165,10 @@ static const int BoundTooSmall = -1;
 // exit code. Under --incremental-bmc, a failed unwinding or recursion
 // assertion is not a verdict but BoundTooSmall, with unwindsAt set to its
 // (checks.h); an unknown from the solver still ends the run, as in ESBMC.
-static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
+// When releaseModule is non-null (single-walk mode), the IR module is freed
+// right after the walk, before solving, to keep peak memory down.
+static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModuleInfo *witnessInfo,
+               std::unique_ptr<Module> *releaseModule = nullptr, unsigned *unwindsAt = nullptr) {
   Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind);
   if (!created) {
     errs() << "vereda: " << toString(created.takeError()) << "\n";
@@ -170,26 +178,30 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   progress("Walking " + entry);
   vereda::util::Stopwatch walkTime;
   vereda::encode::Terms terms(solver);
-  std::unique_ptr<vereda::memory::Memory> memory;
-  try {
-    memory = std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout());
-  } catch (const vereda::Unsupported &e) {
-    return unknown(Twine("unsupported: ") + e.what());
-  }
-  vereda::encode::Encoder enc(terms, *memory, fp2bv);
   vereda::checks::Checks checks;
   vereda::walker::Trace trace;
-  vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
-                                   !incrementalBMC,
-                                   !noSummarizeArrayLoops,
-                                   !witnessFile.empty(),
-                                   !noPointerCheck};
-  if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
-    return finish(unknown(toString(std::move(e))));
+  unsigned symbols = 0;
+  {
+    std::unique_ptr<vereda::memory::Memory> memory;
+    try {
+      memory = std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout());
+    } catch (const vereda::Unsupported &e) {
+      return unknown(Twine("unsupported: ") + e.what());
+    }
+    vereda::encode::Encoder enc(terms, *memory, fp2bv);
+    vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
+                                     !incrementalBMC,
+                                     !noSummarizeArrayLoops,
+                                     !witnessFile.empty(),
+                                     !noPointerCheck};
+    if (Error e = vereda::walker::walk(fn, walkOpts, enc, *memory, checks, trace))
+      return finish(unknown(toString(std::move(e))));
+    symbols = enc.symbolCount();
+  }
   // Peak memory after the walk covers the walker and the terms it built;
   // the growth during solving is the solver's search.
-  outs() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
-         << (checks.size() == 1 ? " check, " : " checks, ") << enc.symbolCount()
+  info() << "Walk time: " << walkTime.elapsed() << " (" << checks.size()
+         << (checks.size() == 1 ? " check, " : " checks, ") << symbols
          << " symbols, peak memory " << vereda::util::peakMemory() << ")\n";
   outs().flush(); // solving may run until a timeout kills the process
 
@@ -211,6 +223,10 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
       return finish(0);
   }
 
+  terms.releaseWalkTables();
+  if (releaseModule)
+    releaseModule->reset();
+
   progress("Solving with " + solver.getSolverNameAndVersion());
   vereda::util::Stopwatch solveTime;
   using vereda::solver::Status;
@@ -224,7 +240,7 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
     std::string msg;
     raw_string_ostream(msg) << "Solving time: " << solveTime.elapsed() << " (peak memory "
                             << vereda::util::peakMemory() << ")";
-    progress(msg);
+    info() << msg << "\n";
   };
   vereda::solver::Verdict verdict =
       vereda::solver::decide(terms, checks, multiProperty, [&](const vereda::checks::Check &c) {
@@ -238,23 +254,24 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
         // One reader for both, so the witness asks the solver for no value
         // the counterexample has read.
         vereda::solver::Model model(solver, terms);
+        model.assumeTrue(c.violated);
         vereda::witness::printCounterexample(model, trace, checks, &c - checks.data(), outs(),
                                                showLibraryStates);
-        if (!witnessFile.empty() && !witnessWritten) {
-          Expected<std::string> witness = vereda::witness::violationWitness(
-              model, trace, checks, &c - checks.data(), *fn.getParent(), entry);
+        if (witnessInfo && !witnessWritten) {
           outs().flush(); // the file may be standard output too
-          if (!witness) {
-            errs() << "vereda: no witness: " << toString(witness.takeError()) << "\n";
-            return;
-          }
-          witnessWritten = true;
-          std::error_code ec;
-          raw_fd_ostream os(witnessFile, ec);
-          if (ec)
-            errs() << "vereda: cannot write " << witnessFile << ": " << ec.message() << "\n";
-          else
-            os << *witness;
+          Error err = vereda::witness::violationWitness(
+              model, trace, checks, &c - checks.data(), *witnessInfo, entry,
+              [&](function_ref<void(raw_ostream &)> write) {
+                witnessWritten = true;
+                std::error_code ec;
+                raw_fd_ostream os(witnessFile, ec);
+                if (ec)
+                  errs() << "vereda: cannot write " << witnessFile << ": " << ec.message() << "\n";
+                else
+                  write(os);
+              });
+          if (err)
+            errs() << "vereda: no witness: " << toString(std::move(err)) << "\n";
         }
       });
   if (!traced)
@@ -267,13 +284,13 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
   for (size_t i = 0; i < checks.size(); ++i)
     bug |= verdict.status[i] == Status::Fails && isAssertion(checks[i]);
   if (incrementalBMC && verdict.check && !bug) {
-    outs() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
+    info() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
     *unwindsAt = verdict.check->unwindsAt;
     return BoundTooSmall;
   }
 
-  if (!checks.empty()) {
-    outs() << "\n** Results:\n";
+  {
+    outs() << "\n[RESULTS]\n";
     std::string lastUnit;
     unsigned checked = 0, failed = 0;
     for (size_t i = 0; i < checks.size(); ++i) {
@@ -292,7 +309,8 @@ static int bmc(Function &fn, unsigned bound, unsigned *unwindsAt = nullptr) {
           << (fails ? "FAILED" : "SUCCESS");
       outs() << (fails ? "       [" : "      [") << c.id() << "]  line " << c.loc.line << "  " << c.comment << "\n";
     }
-    outs() << "\n** " << failed << " of " << checked << " properties failed\n";
+    outs() << "\nProperties: " << checked << " checked, " << checked - failed
+           << " passed, " << failed << " failed, " << checks.size() - checked << " not checked\n";
   }
   outs() << "\n";
   if (verdict.check) {
@@ -327,6 +345,8 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": --dump-dir needs a --dump-* flag\n";
     return ErrorExit;
   }
+  if (!noBanner && !((dumpIROnly || dumpSMTOnly) && dumpDir.empty()))
+    printVersion(outs());
 
   progress("Loading " + inputFile);
   vereda::util::Stopwatch loadTime;
@@ -334,15 +354,15 @@ int main(int argc, char **argv) {
   // The library models sit next to the binary.
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
-      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self));
+      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
   }
-  outs() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
+  info() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
          << ((*module)->getDataLayout().isLittleEndian() ? "little" : "big") << "-endian "
          << (*module)->getTargetTriple().str() << "\n";
-  outs() << "IR preparation time: " << loadTime.elapsed() << "\n";
+  info() << "IR preparation time: " << loadTime.elapsed() << "\n";
   if (dumpIROnly || dumpIRToo) {
     if (!dump("ir.ll", [&](raw_ostream &os) { (*module)->print(os, nullptr); }))
       return ErrorExit;
@@ -355,6 +375,12 @@ int main(int argc, char **argv) {
     return ErrorExit;
   }
 
+  std::optional<vereda::witness::WitnessModuleInfo> witnessInfo;
+  if (!witnessFile.empty())
+    witnessInfo = vereda::witness::extractModuleInfo(**module);
+  const vereda::witness::WitnessModuleInfo *witnessInfoPtr =
+      witnessInfo ? &*witnessInfo : nullptr;
+
   if (!incrementalBMC) {
     cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
     for (cl::Option *o : boundFlags)
@@ -362,7 +388,7 @@ int main(int argc, char **argv) {
         errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
         return ErrorExit;
       }
-    return bmc(*fn, unwind);
+    return bmc(*fn, unwind, witnessInfoPtr, &*module);
   }
   if (!kStep) {
     errs() << argv[0] << ": --k-step must be at least 1\n";
@@ -392,7 +418,7 @@ int main(int argc, char **argv) {
     // solver with a scope per bound was measured and not kept; see
     // docs/survey/2026-11-22-incremental-bmc.md.)
     progress("Checking bound k = " + std::to_string(k));
-    if (int r = bmc(*fn, k, &unwindsAt); r != BoundTooSmall)
+    if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt); r != BoundTooSmall)
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));

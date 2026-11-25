@@ -11,7 +11,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/strcasecmp_model_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^\*\* 2 of 6 properties failed
+// EXPECT: ^Properties: 6 checked, \d+ passed, 2 failed, \d+ not checked
 // EXPECT: FAILED\s+\[main.assertion.2\]
 // EXPECT: FAILED\s+\[strncasecmp.*array bounds violated
 // Vereda: unmet EXPECT: ^\*\* 2 of 6 properties failed

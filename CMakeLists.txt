@@ -56,6 +56,15 @@ target_link_libraries(libvereda PUBLIC ${llvm_libs} camada::camada)
 
 add_executable(vereda src/driver/main.cpp)
 target_link_libraries(vereda PRIVATE libvereda)
+# Recheck HEAD on each build, rewriting the header only when it changes.
+add_custom_target(vereda-version
+  COMMAND "${CMAKE_COMMAND}" "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+          "-DOUTPUT=${CMAKE_BINARY_DIR}/generated/vereda-version.h"
+          -P "${CMAKE_SOURCE_DIR}/cmake/Version.cmake"
+  BYPRODUCTS "${CMAKE_BINARY_DIR}/generated/vereda-version.h"
+  VERBATIM)
+add_dependencies(vereda vereda-version)
+target_include_directories(vereda PRIVATE "${CMAKE_BINARY_DIR}/generated")
 # ld.bfd's default script gathers the static constructors (.text.startup)
 # in one place; lld leaves each with its object, so the 1,789 of Z3, cvc5
 # and LLVM run from 921 separate 64 KiB windows of .text, and the kernel

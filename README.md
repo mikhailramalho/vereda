@@ -77,6 +77,10 @@ configure.
 ./vereda.py file.rs --unwind 5
 ```
 
+The version banner comes before compilation and includes the executable's
+build commit immediately after the camada version. Rebuilding refreshes the
+short commit hash; builds without Git metadata report `commit unknown`.
+
 `vereda.py` takes C (`.c`, `.i`), Rust (`.rs`) or IR (`.ll`, `.bc`) inputs and its own
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and ESBMC's `--overflow-check`,
@@ -117,14 +121,24 @@ one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
 `VERIFICATION UNKNOWN` (exit 2):
 
 ```
-** Results:
+[RESULTS]
 loop_unwind_false.c, function main
   FAILED       [main.unwind.0]  line 10  unwinding assertion loop 0
 
-** 1 of 1 properties failed
+Properties: 1 checked, 0 passed, 1 failed, 0 not checked
 
 VERIFICATION FAILED
 ```
+
+Stage activity and loop unwinding use `[PROGRESS]`; target, timings and memory
+use `[INFO]`; warnings use `[WARNING]`. A `[COUNTEREXAMPLE]` contains plain
+assumption and state blocks, with binary values as inline comments,
+followed by the violated property. `[RESULTS]` always appears for a verdict,
+including successful runs with no remaining checks. Its counts describe
+properties decided by the solver; checks resolved during the walk do not
+appear in that table. An UNKNOWN verdict gives its reason instead of counts.
+Property IDs, exit codes and the final `VERIFICATION ...` and SV-COMP verdict
+lines are unchanged.
 
 A run that ends in an error instead of a verdict (a bad option, an input that
 cannot be loaded, a failed compile) exits with 6, as in ESBMC.

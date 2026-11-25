@@ -9,7 +9,7 @@ int main()
 // Needs: --result-only
 // RUN: --result-only
 // MODE: FUTURE
-// EXPECT: ^\*\* Results:$
+// EXPECT: ^\[RESULTS\]$
 // EXPECT: ^ +PASSED .*line +5 +A1$
 // EXPECT: ^ +FAILED .*line +6 +A2$
 // EXPECT: ^VERIFICATION FAILED$
