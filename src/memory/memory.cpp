@@ -676,6 +676,191 @@ void Memory::fill(State &st, uint64_t o, Term byte) {
   st.separate.set({o, 0}, {t.constArray(index, elem), shift ? prov : t.constArray(index, prov)});
 }
 
+bool Memory::applyRange(State &st, uint64_t o, Term p, uint64_t n, const char *name,
+                        const std::function<Term(const Term &j, const Term &d)> &valueAt) {
+  using U = unsigned __int128;
+  if (n < MinSeparate || o == 0 || o >= objects.size())
+    return false;
+  if (ptrBits < 64 && n >= (U(1) << ptrBits))
+    return false;
+  std::optional<Key> k = key(p);
+  if (k && U(k->second) + n > (U(1) << ptrBits))
+    return false;
+  unsigned shift = shifts.lookup(o);
+  if (shift && (!k || (k->second & ((1u << shift) - 1)) != 0 || (n & ((1u << shift) - 1)) != 0))
+    return false;
+  if (k)
+    st.known.eraseRange(o, k->second, k->second + n - 1);
+  else
+    flush(st, o);
+  const State::Cell *own = st.separate.find({o, 0});
+  State::Cell below = own ? *own : State::Cell{st.data, st.prov};
+  bool byOffset = own && owned.count(o);
+  SMTSortRef index = !byOffset ? pointerSort() : s.mkBVSort(ptrBits - shift);
+  SMTSortRef dataSort = s.mkArraySort(index, s.mkBVSort(8u << shift));
+  Term objectId = t.bv(o, ObjBits), intProv = t.bv(IntProvenance, ObjBits);
+  std::function<bool(const Term &)> misses;
+  std::function<std::pair<Term, Term>(const Term &)> inRange;
+  if (shift) {
+    unsigned idxBits = ptrBits - shift;
+    uint64_t eLo = k->second >> shift, eCount = n >> shift;
+    Term eStart = t.bv(eLo, idxBits), eLen = t.bv(eCount, idxBits);
+    misses = [this, eLo, eCount](const Term &j) {
+      std::optional<encode::Terms::Range> v = t.range(j);
+      return v && (v->hi < eLo || v->lo >= eLo + eCount);
+    };
+    inRange = [this, eStart, eLen](const Term &j) -> std::pair<Term, Term> {
+      Term d = t.sub(j, eStart);
+      return {t.ult(d, eLen), d};
+    };
+  } else {
+    Term start = offset(p), len = t.bv(n, ptrBits);
+    std::optional<uint64_t> from = k ? std::optional<uint64_t>(k->second) : std::nullopt;
+    misses = [this, byOffset, objectId, from, n](const Term &j) {
+      if (!byOffset && t.isFalse(t.eq(object(j), objectId)))
+        return true;
+      if (!from)
+        return false;
+      Term off = byOffset ? j : offset(j);
+      std::optional<encode::Terms::Range> v = t.range(off);
+      return v && (v->hi < *from || v->lo >= U(*from) + U(n));
+    };
+    inRange = [this, byOffset, objectId, start, len](const Term &j) -> std::pair<Term, Term> {
+      Term inObj = byOffset ? t.boolean(true) : t.eq(object(j), objectId);
+      if (t.isFalse(inObj))
+        return {inObj, {}};
+      Term off = byOffset ? j : offset(j);
+      Term d = t.sub(off, start);
+      return {t.land(inObj, t.ult(d, len)), d};
+    };
+  }
+  std::string id = std::to_string(fresh++);
+  State::Cell after{
+      t.lambda(dataSort, std::string(name) + "#" + id,
+               [this, inRange, valueAt, below](const Term &j) {
+                 auto [in, d] = inRange(j);
+                 if (t.isFalse(in))
+                   return t.select(below.data, j);
+                 Term v = valueAt(j, d);
+                 if (t.isTrue(in))
+                   return v;
+                 return t.ite(in, v, t.select(below.data, j));
+               },
+               below.data, misses),
+      below.prov};
+  if (!shift && t.filledWith(below.prov) != intProv) {
+    after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)),
+                          std::string(name) + "_provenance#" + id,
+                          [this, inRange, intProv, below](const Term &j) {
+                            auto [in, d] = inRange(j);
+                            if (t.isTrue(in))
+                              return intProv;
+                            Term old = t.select(below.prov, j);
+                            return t.isFalse(in) || old == intProv ? old
+                                                                   : t.ite(in, intProv, old);
+                          },
+                          below.prov, misses);
+    provBelow[after.prov.id()] = {after.prov, below.prov};
+  }
+  if (own)
+    st.separate.set({o, 0}, after);
+  else
+    st.data = after.data, st.prov = after.prov;
+  return true;
+}
+
+bool Memory::fillRange(State &st, Term p, Term byte, uint64_t n) {
+  Term c, x, y;
+  if (t.split(p, c, x, y)) {
+    int pick = side(c);
+    if (pick >= 0)
+      p = pick ? x : y;
+  }
+  const APInt *obj = t.constant(object(p));
+  if (n < MinSeparate || !obj)
+    return false;
+  uint64_t o = obj->getZExtValue();
+  if (o == 0 || o >= objects.size())
+    return false;
+  unsigned shift = shifts.lookup(o);
+  Term elem = byte;
+  for (unsigned j = 1; j < 1u << shift; ++j)
+    elem = t.concat(byte, elem);
+  return applyRange(st, o, p, n, "fill",
+                    [elem](const Term &, const Term &) { return elem; });
+}
+
+bool Memory::fillElementRange(State &st, Term p, Term elem, uint64_t stride, uint64_t count) {
+  unsigned elemBytes = elem.width() / 8;
+  uint64_t total = count * stride;
+  if (total < MinSeparate || elemBytes != stride)
+    return false;
+  if (const APInt *cv = t.constant(elem)) {
+    uint64_t b0 = cv->extractBitsAsZExtValue(8, 0);
+    bool uniform = true;
+    for (unsigned i = 1; i < elemBytes; ++i)
+      if (cv->extractBitsAsZExtValue(8, 8 * i) != b0) {
+        uniform = false;
+        break;
+      }
+    if (uniform) {
+      fillOrSet(st, p, t.bv(b0, 8), total);
+      return true;
+    }
+  }
+  std::optional<Key> k = key(p);
+  if (!k || k->first == 0 || k->first >= objects.size())
+    return false;
+  uint64_t o = k->first;
+  unsigned shift = shifts.lookup(o);
+  if (shift) {
+    if (elemBytes != (1u << shift) || (k->second & (elemBytes - 1)) != 0)
+      return false;
+    const APInt *size = t.constant(objects[o].size);
+    if (k->second == 0 && size && *size == total) {
+      st.known.eraseObject(o);
+      SMTSortRef index = s.mkBVSort(ptrBits - shift);
+      st.separate.set({o, 0}, {t.constArray(index, elem), t.bv(IntProvenance, ObjBits)});
+      return true;
+    }
+    return applyRange(st, o, p, total, "fill",
+                      [elem](const Term &, const Term &) { return elem; });
+  }
+  return applyRange(st, o, p, total, "fill",
+                    [this, elem, elemBytes](const Term &, const Term &d) {
+                      Term b = isPowerOf2_64(elemBytes)
+                                   ? t.bvand(d, t.bv(elemBytes - 1, ptrBits))
+                                   : t.urem(d, t.bv(elemBytes, ptrBits));
+                      Term r = t.extract(elem, 8 * elemBytes - 1, 8 * (elemBytes - 1));
+                      for (unsigned i = elemBytes - 1; i-- > 0;)
+                        r = t.ite(t.eq(b, t.bv(i, ptrBits)),
+                                  t.extract(elem, 8 * i + 7, 8 * i), r);
+                      return r;
+                    });
+}
+
+bool Memory::havocRange(State &st, uint64_t o, Term p, uint64_t n) {
+  using U = unsigned __int128;
+  if (n < MinSeparate || o == 0 || o >= objects.size())
+    return false;
+  if (ptrBits < 64 && n >= (U(1) << ptrBits))
+    return false;
+  std::optional<Key> k = key(p);
+  if (k && U(k->second) + n > (U(1) << ptrBits))
+    return false;
+  unsigned shift = shifts.lookup(o);
+  if (shift && (!k || (k->second & ((1u << shift) - 1)) != 0 || (n & ((1u << shift) - 1)) != 0))
+    return false;
+  bool byOffset = st.separate.find({o, 0}) && owned.count(o);
+  SMTSortRef index = !byOffset ? pointerSort() : s.mkBVSort(ptrBits - shift);
+  Term freshArr = t.symbol("havoc#" + std::to_string(fresh++),
+                           s.mkArraySort(index, s.mkBVSort(8u << shift)));
+  return applyRange(st, o, p, n, "havoc",
+                    [this, freshArr](const Term &j, const Term &) {
+                      return t.select(freshArr, j);
+                    });
+}
+
 void Memory::havoc(State &st, Term p, std::optional<uint64_t> n) {
   havocWith(st, p, n, t.bv(IntProvenance, ObjBits), true);
 }
@@ -794,6 +979,8 @@ void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
     return;
   const APInt *size = t.constant(objects[o].size);
   if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object
+    if (havocRange(st, o, p, *n))
+      return;
     if (*n > MaxBytes)
       throw Unsupported("nondet contents for " + std::to_string(*n) + " bytes");
     prepare(st, p);
@@ -895,7 +1082,7 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
 }
 
 void Memory::set(State &st, Term p, Term byte, uint64_t n) {
-  if (fillObject(st, p, byte, n))
+  if (fillObject(st, p, byte, n) || fillRange(st, p, byte, n))
     return;
   if (n > MaxBytes)
     throw Unsupported("a fill of " + std::to_string(n) + " bytes, not of a whole object");
@@ -946,6 +1133,36 @@ bool Memory::hasPadding(Type *ty) const {
   return false;
 }
 
+// If c is an array (possibly nested) whose elements are all identical, returns
+// the repeated non-array element and sets count to the total element count.
+static const Constant *splatElement(const Constant *c, uint64_t &count) {
+  count = 1;
+  while (auto *at = dyn_cast<ArrayType>(c->getType())) {
+    uint64_t n = at->getNumElements();
+    if (n == 0)
+      return nullptr;
+    const Constant *first = nullptr;
+    if (auto *cda = dyn_cast<ConstantDataArray>(c)) {
+      StringRef raw = cda->getRawDataValues();
+      unsigned elemBytes = cda->getElementByteSize();
+      if (raw.size() != n * elemBytes ||
+          (n > 1 && raw.drop_back(elemBytes) != raw.drop_front(elemBytes)))
+        return nullptr;
+      first = cda->getElementAsConstant(0);
+    } else if (auto *ca = dyn_cast<ConstantArray>(c)) {
+      first = ca->getOperand(0);
+      for (uint64_t i = 1; i < n; ++i)
+        if (ca->getOperand(i) != first)
+          return nullptr;
+    } else {
+      return nullptr;
+    }
+    count *= n;
+    c = first;
+  }
+  return c;
+}
+
 void Memory::storeConstant(State &st, Term p, const Constant *c,
                            const std::function<Term(const Constant *)> &valueOf) {
   Type *ty = c->getType();
@@ -971,6 +1188,32 @@ void Memory::storeConstant(State &st, Term p, const Constant *c,
     return;
   }
   if (auto *at = dyn_cast<ArrayType>(ty)) {
+    uint64_t count = 0;
+    if (const Constant *elem = splatElement(c, count)) {
+      if (isa<UndefValue>(elem))
+        return;
+      if (elem->isNullValue()) {
+        fillOrSet(st, p, t.bv(0, 8), dl.getTypeAllocSize(ty).getFixedValue());
+        return;
+      }
+      Type *elemTy = elem->getType();
+      uint64_t elemStride = dl.getTypeAllocSize(elemTy);
+      if (elemTy->isIntegerTy() || elemTy->isFloatingPointTy()) {
+        Term bits;
+        if (auto *cf = dyn_cast<ConstantFP>(elem)) {
+          bits = t.bv(cf->getValueAPF().bitcastToAPInt());
+        } else {
+          bits = valueOf(elem);
+          unsigned sb = storeBits(dl, elemTy);
+          if (elemTy->isIntegerTy(1))
+            bits = t.ite(bits, t.bv(1, 8), t.bv(0, 8));
+          else if (bits.width() < sb)
+            bits = t.zext(bits, sb - bits.width());
+        }
+        if (fillElementRange(st, p, bits, elemStride, count))
+          return;
+      }
+    }
     uint64_t stride = dl.getTypeAllocSize(at->getElementType());
     for (uint64_t i = 0; i < at->getNumElements(); ++i)
       storeConstant(st, bytePtr(p, i * stride), c->getAggregateElement(i), valueOf);

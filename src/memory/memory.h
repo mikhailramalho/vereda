@@ -136,8 +136,9 @@ public:
   encode::Term load(State &st, encode::Term p, llvm::Type *ty);
   void store(State &st, encode::Term p, encode::Term v, llvm::Type *ty);
   // Writes byte to the n bytes at p. A fill of a whole object of at least
-  // MinSeparate bytes is one constant array; anything else goes byte by
-  // byte, which past MaxBytes is unsupported.
+  // MinSeparate bytes is one constant array; a partial fill of at least
+  // MinSeparate bytes in a known object is a lambda over the arrays below;
+  // anything else goes byte by byte, which past MaxBytes is unsupported.
   void set(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // Writes byte to every byte of the object p starts, whatever its size,
   // as one constant array: calloc with a size that is not constant.
@@ -236,11 +237,20 @@ private:
   encode::Term index(uint64_t object, encode::Term at);
   // A fill of the whole object at p, if p is one: true when done.
   bool fillObject(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  // A partial-range lambda over the arrays below for n >= MinSeparate bytes
+  // at p in constant object o: returns true when handled.
+  bool applyRange(State &st, uint64_t o, encode::Term p, uint64_t n, const char *name,
+                  const std::function<encode::Term(const encode::Term &j,
+                                                   const encode::Term &d)> &valueAt);
+  bool fillRange(State &st, encode::Term p, encode::Term byte, uint64_t n);
+  bool fillElementRange(State &st, encode::Term p, encode::Term elem, uint64_t stride,
+                        uint64_t count);
+  bool havocRange(State &st, uint64_t o, encode::Term p, uint64_t n);
   void fill(State &st, uint64_t object, encode::Term byte);
   void setBytes(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // set for initialisers: no limit, as they were written byte by byte before.
   void fillOrSet(State &st, encode::Term p, encode::Term byte, uint64_t n) {
-    if (!fillObject(st, p, byte, n))
+    if (!fillObject(st, p, byte, n) && !fillRange(st, p, byte, n))
       setBytes(st, p, byte, n);
   }
   void writeByte(State &st, encode::Term at, const State::Cell &c);
