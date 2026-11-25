@@ -26,8 +26,9 @@ tests that regressed or improved, and nothing when none did.
 numbers run.py records under $REGRESS_STATS for a whole suite run, and the
 tests whose numbers regress or improve between the two by the margins above
 and tests/configurations recorded only on head are measured again here,
-side by side, at most MAX_CANDIDATES of them. New cases come first, then
-the largest changes. Two suite runs on different machines and loads are
+side by side, at most MAX_CANDIDATES of them. Potential regressions come
+first, then new cases, then improvements. Changes within each category are
+ranked by their relative size. Two suite runs on different machines and loads are
 too noisy to report on their own; the side-by-side run decides. When the
 base's suite run timed out or ran out of memory, head runs alone, with the
 base's time limit, and the base's result is the suite run's, marked so in
@@ -222,12 +223,12 @@ def load(stats):
 
 
 def candidates(base_dir, head_dir):
-    """New head cases, then changed time/memory, at most MAX_CANDIDATES."""
+    """Potential regressions, new cases, then improvements, capped at MAX_CANDIDATES."""
     base, head = load(base_dir), load(head_dir)
     found = []
     for name in head.keys() - base.keys():
         if head[name][4] in {"SUCCESSFUL", "FAILED", "UNKNOWN", TIMEOUT, KILLED}:
-            found.append((float("inf"), name))
+            found.append((1, 0, name))
     for name in base.keys() & head.keys():
         b, h = base[name], head[name]
         if b[4] == h[4] and not b[4].startswith(("SUCCESSFUL", "FAILED", "UNKNOWN")) \
@@ -235,11 +236,12 @@ def candidates(base_dir, head_dir):
             continue  # no verdict on either side: a test of an error, not of speed
         if b[4] != h[4] and b[4] not in STOPPED and h[4] not in STOPPED:
             continue  # a changed verdict is tests.yml's to judge, often on purpose
-        if regressions(b, h) or improvements(b, h):
+        why = regressions(b, h)
+        if why or improvements(b, h):
             pairs = ((h[0], b[0]), (b[0], h[0]), (h[3], b[3]), (b[3], h[3]))
             ratio = max(((x or 0) + 0.1) / ((y or 0) + 0.1) for x, y in pairs)
-            found.append((ratio, name))
-    return [name for _, name in sorted(found, reverse=True)[:MAX_CANDIDATES]]
+            found.append((2 if why else 0, ratio, name))
+    return [name for _, _, name in sorted(found, reverse=True)[:MAX_CANDIDATES]]
 
 
 def cell(b, h, fmt):

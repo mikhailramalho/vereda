@@ -158,6 +158,18 @@ class Configurations(unittest.TestCase):
             code = bench.main()
         return code, output.getvalue()
 
+    def test_bulk_import_does_not_crowd_out_regressions(self):
+        def result(wall):
+            return (wall, 0.1, 0.1, 30, "SUCCESSFUL")
+        base = {"suite/regressed": result(1), "suite/improved": result(4)}
+        head = {"suite/regressed": result(4), "suite/improved": result(1)}
+        head.update({f"suite/new{i}": result(1) for i in range(bench.MAX_CANDIDATES + 1)})
+        with patch.object(bench, "load", side_effect=[base, head]):
+            selected = bench.candidates("base", "head")
+        self.assertEqual(len(selected), bench.MAX_CANDIDATES)
+        self.assertEqual(selected[0], "suite/regressed")
+        self.assertNotIn("suite/improved", selected)
+
     def test_new_fixture_uses_head_sources_flags_and_cwd_with_base_binary(self):
         self.test.write_text("// RUN:\n// RUN: --config %S/input\n"
                              "// FILES: helper.c\n// CWD: %S\n")
@@ -207,8 +219,14 @@ class Configurations(unittest.TestCase):
             "enable_testing()\nadd_executable(vereda IMPORTED)\n"
             'set_target_properties(vereda PROPERTIES IMPORTED_LOCATION "/unused/vereda")\n'
             "add_subdirectory(tests)\n")
-        shutil.copyfile(Path(__file__).with_name("CMakeLists.txt"),
-                        self.root / "tests" / "CMakeLists.txt")
+        cmake = Path(__file__).with_name("CMakeLists.txt").read_text()
+        # Mirror #249: no table source, libvereda or C++ compiler in this fixture.
+        cmake = cmake.replace("  add_test(NAME vereda/banner",
+                              "  add_executable(vereda-table-patterns table_patterns.cpp)\n"
+                              "  target_link_libraries(vereda-table-patterns PRIVATE libvereda)\n"
+                              "  add_test(NAME vereda/banner")
+        self.assertIn("add_executable(vereda-table-patterns", cmake)
+        (self.root / "tests" / "CMakeLists.txt").write_text(cmake)
         shutil.copy(Path(run.__file__), self.root / "tests" / "run.py")
         self.test.write_text("// RUN:\n// RUN: --incremental-solver\n")
         ir = self.test.with_name("ir.ll")
