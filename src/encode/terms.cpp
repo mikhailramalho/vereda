@@ -329,11 +329,38 @@ Ref Terms::sub(const Ref &a, const Ref &b) {
     return r;
   if (cb && cb->isZero()) return a;
   if (a == b) return bv(0, a.width());
-  if (const Node *n = node(a); n && n->op == Op::Add) { // (x + y) - x
-    if (n->a == b) return n->b;
-    if (n->b == b) return n->a;
-  }
+  unsigned budget = 32;
+  if (Ref r = cancel(a, b, budget)) return r;
   return make({Op::Sub, a, b});
+}
+
+Ref Terms::cancel(const Ref &sum, const Ref &part, unsigned &budget) {
+  if (sum == part) return bv(0, sum.width());
+  if (!budget) return {};
+  --budget;
+  if (const Node *n = node(sum); n && n->op == Op::Add) {
+    if (Ref r = cancel(n->a, part, budget)) return add(r, n->b);
+    if (Ref r = cancel(n->b, part, budget)) return add(n->a, r);
+  }
+  return {};
+}
+
+bool Terms::sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth) {
+  if (choice(e, c, x, y)) return true;
+  if (depth >= 8) return false;
+  if (const Node *n = node(e); n && n->op == Op::Add) {
+    if (sumChoice(n->a, c, x, y, depth + 1)) {
+      x = add(x, n->b);
+      y = add(y, n->b);
+      return true;
+    }
+    if (sumChoice(n->b, c, x, y, depth + 1)) {
+      x = add(n->a, x);
+      y = add(n->a, y);
+      return true;
+    }
+  }
+  return false;
 }
 
 Ref Terms::mul(const Ref &a, const Ref &b) {
@@ -996,6 +1023,13 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
       unsigned low = n.b.width();
       r = make((U(a->lo) << low) + b->lo, (U(a->hi) << low) + b->hi,
                std::gcd(uint64_t(U(a->stride) << low), b->stride));
+    }
+    break;
+  case Op::Shl:
+    if (const APInt *c = constant(n.b); c && (a = get(n.a))) {
+      uint64_t by = c->getLimitedValue(width);
+      r = by >= width ? make(0, 0, 0)
+                      : make(U(a->lo) << by, U(a->hi) << by, U(a->stride) << by);
     }
     break;
   case Op::LShr:

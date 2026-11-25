@@ -197,6 +197,8 @@ public:
   bool split(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // e as ite(c, x, y), whatever x and y are.
   bool choice(const Ref &e, Ref &c, Ref &x, Ref &y) const;
+  // One choice in an address sum, distributed over its additions.
+  bool sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth = 0);
   // e as store(a, i, v).
   bool stored(const Ref &e, Ref &a, Ref &i, Ref &v) const;
   // The value every index of e holds, if e is a constant array; else null.
@@ -216,7 +218,7 @@ public:
   // The values a term of at most 64 bits may take: lo + stride * i for
   // i = 0, 1, ... up to hi, with no wrap past its width (a strided
   // interval, as in value-set analysis). Known for constants, symbols given
-  // a bound, and add, sub, mul, logical shift right, extension, extract and
+  // a bound, and add, sub, mul, logical shifts, extension, extract and
   // concat of those, as offsets are built; null for anything else.
   // Comparisons fold by them.
   struct Range {
@@ -287,6 +289,7 @@ private:
   void memoInsert(uint32_t idx, uint32_t h);
 
   const Node *node(const Ref &e) const;
+  Ref cancel(const Ref &sum, const Ref &part, unsigned &budget);
   Ref make(Node n);
   // Whether c (1) or its negation (-1) is a conjunct of g, found going up
   // g's left spine of ands for a bounded number of steps; 0 when neither is.
