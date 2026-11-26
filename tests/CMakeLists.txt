@@ -38,6 +38,11 @@ if(TARGET libvereda)
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/frontend_options.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
   set_tests_properties(vereda/frontend_options PROPERTIES LABELS vereda TIMEOUT 60)
+  add_test(NAME vereda/ir_verify
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/ir_verify.py"
+            $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/opt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/vereda/loop_thread_phi_existing_edge.ll")
+  set_tests_properties(vereda/ir_verify PROPERTIES LABELS vereda TIMEOUT 60)
 endif()
 
 file(GLOB suites LIST_DIRECTORIES true RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"

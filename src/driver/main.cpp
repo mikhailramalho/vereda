@@ -227,14 +227,29 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   auto &checks = state->checks;
   auto &trace = state->trace;
   unsigned symbols = 0;
+  constexpr unsigned MaxBoundedUnroll = 1024;
+  unsigned boundedLimit = !incrementalBMC
+                              ? (bound ? 0u : MaxBoundedUnroll)
+                              : (unlimitedKSteps ? MaxBoundedUnroll
+                                                 : (maxKStep > 1
+                                                        ? std::min(MaxBoundedUnroll,
+                                                                   maxKStep.getValue() - 1)
+                                                        : 0u));
   {
     auto &enc = *state->encoder;
     auto &memory = *state->memory;
-    vereda::walker::Options walkOpts{bound, !noUnwindingAssertions, forceMallocSuccess, property,
+    vereda::walker::Options walkOpts{bound,
+                                     !noUnwindingAssertions,
+                                     forceMallocSuccess,
+                                     property,
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
-                                     !noPointerCheck, !noVLASizeCheck, !noAssertions, multiProperty};
+                                     !noPointerCheck,
+                                     !noVLASizeCheck,
+                                     !noAssertions,
+                                     multiProperty,
+                                     boundedLimit};
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
                                                                checks, trace);
@@ -370,7 +385,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      !noPointerCheck,
                                                      !noVLASizeCheck,
                                                      !noAssertions,
-                                                     multiProperty};
+                                                     multiProperty,
+                                                     boundedLimit};
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
                                                      freshState->trace)) {

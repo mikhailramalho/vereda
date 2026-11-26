@@ -1169,6 +1169,68 @@ static void pruneUnreachable(Module &m, StringRef entry) {
   }
 }
 
+// Threads trivial i1-phi merge blocks (clang's land.end / lor.end for && and
+// ||) whose predecessor supplies a constant boolean, so loops like
+// `while (y < 1000 && nondet())` expose `y < 1000` as a direct loop exit to
+// SCEV without running full simplifycfg or disturbing witness block names.
+static void threadBoolPhis(Module &m) {
+  for (Function &f : m) {
+    if (f.isDeclaration())
+      continue;
+    bool changed = true;
+    while (changed) {
+      changed = false;
+      for (BasicBlock &bb : make_early_inc_range(f)) {
+        auto *br = dyn_cast<CondBrInst>(bb.getTerminator());
+        if (!br)
+          continue;
+        auto *phi = dyn_cast<PHINode>(br->getCondition());
+        if (!phi || phi->getParent() != &bb || !phi->hasOneUse())
+          continue;
+        if (&bb.front() != phi || phi->getNextNode() != br)
+          continue;
+        SmallVector<BasicBlock *, 4> toThread;
+        for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i)
+          if (isa<ConstantInt>(phi->getIncomingValue(i)))
+            toThread.push_back(phi->getIncomingBlock(i));
+        for (BasicBlock *pred : toThread) {
+          int idx = phi->getBasicBlockIndex(pred);
+          if (idx < 0)
+            continue;
+          auto *ci = cast<ConstantInt>(phi->getIncomingValue(idx));
+          BasicBlock *target = ci->isOne() ? br->getSuccessor(0) : br->getSuccessor(1);
+          if (target == &bb || pred == &bb || is_contained(successors(pred), target))
+            continue;
+          Instruction *term = pred->getTerminator();
+          unsigned count = 0;
+          for (unsigned s = 0; s < term->getNumSuccessors(); ++s)
+            if (term->getSuccessor(s) == &bb)
+              ++count;
+          if (count != 1)
+            continue;
+          for (unsigned s = 0; s < term->getNumSuccessors(); ++s)
+            if (term->getSuccessor(s) == &bb)
+              term->setSuccessor(s, target);
+          for (PHINode &tp : target->phis())
+            tp.addIncoming(tp.getIncomingValueForBlock(&bb), pred);
+          phi->removeIncomingValue(idx, /*DeletePHIIfEmpty=*/false);
+          changed = true;
+        }
+        if (phi->getNumIncomingValues() == 0) {
+          for (BasicBlock *succ : successors(&bb))
+            succ->removePredecessor(&bb);
+          bb.eraseFromParent();
+          changed = true;
+        } else if (phi->getNumIncomingValues() == 1) {
+          br->setCondition(phi->getIncomingValue(0));
+          phi->eraseFromParent();
+          changed = true;
+        }
+      }
+    }
+  }
+}
+
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck) {
   SMDiagnostic diag;
@@ -1216,6 +1278,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   // shape its loops too. inferattrs, last, gives C library declarations the
   // attributes that tell the walker which arguments a bodyless call only
   // reads.
+  threadBoolPhis(*module);
   fixIrreducible(*module);
   if (Error e = runPipeline(*module, "function(loop-simplify,lcssa),inferattrs"))
     return std::move(e);

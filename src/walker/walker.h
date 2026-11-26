@@ -43,6 +43,10 @@ struct Options {
   bool vlaSizeCheck = true;
   bool assertions = true; // user assertions, independent of unwinding and pointer checks
   bool multiProperty = false; // keep exploring after predicate assertion failures
+  // Maximum SCEV constant max backedge-taken count for which a non-summarised
+  // loop unrolls to completion in one walk (and skips per-iteration solver
+  // feasibility queries), 0 when explicit --unwind N is active.
+  unsigned maxBoundedUnroll = 0;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and
