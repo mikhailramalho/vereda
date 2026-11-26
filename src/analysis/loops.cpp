@@ -50,7 +50,8 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (!f)
     return false;
   StringRef name = f->getName();
-  if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero") {
+  if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero" ||
+      name == "__vereda_check_float_cast_overflow") {
     auto *ok = dyn_cast<ConstantInt>(c.getArgOperand(0));
     return (ok && ok->isOne()) || counted.preconditions;
   }
@@ -63,6 +64,8 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
     auto *kind = init ? dyn_cast<ConstantInt>(init->getOperand(1)) : nullptr;
     return kind && kind->getZExtValue() < 2 && counted.preconditions;
   }
+  if (name == "__ubsan_handle_float_cast_overflow_abort")
+    return counted.preconditions;
   if (f->isIntrinsic())
     return name.starts_with("llvm.ubsantrap") ? counted.traps : f->doesNotAccessMemory();
   if (name == "reach_error" && counted.reachError)

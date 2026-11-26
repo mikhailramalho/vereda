@@ -267,20 +267,28 @@ def main():
     selected, _ = selection.parse_known_args(forwarded)
     no_divisor = False
     count_zero = False
+    float_cast_overflow = False
     for flag in forwarded:
         name, eq, value = flag.partition("=")
         if name == "--no-div-by-zero-check":
             no_divisor = not eq or value in ("", "true", "1")
         if name == "--ub-count-zero-check":
             count_zero = not eq or value in ("", "true", "1")
-    if count_zero and selected.property == "all" and any(i.endswith((".c", ".i")) for i in inputs):
-        flags += ["-fsanitize=builtin", "-fno-sanitize-recover=builtin",
-                  "-fsanitize-debug-trap-reasons=none"]
-    if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all" and not no_divisor:
-        # The nonreturning handler retains the operands, unlike ubsantrap's
-        # shared code for zero division and signed division overflow.
-        flags += ["-fsanitize=integer-divide-by-zero", "-fno-sanitize-recover=integer-divide-by-zero",
-                  "-fsanitize-debug-trap-reasons=none"]
+        if name == "--ub-float-cast-overflow-check":
+            float_cast_overflow = not eq or value in ("", "true", "1")
+    if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all":
+        if count_zero:
+            flags += ["-fsanitize=builtin", "-fno-sanitize-recover=builtin",
+                      "-fsanitize-debug-trap-reasons=none"]
+        if float_cast_overflow:
+            flags += ["-fsanitize=float-cast-overflow", "-fno-sanitize-recover=float-cast-overflow",
+                      "-fsanitize-debug-trap-reasons=none"]
+        if not no_divisor:
+            # The nonreturning handler retains the operands, unlike ubsantrap's
+            # shared code for zero division and signed division overflow.
+            flags += ["-fsanitize=integer-divide-by-zero",
+                      "-fno-sanitize-recover=integer-divide-by-zero",
+                      "-fsanitize-debug-trap-reasons=none"]
 
     def run(cmd):
         if args.verbose:

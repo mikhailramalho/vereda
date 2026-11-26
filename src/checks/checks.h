@@ -9,7 +9,7 @@
 
 namespace vereda::checks {
 
-enum class Property { Assertion, ArithmeticOverflow, DivisionByZero, CountZero, ArrayBounds, Unwinding, Recursion };
+enum class Property { Assertion, ArithmeticOverflow, DivisionByZero, CountZero, FloatCastOverflow, ArrayBounds, Unwinding, Recursion };
 
 struct Check {
   Property property;
@@ -32,6 +32,7 @@ struct Check {
                        : property == Property::ArithmeticOverflow ? "arithmetic-overflow"
                        : property == Property::DivisionByZero ? "division-by-zero"
                        : property == Property::CountZero ? "count-zero"
+                       : property == Property::FloatCastOverflow ? "float-cast-overflow"
                        : property == Property::ArrayBounds ? "array-bounds-violated"
                        : property == Property::Unwinding ? "unwind"
                                                           : "recursion";
