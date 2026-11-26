@@ -1,0 +1,23 @@
+#include <assert.h>
+
+struct S
+{
+  int a;
+  int b;
+};
+
+_Thread_local struct S t;
+
+int main(void)
+{
+  struct S l = {2, 3};
+  t.a = l.a;
+  assert(t.a == 2 && t.b == 0 && l.b == 3);
+  return 0;
+}
+// Imported from ESBMC regression/esbmc/field_sensitive_ssa_global_thread_local
+// EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
+// EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

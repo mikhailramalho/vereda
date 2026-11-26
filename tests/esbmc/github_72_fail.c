@@ -1,0 +1,17 @@
+// #72: with the write to the failed-dereference sink dropped, the write
+// through the valid target is still seen.
+int __VERIFIER_nondet_int(void);
+int x;
+int main(void)
+{
+  int *p;
+  if (__VERIFIER_nondet_int())
+    p = &x;
+  *p = 1;
+  __VERIFIER_assert(x == 0); // x is never written
+  return 0;
+}
+// Imported from ESBMC regression/esbmc/github_72_fail
+// RUN: --no-pointer-check
+// EXPECT: \A(?![\s\S]*invalid_object\d*&\d+#\d+ ==)
+// EXPECT: ^VERIFICATION FAILED$

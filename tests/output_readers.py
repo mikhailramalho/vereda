@@ -22,7 +22,9 @@ assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-ass
     ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions'],
     [], ['--no-standard-checks'])
 for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
-             '--bitwuzllob', '--clang-c-irep2-adjust-only'):
+             '--bitwuzllob', '--clang-c-irep2-adjust-only',
+             '--smtlib --smtlib-oneshot-prog fake-solver.sh',
+             '--smtlib-oneshot-model-prog="z3 -in"'):
     with tempfile.TemporaryDirectory() as directory:
         src = Path(directory) / 'source'
         src.mkdir()

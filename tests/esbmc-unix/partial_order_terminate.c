@@ -1,0 +1,25 @@
+/* #10990: nothing after __ESBMC_terminate_thread runs. */
+#include <pthread.h>
+#include <assert.h>
+void __ESBMC_terminate_thread(void);
+int x = 0;
+void *t(void *a)
+{
+  x = 1;
+  __ESBMC_terminate_thread();
+  x = 2;
+  return 0;
+}
+int main()
+{
+  pthread_t id;
+  pthread_create(&id, 0, t, 0);
+  assert(x != 2);
+  return 0;
+}
+// Imported from ESBMC regression/esbmc-unix/partial_order_terminate
+// Needs: __ESBMC_terminate_thread
+// Needs: --partial-order
+// RUN: --partial-order
+// MODE: FUTURE
+// EXPECT: ^VERIFICATION SUCCESSFUL$
