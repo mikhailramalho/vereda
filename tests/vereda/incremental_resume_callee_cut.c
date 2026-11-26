@@ -1,7 +1,6 @@
-// A truncated callee still requires rewalking its caller; no callee continuation
-// is saved by the nested-loop checkpoints in the entry function.
+// Resume a callee loop, return its value and finish the caller's iteration.
 // RUN: --no-summarize-array-loops --incremental-bmc --max-k-step 8
-// EXPECT-NOT: \[PROGRESS\] Resuming
+// EXPECT: \[PROGRESS\] Resuming main
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 
