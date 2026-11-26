@@ -88,3 +88,5 @@ with `REGRESS_STATS` for both binaries) give the same verdicts except
 `float_fold_frem.ll`, new here (base: unsupported frem). Their tests are
 small; their total wall time went from 76.3 s to 75.3 s, walk from 1.7 s to
 0.8 s, solve from 6.4 s to 6.0 s.
+
+Follow-up issues: #301.

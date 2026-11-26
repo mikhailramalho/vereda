@@ -90,3 +90,5 @@ mimalloc's CMake turns on transparent huge pages for its arenas on Linux
 (`MI_ALLOW_THP` FULL). With `MIMALLOC_ALLOW_THP=0` in the environment,
 `--version` takes 28.4 to 29.1 MB instead of 34.3 MB; what that costs in
 time on long runs is not measured.
+
+Follow-up issues: #318.

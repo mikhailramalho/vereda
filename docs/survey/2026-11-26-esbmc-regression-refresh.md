@@ -27,3 +27,5 @@ Upstream moved the experimental bitwuzllob and neurosym wrapper fixtures to
 `--smtlib-oneshot-prog` and `--smtlib-oneshot-model-prog`. Extend the existing
 wrapper exclusion to these names rather than reintroducing 32 previously
 excluded fixtures. Cover both spellings in the importer regression checks.
+
+Follow-up issues: #302.

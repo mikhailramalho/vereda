@@ -106,3 +106,5 @@ Under ctest, the 500 tests that contain a goto or a setjmp and end within
 60 s pass or skip as marked (85 and 415). IR preparation of
 `ntdrivers/floppy2.i.cil.c` (732 KB, no irreducible cycle) takes the same
 0.15 s as before.
+
+Follow-up issues: #306.

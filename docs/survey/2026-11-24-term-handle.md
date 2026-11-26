@@ -208,3 +208,5 @@ summaries 3.05 → 2.85 s, the decrement test 2.53 → 1.92 s) and the peaks 5
 to 77 MB lower (array_loop_summary_nondet without summaries 1155 → 1078
 MB), with github_302 the same (walk 46.2 → 46.8 s, solve 9.57 → 9.53 s). No
 verdict changed, and bench.py lists the same FUTURE tests.
+
+Follow-up issues: #315.

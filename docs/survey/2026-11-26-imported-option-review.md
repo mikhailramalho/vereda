@@ -30,3 +30,5 @@ their modes; full 300-second coverage remains for CI. Importer regressions and
 all 14 configuration tests pass. Audits confirm unchanged retained C bodies and
 no stranded raw --z3/--bitwuzla/--overflow flags in regenerated commands without
 Needs metadata.
+
+Follow-up issues: #310.

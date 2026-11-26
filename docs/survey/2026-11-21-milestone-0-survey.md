@@ -115,3 +115,5 @@ size test: close to a million instructions after the pass list.
 Not supported: inline asm, so a task that uses it stays UNKNOWN. Left for
 later: variadic functions, indirect calls, floats, irreducible control flow,
 atomics, wide integers, the bit intrinsics, and the C library models.
+
+Follow-up issues: #298.

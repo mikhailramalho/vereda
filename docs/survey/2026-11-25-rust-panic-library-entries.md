@@ -27,3 +27,5 @@ exception unwinding generally and qualifies panic=abort as advice for Rust.
 Release build with LLVM 23.1.6: the Vereda suite passes (398 tests, one existing
 lib_sprintf_overflow skip). The imported ESBMC suite was not run. The separate
 review observation about C overflow property IDs is left for its follow-up.
+
+Follow-up issues: #312.

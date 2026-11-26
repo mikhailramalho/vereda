@@ -70,3 +70,5 @@ joins, whole copies/zeroing, pointer copies through integer layouts, read-only
 writes, VLAs, single-field loop summaries, failing properties, byte-overlap and
 escape fallbacks, returned copy aliases and non-inbounds GEP wrap. Reimporting
 the affected constant tables retains CORE status. Full CI remains pending.
+
+Follow-up issues: #317.

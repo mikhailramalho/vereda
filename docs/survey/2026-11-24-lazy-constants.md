@@ -213,3 +213,5 @@ new code. It means changing the type on 605 lines in 13 files, the 32 maps
 keyed on `const camada::SMTExpr *`, and every handle growing from 24 to 32
 bytes (a solver handle, or a pointer to a constant), which costs memory in
 every map and cell that holds one.
+
+Follow-up issues: #315.

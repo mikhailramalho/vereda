@@ -110,3 +110,5 @@ and the memory functions (printf in 7, swprintf in 4, sscanf, read), none
 reaches an object through a stored pointer, and all 13 give the verdict
 they gave before (60 s, `--incremental-bmc`). The LDV tasks are not on this
 machine and were not run.
+
+Follow-up issues: #319.

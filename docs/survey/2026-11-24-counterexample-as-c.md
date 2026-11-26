@@ -29,3 +29,5 @@ expectations of 27 imported tests and 5 of Vereda's own
 (`vereda/loop_nondet_false.c` finished by hand), and the new constant for
 the least value made `esbmc/cpachecker-long-min-64.c` pass, so it went back
 to THOROUGH.
+
+Follow-up issues: #311.

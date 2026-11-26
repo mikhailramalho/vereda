@@ -45,3 +45,5 @@ give the expected verdict and are CORE. esbmc/vsprintf_stores_output_fail
 went from UNKNOWN to a wrong SUCCESSFUL (an overflow, #29), and
 esbmc/sprintf_objsize_s_no_overflow from a wrong FAILED to UNKNOWN (%s of
 an uninitialised array reads past it until the bound).
+
+Follow-up issues: #305.
