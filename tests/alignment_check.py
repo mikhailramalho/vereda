@@ -108,6 +108,19 @@ int main(void) {
 ''')
     check(command + [str(source), flag], 1, "main.alignment.1")
 
+    # Misaligned store through a pointer to a packed member must not be erased by SROA.
+    source.write_text('''
+struct __attribute__((packed)) P { char c; int x; };
+int main(void) {
+  _Alignas(8) struct P p = {0};
+  int *q = &p.x;
+  *q = 1;
+  return 0;
+}
+''')
+    check(command + [str(source), flag], 1, "main.alignment.1")
+    check(command + [str(source), flag, "-m32"], 1, "main.alignment.1")
+
     # Excluded under --property unreach-call and --property no-overflow (does not prune).
     source.write_text('''
 extern void __assert_fail(const char *, const char *, unsigned, const char *);

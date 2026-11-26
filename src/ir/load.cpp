@@ -144,10 +144,12 @@ static void checkCountZeros(Module &m) {
 }
 
 // Instrument typed memory accesses (load, store, atomicrmw, cmpxchg) with their
-// source-level alignment before InstCombine can raise alignment from UB
-// assumptions or lower memcpy into aligned accesses. Runs after mem2reg/sroa
-// so promoted local slots are not instrumented; parameter 0 is marked
-// non-capturing so it does not expose objects or block array ownership.
+// source-level alignment before SROA/InstCombine can eliminate misaligned
+// accesses through pointers to packed members or raise alignment from UB
+// assumptions. Direct accesses to allocas whose own alignment already satisfies
+// the access alignment are skipped so mem2reg still promotes aligned locals;
+// parameter 0 is marked non-capturing so it does not expose objects or block
+// array ownership.
 static void checkAlignments(Module &m) {
   Function *check = nullptr;
   auto getCheck = [&]() -> Function * {
@@ -1525,6 +1527,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
   lowerRustMain(*module);
+  if (alignmentCheck)
+    checkAlignments(*module);
   nondetLocals(*module);
   lowerLongjmp(*module);
   if (divByZeroCheck)
@@ -1535,8 +1539,6 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     checkFloatCasts(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))
     return std::move(e);
-  if (alignmentCheck)
-    checkAlignments(*module);
   lowerCalls(*module); // before InstCombine, which folds tests of constants
   libmToIntrinsics(*module);
   lowerInlineAsm(*module);

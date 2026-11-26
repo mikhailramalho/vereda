@@ -12,12 +12,13 @@ Clang's `-fsanitize=alignment` inserts `ptrtoint` on every typed dereference, wh
 mark every dereferenced local object as address-exposed in Vereda's memory model, disabling
 `ownsArrays` and `fieldLayout` and forcing address-layout constraints across all locals.
 
-Instead, `checkAlignments` in `src/ir/load.cpp` runs after `mem2reg,sroa` (so promoted
-locals are skipped) and before `instcombine` (before LLVM can raise alignment from UB
-assumptions or lower `memcpy` into aligned loads/stores). For every `load`, `store`,
-`atomicrmw`, and `cmpxchg` with `align > 1`, it inserts a call to
-`__vereda_check_alignment(ptr, i64 align)` whose pointer parameter is marked
-`CaptureInfo::none()` and `MemoryEffects::none()`. Packed struct fields, `char*` accesses,
+Instead, `checkAlignments` in `src/ir/load.cpp` runs before `mem2reg,sroa` and
+`instcombine` (so SROA cannot erase misaligned stores through pointers to packed struct
+members and InstCombine cannot raise alignment from UB assumptions). Direct accesses to
+allocas whose own alignment already satisfies `align` are skipped so `mem2reg` still
+promotes aligned locals. For every remaining `load`, `store`, `atomicrmw`, and `cmpxchg`
+with `align > 1`, it inserts a call to `__vereda_check_alignment(ptr, i64 align)` whose
+pointer parameter is marked `CaptureInfo::none()` and `MemoryEffects::none()`. Packed struct fields, `char*` accesses,
 and `memcpy` carry `align 1` and are naturally skipped; pointer casts without dereferences
 generate no memory instruction and are never flagged.
 
