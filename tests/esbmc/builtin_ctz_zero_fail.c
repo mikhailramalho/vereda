@@ -8,9 +8,6 @@ int main(void)
   return __builtin_ctz(u);
 }
 // Imported from ESBMC regression/esbmc/builtin_ctz_zero_fail
-// Needs: --clz-zero-check
-// RUN: --clz-zero-check
-// MODE: FUTURE
+// RUN: --ub-count-zero-check
 // EXPECT: ^  __builtin_clz/ctz of zero is undefined$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

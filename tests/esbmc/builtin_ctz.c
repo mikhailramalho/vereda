@@ -34,6 +34,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/builtin_ctz
 // RUN: --unwind 33 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

@@ -50,12 +50,19 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (!f)
     return false;
   StringRef name = f->getName();
-  if (name == "__vereda_check_divisor") {
+  if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero") {
     auto *ok = dyn_cast<ConstantInt>(c.getArgOperand(0));
-    return (ok && ok->isOne()) || counted.divisors;
+    return (ok && ok->isOne()) || counted.preconditions;
   }
   if (name == "__ubsan_handle_divrem_overflow_abort")
-    return counted.divisors && counted.traps;
+    return counted.preconditions && counted.traps;
+  if (name == "__ubsan_handle_invalid_builtin_abort") {
+    auto *data = dyn_cast<GlobalVariable>(c.getArgOperand(0)->stripPointerCasts());
+    auto *init = data && data->hasInitializer() ? dyn_cast<ConstantStruct>(data->getInitializer())
+                                               : nullptr;
+    auto *kind = init ? dyn_cast<ConstantInt>(init->getOperand(1)) : nullptr;
+    return kind && kind->getZExtValue() < 2 && counted.preconditions;
+  }
   if (f->isIntrinsic())
     return name.starts_with("llvm.ubsantrap") ? counted.traps : f->doesNotAccessMemory();
   if (name == "reach_error" && counted.reachError)

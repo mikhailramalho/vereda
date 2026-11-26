@@ -33,8 +33,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_clrsb
-// Needs: --clz-zero-check
-// RUN: --clz-zero-check --unwind 32
-// MODE: FUTURE
+// RUN: --ub-count-zero-check --unwind 32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

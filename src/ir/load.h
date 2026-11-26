@@ -15,9 +15,11 @@ namespace vereda::ir {
 // (models-<pointer bits>.bc in models, a directory; none when empty or
 // missing) for the functions the module still calls without defining.
 // With divByZeroCheck, preserves integer divisor checks before optimisation.
+// With countZeroCheck, checks poison-on-zero count intrinsics before optimisation.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
                                                    llvm::StringRef entry = "",
-                                                   bool divByZeroCheck = true);
+                                                   bool divByZeroCheck = true,
+                                                   bool countZeroCheck = false);
 
 } // namespace vereda::ir

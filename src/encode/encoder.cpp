@@ -831,6 +831,29 @@ bool Encoder::intrinsic(CallBase &c) {
     bind(&c, t.boolean(false));
     return true;
   }
+  if (f->getIntrinsicID() == Intrinsic::ctlz || f->getIntrinsicID() == Intrinsic::cttz) {
+    if (!c.getType()->isIntegerTy())
+      return false;
+    unsigned w = c.getType()->getIntegerBitWidth();
+    Term a = value(c.getArgOperand(0));
+    if (w == 1)
+      a = fromBool(a, 1);
+    Term r = t.bv(w, w);
+    bool leading = f->getIntrinsicID() == Intrinsic::ctlz;
+    // Later nonzero bits override earlier ones: highest for ctlz, lowest for cttz.
+    for (unsigned i = 0; i < w; ++i) {
+      unsigned bit = leading ? i : w - 1 - i;
+      r = t.ite(t.eq(t.extract(a, bit, bit), t.bv(1, 1)),
+                t.bv(leading ? w - 1 - bit : bit, w), r);
+    }
+    if (w == 1)
+      r = toBool(r);
+    // An unchecked poison-producing zero is unconstrained, like other poison.
+    if (cast<ConstantInt>(c.getArgOperand(1))->isOne())
+      r = t.ite(t.eq(a, t.bv(0, w)), fresh(c.getType(), "count_zero"), r);
+    bind(&c, r);
+    return true;
+  }
   if (f->getIntrinsicID() == Intrinsic::ptrmask && c.getType()->isPointerTy()) {
     bind(&c, mem.mask(value(c.getArgOperand(0)),
                       resize(value(c.getArgOperand(1)), mem.pointerBits(), false)));
