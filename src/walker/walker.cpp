@@ -1,4 +1,5 @@
 #include "walker/walker.h"
+#include "util/assert.h"
 
 #include "analysis/loops.h"
 #include "ir/debug.h"
@@ -1195,7 +1196,7 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
-    if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
+    if (isAssertFail(name, c.arg_size()) || name == "reach_error" || name == "__VERIFIER_error") {
       if (opts.assertions && counts(false))
         assertion(c, guard, name.str(), "");
       return t.boolean(false);

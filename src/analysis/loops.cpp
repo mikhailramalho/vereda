@@ -1,4 +1,5 @@
 #include "analysis/loops.h"
+#include "util/assert.h"
 
 #include <llvm/Analysis/CFG.h>
 #include <llvm/IR/InstIterator.h>
@@ -36,7 +37,9 @@ static const Function *callee(const Instruction *inst) {
 static bool isErrorCall(const Instruction *inst) {
   const Function *f = callee(inst);
   StringRef name = f ? f->getName() : "";
-  return name == "reach_error" || name == "__assert_fail" || name == "__VERIFIER_error";
+  const auto *call = dyn_cast_or_null<CallBase>(inst);
+  return name == "reach_error" || name == "__VERIFIER_error" ||
+         (call && isAssertFail(name, call->arg_size()));
 }
 
 // Whether a call in a loop body is a check, a nondet value (depth 0, the

@@ -12,6 +12,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/msvc_assert_fold_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
