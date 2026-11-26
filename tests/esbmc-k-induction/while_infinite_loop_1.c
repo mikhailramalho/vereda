@@ -12,7 +12,7 @@ int main() {
   assert(x!=0);
 }
 // Imported from ESBMC regression/k-induction/while_infinite_loop_1
-// Needs: --k-induction --std=gnu89
+// Needs: --k-induction
 // RUN: --k-induction --std=gnu89
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

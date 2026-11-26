@@ -24,7 +24,7 @@ main()
 
 
 // Imported from ESBMC regression/k-induction/terminator_06
-// Needs: --k-induction --std=gnu89
+// Needs: --k-induction
 // RUN: --k-induction --std=gnu89 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

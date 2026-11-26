@@ -13,7 +13,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/k-induction/for_infinite_loop_2
-// Needs: --k-induction --std=gnu89
+// Needs: --k-induction
 // RUN: --k-induction --std=gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

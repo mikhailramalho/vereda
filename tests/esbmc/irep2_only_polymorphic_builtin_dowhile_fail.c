@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_polymorphic_builtin_dowhile_fail
-// Needs: --clang-c-irep2-adjust-only --std c11
+// Needs: --clang-c-irep2-adjust-only
 // RUN: --clang-c-irep2-adjust-only --std c11 --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^\s*FAILED\s+\[__c11_atomic_load\.null-pointer-dereference\.1\]\s+line 11\s+dereference failure: NULL pointer$

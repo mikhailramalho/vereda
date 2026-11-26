@@ -9,7 +9,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10383_fail
-// Needs: --std c2x
 // RUN: --std c2x
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

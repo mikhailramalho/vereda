@@ -22,9 +22,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7466_fail
-// Needs: --std gnu17
 // RUN: --std gnu17
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 21 +assertion
-// Vereda: verdict none
+// Vereda: verdict FAILED

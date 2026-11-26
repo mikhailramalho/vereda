@@ -7,7 +7,7 @@ int main(void)
   reach_error();
 }
 // Imported from ESBMC regression/witnesses_validate/memsafety-violationwitness/target_after_invalid_array_assert_guard
-// Needs: --std c11 --validate-violation-witness --witness witness.yml
+// Needs: --validate-violation-witness --witness witness.yml
 // RUN: --32 --std c11 --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

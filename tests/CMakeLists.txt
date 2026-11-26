@@ -26,6 +26,10 @@ if(TARGET libvereda)
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
   set_tests_properties(vereda/banner PROPERTIES LABELS vereda)
+  add_test(NAME vereda/frontend_options
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/frontend_options.py"
+            "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
+  set_tests_properties(vereda/frontend_options PROPERTIES LABELS vereda TIMEOUT 60)
 endif()
 
 file(GLOB suites LIST_DIRECTORIES true RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"

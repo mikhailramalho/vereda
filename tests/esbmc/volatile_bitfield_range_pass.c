@@ -16,7 +16,7 @@ int main(void)
 ); // a signed 3-bit read stays in range
 }
 // Imported from ESBMC regression/esbmc/volatile_bitfield_range_pass
-// Needs: --std c11 --volatile-check
+// Needs: --volatile-check
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

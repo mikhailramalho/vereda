@@ -32,7 +32,7 @@ int main()
 }
 
 // Imported from ESBMC regression/k-induction-parallel/trex04
-// Needs: --k-induction-parallel --std=gnu89
+// Needs: --k-induction-parallel
 // RUN: --k-induction-parallel --std=gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

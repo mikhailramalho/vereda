@@ -8,7 +8,7 @@ int main(void)
   __VERIFIER_assert(first == second); // volatile reads may differ
 }
 // Imported from ESBMC regression/esbmc/volatile_pointer_read_fail
-// Needs: --std c11 --volatile-check
+// Needs: --volatile-check
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
