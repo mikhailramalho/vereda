@@ -94,6 +94,30 @@ def find_rustc(binary):
     return "rustc"
 
 
+def find_clang(binary):
+    """Prefer the compiler belonging to the LLVM selected at configure time."""
+    binary = shutil.which(binary) or binary
+    path = os.path.join(os.path.dirname(os.path.abspath(binary)), "clang-path.txt")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    return "clang"
+
+
+def check_clang(clang, banner):
+    expected = re.search(r"\bLLVM (\d+)\.", banner)
+    try:
+        version = subprocess.run([clang, "--version"], capture_output=True, text=True, check=False)
+    except OSError as error:
+        fail(f"vereda.py: cannot run clang {clang}: {error}; pass --clang <path> or set CLANG")
+    actual = re.search(r"\bclang version (\d+)\.", version.stdout)
+    if version.returncode or not actual or not expected or actual[1] != expected[1]:
+        required = expected[1] if expected else "the verifier's LLVM version"
+        found = actual[1] if actual else "unknown"
+        fail(f"vereda.py: incompatible clang {clang} (version {found}); needs clang {required} "
+             "matching the verifier; pass --clang <path> or set CLANG")
+
+
 def physical_lines(source, tmp):
     """The file to compile for a .i source, and the clang flags it needs.
     clang takes a linemarker's file and line as the location of what follows,
@@ -142,7 +166,8 @@ def compile_and_link(args, flags, inputs, tmp, run):
         return irs[0]
     print(tag, "Linking", len(irs), "modules")
     ir = os.path.join(tmp, "linked" + ext)
-    llvm_link = os.path.join(os.path.dirname(args.clang), "llvm-link")
+    resolved_clang = shutil.which(args.clang) or args.clang
+    llvm_link = os.path.join(os.path.dirname(os.path.realpath(resolved_clang)), "llvm-link")
     if run([llvm_link] + textual + irs + ["-o", ir]) != 0:
         return None
     return ir
@@ -153,8 +178,8 @@ def main():
     parser = argparse.ArgumentParser(add_help=False, description=__doc__, allow_abbrev=False)
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("--bin", help="verifier binary (default: next to this script or build/)")
-    parser.add_argument("--clang", default=os.environ.get("CLANG", "clang"),
-                        help="clang matching the binary's LLVM (default: $CLANG or clang)")
+    parser.add_argument("--clang", default=os.environ.get("CLANG"),
+                        help="clang matching the binary's LLVM (default: $CLANG, CMake's compiler, or clang)")
     parser.add_argument("--rustc", default=os.environ.get("RUSTC"),
                         help="rustc 1.100.0 (default: $RUSTC, CMake's compiler, or rustc)")
     parser.add_argument("-m32", action="store_true", help="32-bit target, forwarded to clang")
@@ -257,8 +282,15 @@ def main():
         sys.stdout.flush()
         return subprocess.call(cmd)
 
-    if subprocess.call([binary, "--version"]) != 0:
+    version = subprocess.run([binary, "--version"], capture_output=True, text=True, check=False)
+    print(version.stdout, end="", flush=True)
+    if version.stderr:
+        print(version.stderr, end="", file=sys.stderr)
+    if version.returncode != 0:
         return ERROR_EXIT
+    args.clang = args.clang or find_clang(binary)
+    if any(i.endswith((".c", ".i")) for i in inputs):
+        check_clang(args.clang, version.stdout)
     with tempfile.TemporaryDirectory() as tmp:
         ir = compile_and_link(args, flags, inputs, tmp, run)
         if ir is None:
