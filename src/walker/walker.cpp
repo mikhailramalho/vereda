@@ -209,22 +209,20 @@ public:
       recursionsIn = std::move(saved.recursionsIn);
       summarised = std::move(saved.summarised);
     }
+    if (saved.bindings)
+      enc.restoreBindings(std::move(*saved.bindings));
     stack.push_back(&f);
     FunctionInfo &fi = info(f);
     loop(saved.frame, fi, saved.loop, saved.iteration);
-    if (!stopped || !stopped->immediate) {
-      bool after = false;
-      for (BasicBlock *bb : fi.regionBlocks[nullptr]) {
-        if (after) {
-          if (Loop *l = fi.li.getLoopFor(bb))
-            loop(saved.frame, fi, l);
-          else
-            block(saved.frame, *bb);
-          if (stopped && stopped->immediate)
-            break;
-        }
-        after |= bb == saved.loop->getHeader();
-      }
+    for (Loop *l = saved.loop; !stopped || !stopped->immediate;) {
+      Loop *parent = l->getParentLoop();
+      region(saved.frame, fi, parent, l->getHeader());
+      if (!parent || (stopped && stopped->immediate))
+        break;
+      unsigned next = saved.frame.iteration.lookup(parent) + 1;
+      saved.frame.iteration.erase(parent);
+      loop(saved.frame, fi, parent, next);
+      l = parent;
     }
     stack.pop_back();
     finalizeStopped();
@@ -630,11 +628,17 @@ private:
 
   // Walks the blocks of loop l, or of the whole function when l is null, in
   // reverse post-order with each inner loop collapsed to its header.
-  void region(Frame &frame, FunctionInfo &fi, Loop *l) {
+  // With after, finish the region following an already-walked inner loop.
+  void region(Frame &frame, FunctionInfo &fi, Loop *l, BasicBlock *after = nullptr) {
     auto it = fi.regionBlocks.find(l);
     if (it == fi.regionBlocks.end())
       return;
     for (BasicBlock *bb : it->second) {
+      if (after) {
+        if (bb == after)
+          after = nullptr;
+        continue;
+      }
       Loop *inner = fi.li.getLoopFor(bb);
       if (inner == l)
         block(frame, *bb);
@@ -750,7 +754,7 @@ private:
         Term reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
-          bool canCheckpoint = incremental && !l->getParentLoop() && stack.size() == 1 &&
+          bool canCheckpoint = incremental && stack.size() == 1 && !summary &&
                                !stopped && !truncatedInner && !t.isFalse(reached);
           bool immediateCheckpoint = canCheckpoint && frame.arrivals.size() == 1 &&
                                      frame.returns.empty() && t.isTrue(reached);
@@ -773,6 +777,9 @@ private:
             cp.recursionNumber = recursionNumber;
             cp.recursionsIn = recursionsIn;
             cp.summarised = summarised;
+            // Later outer iterations rebind values still needed by this one.
+            if (l->getParentLoop())
+              cp.bindings = enc.saveBindings();
             cp.epoch = t.constraintsEpoch();
             cp.objects = mem.objectCount();
             cp.immediate = false;
@@ -2233,6 +2240,7 @@ private:
     DenseMap<const CallBase *, unsigned> recursionNumber;
     DenseMap<const Function *, unsigned> recursionsIn;
     SmallPtrSet<const Loop *, 8> summarised;
+    std::optional<encode::Encoder::Bindings> bindings;
     uint64_t epoch = 0;
     size_t objects = 0;
     bool immediate = false;

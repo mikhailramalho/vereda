@@ -78,6 +78,10 @@ public:
   void bind(const llvm::Value *v, Term term) { env[v] = std::move(term); }
   // The term bound to v, or a null term.
   Term bound(const llvm::Value *v) const { return env.lookup(v); }
+  // A suspended loop's bindings, before walking a suffix that may rebind them.
+  using Bindings = llvm::DenseMap<const llvm::Value *, Term>;
+  Bindings saveBindings() const { return env; }
+  void restoreBindings(Bindings bindings) { env = std::move(bindings); }
   // A value of type ty as the bits memory holds, and back: the identity
   // except for floats in the solver's theory.
   Term toBits(Term v, llvm::Type *ty);
@@ -143,7 +147,7 @@ private:
   camada::SMTSolver &s;
   memory::Memory &mem;
   camada::FPEncoding fpEncoding;
-  llvm::DenseMap<const llvm::Value *, Term> env;
+  Bindings env;
   // In the solver's theory, one term per constant float, keyed by its bits
   // (so -0 and +0 stay apart), and the bits of each such term.
   llvm::DenseMap<std::pair<const llvm::fltSemantics *, llvm::APInt>, Term> floatTerms;

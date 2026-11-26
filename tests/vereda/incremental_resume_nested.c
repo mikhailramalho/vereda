@@ -1,6 +1,6 @@
-// An inner loop stopped at its bound cannot be resumed as an entry-level prefix.
+// Resume an inner loop without replaying its prefix nondeterministic calls.
 // RUN: --no-summarize-array-loops --incremental-bmc --max-k-step 8
-// EXPECT-NOT: \[PROGRESS\] Resuming
+// EXPECT: \[PROGRESS\] Resuming
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);
