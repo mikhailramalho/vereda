@@ -499,6 +499,46 @@ private:
   // Back-edge count up to which a constant-count loop skips unreachable()
   // during unrolling without --unwind, letting term folding end it instead.
   static constexpr uint64_t SmallConstantLoop = 64;
+  static constexpr uint64_t MaxBoundedInsts = 16384;
+
+  // Constant max backedge-taken count of l when l (and any nested subloops)
+  // stay within the bounded-unroll trip and instruction budgets, else 0.
+  uint64_t boundedBackedges(FunctionInfo &fi, Loop *l, unsigned maxTrips,
+                            uint64_t &workOut) {
+    if (!maxTrips)
+      return 0;
+    auto &se = loopsFor(fi, *l->getHeader()->getParent()).scev();
+    auto *n = dyn_cast<SCEVConstant>(se.getConstantMaxBackedgeTakenCount(l));
+    if (!n || n->getAPInt().isZero() || n->getAPInt().ugt(maxTrips))
+      return 0;
+    uint64_t be = n->getAPInt().getZExtValue();
+    uint64_t trips = be + 1;
+    uint64_t insts = 0;
+    for (BasicBlock *bb : l->blocks()) {
+      if (fi.loops && fi.li.getLoopFor(bb) != l)
+        continue;
+      for (Instruction &inst : *bb) {
+        ++insts;
+        if (auto *c = dyn_cast<CallBase>(&inst)) {
+          Function *callee = c->getCalledFunction();
+          if (callee && !callee->isDeclaration())
+            return 0; // avoid multiplying through callee loops
+        }
+      }
+    }
+    uint64_t bodyWork = insts;
+    for (Loop *sub : l->getSubLoops()) {
+      uint64_t subWork = 0;
+      uint64_t subBe = boundedBackedges(fi, sub, maxTrips, subWork);
+      if (!subBe || trips * (subBe + 1) > maxTrips)
+        return 0;
+      bodyWork += subWork;
+    }
+    if (trips * bodyWork > MaxBoundedInsts)
+      return 0;
+    workOut = trips * bodyWork;
+    return be;
+  }
 
   void loop(Frame &frame, FunctionInfo &fi, Loop *l, unsigned start = 0) {
     BasicBlock *header = l->getHeader();
@@ -522,6 +562,11 @@ private:
               loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
         if (n->getAPInt().ule(SmallConstantLoop))
           knownBackedges = n->getAPInt().getZExtValue();
+    uint64_t maxBackedges = 0;
+    if (opts.maxBoundedUnroll && !start) {
+      uint64_t work = 0;
+      maxBackedges = boundedBackedges(fi, l, opts.maxBoundedUnroll, work);
+    }
     std::string locDisplay;
     if (opts.showIterations)
       locDisplay = loopLocation(l).display();
@@ -537,11 +582,12 @@ private:
         if (opts.unwind && i >= opts.unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
-          // Every path runs l past the bound: until its last iteration, a
-          // larger bound only adds iterations of l.
-          if (auto c = claims.find({l, nullptr}); c != claims.end() && t.isTrue(reached))
+          // Even when the loop has symbolic early exits, a constant SCEV max
+          // backedge-taken count bounds how far incremental BMC needs to grow
+          // k, allowing exponential doubling instead of stepping linearly.
+          if (auto c = claims.find({l, nullptr}); c != claims.end())
             if (auto *n = dyn_cast<SCEVConstant>(
-                    loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
+                    loopsFor(fi, *header->getParent()).scev().getConstantMaxBackedgeTakenCount(l)))
               checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
           // Nothing after this prefix has been walked. Keep its live header
           // instead of rebuilding it at the next bound; exits need fresh walks.
@@ -559,7 +605,9 @@ private:
         // Parameter-bound loops can fold at the call site even when SCEV
         // cannot count them. Defer repeated queries on their unchanged guard.
         bool unchanged = i <= SmallConstantLoop && reached == entryGuard;
-        if (!opts.unwind && i > knownBackedges && !unchanged && unreachable(reached)) {
+        bool withinBounded = maxBackedges && i <= maxBackedges;
+        if (!opts.unwind && i > knownBackedges && !unchanged && !withinBounded &&
+            unreachable(reached)) {
           it->second.clear();
           return;
         }
