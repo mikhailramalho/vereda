@@ -1199,17 +1199,7 @@ static void threadBoolPhis(Module &m) {
             continue;
           auto *ci = cast<ConstantInt>(phi->getIncomingValue(idx));
           BasicBlock *target = ci->isOne() ? br->getSuccessor(0) : br->getSuccessor(1);
-          if (target == &bb || pred == &bb)
-            continue;
-          bool conflict = false;
-          for (PHINode &tp : target->phis()) {
-            int pIdx = tp.getBasicBlockIndex(pred);
-            if (pIdx >= 0 && tp.getIncomingValue(pIdx) != tp.getIncomingValueForBlock(&bb)) {
-              conflict = true;
-              break;
-            }
-          }
-          if (conflict)
+          if (target == &bb || pred == &bb || is_contained(successors(pred), target))
             continue;
           Instruction *term = pred->getTerminator();
           unsigned count = 0;
@@ -1222,8 +1212,7 @@ static void threadBoolPhis(Module &m) {
             if (term->getSuccessor(s) == &bb)
               term->setSuccessor(s, target);
           for (PHINode &tp : target->phis())
-            if (tp.getBasicBlockIndex(pred) < 0)
-              tp.addIncoming(tp.getIncomingValueForBlock(&bb), pred);
+            tp.addIncoming(tp.getIncomingValueForBlock(&bb), pred);
           phi->removeIncomingValue(idx, /*DeletePHIIfEmpty=*/false);
           changed = true;
         }
