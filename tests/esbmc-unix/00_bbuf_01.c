@@ -321,6 +321,3 @@ assert(0);
 // Imported from ESBMC regression/esbmc-unix/00_bbuf_01
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN
