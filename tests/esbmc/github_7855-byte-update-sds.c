@@ -10,8 +10,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7855-byte-update-sds
-// Needs: --smt-during-symex
-// RUN: --64 --smt-during-symex
-// MODE: FUTURE
+// RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

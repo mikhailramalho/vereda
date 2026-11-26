@@ -22,8 +22,8 @@ int main()
   return 1;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-22
-// Needs: --k-induction --add-symex-value-sets --smt-during-symex --smt-symex-guard --smt-symex-assert
-// RUN: --k-induction --add-symex-value-sets --smt-during-symex --smt-symex-guard --smt-symex-assert
+// Needs: --k-induction --smt-symex-guard --smt-symex-assert
+// RUN: --k-induction --smt-symex-guard --smt-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

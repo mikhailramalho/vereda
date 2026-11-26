@@ -58,8 +58,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_atomicity07
-// Needs: --state-hashing --context-bound 2 --atomicity-check
-// RUN: --state-hashing --context-bound 2 --atomicity-check
+// Needs: --context-bound 2 --atomicity-check
+// RUN: --context-bound 2 --atomicity-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

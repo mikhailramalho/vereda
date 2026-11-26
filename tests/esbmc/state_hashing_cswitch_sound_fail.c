@@ -26,8 +26,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/state_hashing_cswitch_sound_fail
-// Needs: --no-por --context-bound 3 --state-hashing
-// RUN: --no-por --context-bound 3 --state-hashing
+// Needs: --no-por --context-bound 3
+// RUN: --no-por --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

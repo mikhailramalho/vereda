@@ -20,8 +20,8 @@ int main(){
     }
 }
 // Imported from ESBMC regression/cvc/incremental_smt
-// Needs: --smt-during-symex --smt-symex-guard
-// RUN: --smt-during-symex --smt-symex-guard --cvc5
+// Needs: --smt-symex-guard
+// RUN: --smt-symex-guard --cvc5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none
