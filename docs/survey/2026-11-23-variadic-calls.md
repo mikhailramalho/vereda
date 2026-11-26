@@ -40,3 +40,5 @@ function, 16 FUTURE tests now give the expected verdict and are CORE, and
 expects, without ESBMC's message, so they stay FUTURE. In the ReachSafety
 baseline, ldv-regression/fo_test (expected false) went from UNKNOWN to
 FALSE.
+
+Follow-up issues: #305.

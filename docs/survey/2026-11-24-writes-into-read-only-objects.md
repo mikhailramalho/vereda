@@ -86,3 +86,5 @@ writes fold the check away while walking, as their pointer's object is
 known; the cost is in writes through a pointer loaded from memory when the
 program exposes a literal, such as `27_exStbFb` (5 checks, 0.48 s of
 solving that `--no-pointer-check` does not spend).
+
+Follow-up issues: #292, #295.

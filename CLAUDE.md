@@ -136,3 +136,6 @@ are created when that stage starts.
 - Record measurements and design decisions (including ones not adopted) as a new file
   `docs/survey/YYYY-MM-DD-short-title.md`, never by editing a shared file, so pull
   requests do not conflict.
+- Always record follow-up ideas, deferred work, and remaining gaps as GitHub issues
+  (`gh issue create`), and link those issue numbers in the survey entry or doc that
+  identifies them (`Follow-up issues: #...`) so nothing stays tracked only in prose.

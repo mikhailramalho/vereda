@@ -16,3 +16,5 @@ write and an array of variable length are not shown, rather than named
 wrongly. A parameter's record of its own argument is dropped; another
 value, another parameter included, stays. Stores through a pointer to a
 heap object, which ESBMC spells `p->x`, are not shown yet.
+
+Follow-up issues: #311.

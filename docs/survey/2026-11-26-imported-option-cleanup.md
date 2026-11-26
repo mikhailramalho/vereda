@@ -39,3 +39,5 @@ and a 15-second per-run limit, the 774 changed fixtures finish with 127 passes,
 retain their prior modes. The importer/output-reader checks and all 14
 test-configuration tests pass. Audits find no removed options in imported RUN
 headers and no edits to retained C bodies. Full 300-second coverage remains for CI.
+
+Follow-up issues: #310.

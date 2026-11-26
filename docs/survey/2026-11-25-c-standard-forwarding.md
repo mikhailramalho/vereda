@@ -39,3 +39,5 @@ The Release build with LLVM 23.1.6 passes the complete CTest run: 7,031
 executions, 2,918 passes, 4,113 expected skips, and zero failures in 300.78
 seconds with eight workers. Compared with main after #255, this adds six new
 executions and recovers eight existing fixtures, reducing skips from 4,121.
+
+Follow-up issues: #292.

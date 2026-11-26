@@ -73,3 +73,5 @@ alone is valid C, so prioritise modelling volatile/environment semantics over
 treating its presence as a defect. Likewise, unknown-function pointer arguments
 need contracts or conservative modelling; blanket validity requirements would
 reject opaque handles and permitted null arguments.
+
+Follow-up issues: #294, #314.

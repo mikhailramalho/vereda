@@ -183,3 +183,5 @@ bounds check to the solver; deciding them needs the facts passed to
 `memory` and `checks`. A switch's cases are compared by the walker, not
 decided. `x != c` could move an end of x's range; `x = y` between two
 non-constant terms, and a fact on `zext(x)` narrowing x, are not learned.
+
+Follow-up issues: #296.

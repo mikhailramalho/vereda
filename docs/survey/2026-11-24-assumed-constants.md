@@ -100,3 +100,5 @@ lattice and join, so it is a pull request of its own. Also left out: a fact
 that a Bool atom is true (`assume(flag)`; #109's guard folding covers the
 same branch condition), `x = y` between two non-constant terms, and an
 equality under an extension (`zext(x) == c` fixing x).
+
+Follow-up issues: #296.

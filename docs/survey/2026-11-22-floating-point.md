@@ -65,3 +65,5 @@ The verdict check's 188 tasks give one new correct SUCCESSFUL
 tests and can time out under a full parallel run. Not yet done: printing
 float values in the counterexample, constant folding of FP operations in
 the term builder, fmod, and the rounding mode.
+
+Follow-up issues: #301, #311.

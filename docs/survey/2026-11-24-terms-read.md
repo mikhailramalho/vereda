@@ -145,3 +145,5 @@ The decrement test needs neither. A read of a byte array (`readOwn` without
 elements, `readArrays`) also builds the provenance select of every byte,
 which only a load of a pointer or a copy uses; no measured test spends time
 there.
+
+Follow-up issues: #315.

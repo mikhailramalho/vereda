@@ -50,3 +50,5 @@ a call to an unknown function changes no memory, as for every bodyless
 function; ESBMC's own `__ESBMC_assume` and an undeclared `assert` are not
 modelled; a `byval` argument is not copied, so a callee that writes its
 by-value struct parameter changes the caller's.
+
+Follow-up issues: #293.

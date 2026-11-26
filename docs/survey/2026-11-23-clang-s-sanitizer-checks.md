@@ -44,3 +44,5 @@ replace, then; the question is which checks to turn on.
   drops as checks Vereda lacks.
 - SV-COMP no-overflow takes signed-integer-overflow only (see the property
   files section above).
+
+Follow-up issues: #298.

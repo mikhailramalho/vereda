@@ -10,3 +10,5 @@ from the last `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` line;
 no such line is an error. Checked with `python3 -m benchexec.test_tool_info`
 (BenchExec 3.20) and on the output of the property tests. Left for the
 release archive: clang next to the binary, and the program files list.
+
+Follow-up issues: #316.

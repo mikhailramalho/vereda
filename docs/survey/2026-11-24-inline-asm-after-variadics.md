@@ -39,3 +39,5 @@ main already reaches its 51 wrong FAILED results on these tasks (against 19
 right ones): the asm rule exposes more such writes but does not add the
 cause. Giving a pointer that comes from outside the program an object of its
 own would remove them; it is not built here.
+
+Follow-up issues: #298, #299, #300.

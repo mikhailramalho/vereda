@@ -41,3 +41,5 @@ The 23 focused Rust tests passed with the installed compiler. Direct checks
 also covered keep-ir, mixed linking, wrong compiler versions, compilation
 errors and the unsupported 32-bit target, including error exit code 6.
 The imported ESBMC suite was not rerun.
+
+Follow-up issues: #308.

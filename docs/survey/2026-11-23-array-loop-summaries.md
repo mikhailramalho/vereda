@@ -174,3 +174,5 @@ A zeroed global under `Memory::MinSeparate` (1024 bytes) is a chain of one
 store per byte. `unsigned char a[1000]` read at a symbolic index after a
 loop takes Bitwuzla 51 s on main, summary or not; at 3000 bytes the object
 is one constant array and the same test takes 0.2 s.
+
+Follow-up issues: #297.

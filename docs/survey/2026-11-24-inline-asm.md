@@ -67,3 +67,5 @@ read): its value is a nondet pointer, which may point to the driver's own
 objects, so `set_current_state()`, an xchg through it, may write them. Main
 gives such results already for pointers from bodyless calls (20 LDV tasks
 expected true are FAILED on main).
+
+Follow-up issues: #298, #299, #300.
