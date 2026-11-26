@@ -43,8 +43,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/k-induction/is_pointer_invariant_list
-// Needs: --interval-analysis --error-label ERROR --goto-unwind --unlimited-goto-unwind --k-induction --max-inductive-step 3
-// RUN: --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --goto-unwind --unlimited-goto-unwind --k-induction --max-inductive-step 3
-// MODE: KNOWNBUG
+// Needs: --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
+// RUN: --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: KNOWNBUG
 // Vereda: verdict none

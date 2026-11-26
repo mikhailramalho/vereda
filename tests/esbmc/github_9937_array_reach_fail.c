@@ -12,8 +12,7 @@ int main()
   __VERIFIER_assert(0); // reachable
 }
 // Imported from ESBMC regression/esbmc/github_9937_array_reach_fail
-// Needs: --result-only
-// RUN: --64 --no-slice --result-only
+// RUN: -m64 --no-slice
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

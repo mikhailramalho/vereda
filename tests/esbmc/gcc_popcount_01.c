@@ -40,8 +40,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcc_popcount_01
-// Needs: --k-induction --boolector
-// RUN: --k-induction --boolector
-// MODE: FUTURE
+// Needs: --k-induction
+// RUN: --k-induction
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

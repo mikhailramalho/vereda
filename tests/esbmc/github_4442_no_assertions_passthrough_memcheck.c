@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4442_no_assertions_passthrough_memcheck
 // Needs: --memory-leak-check --no-abnormal-memory-leak --no-assertions
-// RUN: --memory-leak-check --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2 --64
-// MODE: FUTURE
+// RUN: --memory-leak-check --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

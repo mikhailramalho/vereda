@@ -32,8 +32,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_calleeinv
 // Needs: __ESBMC_loop_invariant
-// Needs: --synthesise-loop-invariants --result-only
-// RUN: --synthesise-loop-invariants --unwind 6 --multi-property --result-only
+// Needs: --synthesise-loop-invariants
+// RUN: --synthesise-loop-invariants --unwind 6 --multi-property
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^  PASSED       \[main\.assertion\.\d+\]  line 27  loop invariant base case \[i <= 4\]$

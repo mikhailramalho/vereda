@@ -12,8 +12,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-showcex
-// Needs: --result-only --k-induction --show-cex
-// RUN: --result-only --k-induction --show-cex
+// Needs: --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*FAILED)[\s\S]*\Z

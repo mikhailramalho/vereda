@@ -2032,10 +2032,10 @@ int main()
 }
 
 // Imported from ESBMC regression/goto-coverage/branch_cov_6
-// Needs: --branch-function-coverage --unlimited-goto-unwind --k-induction
-// RUN: --branch-function-coverage --unlimited-goto-unwind --k-induction
-// MODE: FUTURE
+// Needs: --branch-function-coverage --k-induction
+// RUN: --branch-function-coverage --k-induction
 // EXPECT: ^Function Entry Points & Branches : 542
 // EXPECT: ^Reached : 3
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// MODE: FUTURE
 // Vereda: verdict none

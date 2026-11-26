@@ -10,8 +10,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7256-showcex-trace
-// Needs: --k-induction --show-cex
-// RUN: --k-induction --max-k-step 3 --show-cex
+// Needs: --k-induction
+// RUN: --k-induction --max-k-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // EXPECT: ^Violated property:$

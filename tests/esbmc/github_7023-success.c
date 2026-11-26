@@ -7,9 +7,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-success
-// Needs: --result-only
-// RUN: --result-only
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z
-// Vereda: verdict none

@@ -18,9 +18,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_nested_true
-// Needs: --verbosity 9
-// RUN: --unwind 4 --verbosity 9
+// RUN: --unwind 4
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 11 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

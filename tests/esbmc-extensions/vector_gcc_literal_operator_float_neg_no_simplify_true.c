@@ -14,8 +14,7 @@ int main() {
    return 0; 
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_operator_float_neg_no_simplify_true
-// Needs: --goto-unwind
-// RUN: --goto-unwind --no-simplify
-// MODE: FUTURE
+// RUN: --no-simplify
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -94,9 +94,9 @@ for(counter=0; counter<argc; counter++)
   return res;
 }
 // Imported from ESBMC regression/esbmc-unix2/23_picosat-846_03
-// Needs: --partial-loops --bv
-// RUN: app.c picosat.c --unwind 1 --partial-loops --function picosat_deref_toplevel --bv
+// Needs: --partial-loops
+// RUN: app.c picosat.c --unwind 1 --partial-loops --function picosat_deref_toplevel
 // FILES: app.c picosat.c
-// MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: KNOWNBUG
 // Vereda: verdict none

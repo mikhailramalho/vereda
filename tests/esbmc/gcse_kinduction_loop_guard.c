@@ -66,8 +66,8 @@ ELSE:
     return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_kinduction_loop_guard
-// Needs: --sv-comp --interval-analysis --goto-unwind --unlimited-goto-unwind --k-induction --max-inductive-step 3 --gcse
-// RUN: --sv-comp --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --no-vla-size-check --32 --no-pointer-check --interval-analysis --no-bounds-check --goto-unwind --unlimited-goto-unwind --k-induction --max-inductive-step 3 --max-k-step 6 --gcse
+// Needs: --sv-comp --interval-analysis --k-induction --max-inductive-step 3
+// RUN: --sv-comp --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --interval-analysis --no-bounds-check --k-induction --max-inductive-step 3 --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

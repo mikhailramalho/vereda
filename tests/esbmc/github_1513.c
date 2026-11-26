@@ -48,8 +48,8 @@ void generate_fortune(struct Player *player) {
 }
 
 // Imported from ESBMC regression/esbmc/github_1513
-// Needs: --memory-leak-check --timeout 30 --no-remove-unreachable
-// RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property --no-unwinding-assertions --no-remove-unreachable
+// Needs: --memory-leak-check --timeout 30
+// RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

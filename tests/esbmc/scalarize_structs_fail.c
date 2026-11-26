@@ -19,8 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_fail
-// Needs: --scalarize-structs
-// RUN: --scalarize-structs --unwind 5 --no-unwinding-assertions --no-slice
+// RUN: --unwind 5 --no-unwinding-assertions --no-slice
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^  s\.total = 18; // 00000000 00000000 00000000 00010010$

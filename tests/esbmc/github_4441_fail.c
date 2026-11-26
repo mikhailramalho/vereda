@@ -17,8 +17,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4441_fail
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-assertions
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-assertions --incremental-bmc --k-step 2 --64
-// MODE: FUTURE
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: forgotten memory:
+// MODE: FUTURE
 // Vereda: verdict none

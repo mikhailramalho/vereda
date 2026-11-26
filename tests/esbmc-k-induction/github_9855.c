@@ -15,8 +15,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/k-induction/github_9855
-// Needs: --k-induction --verbosity k-induction:8
-// RUN: --k-induction --k-step 4 --max-k-step 9 --verbosity k-induction:8
+// Needs: --k-induction
+// RUN: --k-induction --k-step 4 --max-k-step 9
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: function unreachable_update: anything \(does not decide the step\)

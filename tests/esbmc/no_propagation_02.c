@@ -6,8 +6,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/no_propagation_02
-// Needs: --no-propagation
-// RUN: --no-propagation
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

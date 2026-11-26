@@ -6,8 +6,33 @@ import tempfile
 import import_esbmc
 import run
 
-ignored = ("--tuple-sym-flattener", "--state-hashing", "--smt-during-symex",
-           "--add-symex-value-sets", "--goto-functions-only")
+for flag in import_esbmc.IGNORED_WITH_VALUE:
+    for argument in (flag + ' "solver -in"', flag + '="solver -in"'):
+        assert import_esbmc.translate(argument + ' --z3', '.') == (
+            ['--solver', 'z3'], [], [])
+        lines = import_esbmc.header('suite/value', 'CORE',
+                                    argument + ' --k-induction --32', [], '.', [])
+        assert '// RUN: --k-induction -m32' in lines, lines
+assert import_esbmc.translate('--32 --64 --data-races-check', '.') == (
+    ['-m32', '-m64', '--data-race-check'], [], [])
+assert import_esbmc.translate('--data-races-check=false', '.') == (
+    ['--data-race-check=false'], [], [])
+assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-assertion '
+                             '--no-standard-check', '.') == (
+    ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions',
+     '--no-standard-checks'], [], [])
+for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
+             '--bitwuzllob', '--clang-c-irep2-adjust-only'):
+    with tempfile.TemporaryDirectory() as directory:
+        src = Path(directory) / 'source'
+        src.mkdir()
+        (src / 'main.c').write_text('int main(void) { return 0; }\n')
+        (src / 'test.desc').write_text('CORE\nmain.c\n' + flag + '\n^VERIFICATION SUCCESSFUL$\n')
+        dest = Path(directory) / 'copy'
+        assert not import_esbmc.import_test(str(src), str(dest), 'suite/internal', None).endswith('.c')
+        assert not dest.with_suffix('.c').exists()
+
+ignored = sorted(import_esbmc.IGNORED_FLAGS)
 for flag in ignored:
     for token in (flag, flag + "=true", flag + "=false"):
         assert import_esbmc.translate(token + " --z3", ".") == (["--solver", "z3"], [], [])

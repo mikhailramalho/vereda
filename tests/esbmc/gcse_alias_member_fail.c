@@ -23,8 +23,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_alias_member_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

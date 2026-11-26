@@ -33,10 +33,10 @@ int main()
    return 0;
 }
 // Imported from ESBMC regression/goto-coverage/branch_cov_5
-// Needs: --branch-function-coverage --unlimited-goto-unwind --k-induction
-// RUN: --branch-function-coverage --unlimited-goto-unwind --k-induction
-// MODE: FUTURE
+// Needs: --branch-function-coverage --k-induction
+// RUN: --branch-function-coverage --k-induction
 // EXPECT: ^Function Entry Points & Branches : 11
 // EXPECT: ^Reached : 11
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// MODE: FUTURE
 // Vereda: verdict none

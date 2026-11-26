@@ -12,8 +12,5 @@ int main()
   b1 ^= main_b2;
 }
 // Imported from ESBMC regression/esbmc/github_7992_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

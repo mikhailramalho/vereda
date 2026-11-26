@@ -19,8 +19,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/goto_unwind_counter_in_callee_fail
-// Needs: --k-induction --goto-unwind --unlimited-goto-unwind
-// RUN: --k-induction --goto-unwind --unlimited-goto-unwind --max-k-step 20
-// MODE: FUTURE
+// Needs: --k-induction
+// RUN: --k-induction --max-k-step 20
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

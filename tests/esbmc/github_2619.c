@@ -10,8 +10,8 @@ int main()
   }
 }
 // Imported from ESBMC regression/esbmc/github_2619
-// Needs: --parallel-solving --k-induction
-// RUN: --parallel-solving --k-induction
+// Needs: --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^Properties: 2 checked, \d+ passed, 2 failed, \d+ not checked$
 // Vereda: verdict none

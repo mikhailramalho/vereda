@@ -19,7 +19,7 @@ main()
 
 // Imported from ESBMC regression/k-induction/z_sum_array
 // Needs: --k-induction
-// RUN: --k-induction --32
-// MODE: KNOWNBUG
+// RUN: --k-induction -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: KNOWNBUG
 // Vereda: verdict none

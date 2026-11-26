@@ -34,8 +34,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_opaque_field
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --unwind 6
-// MODE: FUTURE
+// RUN: --unwind 6
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

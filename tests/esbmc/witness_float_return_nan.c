@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_float_return_nan
 // Needs: --witness-output-yaml w.yml CHECK_FILE w.yml absent function_return
-// RUN: --64 --witness-output-yaml w.yml
-// MODE: FUTURE
+// RUN: -m64 --witness-output-yaml w.yml
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

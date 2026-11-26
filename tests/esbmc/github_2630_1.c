@@ -20,8 +20,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2630_1
-// Needs: --parallel-solving
-// RUN: --multi-property --parallel-solving
+// RUN: --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

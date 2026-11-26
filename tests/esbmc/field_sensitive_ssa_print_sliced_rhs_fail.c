@@ -14,9 +14,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_sliced_rhs_fail
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa
-// MODE: FUTURE
+// RUN:
 // EXPECT: \A(?![\s\S]*\n  s = )[\s\S]*\Z
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

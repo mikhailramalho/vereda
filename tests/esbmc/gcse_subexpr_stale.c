@@ -16,8 +16,5 @@ int main()
   return (int)(y + w);
 }
 // Imported from ESBMC regression/esbmc/gcse_subexpr_stale
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

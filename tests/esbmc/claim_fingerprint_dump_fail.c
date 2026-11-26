@@ -8,8 +8,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/claim_fingerprint_dump_fail
-// Needs: --claim-fingerprint-dump -
-// RUN: --multi-property --claim-fingerprint-dump -
+// Needs: -
+// RUN: --multi-property -
 // MODE: FUTURE
 // EXPECT: ^CLAIM-FP [0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9]+\s+SAT\s
 // EXPECT: ^VERIFICATION FAILED$

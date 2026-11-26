@@ -1937,7 +1937,7 @@ void CWE190_Integer_Overflow__int_fgets_multiply_53d_goodB2GSink(int data)
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009_success
 // Needs: --no-assertions --k-induction --max-inductive-step 3 REQUIRES signed_wchar_host
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --64 --no-pointer-check --no-bounds-check --overflow-check --no-assertions --k-induction --max-inductive-step 3
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps -m64 --no-pointer-check --no-bounds-check --overflow-check --no-assertions --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

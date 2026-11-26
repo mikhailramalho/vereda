@@ -16,9 +16,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/witness_fixed_branch_goto_unwind_fail
-// Needs: --goto-unwind --unlimited-goto-unwind --witness-output-yaml -
-// RUN: --goto-unwind --unlimited-goto-unwind --witness-output-yaml -
-// MODE: FUTURE
+// Needs: --witness-output-yaml -
+// RUN: --witness-output-yaml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)value: "false"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_goto_unwind_fail\.c"\n\s+line: 13$.*value: "true"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_goto_unwind_fail\.c"\n\s+line: 13$
+// MODE: FUTURE
 // Vereda: verdict none

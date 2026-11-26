@@ -34,9 +34,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6464_merged_pointer_bounds_fail
-// Needs: --no-propagation
-// RUN: --no-propagation
+// RUN:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: array bounds violated: heap object$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

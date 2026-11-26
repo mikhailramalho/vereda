@@ -31,8 +31,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_multibyte_array_fail
-// Needs: --little-endian
-// RUN: --little-endian
+// RUN:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

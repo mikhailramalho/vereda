@@ -29,8 +29,7 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc-unix2/pthread_cleanup8_fail
-// Needs: --smt-symex-assume
-// RUN: --incremental-bmc --smt-symex-assume --z3
+// RUN: --incremental-bmc --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

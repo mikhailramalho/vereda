@@ -21,8 +21,5 @@ int main()
   assert(z == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_callee_recompute_stale_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

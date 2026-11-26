@@ -9,8 +9,5 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/github_1631_nondet_compact
-// Needs: --compact-trace
-// RUN: --force-malloc-success --compact-trace
-// MODE: FUTURE
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

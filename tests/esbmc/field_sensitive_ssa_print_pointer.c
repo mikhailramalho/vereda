@@ -37,8 +37,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_pointer
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --64
-// MODE: FUTURE
+// RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

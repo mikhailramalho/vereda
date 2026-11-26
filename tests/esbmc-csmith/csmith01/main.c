@@ -2714,8 +2714,8 @@ FYI: the random generator makes assumptions about the integer size. See platform
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith01
-// Needs: --no-standard-checks --partial-loops --tuple-node-flattener --all-claims --bv
-// RUN: --no-standard-checks --partial-loops --no-align-check --tuple-node-flattener --all-claims --bv --unwind 1
-// MODE: FUTURE
+// Needs: --no-standard-checks --partial-loops --all-claims
+// RUN: --no-standard-checks --partial-loops --no-align-check --all-claims --unwind 1
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

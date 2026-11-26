@@ -23,8 +23,8 @@ int main()
   pthread_create(&id2, NULL, t2, NULL);
 }
 // Imported from ESBMC regression/esbmc-unix/00_race03
-// Needs: --data-races-check --context-bound 3
-// RUN: --data-races-check --context-bound 3
-// MODE: FUTURE
+// Needs: --data-race-check --context-bound 3
+// RUN: --data-race-check --context-bound 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

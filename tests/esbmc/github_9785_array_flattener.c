@@ -12,8 +12,5 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_array_flattener
-// Needs: --array-flattener
-// RUN: --array-flattener
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

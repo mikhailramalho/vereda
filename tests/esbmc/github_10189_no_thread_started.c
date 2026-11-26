@@ -23,9 +23,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10189_no_thread_started
-// Needs: --sv-comp --k-induction --interval-analysis --goto-unwind --unlimited-goto-unwind
-// RUN: --sv-comp --k-induction --interval-analysis --goto-unwind --unlimited-goto-unwind
-// MODE: FUTURE
+// Needs: --sv-comp --k-induction --interval-analysis
+// RUN: --sv-comp --k-induction --interval-analysis
 // EXPECT: \A(?![\s\S]*can start a thread)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

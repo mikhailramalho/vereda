@@ -39,8 +39,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5138_fail
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success --64 --unwind 5
-// MODE: FUTURE
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success -m64 --unwind 5
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*forgotten memory.*$
+// MODE: FUTURE
 // Vereda: verdict none

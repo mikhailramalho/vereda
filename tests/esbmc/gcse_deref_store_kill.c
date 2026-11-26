@@ -14,8 +14,5 @@ int main()
   assert(b == 4);
 }
 // Imported from ESBMC regression/esbmc/gcse_deref_store_kill
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

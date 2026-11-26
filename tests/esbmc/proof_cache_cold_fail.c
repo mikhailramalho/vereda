@@ -8,8 +8,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/proof_cache_cold_fail
-// Needs: --proof-cache proof-store --claim-fingerprint-dump fp.tsv CHECK_FILE fp.tsv contains SAT
-// RUN: --multi-property --proof-cache proof-store --claim-fingerprint-dump fp.tsv
+// Needs: --proof-cache proof-store fp.tsv CHECK_FILE fp.tsv contains SAT
+// RUN: --multi-property --proof-cache proof-store fp.tsv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

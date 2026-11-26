@@ -19,9 +19,9 @@ int main(void)
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/align-deref-ptr_fail
-// Needs: --func f
-// RUN: --func f
+// Needs: --entry f
+// RUN: --entry f
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

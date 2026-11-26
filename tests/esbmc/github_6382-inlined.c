@@ -37,8 +37,8 @@ int main()
   sem_destroy(&sem);
 }
 // Imported from ESBMC regression/esbmc/github_6382-inlined
-// Needs: --context-bound 2 --no-standard-checks --no-library-assertions --full-inlining
-// RUN: --multi-property --unwind 11 --context-bound 2 --no-standard-checks --no-library-assertions --full-inlining
+// Needs: --context-bound 2 --no-standard-checks --no-library-assertions
+// RUN: --multi-property --unwind 11 --context-bound 2 --no-standard-checks --no-library-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Removed [1-9]\d* library assertion\(s\)$

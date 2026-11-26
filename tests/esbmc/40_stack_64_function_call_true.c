@@ -10,7 +10,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/40_stack_64_function_call_true
 // Needs: --stack-limit 16
-// RUN: --64 --stack-limit 16
-// MODE: FUTURE
+// RUN: -m64 --stack-limit 16
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

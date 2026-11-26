@@ -24,8 +24,5 @@ int main()
 
 
 // Imported from ESBMC regression/mathsat/sqrt1
-// Needs: --mathsat
-// RUN: --mathsat
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

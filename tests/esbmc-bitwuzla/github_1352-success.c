@@ -63,8 +63,8 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/bitwuzla/github_1352-success
-// Needs: --no-unwinding-assertion
-// RUN: --unwind 1 --no-unwinding-assertion --force-malloc-success --no-pointer-check --bitwuzla
+// Needs: --no-unwinding-assertions
+// RUN: --unwind 1 --no-unwinding-assertions --force-malloc-success --no-pointer-check --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

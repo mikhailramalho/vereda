@@ -79,7 +79,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix2/14_popl20-figure1
 // Needs: --no-por --context-bound 4
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1 --context-bound 4
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps -m32 --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1 --context-bound 4
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

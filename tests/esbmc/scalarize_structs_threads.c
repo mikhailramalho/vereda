@@ -27,9 +27,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_threads
-// Needs: --scalarize-structs
-// RUN: --scalarize-structs
+// RUN:
 // MODE: FUTURE
 // EXPECT: ^WARNING: --scalarize-structs is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

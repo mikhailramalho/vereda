@@ -63,9 +63,9 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1352-32bit
-// Needs: --no-unwinding-assertion --boolector
-// RUN: --unwind 1 --no-unwinding-assertion --force-malloc-success --32 --boolector
+// Needs: --no-unwinding-assertions
+// RUN: --unwind 1 --no-unwinding-assertions --force-malloc-success -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: array bounds violated\b
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

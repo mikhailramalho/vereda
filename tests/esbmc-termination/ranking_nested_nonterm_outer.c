@@ -26,8 +26,8 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/ranking_nested_nonterm_outer
 // Needs: --force-realloc-success --no-assertions --termination --max-inductive-step 3
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^Recurrent state shows a non-terminating execution.*$
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

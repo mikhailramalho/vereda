@@ -13,8 +13,8 @@ int main()
 }
 // Imported from ESBMC regression/cvc/github_10917
 // Needs: --all-witnesses --max-witnesses 4
-// RUN: --all-witnesses --max-witnesses 4 --cvc5
-// MODE: FUTURE
+// RUN: --all-witnesses --max-witnesses 4
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -27,8 +27,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/function_contract/conc_race_fail
-// Needs: --data-races-check
-// RUN: --data-races-check --no-bounds-check --no-pointer-check
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --data-race-check --no-bounds-check --no-pointer-check
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

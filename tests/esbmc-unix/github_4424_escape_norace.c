@@ -30,8 +30,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_norace
-// Needs: --data-races-check
-// RUN: --data-races-check
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

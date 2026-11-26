@@ -59,8 +59,8 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-31
-// Needs: --context-bound 2 --data-races-check --smt-symex-assume
-// RUN: --context-bound 2 --data-races-check --multi-property --smt-symex-assume --bitwuzla
+// Needs: --context-bound 2 --data-race-check
+// RUN: --context-bound 2 --data-race-check --multi-property --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

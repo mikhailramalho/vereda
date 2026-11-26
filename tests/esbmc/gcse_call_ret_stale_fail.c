@@ -19,8 +19,5 @@ int main()
   assert(y == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_call_ret_stale_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

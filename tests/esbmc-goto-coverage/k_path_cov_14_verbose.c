@@ -14,8 +14,8 @@ int main()
   return a + b;
 }
 // Imported from ESBMC regression/goto-coverage/k_path_cov_14_verbose
-// Needs: --k-path-coverage=2 --verbosity coverage:1
-// RUN: --k-path-coverage=2 --unwind 2 --no-unwinding-assertions --verbosity coverage:1
+// Needs: --k-path-coverage=2
+// RUN: --k-path-coverage=2 --unwind 2 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^Current k-Path Coverage: 100%$
 // EXPECT: ^k-Path Coverage: 100%$

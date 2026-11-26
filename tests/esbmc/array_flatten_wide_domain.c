@@ -18,8 +18,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_flatten_wide_domain
-// Needs: --array-flattener
-// RUN: --array-flattener
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -25,9 +25,8 @@ int foo()
   return i;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_multi_function_true
-// Needs: --verbosity 9
-// RUN: --verbosity 9
+// RUN:
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 11 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

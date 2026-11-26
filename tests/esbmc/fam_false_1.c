@@ -11,8 +11,7 @@ main() {
   free(ptr);
 }
 // Imported from ESBMC regression/esbmc/fam_false_1
-// Needs: --compact-trace
-// RUN: --compact-trace  --force-malloc-success -Wno-error=implicit-function-declaration -Wno-error=implicit-int
-// MODE: FUTURE
+// RUN: --force-malloc-success -Wno-error=implicit-function-declaration -Wno-error=implicit-int
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

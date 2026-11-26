@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/memsafety-violationwitness/target_after_invalid_array_assert_guard
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: --32 --std c11 --validate-violation-witness --witness witness.yml
-// MODE: FUTURE
+// RUN: -m32 --std c11 --validate-violation-witness --witness witness.yml
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -14,8 +14,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_746
-// Needs: --color always
-// RUN: --color always
+// Needs: always
+// RUN: always
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \x1b\[0;1;35mAtomicExpr

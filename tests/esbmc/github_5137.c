@@ -34,8 +34,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5137
-// Needs: --data-races-check --context-bound 2
-// RUN: --data-races-check --context-bound 2 --unwind 2
-// MODE: FUTURE
+// Needs: --data-race-check --context-bound 2
+// RUN: --data-race-check --context-bound 2 --unwind 2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

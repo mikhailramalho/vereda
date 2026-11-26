@@ -78,8 +78,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/tuple_const_array_struct_member
-// Needs: --boolector
-// RUN: --boolector --multi-property
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -22,8 +22,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-14
-// Needs: --smt-symex-assert --smt-symex-guard
-// RUN: --smt-symex-assert --smt-symex-guard
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

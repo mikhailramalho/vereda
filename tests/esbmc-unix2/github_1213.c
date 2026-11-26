@@ -18,8 +18,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix2/github_1213
-// Needs: --ssa-trace
-// RUN: --ssa-trace --no-slice
+// RUN: --no-slice
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

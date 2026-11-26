@@ -21,8 +21,8 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/Interval-analysis-ibex-contractor/05-logic-operators-fail
-// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction --unlimited-k-step
-// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-step
+// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
+// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

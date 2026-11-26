@@ -24,8 +24,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/github_402_fail2
-// Needs: --no-goto-merge
-// RUN: --no-goto-merge
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

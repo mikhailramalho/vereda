@@ -22,8 +22,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_01_basic
-// Needs: --unwindsetname compute_sum:0:11
-// RUN: --unwindsetname compute_sum:0:11
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

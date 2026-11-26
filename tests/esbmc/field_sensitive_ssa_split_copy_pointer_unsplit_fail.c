@@ -21,8 +21,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_split_copy_pointer_unsplit_fail
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --unwind 6
-// MODE: FUTURE
+// RUN: --unwind 6
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

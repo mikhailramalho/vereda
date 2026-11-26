@@ -7,8 +7,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7643_complex_init_part_error
-// Needs: --color never
-// RUN: --color never
+// Needs: never
+// RUN: never
 // MODE: FUTURE
 // EXPECT: ^ERROR: Unknown Atomic expression$
 // EXPECT: ^ERROR: CONVERSION ERROR$

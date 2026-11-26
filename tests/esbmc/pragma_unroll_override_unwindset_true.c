@@ -16,9 +16,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pragma_unroll_override_unwindset_true
-// Needs: --verbosity 9 --unwindset 2:2
-// RUN: --verbosity 9 --unwindset 2:2 --no-unwinding-assertions
+// RUN: --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 8 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

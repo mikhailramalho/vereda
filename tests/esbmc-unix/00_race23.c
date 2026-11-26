@@ -31,8 +31,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_race23
-// Needs: --data-races-check
-// RUN: --data-races-check
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --data-race-check
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

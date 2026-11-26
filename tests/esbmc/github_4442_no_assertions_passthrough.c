@@ -38,8 +38,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4442_no_assertions_passthrough
 // Needs: --no-assertions
-// RUN: --no-assertions --incremental-bmc --k-step 2 --64
-// MODE: FUTURE
+// RUN: --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: NULL pointer
+// MODE: FUTURE
 // Vereda: verdict none

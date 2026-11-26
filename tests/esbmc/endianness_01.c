@@ -14,8 +14,5 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/endianness_01
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

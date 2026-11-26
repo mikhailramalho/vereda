@@ -18,8 +18,8 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_via_global_norace
-// Needs: --sv-comp --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only --no-assertions
-// RUN: --32 --sv-comp --no-div-by-zero-check --force-malloc-success --smt-symex-guard --cswitch-skip-readonly-globals --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
-// MODE: FUTURE
+// Needs: --sv-comp --data-races-check-only --no-assertions
+// RUN: -m32 --sv-comp --no-div-by-zero-check --force-malloc-success --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -15,8 +15,8 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/loop_unroll_kind_true
-// Needs: --k-induction --goto-unwind
-// RUN: --k-induction --goto-unwind
-// MODE: FUTURE
+// Needs: --k-induction
+// RUN: --k-induction
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -32,8 +32,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_10293_race_symbolic_index_fail
-// Needs: --data-races-check-only --tuple-node-flattener
-// RUN: --data-races-check-only --incremental-bmc --max-k-step 2 --z3 --tuple-node-flattener
-// MODE: FUTURE
+// Needs: --data-races-check-only
+// RUN: --data-races-check-only --incremental-bmc --max-k-step 2 --z3
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

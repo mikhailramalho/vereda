@@ -39,8 +39,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_calleeinv_nested
 // Needs: __ESBMC_loop_invariant
-// Needs: --synthesise-loop-invariants --result-only
-// RUN: --synthesise-loop-invariants --unwind 6 --multi-property --result-only
+// Needs: --synthesise-loop-invariants
+// RUN: --synthesise-loop-invariants --unwind 6 --multi-property
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants added no invariant: no loop matched the affine counter/accumulator shape, or every match was declined; the run proceeds unchanged$

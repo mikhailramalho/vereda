@@ -13,9 +13,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_slice_fail
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa
+// RUN:
 // MODE: FUTURE
 // EXPECT: ^State 1 file [^\n]*field_sensitive_ssa_print_slice_fail\.c line 12 column
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED

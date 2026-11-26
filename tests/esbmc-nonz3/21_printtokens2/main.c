@@ -526,7 +526,7 @@ static int is_spec_symbol(str)
 
 // Imported from ESBMC regression/nonz3/21_printtokens2
 // Needs: --partial-loops
-// RUN: --partial-loops --unwind 1 --32 -Wno-error=implicit-int
-// MODE: KNOWNBUG
+// RUN: --partial-loops --unwind 1 -m32 -Wno-error=implicit-int
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: KNOWNBUG
 // Vereda: verdict none

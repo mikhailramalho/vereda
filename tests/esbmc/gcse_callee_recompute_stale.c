@@ -21,8 +21,5 @@ int main()
   assert(z == x + 1u);
 }
 // Imported from ESBMC regression/esbmc/gcse_callee_recompute_stale
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

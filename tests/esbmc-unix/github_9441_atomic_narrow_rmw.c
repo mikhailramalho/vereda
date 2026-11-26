@@ -29,7 +29,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9441_atomic_narrow_rmw
 // Needs: --no-standard-checks
-// RUN: --64 --no-standard-checks --unwind 20
-// MODE: FUTURE
+// RUN: -m64 --no-standard-checks --unwind 20
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

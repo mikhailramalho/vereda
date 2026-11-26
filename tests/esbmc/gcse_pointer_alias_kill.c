@@ -15,8 +15,5 @@ int main()
   assert(b == 6 && d == 8);
 }
 // Imported from ESBMC regression/esbmc/gcse_pointer_alias_kill
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

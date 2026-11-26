@@ -17,8 +17,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1583_argv_smt_symex_guard
-// Needs: --smt-symex-guard
-// RUN: --smt-symex-guard
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

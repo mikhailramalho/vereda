@@ -9,8 +9,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_746_nocolor
-// Needs: --color never
-// RUN: --color never
+// Needs: never
+// RUN: never
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \A(?!(?s:.)*\x1b\[0;1;35m)

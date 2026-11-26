@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/return_mutually_exclusive_branches
 // Needs: --sv-comp --validate-violation-witness --witness witness.yml
-// RUN: --32 --sv-comp --std c11 --validate-violation-witness --witness witness.yml --unwind 4
-// MODE: FUTURE
+// RUN: -m32 --sv-comp --std c11 --validate-violation-witness --witness witness.yml --unwind 4
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

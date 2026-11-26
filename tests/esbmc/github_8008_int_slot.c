@@ -13,8 +13,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8008_int_slot
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

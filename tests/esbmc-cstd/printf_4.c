@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/cstd/printf_4
 // Needs: --k-induction
-// RUN: --32 --k-induction
-// MODE: FUTURE
+// RUN: -m32 --k-induction
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -29,8 +29,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Unbounded_Array4
-// Needs: --array-flattener
-// RUN: --array-flattener -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

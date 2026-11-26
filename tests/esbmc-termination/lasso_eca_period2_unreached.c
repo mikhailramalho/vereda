@@ -43,7 +43,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/lasso_eca_period2_unreached
 // Needs: --no-assertions --termination --max-inductive-step 3 --interval-analysis
-// RUN: --no-div-by-zero-check --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

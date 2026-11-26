@@ -10,9 +10,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-notchecked-multi
-// Needs: --result-only
-// RUN: --result-only --multi-property
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z
-// Vereda: verdict none

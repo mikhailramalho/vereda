@@ -78,9 +78,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/tuple_const_array_struct_member_fail
-// Needs: --boolector
-// RUN: --boolector --multi-property
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

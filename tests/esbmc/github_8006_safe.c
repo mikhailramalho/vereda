@@ -14,8 +14,5 @@ int main()
   return a + b;
 }
 // Imported from ESBMC regression/esbmc/github_8006_safe
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

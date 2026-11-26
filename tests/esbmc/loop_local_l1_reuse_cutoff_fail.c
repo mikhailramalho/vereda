@@ -21,9 +21,8 @@ int main()
   return g(2);
 }
 // Imported from ESBMC regression/esbmc/loop_local_l1_reuse_cutoff_fail
-// Needs: --unwindsetname g:0:3
-// RUN: --unwind 1 --unwindsetname g:0:3 --multi-property
-// MODE: FUTURE
+// RUN: --unwind 1 --multi-property
 // EXPECT: FAILED +\[g\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict FAILED

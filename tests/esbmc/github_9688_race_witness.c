@@ -19,8 +19,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness
-// Needs: --data-races-check --no-assertions
-// RUN: --data-races-check --no-assertions
-// MODE: FUTURE
+// Needs: --data-race-check --no-assertions
+// RUN: --data-race-check --no-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

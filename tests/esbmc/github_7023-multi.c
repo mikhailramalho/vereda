@@ -6,10 +6,9 @@ int main()
   __VERIFIER_assert(a + b == a + c); // A2
 }
 // Imported from ESBMC regression/esbmc/github_7023-multi
-// Needs: --result-only
-// RUN: --result-only --multi-property
+// RUN: --multi-property
 // MODE: FUTURE
 // EXPECT: ^ +PASSED .*line +5 +A1$
 // EXPECT: ^ +FAILED .*line +6 +A2$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED

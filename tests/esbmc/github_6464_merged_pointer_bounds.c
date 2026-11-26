@@ -35,8 +35,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6464_merged_pointer_bounds
-// Needs: --no-propagation
-// RUN: --no-propagation
-// MODE: FUTURE
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

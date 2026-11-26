@@ -7,10 +7,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-blank-desc
-// Needs: --result-only
-// RUN: --result-only
+// RUN:
 // MODE: FUTURE
 // EXPECT: ^  PASSED +\[main\.assertion\.1\]  line 5[^\t\n]*$
 // EXPECT: ^  FAILED +\[main\.assertion\.2\]  line 6  P2$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED
