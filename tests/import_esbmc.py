@@ -657,7 +657,9 @@ ESBMC_ONLY = [
      re.compile(r"--(?:clang-c-irep2-adjust(?:-only|-writeback-all)?|irep2-bodies|no-irep2-native-body|old-frontend)\b"), None, False),
     ("Lean exporter", re.compile(r"--goto2lean\b"), None, False),
     ("transition-system engine", re.compile(r"--ts-(?:bmc|pdr|check|no-fallback|push-pop|dump|fresh-solver)\b"), None, False),
-    ("experimental solver wrappers", re.compile(r"--(?:bitwuzllob|neurosym)(?:-\w+)*\b"), None, False),
+    ("experimental solver wrappers",
+     re.compile(r"--(?:(?:bitwuzllob|neurosym)(?:-\w+)*|smtlib-oneshot(?:-model)?-prog)\b"),
+     None, False),
     ("CHERI pointer semantics", re.compile(r"--cheri\b"), None, False),
     ("function contracts",
      re.compile(r"--(enforce-contract|replace-call-with-contract"
