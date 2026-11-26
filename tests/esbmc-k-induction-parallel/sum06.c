@@ -16,7 +16,7 @@ int main()
   assert(sn == n * a || sn == 0);
 }
 // Imported from ESBMC regression/k-induction-parallel/sum06
-// Needs: --k-induction-parallel --std=gnu89
+// Needs: --k-induction-parallel
 // RUN: --k-induction-parallel --std=gnu89
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

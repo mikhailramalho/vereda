@@ -17,7 +17,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/k-induction/count_down_02
-// Needs: --k-induction --std=gnu89
+// Needs: --k-induction
 // RUN: --k-induction --std=gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -44,8 +44,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/github_9352
-// Needs: --std c11
 // RUN: --std c11
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

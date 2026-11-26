@@ -12,7 +12,7 @@ void f(int a)
 {
 }
 // Imported from ESBMC regression/esbmc/interval_call_arity_mismatch
-// Needs: --std c17 --interval-analysis
+// Needs: --interval-analysis
 // RUN: --std c17 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

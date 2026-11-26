@@ -10,7 +10,7 @@ int main(void)
   __VERIFIER_assert(flag.value == 0); // a volatile assertion reads a fresh value
 }
 // Imported from ESBMC regression/esbmc/volatile_assert_read_fail
-// Needs: --std c11 --volatile-check
+// Needs: --volatile-check
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

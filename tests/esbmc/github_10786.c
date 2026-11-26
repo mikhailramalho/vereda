@@ -6,10 +6,9 @@ int main()
   sizeof(int[0 & 0 / 0]);
 }
 // Imported from ESBMC regression/esbmc/github_10786
-// Needs: --std c11
 // RUN: --std c11 --multi-property
 // MODE: FUTURE
 // EXPECT: \[main\.division-by-zero\.1\]  line 5  division by zero$
 // EXPECT: \[main\.division-by-zero\.2\]  line 6  division by zero$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

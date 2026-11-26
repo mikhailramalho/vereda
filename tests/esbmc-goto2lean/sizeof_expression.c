@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/goto2lean/sizeof_expression
-// Needs: --goto2lean --std c23
+// Needs: --goto2lean
 // RUN: --goto2lean --std c23
 // MODE: FUTURE
 // EXPECT: ^  let s := \(4#64\);$

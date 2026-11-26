@@ -55,8 +55,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7466
-// Needs: --std gnu17
 // RUN: --std gnu17
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

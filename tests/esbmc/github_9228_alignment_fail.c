@@ -11,8 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9228_alignment_fail
-// Needs: --std c11
-// RUN: --std c11 --64
-// MODE: FUTURE
+// RUN: --std c11 -m64
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

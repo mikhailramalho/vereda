@@ -10,7 +10,7 @@ int main(void)
   __VERIFIER_assert(first == second); // volatile conditional reads may differ
 }
 // Imported from ESBMC regression/esbmc/volatile_conditional_read_fail
-// Needs: --std c11 --volatile-check
+// Needs: --volatile-check
 // RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
