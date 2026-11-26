@@ -686,6 +686,12 @@ SKIPPED_TESTS = {
     "z3/github_10316_fail": "rounds ties away from zero, which C cannot set",
 }
 
+# Imported tests kept with local edits (such as smaller bounds) so a rerun
+# skips them without overwriting or deleting the checked-in copy.
+PRESERVED_TESTS = {
+    "cstd/scanf-false-3": "uses --max-k-step 3 locally so it does not spend ~45 s reaching bound 50",
+}
+
 
 # Tests Vereda gets wrong in a way to fix, by ESBMC path: they are imported
 # as KNOWNBUG, with the reason.
@@ -739,6 +745,8 @@ def import_test(src, dest, origin, tracked):
         return "unreadable flags"
     if any(outside(src, p) for p in paths):
         return "files outside the test"
+    if origin in PRESERVED_TESTS:
+        return PRESERVED_TESTS[origin]
     regexes = expectations(lines[3:], src, args)
     reason = SKIPPED_TESTS.get(origin) or esbmc_only(src, args)
     if output_mode(args) and not any(run.EXPECTED.fullmatch(r) for r in regexes):
