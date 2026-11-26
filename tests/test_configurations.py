@@ -22,6 +22,10 @@ with open(os.environ["CONFIG_TEST_LOG"], "a") as log:
     log.write(json.dumps(dict(args=sys.argv[1:], cwd=os.getcwd())) + "\\n")
 if "--slow" in sys.argv:
     time.sleep(2)
+if "--oom-verdict" in sys.argv:
+    print("VERIFICATION SUCCESSFUL")
+    print("out of memory")
+    sys.exit(6)
 if "--oom" in sys.argv:
     print("out of memory")
     sys.exit(6)
@@ -68,6 +72,53 @@ class Configurations(unittest.TestCase):
         self.assertEqual(desc["EXPECT"], ["shared"])
         self.assertEqual(run.split_run("suite/file.with.dots@run12"),
                          ("suite/file.with.dots", 12))
+
+    def test_stats_wall_stops_before_output_analysis(self):
+        self.test.write_text("// EXPECT: ^VERIFICATION SUCCESSFUL$\n")
+        output = "VERIFICATION SUCCESSFUL\n"
+        clock = [100.0]
+
+        def execute(*args):
+            clock[0] += 2.0
+            return output
+
+        def memory_check(out):
+            clock[0] += 10.0
+            return False
+
+        argv = [run.__file__, "--vereda", "unused", "--bin", "unused",
+                "--clang", "unused", "--memory-limit", "4096", str(self.test)]
+        with patch.object(sys, "argv", argv), \
+             patch.object(run, "execute", side_effect=execute), \
+             patch.object(run.time, "monotonic", side_effect=lambda: clock[0]), \
+             patch.object(run, "out_of_memory", side_effect=memory_check), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(run.main(), 0)
+        stat = json.loads((self.stats / "suite__sample.json").read_text())
+        self.assertEqual(stat["wall"], 2.0)
+        self.assertEqual(stat["verdict"], "SUCCESSFUL")
+
+    def test_memory_error_overrides_printed_verdict(self):
+        self.test.write_text("// RUN: --oom-verdict\n// EXPECT: ^VERIFICATION SUCCESSFUL$\n")
+        result = self.execute("--memory-limit", "4096")
+        self.assertEqual(result.returncode, run.OUT_OF_MEMORY, result.stdout + result.stderr)
+        stat = json.loads((self.stats / "suite__sample.json").read_text())
+        self.assertEqual(stat["verdict"], "MEMOUT")
+
+    def test_near_memory_limit_retains_verdict_prefix_rules(self):
+        self.test.write_text("// EXPECT: tail\n")
+        argv = [run.__file__, "--vereda", "unused", "--bin", "unused",
+                "--clang", "unused", "--memory-limit", "4096", str(self.test)]
+        for prefix, status in (("", 0), ("prefix\n", 0),
+                               ("prefix ", run.OUT_OF_MEMORY), ("\r", run.OUT_OF_MEMORY)):
+            # The memory heuristic accepts any anchored VERIFICATION prefix,
+            # even when the status is malformed and verdict_of returns none.
+            with self.subTest(prefix=prefix), patch.object(sys, "argv", argv), \
+                 patch.object(run, "execute", return_value=prefix + "VERIFICATION INVALID\ntail\n"), \
+                 patch.object(run.resource, "getrusage") as usage, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                usage.return_value.ru_maxrss = 4096 << 10
+                self.assertEqual(run.main(), status)
 
     def test_all_runs_have_independent_commands_stats_and_cwd(self):
         self.test.write_text("// RUN:\n// RUN: --incremental-solver\n"
