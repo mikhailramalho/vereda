@@ -865,7 +865,7 @@ static bool writtenBeforeRead(AllocaInst *a, const DominatorTree &dt) {
   });
 }
 
-static void nondetLocals(Module &m) {
+static void nondetLocals(Module &m, bool uninitCheck) {
   DenseMap<Type *, FunctionCallee> nondet;
   Function *opaque = cast<Function>(
       m.getOrInsertFunction("__vereda_uninitialised",
@@ -896,7 +896,7 @@ static void nondetLocals(Module &m) {
     for (AllocaInst *a : locals) {
       IRBuilder<> b(a->getNextNode());
       b.SetCurrentDebugLocation(DebugLoc()); // no source line: not a store to show
-      if (!a->isStaticAlloca()) {
+      if (uninitCheck || !a->isStaticAlloca()) {
         markUninitialised(b, a);
         continue;
       }
@@ -1511,7 +1511,8 @@ static void threadBoolPhis(Module &m) {
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
-                                       bool floatCastOverflowCheck, bool alignmentCheck) {
+                                       bool floatCastOverflowCheck, bool alignmentCheck,
+                                       bool uninitCheck) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1529,7 +1530,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   lowerRustMain(*module);
   if (alignmentCheck)
     checkAlignments(*module);
-  nondetLocals(*module);
+  nondetLocals(*module, uninitCheck);
   lowerLongjmp(*module);
   if (divByZeroCheck)
     checkDivisors(*module);

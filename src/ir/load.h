@@ -18,12 +18,14 @@ namespace vereda::ir {
 // With countZeroCheck, checks poison-on-zero count intrinsics before optimisation.
 // With floatCastOverflowCheck, checks out-of-range fptosi/fptoui before optimisation.
 // With alignmentCheck, preserves typed memory alignment checks before InstCombine.
+// With uninitCheck, keeps uninitialised locals in memory for read checking.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
                                                    llvm::StringRef entry = "",
                                                    bool divByZeroCheck = true,
                                                    bool countZeroCheck = false,
                                                    bool floatCastOverflowCheck = false,
-                                                   bool alignmentCheck = false);
+                                                   bool alignmentCheck = false,
+                                                   bool uninitCheck = false);
 
 } // namespace vereda::ir

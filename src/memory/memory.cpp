@@ -24,8 +24,8 @@ static unsigned storeBits(const DataLayout &dl, Type *ty) {
   return 8 * dl.getTypeStoreSize(ty).getFixedValue();
 }
 
-Memory::Memory(encode::Terms &t, const DataLayout &dl)
-    : t(t), s(t.solver()), dl(dl), ptrBits(dl.getPointerSizeInBits(0)) {
+Memory::Memory(encode::Terms &t, const DataLayout &dl, bool trackInit)
+    : t(t), s(t.solver()), dl(dl), ptrBits(dl.getPointerSizeInBits(0)), trackInit(trackInit) {
   if (dl.isBigEndian())
     throw Unsupported("big-endian targets");
   objects.push_back({t.bv(0, ptrBits), t.bv(0, ptrBits), t.boolean(true), 0, false, true});
@@ -302,8 +302,199 @@ Term Memory::fromAddress(Term a, unsigned &budget) {
 State Memory::initial() {
   SMTSortRef index = pointerSort();
   std::string n = std::to_string(fresh++);
-  return {t.symbol("memory#" + n, s.mkArraySort(index, s.mkBVSort(8))),
-          t.constArray(index, t.bv(IntProvenance, ObjBits))};
+  State st{t.symbol("memory#" + n, s.mkArraySort(index, s.mkBVSort(8))),
+           t.constArray(index, t.bv(IntProvenance, ObjBits))};
+  if (trackInit)
+    st.init = t.constArray(index, t.boolean(true));
+  return st;
+}
+
+void Memory::markInitialisedObject(State &st, uint64_t o) {
+  if (!trackInit)
+    return;
+  st.knownInit.eraseObject(o);
+  st.initFlushed.eraseObject(o);
+  st.objInit.set({o, 0}, t.boolean(true));
+}
+
+void Memory::markUninitialised(State &st, Term p) {
+  if (!trackInit)
+    return;
+  if (std::optional<Key> k = key(p)) {
+    st.knownInit.eraseObject(k->first);
+    st.initFlushed.eraseObject(k->first);
+    st.objInit.set({k->first, 0}, t.boolean(false));
+  }
+}
+
+void Memory::markInitialised(State &st, Term p) {
+  if (!trackInit)
+    return;
+  if (std::optional<Key> k = key(p))
+    markInitialisedObject(st, k->first);
+}
+
+void Memory::flushInitObject(State &st, uint64_t o) {
+  if (!st.initFlushed.find({o, 0})) {
+    if (const Term *def = st.objInit.find({o, 0})) {
+      Term prev = st.init, val = *def, objId = t.bv(o, ObjBits);
+      st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
+                         "init#" + std::to_string(fresh++),
+                         [this, objId, val, prev](const Term &j) {
+                           return t.ite(t.eq(object(j), objId), val, t.select(prev, j));
+                         });
+    }
+    st.objInit.eraseObject(o);
+    st.initFlushed.set({o, 0}, true);
+  }
+  st.knownInit.forObject(o, [&](Key k, const Term &v) {
+    st.init = t.store(st.init, ptr(k), v);
+  });
+  st.knownInit.eraseObject(o);
+}
+
+void Memory::flushInitFor(State &st, Term p) {
+  if (const APInt *obj = t.constant(object(p))) {
+    flushInitObject(st, obj->getZExtValue());
+    return;
+  }
+  std::set<uint64_t> objs;
+  st.objInit.forEach([&](Key k, const Term &) { objs.insert(k.first); });
+  st.knownInit.forEach([&](Key k, const Term &) { objs.insert(k.first); });
+  for (uint64_t o : objs)
+    flushInitObject(st, o);
+}
+
+Term Memory::readInitByte(State &st, Term p) {
+  if (!trackInit)
+    return t.boolean(true);
+  if (std::optional<Key> k = key(p)) {
+    if (const Term *v = st.knownInit.find(*k))
+      return *v;
+    if (!st.initFlushed.find({k->first, 0})) {
+      if (const Term *def = st.objInit.find({k->first, 0}))
+        return *def;
+      return t.boolean(true);
+    }
+    return t.select(st.init, p);
+  }
+  flushInitFor(st, p);
+  return t.select(st.init, p);
+}
+
+void Memory::writeInitBytes(State &st, Term p, uint64_t n, Term val) {
+  if (!trackInit || !n)
+    return;
+  if (std::optional<Key> k = key(p)) {
+    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+    for (uint64_t i = 0; i < n; ++i)
+      st.knownInit.set({k->first, (k->second + i) & mask}, val);
+    return;
+  }
+  flushInitFor(st, p);
+  for (uint64_t i = 0; i < n; ++i)
+    st.init = t.store(st.init, bytePtr(p, i), val);
+}
+
+void Memory::writeInitRange(State &st, Term p, uint64_t n, Term val) {
+  if (!trackInit || !n)
+    return;
+  if (std::optional<Key> k = key(p); k && k->second == 0 && k->first < objects.size())
+    if (const APInt *sz = t.constant(objects[k->first].size); sz && *sz == n && t.isTrue(val)) {
+      markInitialisedObject(st, k->first);
+      return;
+    }
+  if (n <= MaxBytes) {
+    writeInitBytes(st, p, n, val);
+    return;
+  }
+  flushInitFor(st, p);
+  Term prev = st.init, obj = object(p), off = offset(p), len = t.bv(n, ptrBits);
+  st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
+                     "init#" + std::to_string(fresh++),
+                     [this, obj, off, len, val, prev](const Term &j) {
+                       Term in = t.land(t.eq(object(j), obj), t.ult(t.sub(offset(j), off), len));
+                       return t.ite(in, val, t.select(prev, j));
+                     });
+}
+
+void Memory::copyInitBytes(State &st, Term dst, Term src, uint64_t n) {
+  if (!trackInit || !n || dst == src)
+    return;
+  if (n <= MaxBytes) {
+    std::vector<Term> vals;
+    vals.reserve(n);
+    for (uint64_t i = 0; i < n; ++i)
+      vals.push_back(readInitByte(st, bytePtr(src, i)));
+    if (std::optional<Key> dk = key(dst)) {
+      uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+      for (uint64_t i = 0; i < n; ++i)
+        st.knownInit.set({dk->first, (dk->second + i) & mask}, vals[i]);
+    } else {
+      flushInitFor(st, dst);
+      for (uint64_t i = 0; i < n; ++i)
+        st.init = t.store(st.init, bytePtr(dst, i), vals[i]);
+    }
+    return;
+  }
+  flushInitFor(st, src);
+  flushInitFor(st, dst);
+  Term prev = st.init, dObj = object(dst), dOff = offset(dst), len = t.bv(n, ptrBits);
+  st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
+                     "init#" + std::to_string(fresh++),
+                     [this, dObj, dOff, src, len, prev](const Term &j) {
+                       Term d = t.sub(offset(j), dOff);
+                       Term in = t.land(t.eq(object(j), dObj), t.ult(d, len));
+                       return t.ite(in, t.select(prev, advance(src, d)), t.select(prev, j));
+                     });
+}
+
+Term Memory::isInitialised(State &st, Term p, uint64_t n) {
+  if (!trackInit || !n)
+    return t.boolean(true);
+  Term ok = t.boolean(true);
+  for (uint64_t i = 0; i < n; ++i) {
+    ok = t.land(ok, readInitByte(st, bytePtr(p, i)));
+    if (t.isFalse(ok))
+      return ok;
+  }
+  return ok;
+}
+
+void Memory::mergeInit(Term c, const State &a0, const State &b0, State &out) {
+  if (!trackInit)
+    return;
+  if (a0.init == b0.init && a0.knownInit.same(b0.knownInit) &&
+      a0.objInit.same(b0.objInit) && a0.initFlushed.same(b0.initFlushed)) {
+    out.init = a0.init;
+    out.knownInit = a0.knownInit;
+    out.objInit = a0.objInit;
+    out.initFlushed = a0.initFlushed;
+    return;
+  }
+  State a = a0, b = b0;
+  std::set<uint64_t> syncFlush;
+  Trie<bool>::diff(a.initFlushed, b.initFlushed, [&](Key k, const bool *, const bool *) {
+    syncFlush.insert(k.first);
+  });
+  for (uint64_t o : syncFlush) {
+    flushInitObject(a, o);
+    flushInitObject(b, o);
+  }
+  out.init = t.ite(c, a.init, b.init);
+  out.initFlushed = a.initFlushed;
+  out.objInit = a.objInit;
+  Trie<Term>::diff(a.objInit, b.objInit, [&](Key k, const Term *x, const Term *y) {
+    Term xa = x ? *x : t.boolean(true);
+    Term yb = y ? *y : t.boolean(true);
+    out.objInit.set(k, t.ite(c, xa, yb));
+  });
+  out.knownInit = a.knownInit;
+  Trie<Term>::diff(a.knownInit, b.knownInit, [&](Key k, const Term *x, const Term *y) {
+    Term xa = x ? *x : readInitByte(a, ptr(k));
+    Term yb = y ? *y : readInitByte(b, ptr(k));
+    out.knownInit.set(k, t.ite(c, xa, yb));
+  });
 }
 
 // Past this many known bytes in a state, all go to the arrays. 1 MiB keeps
@@ -921,9 +1112,12 @@ void Memory::writeByte(State &st, Term at, const State::Cell &c) {
 }
 
 State Memory::ite(Term c, const State &a0, const State &b0) {
-  if (a0.known.same(b0.known))
-    return {t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
+  if (a0.known.same(b0.known)) {
+    State r{t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
             mergeSeparate(c, a0, b0)};
+    mergeInit(c, a0, b0, r);
+    return r;
+  }
   // An object whose bytes would become a choice between two values that
   // multiply or divide goes to the arrays on both sides instead. There the
   // solver bit-blasts a stored value only where a read needs it; as a choice,
@@ -962,6 +1156,7 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
                       t.ite(c, xy.first.prov, xy.second.prov)});
   State r{t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov), std::move(known),
           mergeSeparate(c, a, b)};
+  mergeInit(c, a, b, r);
   if (r.known.size() > MaxKnown)
     flush(r);
   return r;
@@ -987,6 +1182,8 @@ void Memory::storeBytes(State &st, Term p, Term bits, Term prov) {
 }
 
 void Memory::store(State &st, Term p, Term v, Type *ty) {
+  if (trackInit)
+    writeInitBytes(st, p, storeBits(dl, ty) / 8, t.boolean(true));
   Term mapped = fieldPointer(p, storeBits(dl, ty) / 8);
   if (mapped == p && !initialising)
     if (const APInt *id = t.constant(object(p)); id && fieldStorage.count(id->getZExtValue()))
@@ -1158,6 +1355,8 @@ void Memory::fill(State &st, Term p, Term byte) {
 }
 
 void Memory::fill(State &st, uint64_t o, Term byte) {
+  if (trackInit)
+    markInitialisedObject(st, o);
   if (auto it = fieldStorage.find(o); it != fieldStorage.end())
     for (const FieldStorage &field : it->second.fields)
       fill(st, field.object, byte);
@@ -1473,6 +1672,8 @@ void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
     return;
   const APInt *size = t.constant(objects[o].size);
   if (n && !(k && k->second == 0 && size && *size == *n)) { // part of the object
+    if (trackInit)
+      writeInitRange(st, p, *n, t.boolean(true));
     if (havocRange(st, o, p, *n))
       return;
     if (*n > MaxBytes)
@@ -1487,6 +1688,8 @@ void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
 }
 
 void Memory::havocObject(State &st, uint64_t o, Term prov) {
+  if (trackInit)
+    markInitialisedObject(st, o);
   if (auto it = fieldStorage.find(o); it != fieldStorage.end())
     for (const FieldStorage &field : it->second.fields)
       havocObject(st, field.object, prov);
@@ -1597,6 +1800,8 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
 }
 
 void Memory::set(State &st, Term p, Term byte, uint64_t n) {
+  if (trackInit)
+    writeInitRange(st, p, n, t.boolean(true));
   if (fillObject(st, p, byte, n) || fillRange(st, p, byte, n))
     return;
   if (n > MaxBytes)
@@ -1838,6 +2043,8 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n, bool backing) 
 void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   if (!n || dst == src)
     return;
+  if (trackInit)
+    copyInitBytes(st, dst, src, n);
   auto d = key(dst), s = key(src);
   if (d && s && d->second == 0 && s->second == 0) {
     auto to = fieldStorage.find(d->first), from = fieldStorage.find(s->first);
