@@ -28,7 +28,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_unlock_then_return_lock_order_fail
-// Needs: --data-races-check --no-assertions --lock-order-check
+// Needs: --data-races-check --lock-order-check
 // RUN: --data-races-check --no-assertions --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

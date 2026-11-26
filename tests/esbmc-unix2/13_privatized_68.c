@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc-unix2/13_privatized_68
 // Needs: --state-hashing --add-symex-value-sets --no-por
-// RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2  --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1
+// RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

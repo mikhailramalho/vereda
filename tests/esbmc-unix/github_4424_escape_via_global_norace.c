@@ -18,7 +18,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_via_global_norace
-// Needs: --sv-comp --state-hashing --add-symex-value-sets --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only --no-assertions
+// Needs: --sv-comp --state-hashing --add-symex-value-sets --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only
 // RUN: --32 --sv-comp --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --smt-symex-guard --cswitch-skip-readonly-globals --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

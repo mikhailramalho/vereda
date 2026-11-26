@@ -48,7 +48,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4975_atomic_write_race
-// Needs: --data-races-check-only --no-assertions --context-bound 2
+// Needs: --data-races-check-only --context-bound 2
 // RUN: --data-races-check-only --no-assertions --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

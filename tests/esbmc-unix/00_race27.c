@@ -30,7 +30,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_race27
-// Needs: --data-races-check --no-assertions --context-bound 4
+// Needs: --data-races-check --context-bound 4
 // RUN: --data-races-check --no-assertions --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -28,7 +28,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_unlock_then_return_deadlock_check_fail
-// Needs: --data-races-check --no-assertions --deadlock-check
+// Needs: --data-races-check --deadlock-check
 // RUN: --data-races-check --no-assertions --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

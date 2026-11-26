@@ -30,7 +30,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/github_8220_reused_thread_id_fail
-// Needs: --context-bound 3 --data-races-check-only --no-assertions
+// Needs: --context-bound 3 --data-races-check-only
 // RUN: --context-bound 3 --data-races-check-only --no-assertions --no-pointer-check --no-bounds-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

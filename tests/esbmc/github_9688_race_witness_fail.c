@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness_fail
-// Needs: --data-races-check --no-assertions --witness-output-yaml -
+// Needs: --data-races-check --witness-output-yaml -
 // RUN: --data-races-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

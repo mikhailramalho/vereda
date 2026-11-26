@@ -8,6 +8,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/simplifier-modulus-fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_no_assertions
-// Needs: --dead-code-check --no-assertions
+// Needs: --dead-code-check
 // RUN: --dead-code-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --no-assertions$

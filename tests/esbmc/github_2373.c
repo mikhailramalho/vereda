@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2373
-// Needs: --force-realloc-success --state-hashing --add-symex-value-sets --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2  --unlimited-k-steps --no-vla-size-check --32 --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --unwind 10 --no-unwinding-assertions
+// Needs: --force-realloc-success --state-hashing --add-symex-value-sets --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
+// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --unwind 10 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

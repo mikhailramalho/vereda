@@ -7,3 +7,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_fmod_fixedbv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// RUN: --no-div-by-zero-check

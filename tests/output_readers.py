@@ -4,6 +4,11 @@ import re
 import import_esbmc
 import run
 
+assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
+    ["--no-assertions", "--no-div-by-zero-check"], [], [])
+for flag in ("--memory-leak-check", "--data-races-check", "--deadlock-check"):
+    assert import_esbmc.translate(flag, ".") == ([], [], [flag])
+
 for walk_tag, solve_tag in (("", ""), ("", "[PROGRESS] "), ("[INFO] ", "[INFO] ")):
     output = (f"{walk_tag}Walk time: 0.125s (2 checks, 3 symbols, peak memory 40 MB)\n"
               f"{solve_tag}Solving time: 0.250s (peak memory 60 MB)\n")

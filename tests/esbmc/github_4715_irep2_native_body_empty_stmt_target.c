@@ -22,8 +22,5 @@ L:
   return 1;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_native_body_empty_stmt_target
-// Needs: --no-assertions
 // RUN: --unwind 2 --no-assertions
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

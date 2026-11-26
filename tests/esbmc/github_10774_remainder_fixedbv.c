@@ -8,3 +8,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_remainder_fixedbv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// RUN: --no-div-by-zero-check

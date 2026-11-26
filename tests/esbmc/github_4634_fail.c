@@ -26,7 +26,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4634_fail
-// Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions
+// Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
 // RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

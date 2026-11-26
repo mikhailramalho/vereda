@@ -14,8 +14,10 @@ namespace vereda::ir {
 // setjmp and longjmp become control flow. Then links in the library models
 // (models-<pointer bits>.bc in models, a directory; none when empty or
 // missing) for the functions the module still calls without defining.
+// With divByZeroCheck, preserves integer divisor checks before optimisation.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
-                                                   llvm::StringRef entry = "");
+                                                   llvm::StringRef entry = "",
+                                                   bool divByZeroCheck = true);
 
 } // namespace vereda::ir

@@ -26,7 +26,7 @@ int main(void)
   return x != 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6596_uninit_ptr_norace
-// Needs: --data-races-check-only --no-assertions
+// Needs: --data-races-check-only
 // RUN: --32 --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

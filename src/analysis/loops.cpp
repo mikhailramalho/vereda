@@ -47,6 +47,8 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (!f)
     return false;
   StringRef name = f->getName();
+  if (name == "__vereda_check_divisor")
+    return counted.divisors;
   if (f->isIntrinsic())
     return name.starts_with("llvm.ubsantrap") ? counted.traps : f->doesNotAccessMemory();
   if (name == "reach_error" && counted.reachError)

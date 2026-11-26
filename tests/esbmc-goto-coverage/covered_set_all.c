@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/goto-coverage/covered_set_all
-// Needs: --branch-coverage-claims --no-assertions --coverage-covered-set covered.json SEED_FILE covered.json {"version":1,"covered":[{"cond":"unrelated","loc":"unrelated"}]} CHECK_JSON covered.json $.version == 1 CHECK_FILE covered.json contains unrelated CHECK_FILE covered.json contains covered_set_all\.c
+// Needs: --branch-coverage-claims --coverage-covered-set covered.json SEED_FILE covered.json {"version":1,"covered":[{"cond":"unrelated","loc":"unrelated"}]} CHECK_JSON covered.json $.version == 1 CHECK_FILE covered.json contains unrelated CHECK_FILE covered.json contains main.c
 // RUN: --branch-coverage-claims --no-assertions --coverage-covered-set covered.json
 // MODE: FUTURE
 // EXPECT: ^Branches : 2$

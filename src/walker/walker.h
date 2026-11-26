@@ -41,6 +41,7 @@ struct Options {
   bool pointerCheck = true;
   // Report stack objects above PTRDIFF_MAX, unless --no-vla-size-check.
   bool vlaSizeCheck = true;
+  bool assertions = true; // user assertions, independent of unwinding and pointer checks
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

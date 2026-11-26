@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8220_reused_thread_race_safe
-// Needs: --sv-comp --data-races-check-only --no-assertions --context-bound 2 --timeout 60s
+// Needs: --sv-comp --data-races-check-only --context-bound 2 --timeout 60s
 // RUN: --sv-comp --z3 --data-races-check-only --no-assertions --no-pointer-check --no-bounds-check --context-bound 2 --timeout 60s
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
