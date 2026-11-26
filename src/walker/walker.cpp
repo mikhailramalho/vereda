@@ -1691,8 +1691,24 @@ private:
         if (Term term = enc.bound(&inst))
           saved.push_back({&inst, term});
     }
-    for (Argument &arg : callee.args())
-      enc.bind(&arg, actuals[arg.getArgNo()]);
+    const DataLayout &dl = mem.layout();
+    for (Argument &arg : callee.args()) {
+      unsigned i = arg.getArgNo();
+      Term val = actuals[i];
+      if (Type *byValTy = c.getParamByValType(i) ? c.getParamByValType(i)
+                                                 : arg.getParamByValType()) {
+        uint64_t size = dl.getTypeAllocSize(byValTy).getFixedValue();
+        uint64_t align = dl.getABITypeAlign(byValTy).value();
+        if (MaybeAlign a = c.getParamAlign(i))
+          align = std::max(align, a->value());
+        if (MaybeAlign a = arg.getParamAlign())
+          align = std::max(align, a->value());
+        Term copy = mem.allocate(t.bv(size, mem.pointerBits()), align, guard, exposed(&arg));
+        mem.copy(st, copy, val, size);
+        val = copy;
+      }
+      enc.bind(&arg, val);
+    }
 
     const CallBase *outerReachError = reachError;
     if (callee.getName() == "reach_error")
