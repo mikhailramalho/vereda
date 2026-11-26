@@ -1,8 +1,7 @@
-// Soundness: an outer loop whose body truncated an inner loop at bound k must
-// NOT be checkpointed, otherwise later bounds would reuse truncated inner-loop
-// exits from iteration 0 and miss bugs requiring more inner iterations.
+// Resume the first truncated inner loop, rather than an outer prefix containing
+// incomplete inner iterations, to find the bug requiring all 16 increments.
 // RUN: --no-summarize-array-loops --incremental-bmc --max-k-step 8
-// EXPECT-NOT: \[PROGRESS\] Resuming
+// EXPECT: \[PROGRESS\] Resuming main
 // EXPECT: ^VERIFICATION FAILED$
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);
