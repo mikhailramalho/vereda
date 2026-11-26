@@ -149,3 +149,42 @@ int main(void) {
 ''')
     check(command + [str(source), flag, "--property", "unreach-call"], 1, "VERIFICATION FAILED")
     check(command + [str(source), flag, "--property", "no-overflow"], 0, "VERIFICATION SUCCESSFUL")
+
+    # 7. Atomic read-modify-write and compare-exchange must check initialisation before updating.
+    source.write_text('''
+#include <stdatomic.h>
+int main(void) {
+  _Atomic int x;
+  return atomic_fetch_add(&x, 1);
+}
+''')
+    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+
+    source.write_text('''
+#include <stdatomic.h>
+int main(void) {
+  _Atomic int x;
+  int expected = 0;
+  return atomic_compare_exchange_strong(&x, &expected, 1);
+}
+''')
+    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+
+    # 8. Whole-object memset after a symbolic store must overwrite stale uninit flags in st.init.
+    source.write_text('''
+#include <stdlib.h>
+#include <string.h>
+extern unsigned __VERIFIER_nondet_uint(void);
+extern void __VERIFIER_assume(int);
+int main(void) {
+  unsigned i = __VERIFIER_nondet_uint();
+  __VERIFIER_assume(i < 1024);
+  int *p = malloc(1024 * sizeof(int));
+  p[i] = 1;
+  memset(p, 0, 1024 * sizeof(int));
+  int v = p[(i + 1) % 1024];
+  free(p);
+  return v;
+}
+''')
+    check(command + [str(source), flag, "--force-malloc-success"], 0, "VERIFICATION SUCCESSFUL")

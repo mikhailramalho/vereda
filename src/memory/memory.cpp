@@ -336,7 +336,7 @@ void Memory::markInitialised(State &st, Term p) {
 
 void Memory::flushInitObject(State &st, uint64_t o) {
   if (!st.initFlushed.find({o, 0})) {
-    if (const Term *def = st.objInit.find({o, 0}); def && !t.isTrue(*def)) {
+    if (const Term *def = st.objInit.find({o, 0})) {
       Term prev = st.init, val = *def, objId = t.bv(o, ObjBits);
       st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
                          "init#" + std::to_string(fresh++),

@@ -391,6 +391,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      !noVLASizeCheck,
                                                      !noAssertions,
                                                      multiProperty,
+                                                     checkUninit,
                                                      boundedLimit};
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
