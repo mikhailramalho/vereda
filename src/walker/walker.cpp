@@ -1452,16 +1452,28 @@ private:
                   checks::Property::CountZero);
       return t.boolean(false);
     }
-    if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero") {
+    if (name == "__ubsan_handle_float_cast_overflow_abort") {
+      if (counts(false))
+        assertion(c, guard, "float cast overflow", "", nullptr,
+                  checks::Property::FloatCastOverflow);
+      return t.boolean(false);
+    }
+    if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero" ||
+        name == "__vereda_check_float_cast_overflow") {
       Term holds = enc.isTrue(c.getArgOperand(0));
       if (t.isTrue(holds))
         return guard;
+      bool isDiv = name == "__vereda_check_divisor";
+      bool isCount = name == "__vereda_check_count_zero";
       if (counts(false))
         assertion(c, t.land(guard, t.lnot(holds)),
-                  name == "__vereda_check_divisor" ? "division by zero"
-                                                  : "__builtin_clz/ctz of zero is undefined",
-                  "", nullptr, name == "__vereda_check_divisor"
-                                   ? checks::Property::DivisionByZero : checks::Property::CountZero);
+                  isDiv ? "division by zero"
+                        : isCount ? "__builtin_clz/ctz of zero is undefined"
+                                  : "float cast overflow",
+                  "", nullptr,
+                  isDiv ? checks::Property::DivisionByZero
+                        : isCount ? checks::Property::CountZero
+                                  : checks::Property::FloatCastOverflow);
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }

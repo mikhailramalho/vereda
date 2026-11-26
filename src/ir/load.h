@@ -16,10 +16,12 @@ namespace vereda::ir {
 // missing) for the functions the module still calls without defining.
 // With divByZeroCheck, preserves integer divisor checks before optimisation.
 // With countZeroCheck, checks poison-on-zero count intrinsics before optimisation.
+// With floatCastOverflowCheck, checks out-of-range fptosi/fptoui before optimisation.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
                                                    llvm::StringRef entry = "",
                                                    bool divByZeroCheck = true,
-                                                   bool countZeroCheck = false);
+                                                   bool countZeroCheck = false,
+                                                   bool floatCastOverflowCheck = false);
 
 } // namespace vereda::ir

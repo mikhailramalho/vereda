@@ -59,6 +59,9 @@ static cl::opt<bool> noDivByZeroCheck(
     "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
 static cl::opt<bool> ubCountZeroCheck(
     "ub-count-zero-check", cl::desc("Check undefined zero arguments to count-leading/trailing-zeros"));
+static cl::opt<bool> ubFloatCastOverflowCheck(
+    "ub-float-cast-overflow-check",
+    cl::desc("Check out-of-range floating-point to integer conversions"));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
 static cl::opt<bool> dataRaceCheck(
@@ -504,7 +507,8 @@ int main(int argc, char **argv) {
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck,
-                      ubCountZeroCheck && property == Property::All);
+                       ubCountZeroCheck && property == Property::All,
+                       ubFloatCastOverflowCheck && property == Property::All);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
