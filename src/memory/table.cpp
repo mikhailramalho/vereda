@@ -1,5 +1,6 @@
 #include "memory/table.h"
 #include <algorithm>
+#include <bit>
 #include <optional>
 #include <vector>
 
@@ -94,6 +95,33 @@ Terms::Def periodic(Terms &t, std::span<const Term> values) {
         Term k = t.extract(j, bits - 1, 0), r = pattern[0];
         for (size_t i = 1; i < pattern.size(); ++i)
           r = t.ite(t.eq(k, t.bv(i, bits)), pattern[i], r);
+        return r;
+      };
+    }
+  }
+  // Non-power-of-two periods need unsigned remainder; reserve it for large,
+  // repeated tables and keep its operand no wider than the table index needs.
+  if (values.size() >= 128) {
+    unsigned indexBits = std::bit_width(values.size() - 1);
+    for (size_t period = 3; period <= 16 && 2 * period <= values.size(); ++period) {
+      if ((period & (period - 1)) == 0)
+        continue;
+      bool matches = true;
+      for (size_t i = period; i < values.size(); ++i)
+        if (values[i] != values[i % period]) {
+          matches = false;
+          break;
+        }
+      if (!matches)
+        continue;
+      return [&t, period, indexBits,
+              pattern = std::vector<Term>(values.begin(), values.begin() + period)](
+                 const Term &j) {
+        Term index = resized(t, j, indexBits);
+        Term k = t.urem(index, t.bv(APInt(indexBits, period)));
+        Term r = pattern[0];
+        for (size_t i = 1; i < pattern.size(); ++i)
+          r = t.ite(t.eq(k, t.bv(i, indexBits)), pattern[i], r);
         return r;
       };
     }

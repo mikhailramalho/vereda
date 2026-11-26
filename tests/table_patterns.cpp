@@ -63,13 +63,13 @@ int main() {
     values.back() = t.add(values.back(), t.bv(1, w));
     assert(!vereda::memory::tableFunction(t, values));
 
-    for (unsigned period : {2u, 4u, 8u}) {
+    for (unsigned period = 2; period <= 15; ++period) {
       std::vector<Term> pattern;
       for (unsigned i = 0; i < period; ++i)
         pattern.push_back(t.symbol("p" + std::to_string(w) + "_" + std::to_string(i),
                                    (*solver)->mkBVSort(w)));
       values.clear();
-      for (unsigned i = 0; i < 256; ++i)
+      for (unsigned i = 0; i < 257; ++i)
         values.push_back(pattern[i % period]);
       verify(t, values);
       values.back() = y;
