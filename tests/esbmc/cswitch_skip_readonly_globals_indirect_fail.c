@@ -44,8 +44,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals_indirect_fail
-// Needs: --context-bound 6 --no-por --cswitch-skip-readonly-globals
-// RUN: --context-bound 6 --no-por --cswitch-skip-readonly-globals
-// MODE: FUTURE
+// Needs: --context-bound 6 --no-por
+// RUN: --context-bound 6 --no-por
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

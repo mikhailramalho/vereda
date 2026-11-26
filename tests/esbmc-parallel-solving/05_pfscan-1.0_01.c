@@ -5905,8 +5905,7 @@ int main(int argc, char *argv[])
     return n_matches;
 }
 // Imported from ESBMC regression/parallel-solving/05_pfscan-1.0_01
-// Needs: --parallel-solving
-// RUN: --incremental-bmc --parallel-solving
+// RUN: --incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$ .*
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

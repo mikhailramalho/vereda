@@ -15,8 +15,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/loop_unroll_incr_02_true
-// Needs: --goto-unwind --unlimited-goto-unwind
-// RUN: --incremental-bmc --goto-unwind --unlimited-goto-unwind
-// MODE: FUTURE
+// RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

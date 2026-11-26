@@ -31,9 +31,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/interleaving_count_no_por
-// Needs: --context-bound 3 --all-runs --no-por
-// RUN: --unwind 3 --context-bound 3 --all-runs --no-por
-// MODE: FUTURE
+// Needs: --context-bound 3 --no-por
+// RUN: --unwind 3 --context-bound 3 --no-por
 // EXPECT: ^Number of generated interleavings: 61$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

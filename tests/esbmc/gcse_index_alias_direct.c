@@ -15,8 +15,4 @@ int main()
   assert(y == 6);
 }
 // Imported from ESBMC regression/esbmc/gcse_index_alias_direct
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

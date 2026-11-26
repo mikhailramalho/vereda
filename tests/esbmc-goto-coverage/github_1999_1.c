@@ -16,8 +16,8 @@ int main()
     assert(0);
 }
 // Imported from ESBMC regression/goto-coverage/github_1999_1
-// Needs: --condition-coverage --verbosity coverage:10
-// RUN: --condition-coverage --verbosity coverage:10
+// Needs: --condition-coverage
+// RUN: --condition-coverage
 // MODE: FUTURE
 // EXPECT: ^Reached Conditions:  10
 // EXPECT: ^Short Circuited Conditions:  0

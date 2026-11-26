@@ -106,8 +106,8 @@ int *create_fresh_int_array(int size) {
 }
 // Imported from ESBMC regression/esbmc/github_1259_unroll-2-v1-fail
 // Needs: --memory-leak-check
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check -D'__builtin_unreachable()' --no-vla-size-check --32 --memory-leak-check --no-assertions --no-unwinding-assertions --unwind 1
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check -D'__builtin_unreachable()' --no-vla-size-check -m32 --memory-leak-check --no-assertions --no-unwinding-assertions --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bforgotten memory\b
+// MODE: FUTURE
 // Vereda: verdict none

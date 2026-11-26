@@ -7,8 +7,5 @@ int main()
   assert(resp==a+b);
 }
 // Imported from ESBMC regression/esbmc/github_485
-// Needs: --symbol-table-too
-// RUN: --overflow-check --symbol-table-too -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

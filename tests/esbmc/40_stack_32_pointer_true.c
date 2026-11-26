@@ -11,7 +11,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/40_stack_32_pointer_true
 // Needs: --stack-limit 96
-// RUN: --32 --stack-limit 96
-// MODE: FUTURE
+// RUN: -m32 --stack-limit 96
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

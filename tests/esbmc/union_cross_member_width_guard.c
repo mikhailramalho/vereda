@@ -16,8 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_cross_member_width_guard
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

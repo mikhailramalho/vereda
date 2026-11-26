@@ -7,8 +7,8 @@ int main() {
         return 0;
 }
 // Imported from ESBMC regression/esbmc/github_666-id
-// Needs: --no-slice-id c:no_slice.c@21@F@main@foo?1!0&0#3
-// RUN: --no-slice-id c:no_slice.c@21@F@main@foo?1!0&0#3
+// Needs: c:no_slice.c@21@F@main@foo?1!0&0#3
+// RUN: c:no_slice.c@21@F@main@foo?1!0&0#3
 // MODE: FUTURE
 // EXPECT: \bfoo = 15\b
 // EXPECT: ^VERIFICATION FAILED$

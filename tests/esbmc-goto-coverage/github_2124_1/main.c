@@ -731,8 +731,8 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 // Imported from ESBMC regression/goto-coverage/github_2124_1
-// Needs: --condition-coverage-claims --no-standard-check
-// RUN: --condition-coverage-claims --unwind 1 --function handleRunplanEvent --no-standard-check --no-simplify
+// Needs: --condition-coverage-claims --no-standard-checks
+// RUN: --condition-coverage-claims --unwind 1 --entry handleRunplanEvent --no-standard-checks --no-simplify
 // MODE: FUTURE
 // EXPECT: ^Total Conditions:  8
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE

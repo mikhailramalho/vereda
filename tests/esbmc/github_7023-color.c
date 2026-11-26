@@ -10,8 +10,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-color
-// Needs: --result-only --color always
-// RUN: --result-only --color always
+// Needs: always
+// RUN: always
 // MODE: FUTURE
 // EXPECT: ^  \x1b\[31mFAILED +\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$
 // EXPECT: ^  \x1b\[33mNOT CHECKED\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$

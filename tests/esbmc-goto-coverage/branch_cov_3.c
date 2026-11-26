@@ -24,11 +24,11 @@ int main()
 }
 
 // Imported from ESBMC regression/goto-coverage/branch_cov_3
-// Needs: --branch-function-coverage --goto-unwind --k-induction
-// RUN: --branch-function-coverage --goto-unwind --k-induction
-// MODE: FUTURE
+// Needs: --branch-function-coverage --k-induction
+// RUN: --branch-function-coverage --k-induction
 // EXPECT: ^Function Entry Points & Branches : 8
 // EXPECT: ^Reached : 5
 // EXPECT: ^Branch Coverage: 62.5%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// MODE: FUTURE
 // Vereda: verdict none

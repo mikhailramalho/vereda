@@ -14,9 +14,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_08_lowers_global
-// Needs: --unwindsetname compute_sum:0:3
 // RUN: --unwind 20 --unwindsetname compute_sum:0:3
-// MODE: FUTURE
 // EXPECT: ^  unwinding assertion loop \d+$
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none
+// Needs: --unwindsetname compute_sum:0:3

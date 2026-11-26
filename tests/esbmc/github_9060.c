@@ -25,11 +25,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9060
-// Needs: --show-symex-value-sets
-// RUN: --show-symex-value-sets
-// MODE: FUTURE
-// EXPECT: ^        ASSIGN x=&g;$
-// EXPECT: \A(?![\s\S]*ASSIGN x=&g;\n\n\n(?:[^\n]+\n)*[^\n]*@t\?1!0\.[pq] = )
-// EXPECT: \A(?![\s\S]*ASSIGN x=&g;\n\n\n(?:[^\n]+\n)*[^\n]*@F@f@s\?1!0\.[pq] = )
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

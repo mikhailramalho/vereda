@@ -7,8 +7,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_536_boolector
-// Needs: --smt-model --boolector
-// RUN: --smt-model --boolector -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// Needs: --smt-model
+// RUN: --smt-model -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -9,7 +9,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/40_stack_64_while_false
 // Needs: --k-induction --stack-limit 15
-// RUN: --64 --k-induction --stack-limit 15
-// MODE: FUTURE
+// RUN: -m64 --k-induction --stack-limit 15
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

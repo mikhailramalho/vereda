@@ -6,8 +6,8 @@ int main()
         pthread_join(0, 0);
 }
 // Imported from ESBMC regression/parallel-solving/pthread_join
-// Needs: --parallel-solving --k-induction
-// RUN: --parallel-solving --k-induction
+// Needs: --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

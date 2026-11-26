@@ -27,8 +27,8 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix/github_1456_fail
-// Needs: --data-races-check
-// RUN: --data-races-check
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --data-race-check
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

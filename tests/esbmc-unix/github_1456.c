@@ -26,8 +26,8 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1456
-// Needs: --data-races-check --smt-symex-guard --context-bound 4
-// RUN: --data-races-check --smt-symex-guard --context-bound 4
-// MODE: FUTURE
+// Needs: --data-race-check --context-bound 4
+// RUN: --data-race-check --context-bound 4
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

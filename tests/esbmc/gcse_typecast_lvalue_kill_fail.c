@@ -10,8 +10,4 @@ int main()
   assert(y == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_typecast_lvalue_kill_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

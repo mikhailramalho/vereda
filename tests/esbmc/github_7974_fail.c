@@ -8,9 +8,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7974_fail
-// Needs: --no-propagation
-// RUN: --no-propagation
 // MODE: FUTURE
 // EXPECT: ^  x = 4; //
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED

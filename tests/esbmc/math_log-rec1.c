@@ -31,8 +31,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/math_log-rec1
-// Needs: --boolector
-// RUN: --unwind 10 --boolector
-// MODE: FUTURE
+// RUN: --unwind 10
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict FAILED

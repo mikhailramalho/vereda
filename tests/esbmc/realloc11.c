@@ -18,8 +18,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/realloc11
-// Needs: --compact-trace
-// RUN: --force-malloc-success --compact-trace
-// MODE: FUTURE
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

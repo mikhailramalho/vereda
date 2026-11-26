@@ -22,9 +22,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_threads
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa
 // MODE: FUTURE
 // EXPECT: ^WARNING: --field-sensitive-ssa is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

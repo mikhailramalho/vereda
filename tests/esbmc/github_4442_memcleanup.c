@@ -34,8 +34,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4442_memcleanup
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --no-assertions --incremental-bmc --k-step 2 --64
-// MODE: FUTURE
+// RUN: --memory-leak-check --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: forgotten memory:
+// MODE: FUTURE
 // Vereda: verdict none

@@ -370,8 +370,8 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_595
-// Needs: --context-bound 2 --array-flattener
-// RUN: --unwind 1 --no-slice --context-bound 2 --array-flattener
-// MODE: FUTURE
+// Needs: --context-bound 2
+// RUN: --unwind 1 --no-slice --context-bound 2
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

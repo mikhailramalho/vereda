@@ -15,8 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9273_fail
-// Needs: --smt-symex-guard
-// RUN: --smt-symex-guard
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

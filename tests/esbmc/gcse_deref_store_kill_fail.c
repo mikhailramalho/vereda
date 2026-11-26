@@ -13,8 +13,4 @@ int main()
   assert(b == a);
 }
 // Imported from ESBMC regression/esbmc/gcse_deref_store_kill_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

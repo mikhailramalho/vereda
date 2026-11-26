@@ -11,8 +11,4 @@ int main()
   assert(result==a*b);
 }
 // Imported from ESBMC regression/esbmc/02_eureka23
-// Needs: --boolector
-// RUN: -Wno-error=implicit-function-declaration --boolector
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

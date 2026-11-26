@@ -226,6 +226,6 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10063_decay
 // Needs: --inductive-step --unwindset 6:65,3:4 --timeout 60s
 // RUN: --inductive-step --k-step 2 --unwind 2 --unwindset 6:65,3:4 --timeout 60s
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -28,9 +28,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_rwlock_unlock_then_return_fail
-// Needs: --data-races-check
-// RUN: --data-races-check --no-assertions
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --data-race-check --no-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@global
+// MODE: FUTURE
 // Vereda: verdict none

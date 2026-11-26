@@ -21,9 +21,8 @@ int main()
   __VERIFIER_assert(cur_idx == prv_idx); // end: idxs equal
 }
 // Imported from ESBMC regression/esbmc/github_interval_guard_phi_fail
-// Needs: --compact-trace
-// RUN: --unwind 3 --compact-trace
-// MODE: FUTURE
+// RUN: --unwind 3
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: loop_idx_vfy = 3
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict FAILED

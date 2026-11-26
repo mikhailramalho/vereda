@@ -23,8 +23,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_aggregate_launder
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

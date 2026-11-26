@@ -14,8 +14,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7855-all-witnesses_fail
 // Needs: --all-witnesses --max-witnesses 2
-// RUN: --64 --all-witnesses --max-witnesses 2
-// MODE: FUTURE
+// RUN: -m64 --all-witnesses --max-witnesses 2
 // EXPECT: ^\[Counterexamples - 2 witnesses\]
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

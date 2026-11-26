@@ -1671,8 +1671,8 @@ XXX percentage an existing variable is used: 78.6
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith06
-// Needs: --show-goto-value-sets --falsification --ssa-symbol-table --partial-loops --memory-leak-check --little-endian --mathsat
-// RUN: --no-unwinding-assertions --unwind 15 --show-goto-value-sets --falsification --no-pointer-check --ssa-symbol-table --partial-loops --no-align-check --memory-leak-check --little-endian --force-malloc-success --mathsat
+// Needs: --falsification --partial-loops --memory-leak-check
+// RUN: --no-unwinding-assertions --unwind 15 --falsification --no-pointer-check --partial-loops --no-align-check --memory-leak-check --force-malloc-success
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

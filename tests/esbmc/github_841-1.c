@@ -23,8 +23,4 @@ int main()
 	assert(u.a[1][3] == 0x11);
 }
 // Imported from ESBMC regression/esbmc/github_841-1
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

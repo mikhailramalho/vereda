@@ -13,8 +13,8 @@ int main() {
 //  assert(0);
 } 
 // Imported from ESBMC regression/esbmc/00_big_endian_01
-// Needs: --big-endian --bv
-// RUN: --big-endian --bv
-// MODE: FUTURE
+// Needs: --big-endian
+// RUN: --big-endian
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

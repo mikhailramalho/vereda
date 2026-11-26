@@ -35,8 +35,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_smt_during_symex_safe
-// Needs: --smt-symex-guard --cswitch-skip-readonly-globals
-// RUN: --smt-symex-guard --cswitch-skip-readonly-globals --bitwuzla
-// MODE: FUTURE
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

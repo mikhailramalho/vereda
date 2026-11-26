@@ -148,8 +148,8 @@ FYI: the random generator makes assumptions about the integer size. See platform
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith05
-// Needs: --ssa-guards --enable-core-dump --result-only --interval-analysis --show-cex --print-stack-traces --i386-linux --parse-tree-too --termination --no-library --max-inductive-step 2
-// RUN: --no-unwinding-assertions --unwind 15 --ssa-guards --enable-core-dump --result-only --interval-analysis --show-cex --print-stack-traces --i386-linux --parse-tree-too --termination --no-library --max-inductive-step 2
+// Needs: --enable-core-dump --interval-analysis --print-stack-traces --i386-linux --termination --no-library --max-inductive-step 2
+// RUN: --no-unwinding-assertions --unwind 15 --enable-core-dump --interval-analysis --print-stack-traces --i386-linux --termination --no-library --max-inductive-step 2
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

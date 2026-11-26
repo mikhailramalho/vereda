@@ -313,8 +313,5 @@ void main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/overflow_16_fir_new
-// Needs: --boolector
-// RUN: --unwind 34 --overflow-check --boolector
-// MODE: FUTURE
+// RUN: --unwind 34 --overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

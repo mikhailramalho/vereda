@@ -18,8 +18,8 @@ int main(void)
   }
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_kinduction_fail
-// Needs: --scalarize-structs --k-induction
-// RUN: --scalarize-structs --k-induction --max-k-step 5
+// Needs: --k-induction
+// RUN: --k-induction --max-k-step 5
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^VERIFICATION FAILED$

@@ -18,8 +18,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/Interval-analysis-ibex-contractor/02-arithmetic-operations-success
-// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction --unlimited-k-step
-// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-step
+// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction
+// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

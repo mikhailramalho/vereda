@@ -13,8 +13,8 @@ int main () {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_race28
-// Needs: --context-bound 1 --data-races-check
-// RUN: --context-bound 1 --no-slice --data-races-check
-// MODE: FUTURE
+// Needs: --context-bound 1 --data-race-check
+// RUN: --context-bound 1 --no-slice --data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

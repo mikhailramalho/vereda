@@ -26,11 +26,11 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10749_race_branch_witness_fail
-// Needs: --data-races-check --witness-output-yaml -
-// RUN: --data-races-check --no-assertions --witness-output-yaml -
-// MODE: FUTURE
+// Needs: --data-race-check --witness-output-yaml -
+// RUN: --data-race-check --no-assertions --witness-output-yaml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^    format_version: "2\.4"$
 // EXPECT: type: "function_enter"
 // EXPECT: (?s)\A(?!.*type: "branching")
+// MODE: FUTURE
 // Vereda: verdict none

@@ -8,8 +8,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-failfast
-// Needs: --result-only --multi-fail-fast 0
-// RUN: --result-only --multi-property --multi-fail-fast 0
+// Needs: --multi-fail-fast 0
+// RUN: --multi-property --multi-fail-fast 0
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*PASSED)[\s\S]*\Z

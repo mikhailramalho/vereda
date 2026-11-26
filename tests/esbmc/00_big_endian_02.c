@@ -12,8 +12,8 @@ int main() {
 //  assert(0);
 } 
 // Imported from ESBMC regression/esbmc/00_big_endian_02
-// Needs: --big-endian --bv
-// RUN: --big-endian --bv -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// Needs: --big-endian
+// RUN: --big-endian -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

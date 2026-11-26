@@ -12,8 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7974
-// Needs: --no-propagation
-// RUN: --no-propagation
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

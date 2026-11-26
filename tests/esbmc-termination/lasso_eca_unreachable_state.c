@@ -44,7 +44,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/lasso_eca_unreachable_state
 // Needs: --force-realloc-success --termination --max-inductive-step 3
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
-// MODE: FUTURE
+// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^VERIFICATION (UNKNOWN|SUCCESSFUL)$
+// MODE: FUTURE
 // Vereda: verdict none

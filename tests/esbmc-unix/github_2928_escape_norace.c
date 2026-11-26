@@ -28,8 +28,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_2928_escape_norace
-// Needs: --sv-comp --force-realloc-success --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only
-// RUN: --32 --sv-comp --no-div-by-zero-check --force-malloc-success --force-realloc-success --smt-symex-guard --cswitch-skip-readonly-globals --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
-// MODE: FUTURE
+// Needs: --sv-comp --force-realloc-success --data-races-check-only
+// RUN: -m32 --sv-comp --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

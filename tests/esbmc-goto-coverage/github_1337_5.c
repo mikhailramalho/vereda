@@ -32,10 +32,10 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/goto-coverage/github_1337_5
-// Needs: --goto-unwind --assertion-coverage
-// RUN: --goto-unwind --assertion-coverage
-// MODE: FUTURE
+// Needs: --assertion-coverage
+// RUN: --assertion-coverage
 // EXPECT: ^Total Asserts: 8
 // EXPECT: ^Total Assertion Instances: 8
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// MODE: FUTURE
 // Vereda: verdict none

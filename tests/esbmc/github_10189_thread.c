@@ -19,9 +19,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10189_thread
-// Needs: --sv-comp --k-induction --interval-analysis --goto-unwind --unlimited-goto-unwind
-// RUN: --sv-comp --k-induction --interval-analysis --goto-unwind --unlimited-goto-unwind
-// MODE: FUTURE
+// Needs: --sv-comp --k-induction --interval-analysis
+// RUN: --sv-comp --k-induction --interval-analysis
 // EXPECT: ^The program can start a thread: verifying its schedules$
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

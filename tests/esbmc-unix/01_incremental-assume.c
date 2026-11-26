@@ -21,8 +21,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/01_incremental-assume
-// Needs: --no-por --smt-symex-assume
-// RUN: --no-por --smt-symex-assume
+// Needs: --no-por
+// RUN: --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

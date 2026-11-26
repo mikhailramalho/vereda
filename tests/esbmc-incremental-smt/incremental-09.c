@@ -18,8 +18,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-09
-// Needs: --smt-symex-assert --k-induction
-// RUN: --smt-symex-assert --k-induction --z3 --max-k-step 5
-// MODE: KNOWNBUG
+// Needs: --k-induction
+// RUN: --k-induction --solver z3 --max-k-step 5
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: KNOWNBUG
 // Vereda: verdict none

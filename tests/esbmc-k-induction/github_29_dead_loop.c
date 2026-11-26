@@ -22,7 +22,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_29_dead_loop
 // Needs: --k-induction --max-inductive-step 3 --interval-analysis --error-label ERROR
-// RUN: --32 --k-induction --max-inductive-step 3 --interval-analysis --error-label ERROR
-// MODE: FUTURE
+// RUN: -m32 --k-induction --max-inductive-step 3 --interval-analysis --error-label ERROR
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

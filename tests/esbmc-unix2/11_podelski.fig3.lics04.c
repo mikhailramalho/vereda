@@ -22,8 +22,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/11_podelski.fig3.lics04
-// Needs: --data-races-check
-// RUN: --unwind 1 --no-unwinding-assertions --data-races-check
-// MODE: FUTURE
+// Needs: --data-race-check
+// RUN: --unwind 1 --no-unwinding-assertions --data-race-check
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

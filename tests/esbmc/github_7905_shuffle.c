@@ -18,8 +18,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7905_shuffle
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

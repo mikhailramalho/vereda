@@ -14,8 +14,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vector_union_bytes
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

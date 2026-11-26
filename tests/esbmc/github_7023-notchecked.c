@@ -10,10 +10,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-notchecked
-// Needs: --result-only
-// RUN: --result-only
 // MODE: FUTURE
 // EXPECT: ^ +NOT CHECKED .*a is not (one|two)$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*PASSED .*a is not )[\s\S]*\Z
-// Vereda: verdict none
+// Vereda: verdict FAILED

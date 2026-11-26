@@ -6,12 +6,38 @@ import tempfile
 import import_esbmc
 import run
 
+for flag in import_esbmc.IGNORED_WITH_VALUE:
+    for argument in (flag + ' "solver -in"', flag + '="solver -in"'):
+        assert import_esbmc.translate(argument + ' --z3', '.') == (
+            ['--solver', 'z3'], [], [])
+        lines = import_esbmc.header('suite/value', 'CORE',
+                                    argument + ' --k-induction --32', [], '.', [])
+        assert '// RUN: --k-induction -m32' in lines, lines
+assert import_esbmc.translate('--32 --64 --data-races-check', '.') == (
+    ['-m32', '-m64'], [], ['--data-race-check'])
+assert import_esbmc.translate('--data-races-check=false', '.') == (
+    [], [], ['--data-race-check=false'])
+assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-assertion '
+                             '--no-standard-check', '.') == (
+    ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions'],
+    [], ['--no-standard-checks'])
+for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
+             '--bitwuzllob', '--clang-c-irep2-adjust-only'):
+    with tempfile.TemporaryDirectory() as directory:
+        src = Path(directory) / 'source'
+        src.mkdir()
+        (src / 'main.c').write_text('int main(void) { return 0; }\n')
+        (src / 'test.desc').write_text('CORE\nmain.c\n' + flag + '\n^VERIFICATION SUCCESSFUL$\n')
+        dest = Path(directory) / 'copy'
+        assert not import_esbmc.import_test(str(src), str(dest), 'suite/internal', None).endswith('.c')
+        assert not dest.with_suffix('.c').exists()
+
 assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
     ["--no-assertions", "--no-div-by-zero-check"], [], [])
-for flag in ("--memory-leak-check", "--data-races-check", "--deadlock-check"):
+for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
-ignored = ("--tuple-sym-flattener", "--state-hashing", "--smt-during-symex",
-           "--add-symex-value-sets", "--goto-functions-only")
+
+ignored = sorted(import_esbmc.IGNORED_FLAGS)
 for flag in ignored:
     for token in (flag, flag + "=true", flag + "=false"):
         assert import_esbmc.translate(token + " --z3", ".") == (["--solver", "z3"], [], [])
@@ -146,3 +172,16 @@ for name in ("array_loop_summary_decrement", "array_loop_summary_decrement_fail"
         lines = import_esbmc.header("esbmc/" + name, "CORE", args, [], ".", [])
         runs = [line.partition(":")[2].strip() for line in lines if line.startswith("// RUN:")]
         assert runs == [flags, (flags + " --no-summarize-array-loops").strip()], runs
+
+for flag in ('--unwindset f:0:3', '--unwindsetname loop:4', '--data-races-check', '--no-standard-check'):
+    lines = import_esbmc.header('suite/semantic', 'CORE', flag, [], '.', [])
+    assert '// MODE: FUTURE' in lines, lines
+    assert any(line.startswith('// Needs:') for line in lines), lines
+assert import_esbmc.translate('--cvc5 -D__builtin_unreachable()', '.') == (
+    ['--solver', 'cvc5', '-D__builtin_unreachable()'], [], [])
+for args, expected in (('--gcse --z3', '--solver z3'),
+                       ('--array-flattener --overflow --bitwuzla',
+                        '--overflow-check --solver bitwuzla')):
+    lines = import_esbmc.header('suite/last_blocker', 'CORE', args, [], '.', [])
+    assert '// RUN: ' + expected in lines, lines
+    assert not any(line.startswith('// Needs:') for line in lines), lines

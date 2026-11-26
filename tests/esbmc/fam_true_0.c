@@ -9,8 +9,4 @@ int main() {
   __VERIFIER_assert(F.arr != NULL); // FAM should be initialized properly
 }
 // Imported from ESBMC regression/esbmc/fam_true_0
-// Needs: --compact-trace
-// RUN: --compact-trace
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

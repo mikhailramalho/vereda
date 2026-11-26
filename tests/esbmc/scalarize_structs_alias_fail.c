@@ -15,8 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_alias_fail
-// Needs: --scalarize-structs
-// RUN: --scalarize-structs
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

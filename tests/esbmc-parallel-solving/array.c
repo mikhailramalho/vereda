@@ -11,8 +11,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/array
-// Needs: --parallel-solving --array-flattener
-// RUN: --parallel-solving --array-flattener
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -9,8 +9,5 @@ int main()
   __VERIFIER_assert(u.p != arr + 100); // p kept
 }
 // Imported from ESBMC regression/esbmc/github_9937_struct_array_fail
-// Needs: --result-only
-// RUN: --64 --no-slice --result-only
-// MODE: FUTURE
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

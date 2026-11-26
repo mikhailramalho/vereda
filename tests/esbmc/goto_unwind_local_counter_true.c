@@ -16,8 +16,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/goto_unwind_local_counter_true
-// Needs: --k-induction --goto-unwind
-// RUN: --k-induction --goto-unwind --max-k-step 2
-// MODE: FUTURE
+// Needs: --k-induction
+// RUN: --k-induction --max-k-step 2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

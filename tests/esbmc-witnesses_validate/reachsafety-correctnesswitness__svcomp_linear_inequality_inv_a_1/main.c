@@ -33,7 +33,7 @@ int main() {
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/svcomp_linear_inequality_inv_a_1
 // Needs: --force-realloc-success --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
-// RUN: --32 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
-// MODE: FUTURE
+// RUN: -m32 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

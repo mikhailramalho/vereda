@@ -4,8 +4,8 @@ int main() {
   return 0; // Total 32 + 32 + 32 = 96
 }
 // Imported from ESBMC regression/esbmc/40_total_stack_return_true
-// Needs: --total-stack-limit 96 --no-return-value-opt
-// RUN: --64 --total-stack-limit 96 --no-return-value-opt
+// Needs: --total-stack-limit 96
+// RUN: -m64 --total-stack-limit 96
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

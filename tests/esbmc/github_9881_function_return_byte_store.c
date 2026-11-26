@@ -23,9 +23,9 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9881_function_return_byte_store
 // Needs: --witness-output-yaml -
-// RUN: --32 --no-pointer-check --witness-output-yaml -
-// MODE: FUTURE
+// RUN: -m32 --no-pointer-check --witness-output-yaml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 5"
 // EXPECT: (?s)\A(?!.*result == 5.*result == 5)
+// MODE: FUTURE
 // Vereda: verdict none

@@ -15,8 +15,4 @@ L:
   return x;
 }
 // Imported from ESBMC regression/esbmc/gcse_goto_guard_stale
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -16,9 +16,9 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals_const_write_fail
-// Needs: --context-bound 3 --cswitch-skip-readonly-globals
-// RUN: --context-bound 3 --cswitch-skip-readonly-globals
-// MODE: FUTURE
+// Needs: --context-bound 3
+// RUN: --context-bound 3
 // EXPECT: write access to const object `t'
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

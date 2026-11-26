@@ -11,8 +11,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10087_spanning_fail
-// Needs: --little-endian
-// RUN: --little-endian
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

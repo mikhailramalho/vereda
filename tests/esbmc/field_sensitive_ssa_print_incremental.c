@@ -22,8 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_incremental
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --incremental-bmc
-// MODE: FUTURE
+// RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

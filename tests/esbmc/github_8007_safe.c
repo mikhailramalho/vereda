@@ -21,9 +21,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8007_safe
-// Needs: --gcse
-// RUN: --gcse
 // MODE: FUTURE
 // EXPECT: ^WARNING: --gcse is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

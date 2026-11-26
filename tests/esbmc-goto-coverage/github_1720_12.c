@@ -15,9 +15,9 @@ int main()
     calculate_output();
 }
 // Imported from ESBMC regression/goto-coverage/github_1720_12
-// Needs: --condition-coverage-claims --no-cov-asserts --goto-unwind
-// RUN: --condition-coverage-claims --no-cov-asserts --goto-unwind
-// MODE: FUTURE
+// Needs: --condition-coverage-claims --no-cov-asserts
+// RUN: --condition-coverage-claims --no-cov-asserts
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -15,8 +15,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_821_fail
-// Needs: --little-endian
-// RUN: --no-simplify --incremental-bmc --little-endian
-// MODE: FUTURE
+// RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

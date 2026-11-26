@@ -15,8 +15,8 @@ int main(void)
   return a[1] + 1;
 }
 // Imported from ESBMC regression/esbmc/github_9884_dead_store_fail
-// Needs: --no-propagation --witness-output-yaml -
-// RUN: --overflow-check --no-assertions --no-propagation --witness-output-yaml -
+// Needs: --witness-output-yaml -
+// RUN: --overflow-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"

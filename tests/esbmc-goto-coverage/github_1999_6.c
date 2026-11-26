@@ -23,8 +23,8 @@ int main()
 	bool x = ((nS != nE) && t1() || (2 == 3));
 }
 // Imported from ESBMC regression/goto-coverage/github_1999_6
-// Needs: --condition-coverage-claims --verbosity coverage:10
-// RUN: --condition-coverage-claims --verbosity coverage:10
+// Needs: --condition-coverage-claims
+// RUN: --condition-coverage-claims
 // MODE: FUTURE
 // EXPECT: ^Short Circuited Conditions:  2
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

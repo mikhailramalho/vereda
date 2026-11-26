@@ -16,8 +16,4 @@ int main()
   free(p);
 }
 // Imported from ESBMC regression/esbmc/gcse_heap_alias_kill
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

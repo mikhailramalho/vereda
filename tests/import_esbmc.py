@@ -67,12 +67,15 @@ SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--no-pointer-check", "--no-vla-size-check", "--no-assertions", "--no-div-by-zero-check"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
+    "--unlimited-k-step": ["--unlimited-k-steps"],
+    "--no-unwinding-assertion": ["--no-unwinding-assertions"],
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
-    "--smt-formula-only": ["--dump-smt-only"], "--smt-formula-too": ["--dump-smt-too"],
     "--bitwuzla": ["--solver", "bitwuzla"], "--z3": ["--solver", "z3"],
     "--cvc": ["--solver", "cvc5"], "--cvc5": ["--solver", "cvc5"],
 }
-RENAMED_WITH_VALUE = {"--function": "--entry"}
+UNSUPPORTED_ALIASES = {"--data-races-check": "--data-race-check",
+                       "--no-standard-check": "--no-standard-checks"}
+RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
 # pipeline switches and numeric selectors in both normal and fallback commands.
@@ -81,6 +84,29 @@ PROGRAM_OUTPUT_FLAGS = {"--" + name + "-" + suffix
                         for suffix in ("only", "too")}
 IGNORED_FLAGS = {"--floatbv", "--fixedbv", "--tuple-sym-flattener", "--state-hashing",
                  "--smt-during-symex", "--add-symex-value-sets"} | PROGRAM_OUTPUT_FLAGS
+IGNORED_FLAGS |= {
+    "--gcse", "--field-sensitive-ssa", "--smt-symex-assume", "--parallel-solving",
+    "--scalarize-structs", "--no-propagation", "--no-return-value-opt", "--full-inlining",
+    "--no-remove-unreachable", "--no-slice-id", "--no-slice-name", "--little-endian",
+    "--yices", "--result-only", "--show-cex", "--color", "--show-claims",
+    "--show-call-sites", "--ssa-trace", "--symex-trace", "--parse-tree-too",
+    "--symbol-table-too", "--ssa-guards", "--ssa-no-location", "--ssa-smt-trace",
+    "--ssa-symbol-table", "--symex-ssa-trace", "--claim-fingerprint-dump",
+    "--clang-c-irep2-adjust-only", "--goto-unwind", "--goto2lean",
+    "--smt-symex-guard", "--unlimited-goto-unwind", "--compact-trace", "--ts-bmc",
+    "--smt-symex-assert", "--cswitch-skip-readonly-globals", "--bitwuzllob",
+    "--ts-pdr", "--boolector", "--irep2-bodies", "--symbol-table-only", "--bv",
+    "--neurosym", "--smt-formula-only", "--smt-formula-too", "--dump-smt-only",
+    "--array-flattener", "--mathsat", "--no-irep2-native-body", "--show-vcc",
+    "--tuple-node-flattener", "--no-goto-merge", "--show-goto-value-sets",
+    "--ts-push-pop", "--show-symex-value-sets", "--all-runs",
+    "--ts-check", "--ts-no-fallback",
+}
+IGNORED_WITH_VALUE = {
+    "--verbosity",
+    "--bitwuzllob-prog", "--bitwuzllob-model-prog", "--neurosym-prog",
+    "--neurosym-model-prog",
+}
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
            "--no-align-check", "--no-pointer-relation-check",
            "--no-simplify", "--no-slice"} | IGNORED_FLAGS
@@ -92,7 +118,10 @@ def translate(args, test_dir):
     tokens = iter(shlex.split(args))
     for tok in tokens:
         name, eq, value = tok.partition("=")
-        if not tok.startswith("-"):
+        if name in IGNORED_WITH_VALUE:
+            if not eq:
+                next(tokens, "")
+        elif not tok.startswith("-"):
             if tok.endswith(".c") and os.path.exists(os.path.join(test_dir, tok)):
                 files.append(tok)
             else:
@@ -102,6 +131,8 @@ def translate(args, test_dir):
             flags += [RENAMED_WITH_VALUE.get(name, name), value]
         elif tok in SAME:
             flags.append(tok)
+        elif name in UNSUPPORTED_ALIASES:
+            missing.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else ""))
         elif tok in RENAMED:
             flags += RENAMED[tok]
         elif tok in DROPPED or name in IGNORED_FLAGS or tok.startswith("-Wno-"):
@@ -120,7 +151,16 @@ def suite_name(suite):
 
 # test.desc lines that are not output regexes.
 DIRECTIVES = ("REQUIRES", "CHECK_JSON", "CHECK_FILE", "SEED_FILE")
-OUTPUT_MODES = PROGRAM_OUTPUT_FLAGS | {"--smt-formula-only", "--smt-formula-too"}
+OUTPUT_MODES = PROGRAM_OUTPUT_FLAGS | {"--smt-formula-only", "--smt-formula-too",
+                                      "--claim-fingerprint-dump", "--show-claims",
+                                      "--show-call-sites", "--ssa-trace", "--symex-trace",
+                                      "--parse-tree-too", "--symbol-table-too",
+                                      "--ssa-guards", "--ssa-no-location", "--ssa-smt-trace",
+                                      "--ssa-symbol-table", "--symex-ssa-trace",
+                                      "--dump-smt-only", "--symbol-table-only",
+                                      "--clang-c-irep2-adjust-only", "--irep2-bodies",
+                                      "--show-vcc", "--show-goto-value-sets",
+                                      "--show-symex-value-sets", "--goto2lean"}
 
 
 def output_mode(args):
@@ -154,10 +194,22 @@ def header(origin, mode, args, expected, test_dir, builtins):
         # Keep unsupported options visible without restoring ignored flags.
         lexer = shlex.shlex(args, posix=True)
         lexer.whitespace_split, lexer.commenters = True, ""
-        raw_args, start = [], 0
+        raw_args, start, skip_value = [], 0, False
         for token in lexer:
             end = lexer.instream.tell()
-            if token.partition("=")[0] not in IGNORED_FLAGS:
+            name, eq, value = token.partition("=")
+            if skip_value:
+                skip_value = False
+            elif name in IGNORED_WITH_VALUE:
+                skip_value = not eq
+            elif name in UNSUPPORTED_ALIASES:
+                raw_args.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else "") + " ")
+            elif name in RENAMED:
+                renamed = shlex.join(RENAMED[name])
+                raw_args.append(renamed + " ")
+            elif name in RENAMED_WITH_VALUE:
+                raw_args.append(RENAMED_WITH_VALUE[name] + ("=" + value if eq else " "))
+            elif name not in IGNORED_FLAGS:
                 raw_args.append(args[start:end])
             start = end
         lines += ["// Needs: " + " ".join(missing), ("// RUN: " + "".join(raw_args).strip()).rstrip()]
@@ -601,6 +653,12 @@ def rename_builtins(path):
 # any of them, or with both a flag and a builtin when both is set, is not
 # imported.
 ESBMC_ONLY = [
+    ("ESBMC frontend internals",
+     re.compile(r"--(?:clang-c-irep2-adjust(?:-only|-writeback-all)?|irep2-bodies|no-irep2-native-body|old-frontend)\b"), None, False),
+    ("Lean exporter", re.compile(r"--goto2lean\b"), None, False),
+    ("transition-system engine", re.compile(r"--ts-(?:bmc|pdr|check|no-fallback|push-pop|dump|fresh-solver)\b"), None, False),
+    ("experimental solver wrappers", re.compile(r"--(?:bitwuzllob|neurosym)(?:-\w+)*\b"), None, False),
+    ("CHERI pointer semantics", re.compile(r"--cheri\b"), None, False),
     ("function contracts",
      re.compile(r"--(enforce-contract|replace-call-with-contract"
                 r"|enforce-all-contracts|replace-all-contracts)\b"),
@@ -629,6 +687,7 @@ SKIPPED_TESTS = {
 # Tests Vereda gets wrong in a way to fix, by ESBMC path: they are imported
 # as KNOWNBUG, with the reason.
 KNOWN_BUGS = {
+    "esbmc/tuple_const_array_struct_member": "exceeds the 4 GiB regression memory limit",
     "esbmc/github_243": "solver exceeds the 4 GiB regression limit with the 32-bit target",
     "esbmc/array_loop_summary_counter": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_decrement": "out of memory, over 16 GB",

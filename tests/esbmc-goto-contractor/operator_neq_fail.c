@@ -15,8 +15,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/goto-contractor/operator_neq_fail
-// Needs: --interval-analysis --goto-contractor --unlimited-k-step
-// RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental-bmc --unlimited-k-step --k-step 100
+// Needs: --interval-analysis --goto-contractor
+// RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental-bmc --unlimited-k-steps --k-step 100
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

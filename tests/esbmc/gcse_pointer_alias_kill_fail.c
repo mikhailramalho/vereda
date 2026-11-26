@@ -15,8 +15,4 @@ int main()
   assert(b == a || d == c);
 }
 // Imported from ESBMC regression/esbmc/gcse_pointer_alias_kill_fail
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

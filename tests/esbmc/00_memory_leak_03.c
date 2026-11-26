@@ -19,8 +19,8 @@ int main()
   assert(accounts[0]->name!=1);
 }
 // Imported from ESBMC regression/esbmc/00_memory_leak_03
-// Needs: --compact-trace --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --compact-trace --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// MODE: FUTURE
+// Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

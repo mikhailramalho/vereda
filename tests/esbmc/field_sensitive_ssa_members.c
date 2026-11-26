@@ -33,9 +33,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_members
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --incremental-bmc
+// RUN: --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

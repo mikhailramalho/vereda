@@ -4,8 +4,5 @@ int main(int argc, char *argv[])
     ;
 }
 // Imported from ESBMC regression/esbmc/github_2639
-// Needs: --smt-symex-guard
-// RUN: --smt-symex-guard --z3
-// MODE: FUTURE
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9763
 // Needs: --printf-check
-// RUN: --printf-check --32
-// MODE: FUTURE
+// RUN: --printf-check -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

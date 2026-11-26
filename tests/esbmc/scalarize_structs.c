@@ -84,9 +84,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs
-// Needs: --scalarize-structs
-// RUN: --scalarize-structs --unwind 4 --no-unwinding-assertions
+// RUN: --unwind 4 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^Scalarized [0-9]+ struct variable\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

@@ -21,8 +21,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/testcomp_gen_nondet_memory_mixed
-// Needs: --generate-testcase CHECK_FILE testcase.xml contains <testcase coversError="true">\n<input>0</input>\n<input>0</input>\n<input>192</input>\n<input>63</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>5</input>\n<input>0</input>\n<input>0</input>\n<input>0</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n</testcase>
-// RUN: --generate-testcase --64
-// MODE: FUTURE
+// Needs: --generate-testcase
+// RUN: --generate-testcase -m64
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -34,7 +34,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4441
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2 --64
-// MODE: FUTURE
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: FUTURE
 // Vereda: verdict none

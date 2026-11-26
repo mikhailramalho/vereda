@@ -9,8 +9,6 @@ int main()
 	pthread_detach(t1);
 }
 // Imported from ESBMC regression/mathsat/github_1197
-// Needs: --mathsat
-// RUN: --mathsat
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN

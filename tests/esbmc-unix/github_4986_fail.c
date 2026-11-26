@@ -34,7 +34,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4986_fail
 // Needs: --force-realloc-success
-// RUN: --64 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --no-vla-size-check --no-pointer-check --no-bounds-check --overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --bitwuzla
-// MODE: FUTURE
+// RUN: -m64 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --no-vla-size-check --no-pointer-check --no-bounds-check --overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

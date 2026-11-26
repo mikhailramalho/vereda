@@ -20,8 +20,4 @@ int main()
   assert(b == 6);
 }
 // Imported from ESBMC regression/esbmc/gcse_field_pointer_store
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/insertion_sort
 // Needs: --k-induction
-// RUN: --k-induction --32
-// MODE: KNOWNBUG
+// RUN: --k-induction -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: KNOWNBUG
 // Vereda: verdict none

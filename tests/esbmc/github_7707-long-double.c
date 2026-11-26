@@ -19,7 +19,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7707-long-double
 // Needs: REQUIRES x87_long_double
-// RUN: --32
-// MODE: FUTURE
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

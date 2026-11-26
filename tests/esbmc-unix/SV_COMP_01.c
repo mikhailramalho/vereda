@@ -31,8 +31,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/SV_COMP_01
-// Needs: --data-races-check --context-bound 2
-// RUN: --force-malloc-success --data-races-check --context-bound 2
-// MODE: FUTURE
+// Needs: --data-race-check --context-bound 2
+// RUN: --force-malloc-success --data-race-check --context-bound 2
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

@@ -33,7 +33,7 @@ int main()
 }
 // Imported from ESBMC regression/loop-invariants/github_6189
 // Needs: __ESBMC_loop_invariant
-// Needs: --result-only --loop-invariant-check
-// RUN: --multi-property --result-only --loop-invariant-check
+// Needs: --loop-invariant-check
+// RUN: --multi-property --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -58,9 +58,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_copy
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits [1-9][0-9]* struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

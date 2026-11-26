@@ -48,8 +48,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7907_pun
-// Needs: --little-endian
-// RUN: --little-endian --unwind 17
-// MODE: FUTURE
+// RUN: --unwind 17
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

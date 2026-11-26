@@ -12,8 +12,5 @@ int main() {
 	return 0;
 }
 // Imported from ESBMC regression/mathsat/00_Division_false-no-overflow
-// Needs: --mathsat
-// RUN: --overflow-check --mathsat
-// MODE: FUTURE
+// RUN: --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

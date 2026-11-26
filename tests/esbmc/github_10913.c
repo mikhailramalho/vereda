@@ -9,11 +9,11 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10913
-// Needs: --all-witnesses --boolector
-// RUN: --all-witnesses --boolector
-// MODE: FUTURE
+// Needs: --all-witnesses
+// RUN: --all-witnesses
 // EXPECT: ^\[Counterexamples - 1 witnesses\]$
 // EXPECT: x = 5; //
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

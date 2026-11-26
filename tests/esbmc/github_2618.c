@@ -19,8 +19,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2618
-// Needs: --parallel-solving --k-induction
-// RUN: --parallel-solving --k-induction
+// Needs: --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

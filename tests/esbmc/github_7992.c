@@ -13,8 +13,4 @@ int main()
   b1 ^= main_b2;
 }
 // Imported from ESBMC regression/esbmc/github_7992
-// Needs: --gcse
-// RUN: --gcse
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

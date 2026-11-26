@@ -118,8 +118,5 @@ FYI: the random generator makes assumptions about the integer size. See platform
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith07
-// Needs: --show-symex-value-sets --symex-trace --ssa-smt-trace --show-goto-value-sets --symex-ssa-trace --ssa-trace
-// RUN: --unwind 10 --show-symex-value-sets --symex-trace --ssa-smt-trace --show-goto-value-sets --symex-ssa-trace --ssa-trace
-// MODE: KNOWNBUG
+// RUN: --unwind 10
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

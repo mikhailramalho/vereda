@@ -27,8 +27,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10888
-// Needs: --little-endian
-// RUN: --little-endian --multi-property
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

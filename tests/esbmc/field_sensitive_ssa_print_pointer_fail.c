@@ -34,11 +34,10 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_pointer_fail
-// Needs: --field-sensitive-ssa
-// RUN: --field-sensitive-ssa --64 --force-malloc-success
+// RUN: -m64 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^  copy = \{ \.next=\( struct node \*\)8 \}$
 // EXPECT: ^  t = \{ \.a=2, \.b=5 \}$
 // EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 33 .*NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

@@ -28,8 +28,8 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7858
 // Needs: --witness-output-graphml -
-// RUN: --64 --overflow-check --witness-output-graphml -
-// MODE: FUTURE
+// RUN: -m64 --overflow-check --witness-output-graphml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">d-&gt;devnum == -?\d+;
+// MODE: FUTURE
 // Vereda: verdict none

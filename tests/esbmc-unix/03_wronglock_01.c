@@ -60,7 +60,7 @@ int main(void) {
 
 // Imported from ESBMC regression/esbmc-unix/03_wronglock_01
 // Needs: --context-bound 2
-// RUN: --context-bound 2 --32 -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --context-bound 2 -m32 -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
 // Vereda: verdict none

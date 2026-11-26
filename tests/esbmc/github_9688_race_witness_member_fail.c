@@ -19,9 +19,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness_member_fail
-// Needs: --data-races-check --witness-output-yaml -
-// RUN: --data-races-check --no-assertions --witness-output-yaml -
-// MODE: FUTURE
+// Needs: --data-race-check --witness-output-yaml -
+// RUN: --data-race-check --no-assertions --witness-output-yaml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)segment:\s+- waypoint:\s+type: "target"[^\n]*\n[^\n]*\n\s+location:[^\n]*\n[^\n]*\n\s+line: (?:10|17)\b.*?- waypoint:\s+type: "target"[^\n]*\n[^\n]*\n\s+location:[^\n]*\n[^\n]*\n\s+line: (?:10|17)\b
+// MODE: FUTURE
 // Vereda: verdict none
