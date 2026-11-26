@@ -57,6 +57,8 @@ static cl::opt<bool> noPointerCheck(
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
 static cl::opt<bool> noDivByZeroCheck(
     "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
+static cl::opt<bool> ubUninitCheck(
+    "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
 static cl::opt<bool> dataRaceCheck(
@@ -188,9 +190,10 @@ struct BMCState {
   std::unique_ptr<vereda::encode::Encoder> encoder;
   std::unique_ptr<vereda::walker::Incremental> walk;
 
-  BMCState(camada::SMTSolverRef solver, Function &fn)
+  BMCState(camada::SMTSolverRef solver, Function &fn, bool trackInit = false)
       : solver(std::move(solver)), terms(*this->solver),
-        memory(std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout())),
+        memory(std::make_unique<vereda::memory::Memory>(terms, fn.getParent()->getDataLayout(),
+                                                        trackInit)),
         encoder(std::make_unique<vereda::encode::Encoder>(terms, *memory, fp2bv)) {}
 
   bool resumable() const { return walk && walk->resumable(); }
@@ -208,6 +211,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                std::unique_ptr<BMCState> *retained = nullptr) {
   std::unique_ptr<BMCState> local;
   auto &state = retained ? *retained : local;
+  bool checkUninit = ubUninitCheck && property == Property::All;
   if (!state || !state->resumable()) {
     Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind, incrementalSolver);
     if (!created) {
@@ -215,7 +219,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
       return ErrorExit;
     }
     try {
-      state = std::make_unique<BMCState>(std::move(*created), fn);
+      state = std::make_unique<BMCState>(std::move(*created), fn, checkUninit);
     } catch (const vereda::Unsupported &e) {
       return unknown(Twine("unsupported: ") + e.what());
     }
@@ -249,6 +253,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !noVLASizeCheck,
                                      !noAssertions,
                                      multiProperty,
+                                     checkUninit,
                                      boundedLimit};
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
@@ -371,7 +376,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                     return {nullptr, nullptr};
                   }
                   try {
-                    freshState = std::make_unique<BMCState>(std::move(*created), fn);
+                    freshState = std::make_unique<BMCState>(std::move(*created), fn, checkUninit);
                   } catch (const vereda::Unsupported &) {
                     return {nullptr, nullptr};
                   }
@@ -499,7 +504,8 @@ int main(int argc, char **argv) {
   // The library models sit next to the binary.
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
-      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck);
+      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck,
+                       ubUninitCheck && property == Property::All);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;

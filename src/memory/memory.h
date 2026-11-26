@@ -83,11 +83,16 @@ struct State {
   // given them by own(), by the offset. For an object of elements, its
   // element array and the constant provenance of an integer.
   CellMap separate;
+  // Byte-level initialisation state, populated only when Memory::trackInit is true.
+  encode::Term init;
+  Trie<encode::Term> knownInit;
+  Trie<encode::Term> objInit;
+  Trie<bool> initFlushed;
 };
 
 class Memory {
 public:
-  Memory(encode::Terms &t, const llvm::DataLayout &dl);
+  Memory(encode::Terms &t, const llvm::DataLayout &dl, bool trackInit = false);
 
   unsigned pointerBits() const { return ptrBits; }
   const llvm::DataLayout &layout() const { return dl; }
@@ -145,6 +150,10 @@ public:
   // Loads and stores of integers (i1 as a byte) and pointers.
   encode::Term load(State &st, encode::Term p, llvm::Type *ty);
   void store(State &st, encode::Term p, encode::Term v, llvm::Type *ty);
+  // Path-sensitive byte-level initialisation tracking (active when trackInit is true).
+  void markUninitialised(State &st, encode::Term p);
+  void markInitialised(State &st, encode::Term p);
+  encode::Term isInitialised(State &st, encode::Term p, uint64_t n);
   // Writes byte to the n bytes at p. A fill of a whole object of at least
   // MinSeparate bytes is one constant array; a partial fill of at least
   // MinSeparate bytes in a known object is a lambda over the arrays below;
@@ -342,10 +351,19 @@ private:
   // or reading bases: pointer (kept alive) -> equivalent (p == null()).
   llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> nullEq;
   unsigned fresh = 0;
+  bool trackInit = false;
   encode::Term context;
   bool initialising = false;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
   int side(const encode::Term &c);
+  void flushInitObject(State &st, uint64_t o);
+  void flushInitFor(State &st, encode::Term p);
+  encode::Term readInitByte(State &st, encode::Term p);
+  void writeInitBytes(State &st, encode::Term p, uint64_t n, encode::Term val);
+  void writeInitRange(State &st, encode::Term p, uint64_t n, encode::Term val);
+  void copyInitBytes(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  void markInitialisedObject(State &st, uint64_t o);
+  void mergeInit(encode::Term c, const State &a0, const State &b0, State &out);
 };
 
 } // namespace vereda::memory

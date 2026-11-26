@@ -696,7 +696,7 @@ private:
       frame.arrivals.erase(header);
       return;
     }
-    if (!start && opts.summarise && summarise(frame, fi, l))
+    if (!start && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
     // When SCEV knows the loop takes its back edge a small constant number of
@@ -1848,14 +1848,26 @@ private:
                            : t.mul(enc.resize(count, bits, false), t.bv(elemSize, bits));
       Term p = mem.allocate(size, a->getAlign().value(), guard, exposed(a));
       ownObject(st, a, p, dl);
+      if (opts.uninitCheck)
+        mem.markUninitialised(st, p);
       enc.bind(a, p);
       return true;
     }
     // Atomics: one thread, so each is a plain load and store and a fence
     // orders nothing.
     if (auto *l = dyn_cast<LoadInst>(&inst)) {
-      enc.bind(l, enc.fromBits(mem.load(st, enc.value(l->getPointerOperand()), l->getType()),
-                               l->getType()));
+      Term p = enc.value(l->getPointerOperand());
+      if (opts.uninitCheck && counts(false)) {
+        uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
+        Term ok = mem.isInitialised(st, p, bytes);
+        if (!t.isTrue(ok)) {
+          assertion(inst, t.land(guard, t.lnot(ok)), "read of uninitialised memory", "", nullptr,
+                    checks::Property::UninitialisedRead);
+          guard = t.land(guard, ok);
+          mem.setContext(guard);
+        }
+      }
+      enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
       return true;
     }
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
@@ -2075,6 +2087,8 @@ private:
         mem.fill(st, p, t.bv(0, 8));
       else if (!t.isFalse(ok))
         mem.set(st, p, t.bv(0, 8), n->getZExtValue());
+    } else if (opts.uninitCheck) {
+      mem.markUninitialised(st, p);
     }
     enc.bind(&c, t.ite(ok, p, mem.null()));
   }
