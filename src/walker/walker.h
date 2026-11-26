@@ -55,8 +55,10 @@ struct Options {
 llvm::Error walk(llvm::Function &entry, const Options &opts, encode::Encoder &enc,
                  memory::Memory &mem, checks::Checks &checks, Trace &trace);
 
-// Keeps a prefix stopped inside an unconditional outer loop. Other walks
-// finish normally and cannot be extended; their next bound starts afresh.
+// Keeps a prefix stopped at a top-level loop in the entry function (including
+// loops with symbolic exits or early returns, rolling back the post-loop
+// suffix between bounds). Walks cut inside nested loops, callees, recursion,
+// or whose suffix adds global solver constraints start afresh at the next bound.
 class Incremental {
 public:
   Incremental(llvm::Function &entry, const Options &opts, encode::Encoder &enc,

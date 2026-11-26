@@ -209,7 +209,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   std::unique_ptr<BMCState> local;
   auto &state = retained ? *retained : local;
   if (!state || !state->resumable()) {
-    Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind, incrementalSolver);
+    Expected<camada::SMTSolverRef> created =
+        vereda::solver::create(solverKind, incrementalSolver || incrementalBMC);
     if (!created) {
       errs() << "vereda: " << toString(created.takeError()) << "\n";
       return ErrorExit;
@@ -303,7 +304,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     else if (!(incrementalBMC && terms.isTrue(c.violated)))
       hasNonConstUnwind = true;
   }
-  bool mayRewalk = !incrementalSolver && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
+  bool useIncremental = incrementalSolver || state->resumable();
+  bool mayRewalk = !useIncremental && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
   if (releaseModule && !mayRewalk)
     releaseModule->reset();
 
@@ -355,7 +357,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   std::unique_ptr<BMCState> freshState;
   bool initialSolverUsed = false;
   vereda::solver::Verdict verdict =
-      incrementalSolver
+      useIncremental
           ? vereda::solver::decide(terms, checks, multiProperty,
                                    [&](const vereda::checks::Check &c) {
                                      onViolated(terms, checks, trace, &c - checks.data());

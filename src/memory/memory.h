@@ -90,6 +90,7 @@ public:
   Memory(encode::Terms &t, const llvm::DataLayout &dl);
 
   unsigned pointerBits() const { return ptrBits; }
+  size_t objectCount() const { return objects.size(); }
   const llvm::DataLayout &layout() const { return dl; }
   camada::SMTSortRef pointerSort();
   encode::Term null();
