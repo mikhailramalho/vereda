@@ -550,6 +550,49 @@ void Memory::own(State &st, Term p, unsigned bits) {
   st.separate.set({o, 0}, initial);
 }
 
+void Memory::ownFields(State &st, Term p, uint64_t stride, const std::vector<Field> &fields) {
+  uint64_t root = key(p)->first;
+  unsigned shift = Log2_64(stride);
+  Term count = t.lshr(objects[root].size, t.bv(shift, ptrBits));
+  StructStorage storage{shift, {}};
+  for (const Field &field : fields) {
+    uint64_t id = objects.size();
+    Term size = t.mul(count, t.bv(field.bytes, ptrBits));
+    // These are storage partitions, never allocations or program pointers.
+    objects.push_back({t.bv(0, ptrBits), size, t.boolean(false), 1, false, true});
+    if (sizes)
+      t.addConstraint(t.eq(t.select(sizes, t.bv(id, ObjBits)), size));
+    Term at = ptr(t.bv(id, ObjBits), t.bv(0, ptrBits));
+    own(st, at, field.pointer ? 8 : 8 * field.bytes);
+    storage.fields.push_back({field, id});
+    fieldOwners[id] = root;
+  }
+  fieldStorage[root] = std::move(storage);
+}
+
+Term Memory::fieldPointer(Term p, unsigned bytes) {
+  const APInt *id = t.constant(object(p));
+  if (!id)
+    return p;
+  auto it = fieldStorage.find(id->getZExtValue());
+  if (it == fieldStorage.end())
+    return p;
+  Term off = offset(p);
+  for (const FieldStorage &storage : it->second.fields) {
+    const Field &f = storage.field;
+    for (unsigned delta = 0; delta + bytes <= f.bytes; ++delta) {
+      Term relative = t.sub(off, t.bv(f.offset + delta, ptrBits));
+      const APInt *low = t.constant(t.extract(relative, it->second.shift - 1, 0));
+      if (!low || !low->isZero())
+        continue;
+      Term i = t.lshr(relative, t.bv(it->second.shift, ptrBits));
+      Term mapped = t.add(t.mul(i, t.bv(f.bytes, ptrBits)), t.bv(delta, ptrBits));
+      return ptr(t.bv(storage.object, ObjBits), mapped);
+    }
+  }
+  return p;
+}
+
 // The bits of byte at within its element: (offset mod bytes) * 8, n bits wide.
 static Term byteShift(encode::Terms &t, Term off, unsigned shift, unsigned n) {
   return t.shl(t.zext(t.extract(off, shift - 1, 0), n - shift), t.bv(3, n));
@@ -588,6 +631,19 @@ State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, Term at,
 
 void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term count,
                        Iteration iteration) {
+  Term mapped = fieldPointer(first, storeBits(dl, ty) / 8);
+  if (mapped != first) {
+    uint64_t root = t.constant(object(first))->getZExtValue();
+    uint64_t child = t.constant(object(mapped))->getZExtValue();
+    const StructStorage &storage = fieldStorage.find(root)->second;
+    for (const FieldStorage &field : storage.fields)
+      if (field.object == child) {
+        assert((stride & ((uint64_t(1) << storage.shift) - 1)) == 0);
+        stride = (stride >> storage.shift) * field.field.bytes;
+        break;
+      }
+    first = mapped;
+  }
   uint64_t o = t.constant(object(first))->getZExtValue();
   flush(st, o);
   const State::Cell *own = st.separate.find({o, 0});
@@ -681,6 +737,9 @@ void Memory::storeArrays(State &st, uint64_t object, Term at, const State::Cell 
 }
 
 State::Cell Memory::readArrays(const State &st, Term at, bool withProvenance) {
+  Term mapped = fieldPointer(at);
+  if (mapped != at)
+    return readByte(st, mapped, withProvenance);
   Term objTerm = object(at);
   if (const APInt *obj = t.constant(objTerm)) {
     if (const State::Cell *own = st.separate.find({obj->getZExtValue(), 0}))
@@ -800,6 +859,7 @@ int Memory::side(const Term &c) {
 }
 
 State::Cell Memory::readByte(const State &st, Term at, bool withProvenance) {
+  at = fieldPointer(at);
   Term c, x, y;
   if (t.split(at, c, x, y)) { // one of two constant pointers
     if (int pick = side(c); pick >= 0)
@@ -814,6 +874,7 @@ State::Cell Memory::readByte(const State &st, Term at, bool withProvenance) {
 }
 
 void Memory::writeByte(State &st, Term at, const State::Cell &c) {
+  at = fieldPointer(at);
   Term cond, x, y;
   if (t.split(at, cond, x, y)) { // each side keeps its old byte unless chosen
     if (int pick = side(cond); pick >= 0) {
@@ -914,7 +975,8 @@ void Memory::storeBytes(State &st, Term p, Term bits, Term prov) {
     // is built until a flush needs one. Offsets wrap at the pointer width.
     uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
     for (unsigned i = 0; i < n; ++i)
-      st.known.set({k->first, (k->second + i) & mask}, {t.extract(bits, 8 * i + 7, 8 * i), prov});
+      st.known.set(*key(fieldPointer(ptr({k->first, (k->second + i) & mask}))),
+                   {t.extract(bits, 8 * i + 7, 8 * i), prov});
     if (st.known.size() > MaxKnown)
       flush(st);
     return;
@@ -925,6 +987,11 @@ void Memory::storeBytes(State &st, Term p, Term bits, Term prov) {
 }
 
 void Memory::store(State &st, Term p, Term v, Type *ty) {
+  Term mapped = fieldPointer(p, storeBits(dl, ty) / 8);
+  if (mapped == p && !initialising)
+    if (const APInt *id = t.constant(object(p)); id && fieldStorage.count(id->getZExtValue()))
+      throw Unsupported("field array store with an unresolved offset");
+  p = mapped;
   unsigned bits = storeBits(dl, ty);
   if (ty->isPointerTy()) {
     // A pointer with no object but an offset, outside the program, was
@@ -955,6 +1022,11 @@ void Memory::store(State &st, Term p, Term v, Type *ty) {
 Term Memory::load(State &st, Term p, Type *ty) {
   if (!ty->isIntegerTy() && !ty->isPointerTy() && !ty->isFloatingPointTy())
     throw Unsupported("load of a non-integer value");
+  Term mapped = fieldPointer(p, storeBits(dl, ty) / 8);
+  if (mapped == p)
+    if (const APInt *id = t.constant(object(p)); id && fieldStorage.count(id->getZExtValue()))
+      throw Unsupported("field array access with an unresolved offset");
+  p = mapped;
   prepare(st, p);
   if (std::optional<uint64_t> o = element(p, ty))
     return t.select(st.separate.find({*o, 0})->data, index(*o, p));
@@ -1030,6 +1102,9 @@ void Memory::fill(State &st, Term p, Term byte) {
 }
 
 void Memory::fill(State &st, uint64_t o, Term byte) {
+  if (auto it = fieldStorage.find(o); it != fieldStorage.end())
+    for (const FieldStorage &field : it->second.fields)
+      fill(st, field.object, byte);
   st.known.eraseObject(o); // every byte is overwritten, so its known bytes are stale
   unsigned shift = shifts.lookup(o);
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
@@ -1356,6 +1431,9 @@ void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
 }
 
 void Memory::havocObject(State &st, uint64_t o, Term prov) {
+  if (auto it = fieldStorage.find(o); it != fieldStorage.end())
+    for (const FieldStorage &field : it->second.fields)
+      havocObject(st, field.object, prov);
   unsigned shift = shifts.lookup(o); // an object of elements, as in fillObject
   SMTSortRef index = owned.count(o) ? s.mkBVSort(ptrBits - shift) : pointerSort();
   std::string id = std::to_string(fresh++);
@@ -1387,6 +1465,8 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
         if (x && x < objects.size()) // not null, nor an integer's
           xs.push_back(x);
     for (uint64_t o : in) {
+      if (auto owner = fieldOwners.find(o); owner != fieldOwners.end())
+        o = owner->second;
       if (!xs.empty())
         to[o].insert(xs.begin(), xs.end());
       if (read && !exposed.empty() && holdsRead.insert(o).second)
@@ -1474,7 +1554,7 @@ void Memory::setBytes(State &st, Term p, Term byte, uint64_t n) {
     uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
     State::Cell cell{byte, prov};
     for (uint64_t i = 0; i < n; ++i) {
-      st.known.set({k->first, (k->second + i) & mask}, cell);
+      st.known.set(*key(fieldPointer(ptr({k->first, (k->second + i) & mask}))), cell);
       if (st.known.size() > MaxKnown)
         flush(st);
     }
@@ -1485,7 +1565,12 @@ void Memory::setBytes(State &st, Term p, Term byte, uint64_t n) {
     writeByte(st, bytePtr(p, i), {byte, prov});
 }
 
-bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
+bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n, bool backing) {
+  if (!backing)
+    for (Term p : {dst, src})
+      for (uint64_t o : candidates(p))
+        if (fieldStorage.count(o))
+          return false;
   if (n < MinSeparate)
     return false;
   if (ptrBits < 64 && n >= (uint64_t(1) << ptrBits))
@@ -1697,6 +1782,31 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n) {
 void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   if (!n || dst == src)
     return;
+  auto d = key(dst), s = key(src);
+  if (d && s && d->second == 0 && s->second == 0) {
+    auto to = fieldStorage.find(d->first), from = fieldStorage.find(s->first);
+    if (to != fieldStorage.end() && from != fieldStorage.end() &&
+        to->second.shift == from->second.shift &&
+        to->second.fields.size() == from->second.fields.size()) {
+      const APInt *ds = t.constant(objects[d->first].size);
+      const APInt *ss = t.constant(objects[s->first].size);
+      std::vector<std::pair<FieldStorage, FieldStorage>> pairs;
+      if (ds && ss && *ds == n && *ss == n)
+        for (const auto &a : to->second.fields)
+          for (const auto &b : from->second.fields)
+            if (a.field.offset == b.field.offset && a.field.bytes == b.field.bytes)
+              pairs.emplace_back(a, b);
+      if (pairs.size() == to->second.fields.size()) {
+        for (const auto &[a, b] : pairs)
+          copy(st, ptr(t.bv(a.object, ObjBits), t.bv(0, ptrBits)),
+               ptr(t.bv(b.object, ObjBits), t.bv(0, ptrBits)),
+               (n >> to->second.shift) * a.field.bytes);
+        // The original backing still preserves padding and unobserved fields.
+        if (copyArray(st, dst, src, n, true))
+          return;
+      }
+    }
+  }
   if (copyArray(st, dst, src, n))
     return;
   if (n > MaxBytes)
@@ -1721,7 +1831,7 @@ void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   }
   if (std::optional<Key> dk = key(dst)) {
     for (uint64_t i = 0; i < n; ++i) {
-      st.known.set({dk->first, (dk->second + i) & mask}, bytes[i]);
+      st.known.set(*key(fieldPointer(ptr({dk->first, (dk->second + i) & mask}))), bytes[i]);
       if (st.known.size() > MaxKnown)
         flush(st);
     }
@@ -1733,6 +1843,7 @@ void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
 
 void Memory::initialise(State &st, const Module &m,
                         const std::function<Term(const Constant *)> &valueOf) {
+  initialising = true;
   for (const GlobalVariable &g : m.globals()) {
     if (!g.hasInitializer()) // extern: contents unknown
       continue;
@@ -1743,6 +1854,7 @@ void Memory::initialise(State &st, const Module &m,
           dl.getTypeAllocSize(init->getType()).getFixedValue());
     storeConstant(st, globals.lookup(&g), init, valueOf);
   }
+  initialising = false;
 }
 
 bool Memory::hasPadding(Type *ty) const {

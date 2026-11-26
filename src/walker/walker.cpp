@@ -162,8 +162,7 @@ public:
     });
     memory::State st = mem.initial();
     for (const GlobalVariable &g : m.globals())
-      if (unsigned bits = ownsArrays(&g, m.getDataLayout()))
-        mem.own(st, mem.global(&g), bits);
+      ownObject(st, &g, mem.global(&g), m.getDataLayout());
     mem.initialise(st, m, [this](const Constant *c) { return enc.value(c); });
     errnoObject = m.getNamedGlobal("__vereda_errno");
     for (GlobalVariable &g : m.globals())
@@ -427,6 +426,155 @@ private:
         return 8;
     }
     return bits;
+  }
+
+  struct FieldLayout {
+    uint64_t stride;
+    std::vector<memory::Memory::Field> fields;
+  };
+
+  std::optional<FieldLayout> fieldLayout(const Value *v, const DataLayout &dl) {
+    // Keep all address observations on the source object. Only disjoint scalar
+    // accesses and bounded whole-object copies/zeroing enter the partitions.
+    if (exposed(v) || v->getType()->getPointerAddressSpace() != 0)
+      return std::nullopt;
+    Type *type = nullptr;
+    bool fixed = true;
+    if (auto *g = dyn_cast<GlobalVariable>(v)) {
+      if (!g->hasInitializer())
+        return std::nullopt;
+      type = g->getValueType();
+    } else if (auto *a = dyn_cast<AllocaInst>(v)) {
+      type = a->getAllocatedType();
+      auto *count = dyn_cast<ConstantInt>(a->getArraySize());
+      fixed = count && count->isOne();
+      if (!fixed && !type->isStructTy())
+        return std::nullopt;
+    }
+    if (!type)
+      return std::nullopt;
+    uint64_t bytes = fixed ? dl.getTypeAllocSize(type).getFixedValue() : 0;
+    if (auto *array = dyn_cast<ArrayType>(type))
+      type = array->getElementType();
+    else if (fixed)
+      return std::nullopt;
+    if (!type->isStructTy() || !type->isSized())
+      return std::nullopt;
+    uint64_t stride = dl.getTypeAllocSize(type).getFixedValue();
+    if (stride < 2 || stride > 64 || !isPowerOf2_64(stride))
+      return std::nullopt;
+    unsigned bits = dl.getPointerSizeInBits();
+    struct Pointer {
+      const Value *value;
+      APInt constant;
+      unsigned depth, terms;
+    };
+    SmallVector<Pointer, 8> work{{v, APInt(bits, 0), 0, 0}};
+    SmallPtrSet<const Value *, 16> seen{v};
+    FieldLayout result{stride, {}};
+    bool copiedPointers = false;
+    while (!work.empty()) {
+      Pointer at = work.pop_back_val();
+      for (const User *u : at.value->users()) {
+        if (auto *g = dyn_cast<GEPOperator>(u)) {
+          SmallMapVector<Value *, APInt, 4> scales;
+          APInt constant(bits, 0);
+          if (at.depth >= 4 || dl.getIndexTypeSizeInBits(g->getType()) != bits ||
+              !g->collectOffset(dl, bits, scales, constant) || at.terms + scales.size() > 4 ||
+              any_of(scales, [&](const auto &s) { return s.second.countr_zero() < Log2_64(stride); }))
+            return std::nullopt;
+          if (seen.insert(g).second)
+            work.push_back({g, at.constant + constant, at.depth + 1,
+                            at.terms + static_cast<unsigned>(scales.size())});
+          continue;
+        }
+        if (isa<ICmpInst>(u))
+          continue;
+        Type *access = nullptr;
+        if (auto *load = dyn_cast<LoadInst>(u))
+          access = load->getType();
+        else if (auto *store = dyn_cast<StoreInst>(u)) {
+          if (store->getValueOperand() != at.value)
+            access = store->getValueOperand()->getType();
+        } else if (auto *call = dyn_cast<CallBase>(u)) {
+          if (call->getCalledFunction() &&
+              call->getCalledFunction()->getName() == "__vereda_uninitialised")
+            continue;
+          bool copy = false;
+          if (at.value == v && bytes && isMemoryCopyOrSet(call, copy)) {
+            auto *length = dyn_cast<ConstantInt>(call->getArgOperand(2));
+            auto *byte = dyn_cast<ConstantInt>(call->getArgOperand(1));
+            if (length && length->getValue() == bytes &&
+                ((copy && bytes <= memory::Memory::MaxBytes) || (!copy && byte && byte->isZero()))) {
+              if (copy && call->getArgOperand(0) == v) {
+                SmallPtrSet<const Value *, 8> visiting;
+                copiedPointers |= !holdsNoPointers(getUnderlyingObject(call->getArgOperand(1)), visiting);
+              }
+              continue;
+            }
+          }
+        }
+        if (!access || (!access->isIntegerTy() && !access->isPointerTy()) ||
+            (access->isPointerTy() && access->getPointerAddressSpace() != 0))
+          return std::nullopt;
+        unsigned width = dl.getTypeStoreSize(access).getFixedValue();
+        uint64_t offset = at.constant.getZExtValue() % stride;
+        if (!isPowerOf2_32(width) || width > 8 || offset + width > stride)
+          return std::nullopt;
+        memory::Memory::Field field{offset, width, access->isPointerTy()};
+        bool present = false;
+        for (const auto &old : result.fields) {
+          if (old.offset == field.offset && old.bytes == field.bytes && old.pointer == field.pointer) {
+            present = true;
+            break;
+          }
+          if (old.offset < offset + width && offset < old.offset + old.bytes)
+            return std::nullopt;
+        }
+        if (!present)
+          result.fields.push_back(field);
+      }
+    }
+    if (result.fields.empty() || (result.fields.size() == 1 && result.fields[0].bytes == stride))
+      return std::nullopt;
+    // Initialisers and copies can carry pointer provenance even if a field
+    // is only read as an integer in this module.
+    bool supported = true;
+    auto pointers = [&](auto &&self, Type *ty, uint64_t at) -> void {
+      if (ty->isPointerTy()) {
+        supported &= ty->getPointerAddressSpace() == 0;
+        uint64_t n = dl.getTypeStoreSize(ty).getFixedValue();
+        for (auto &field : result.fields)
+          field.pointer |= at < field.offset + field.bytes && field.offset < at + n;
+      } else if (auto *s = dyn_cast<StructType>(ty)) {
+        const StructLayout *layout = dl.getStructLayout(s);
+        for (unsigned i = 0; i < s->getNumElements(); ++i)
+          self(self, s->getElementType(i), at + layout->getElementOffset(i));
+      } else if (auto *a = dyn_cast<ArrayType>(ty)) {
+        uint64_t step = dl.getTypeAllocSize(a->getElementType()).getFixedValue();
+        if (step)
+          for (uint64_t i = 0; i < a->getNumElements(); ++i)
+            self(self, a->getElementType(), at + i * step);
+      } else if (auto *v = dyn_cast<FixedVectorType>(ty)) {
+        uint64_t step = dl.getTypeStoreSize(v->getElementType()).getFixedValue();
+        for (unsigned i = 0; i < v->getNumElements(); ++i)
+          self(self, v->getElementType(), at + i * step);
+      }
+    };
+    pointers(pointers, type, 0);
+    if (!supported)
+      return std::nullopt;
+    for (auto &field : result.fields)
+      field.pointer |= copiedPointers;
+    return result;
+  }
+
+  void ownObject(memory::State &st, const Value *v, Term p, const DataLayout &dl) {
+    if (unsigned bits = ownsArrays(v, dl)) {
+      mem.own(st, p, bits);
+      if (auto fields = fieldLayout(v, dl))
+        mem.ownFields(st, p, fields->stride, fields->fields);
+    }
   }
 
   FunctionInfo &info(Function &f) {
@@ -1651,8 +1799,7 @@ private:
       Term size = zeroSize ? t.bv(0, bits)
                            : t.mul(enc.resize(count, bits, false), t.bv(elemSize, bits));
       Term p = mem.allocate(size, a->getAlign().value(), guard, exposed(a));
-      if (unsigned bits = ownsArrays(a, dl))
-        mem.own(st, p, bits);
+      ownObject(st, a, p, dl);
       enc.bind(a, p);
       return true;
     }

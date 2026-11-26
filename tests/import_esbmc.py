@@ -688,7 +688,6 @@ SKIPPED_TESTS = {
 # Tests Vereda gets wrong in a way to fix, by ESBMC path: they are imported
 # as KNOWNBUG, with the reason.
 KNOWN_BUGS = {
-    "esbmc/tuple_const_array_struct_member": "exceeds the 4 GiB regression memory limit",
     "esbmc/array_loop_summary_counter": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_decrement": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_store": "out of memory, over 16 GB",
