@@ -26,7 +26,6 @@ int main()
     copy_to_user(kernel_addr, user_addr, size);
 }
 // Imported from ESBMC regression/linux/user_to_user_fail
-// Needs: --std gnu89
 // RUN: --unwind 200 --std gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

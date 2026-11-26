@@ -5,6 +5,7 @@
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
+#include <llvm/Analysis/SimplifyQuery.h>
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
@@ -38,32 +39,52 @@ namespace vereda::ir {
 
 // Keep the check even when mem2reg or InstCombine removes an unused division.
 static void checkDivisors(Module &m) {
-  SmallVector<Instruction *, 16> divisions;
-  for (Function &f : m)
+  for (Function &f : m) {
+    SmallVector<Instruction *, 16> divisions;
     for (Instruction &i : instructions(f))
       if (i.getOpcode() == Instruction::SDiv || i.getOpcode() == Instruction::UDiv ||
           i.getOpcode() == Instruction::SRem || i.getOpcode() == Instruction::URem)
         divisions.push_back(&i);
-  for (Instruction *i : divisions) {
-    IRBuilder<> b(i);
-    Value *divisor = i->getOperand(1);
-    Value *ok;
-    if (auto *vt = dyn_cast<FixedVectorType>(divisor->getType())) {
-      ok = b.getTrue();
-      for (unsigned lane = 0; lane < vt->getNumElements(); ++lane) {
-        Value *element = b.CreateExtractElement(divisor, b.getInt32(lane));
-        ok = b.CreateAnd(ok, b.CreateICmpNE(element, Constant::getNullValue(element->getType())));
-      }
-    } else {
-      ok = b.CreateICmpNE(divisor, Constant::getNullValue(divisor->getType()));
-      if (ok->getType()->isVectorTy())
-        ok = b.CreateAndReduce(ok);
-    }
-    if (auto *c = dyn_cast<ConstantInt>(ok); c && c->isOne())
+    if (divisions.empty())
       continue;
-    FunctionCallee check = m.getOrInsertFunction("__vereda_check_divisor", b.getVoidTy(), b.getInt1Ty());
-    b.CreateCall(check, {ok});
+    DominatorTree dt(f);
+    for (Instruction *i : divisions) {
+      IRBuilder<> b(i);
+      Value *divisor = i->getOperand(1);
+      // Clang's sanitizer or a source branch may already exclude zero here.
+      if (isKnownNonZero(divisor, SimplifyQuery(m.getDataLayout(), &dt, nullptr, i,
+                                               /*UseInstrInfo=*/false, /*CanUseUndef=*/false)))
+        continue;
+      Value *ok;
+      if (auto *vt = dyn_cast<FixedVectorType>(divisor->getType())) {
+        ok = b.getTrue();
+        for (unsigned lane = 0; lane < vt->getNumElements(); ++lane) {
+          Value *element = b.CreateExtractElement(divisor, b.getInt32(lane));
+          ok = b.CreateAnd(ok, b.CreateICmpNE(element, Constant::getNullValue(element->getType())));
+        }
+      } else {
+        ok = b.CreateICmpNE(divisor, Constant::getNullValue(divisor->getType()));
+        if (ok->getType()->isVectorTy())
+          ok = b.CreateAndReduce(ok);
+      }
+      if (auto *c = dyn_cast<ConstantInt>(ok); c && c->isOne())
+        continue;
+      FunctionCallee check = m.getOrInsertFunction("__vereda_check_divisor", b.getVoidTy(), b.getInt1Ty());
+      b.CreateCall(check, {ok});
+    }
   }
+}
+
+static void dropSafeDivisors(Module &m) {
+  Function *check = m.getFunction("__vereda_check_divisor");
+  if (!check)
+    return;
+  for (User *user : make_early_inc_range(check->users()))
+    if (auto *call = dyn_cast<CallInst>(user))
+      if (auto *ok = dyn_cast<ConstantInt>(call->getArgOperand(0)); ok && ok->isOne())
+        call->eraseFromParent();
+  if (check->use_empty())
+    check->eraseFromParent();
 }
 
 // Poison-generating flags, attributes and metadata let LLVM assume no
@@ -1182,6 +1203,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
                             "function(instcombine<no-verify-fixpoint>,"
                             "scalarizer<load-store;variable-insert-extract>)"))
     return std::move(e);
+  dropSafeDivisors(*module);
   for (GlobalVariable *g : written)
     g->setConstant(true);
   // After InstCombine, which sets fixIrreducible's guard on a way in from a

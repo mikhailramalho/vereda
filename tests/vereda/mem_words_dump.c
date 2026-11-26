@@ -2,7 +2,7 @@
 // only as one iN, N = 16, 32 or 64, at multiples of N/8 (objects 1 to 3),
 // and not one read as chars too, one passed to memset, one read at an odd
 // offset or one read as shorts too (objects 4 to 7).
-// RUN: --dump-smt-only
+// RUN: --dump-smt-only --no-div-by-zero-check
 // EXPECT: ^\(declare-const \|object#1#\d+\| \(Array \(_ BitVec 62\) \(_ BitVec 32\)\)\)$
 // EXPECT: ^\(declare-const \|object#2#\d+\| \(Array \(_ BitVec 63\) \(_ BitVec 16\)\)\)$
 // EXPECT: ^\(declare-const \|object#3#\d+\| \(Array \(_ BitVec 61\) \(_ BitVec 64\)\)\)$

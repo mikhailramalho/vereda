@@ -31,7 +31,6 @@ int main()
 
 }
 // Imported from ESBMC regression/linux/kernel_from_user_copy_valid
-// Needs: --std gnu89
 // RUN: --unwind 200 --std gnu89
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

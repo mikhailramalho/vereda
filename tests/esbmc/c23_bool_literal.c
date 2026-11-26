@@ -16,8 +16,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/c23_bool_literal
-// Needs: --std c23
 // RUN: --std c23
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -159,6 +159,7 @@ def main():
                         help="rustc 1.100.0 (default: $RUSTC, CMake's compiler, or rustc)")
     parser.add_argument("-m32", action="store_true", help="32-bit target, forwarded to clang")
     parser.add_argument("-m64", action="store_true", help="64-bit target, forwarded to clang")
+    parser.add_argument("--std", "-std", help="C language standard, forwarded to clang")
     parser.add_argument("-I", action="append", default=[], help="include directory for clang")
     parser.add_argument("-D", action="append", default=[], help="macro definition for clang")
     parser.add_argument("--keep-ir", action="store_true",
@@ -177,6 +178,8 @@ def main():
     parser.error = error
     args, rest = parser.parse_known_args()
     flags = ["-m32"] * args.m32 + ["-m64"] * args.m64
+    if args.std is not None:
+        flags.append("-std=" + args.std)
     if args.property_file:
         entry, prop, sanitize = read_property(args.property_file)
         args.sanitize += sanitize
@@ -214,6 +217,8 @@ def main():
     if not inputs:
         fail("vereda.py: no input file (.c .i .rs .ll .bc)")
     if any(i.endswith(".rs") for i in inputs):
+        if args.std is not None:
+            fail("vereda.py: --std selects a C language standard and does not apply to Rust")
         if args.m32:
             fail("vereda.py: Rust source currently supports the host 64-bit target only")
         if args.sanitize or args.property_file or args.I or args.D:
@@ -223,6 +228,8 @@ def main():
                                  check=False)
         if version.returncode or not version.stdout.startswith("rustc 1.100.0 "):
             fail("vereda.py: Rust input needs rustc 1.100.0; pass --rustc or reconfigure CMake")
+    if args.std is not None and not any(i.endswith((".c", ".i")) for i in inputs):
+        fail("vereda.py: --std needs C inputs, not .ll or .bc")
     if any(f.startswith("-fsanitize=") for f in flags) and any(i.endswith(IR_EXTS) for i in inputs):
         fail("vereda.py: clang compiles the overflow checks in, so they need C inputs, "
              "not .ll or .bc")
@@ -233,10 +240,15 @@ def main():
     selection.add_argument("--property", default="all")
     selection.error = error
     selected, _ = selection.parse_known_args(forwarded)
-    no_divisor = {"--no-div-by-zero-check", "--no-div-by-zero-check=true",
-                  "--no-div-by-zero-check=1"} & set(forwarded)
+    no_divisor = False
+    for flag in forwarded:
+        name, eq, value = flag.partition("=")
+        if name == "--no-div-by-zero-check":
+            no_divisor = not eq or value in ("", "true", "1")
     if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all" and not no_divisor:
-        flags += ["-fsanitize=integer-divide-by-zero", "-fsanitize-trap=integer-divide-by-zero",
+        # The nonreturning handler retains the operands, unlike ubsantrap's
+        # shared code for zero division and signed division overflow.
+        flags += ["-fsanitize=integer-divide-by-zero", "-fno-sanitize-recover=integer-divide-by-zero",
                   "-fsanitize-debug-trap-reasons=none"]
 
     def run(cmd):

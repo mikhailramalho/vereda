@@ -23,7 +23,7 @@ int main(void)
   reach_error();
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/return_across_loop_branches
-// Needs: --sv-comp --std c11 --validate-violation-witness --witness witness.yml
+// Needs: --sv-comp --validate-violation-witness --witness witness.yml
 // RUN: --32 --sv-comp --std c11 --validate-violation-witness --witness witness.yml --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -8,6 +8,12 @@ assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == 
     ["--no-assertions", "--no-div-by-zero-check"], [], [])
 for flag in ("--memory-leak-check", "--data-races-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
+for args in ("--std c11", "--std=c11"):
+    assert import_esbmc.translate(args + " --z3", ".") == (
+        ["--std", "c11", "--solver", "z3"], [], [])
+lines = import_esbmc.header("suite/c_standard", "CORE", "--std=c23", [], ".", [])
+assert "// RUN: --std c23" in lines, lines
+assert not any(s.startswith(("// Needs:", "// MODE:")) for s in lines), lines
 
 for walk_tag, solve_tag in (("", ""), ("", "[PROGRESS] "), ("[INFO] ", "[INFO] ")):
     output = (f"{walk_tag}Walk time: 0.125s (2 checks, 3 symbols, peak memory 40 MB)\n"

@@ -13,7 +13,7 @@ int main(void)
   __VERIFIER_assert(first == second); // volatile struct pointer reads may differ
 }
 // Imported from ESBMC regression/esbmc/volatile_struct_pointer_read_fail_kinduction
-// Needs: --std c11 --volatile-check --k-induction
+// Needs: --volatile-check --k-induction
 // RUN: --std c11 --volatile-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

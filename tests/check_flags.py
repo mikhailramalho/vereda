@@ -49,8 +49,26 @@ with tempfile.TemporaryDirectory() as directory:
         check(command + [str(source)] + flags, 1, "division by zero")
     check(command + [str(source), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--no-div-by-zero-check=false"], 1, "division by zero")
+    for flags, status in ((["--no-div-by-zero-check", "--no-div-by-zero-check=false"], 1),
+                          (["--no-div-by-zero-check=false", "--no-div-by-zero-check"], 0)):
+        check(command + [str(source)] + flags, status, "VERIFICATION")
+        source_ir = tmp / "order.ll"
+        source_ir.write_text("define i32 @main(i32 %n) {\n %unused = sdiv i32 7, %n\n ret i32 0\n}\n")
+        check([binary, str(source_ir)] + flags, status, "VERIFICATION")
+    output = check(command + [str(source)], 1, "[main.division-by-zero.1]")
+    assert "main.assertion." not in output and "division-by-zero.2" not in output, output
+    assert "Properties: 1 checked" in output, output
+    prepared = check(command + [str(source), "--dump-ir-only"], 0,
+                     "__ubsan_handle_divrem_overflow_abort")
+    assert "__vereda_check_divisor" not in prepared, prepared
+    for integer, flags in (("long long", []), ("long long", ["-m32"]), ("__int128", []),
+                           ("_BitInt(12)", []), ("_BitInt(129)", [])):
+        source.write_text(f"int main(int n, char **p) {{ {integer} d = n; return (int)(7 / d); }}\n")
+        output = check(command + [str(source)] + flags, 1, "[main.division-by-zero.1]")
+        assert "arithmetic-overflow." not in output, output
     source.write_text("int main(void) { int unused = 1 / 0; return 0; }\n")
-    check(command + [str(source)], 1, "division by zero")
+    output = check(command + [str(source)], 1, "[main.division-by-zero.1]")
+    assert "main.assertion." not in output, output
     check(command + [str(source), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
 
     for operation in ("sdiv", "udiv", "srem", "urem"):
@@ -66,6 +84,14 @@ with tempfile.TemporaryDirectory() as directory:
                   " %unused = sdiv i32 7, 0\n ret i32 0\n}\n")
     output = check([binary, str(ir), "--multi-property"], 1, "division by zero")
     assert "__VERIFIER_assert" in output, output
+    ir.write_text('@type = constant {i16, i16, [4 x i8]} {i16 0, i16 13, [4 x i8] c"i64\\00"}\n'
+                  '@data = constant {{ptr, i32, i32}, ptr} {{ptr, i32, i32} zeroinitializer, ptr @type}\n'
+                  "declare void @__ubsan_handle_divrem_overflow_abort(ptr, i64, i64) noreturn\n"
+                  "define i32 @main(i64 %n) {\n"
+                  " call void @__ubsan_handle_divrem_overflow_abort(ptr @data, i64 0, i64 %n)\n"
+                  " unreachable\n}\n")
+    output = check([binary, str(ir), "--multi-property"], 1, "[main.division-by-zero.1]")
+    assert "[main.arithmetic-overflow.1]" in output, output
 
     source.write_text("#include <assert.h>\nint main(void) {\n"
                       " assert(0); volatile int n = 0; return 7 / n; }\n")
@@ -81,6 +107,15 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--overflow-check", "--no-assertions"],
           1, "arithmetic overflow on add")
+    source.write_text("#include <limits.h>\n"
+                      "int main(void) { return INT_MIN / -1; }\n")
+    output = check(command + [str(source), "--overflow-check"], 1, "VERIFICATION FAILED")
+    assert "division-by-zero." not in output, output
+    source.write_text("#include <limits.h>\nint main(int n, char **argv) {\n"
+                      " if (!n) return 7 / n; return INT_MIN / -1; }\n")
+    output = check(command + [str(source), "--overflow-check", "--multi-property"],
+                   1, "[main.division-by-zero.1]")
+    assert "division-by-zero.2" not in output, output
     source.write_text("int main(int n, char **argv) { return (unsigned)n + 1u; }\n")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--unsigned-overflow-check"], 1, "arithmetic overflow on add")
@@ -96,6 +131,16 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--property-file", str(prop), "--no-assertions"], 6, "conflicts")
     ir.write_text("define i32 @main() { ret i32 0 }\n")
     check([binary, str(ir), "--property=unreach-call", "--no-assertions"], 6, "conflicts")
+
+    # A divisor that becomes constant after mem2reg must not block summaries.
+    source.write_text("unsigned a[1024];\nint main(void) { unsigned d = 2;\n"
+                      " for (unsigned i = 0; i < 1024; ++i) a[i] = i / d; return 0; }\n")
+    for property_name in ("unreach-call", "no-overflow"):
+        flags = ["--property", property_name]
+        output = check(command + [str(source)] + flags, 0, "Summarised 1 array loop(s)")
+        assert "VERIFICATION SUCCESSFUL" in output, output
+        prepared = check(command + [str(source), "--dump-ir-only"] + flags, 0, "define")
+        assert "__vereda_check_divisor" not in prepared, prepared
 
     # User assertion selection must not disable completeness checks.
     source.write_text("int main(int n, char **argv) { while (n > 0) { --n; } }\n")

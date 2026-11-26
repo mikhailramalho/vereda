@@ -17,8 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10786_side_effect
-// Needs: --std c11
 // RUN: --std c11
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

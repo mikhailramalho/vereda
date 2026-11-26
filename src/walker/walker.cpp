@@ -1039,6 +1039,22 @@ private:
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
+    if (name == "__ubsan_handle_divrem_overflow_abort") {
+      Term divisor = enc.value(c.getArgOperand(2));
+      unsigned width = ir::divremOperandBits(c);
+      if (!width)
+        throw Unsupported("integer division sanitizer with an unknown type descriptor");
+      if (width > mem.pointerBits())
+        divisor = mem.load(st, mem.fromAddress(divisor), IntegerType::get(c.getContext(), width));
+      Term zero = t.eq(divisor, t.bv(0, divisor.width()));
+      if (counts(false) && !t.isFalse(zero))
+        assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
+                  checks::Property::DivisionByZero);
+      if (counts(true) && !t.isTrue(zero))
+        assertion(c, t.land(guard, t.lnot(zero)), "arithmetic overflow on division", "", nullptr,
+                  checks::Property::ArithmeticOverflow);
+      return t.boolean(false);
+    }
     // Rust lowers assertions and checked arithmetic and indexing to panic calls.
     // Recognise Rust symbols only, including when their bodies are linked in.
     if (name.starts_with("_R") || name.starts_with("_ZN")) {

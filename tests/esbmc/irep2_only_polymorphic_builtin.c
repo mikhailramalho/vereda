@@ -19,7 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_polymorphic_builtin
-// Needs: --clang-c-irep2-adjust-only --std c11
+// Needs: --clang-c-irep2-adjust-only
 // RUN: --clang-c-irep2-adjust-only --std c11
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

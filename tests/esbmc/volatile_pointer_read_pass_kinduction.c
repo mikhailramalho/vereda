@@ -29,7 +29,7 @@ int main(void)
   __VERIFIER_assert(short_circuit); // short circuit guards the volatile access
 }
 // Imported from ESBMC regression/esbmc/volatile_pointer_read_pass_kinduction
-// Needs: --std c11 --volatile-check --k-induction
+// Needs: --volatile-check --k-induction
 // RUN: --std c11 --volatile-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

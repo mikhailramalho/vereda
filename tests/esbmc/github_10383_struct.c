@@ -16,8 +16,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10383_struct
-// Needs: --std c2x
-// RUN: --std c2x --z3
+// RUN: --std c2x --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

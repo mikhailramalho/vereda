@@ -10,7 +10,7 @@ int main(void)
   free(p);
 }
 // Imported from ESBMC regression/witnesses_validate/memsafety-violationwitness/target_after_invalid_read
-// Needs: --std c11 --validate-violation-witness --witness witness.yml --memory-leak-check
+// Needs: --validate-violation-witness --witness witness.yml --memory-leak-check
 // RUN: --32 --std c11 --validate-violation-witness --witness witness.yml --memory-leak-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
