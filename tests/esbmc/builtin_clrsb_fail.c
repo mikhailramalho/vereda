@@ -11,8 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_clrsb_fail
-// Needs: --clz-zero-check
-// RUN: --clz-zero-check --multi-property
-// MODE: FUTURE
+// RUN: --ub-count-zero-check --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

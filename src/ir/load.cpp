@@ -76,8 +76,72 @@ static void checkDivisors(Module &m) {
   }
 }
 
-static void dropSafeDivisors(Module &m) {
-  Function *check = m.getFunction("__vereda_check_divisor");
+// Preserve checks even when the result is unused or the operand is constant zero.
+// Clang's defined-zero builtins mask the poison result with a select, sometimes
+// after a cast (clzg/ctzg) or an add (ffs).
+static bool maskedCountZero(Value *v, Value *arg, unsigned &budget) {
+  if (!budget || v->use_empty())
+    return false;
+  --budget;
+  for (User *u : v->users()) {
+    if (isa<CastInst>(u) || isa<BinaryOperator>(u)) {
+      if (!maskedCountZero(u, arg, budget))
+        return false;
+      continue;
+    }
+    auto *sel = dyn_cast<SelectInst>(u);
+    auto *cmp = sel ? dyn_cast<ICmpInst>(sel->getCondition()) : nullptr;
+    if (!cmp || !cmp->isEquality() || cmp->getOperand(0) != arg ||
+        !isa<Constant>(cmp->getOperand(1)) ||
+        !cast<Constant>(cmp->getOperand(1))->isNullValue())
+      return false;
+    bool zeroOnTrue = cmp->getPredicate() == ICmpInst::ICMP_EQ;
+    if ((zeroOnTrue ? sel->getFalseValue() : sel->getTrueValue()) != v ||
+        (zeroOnTrue ? sel->getTrueValue() : sel->getFalseValue()) == v)
+      return false;
+  }
+  return true;
+}
+
+static void checkCountZeros(Module &m) {
+  for (Function &f : m) {
+    SmallVector<IntrinsicInst *, 8> calls;
+    for (Instruction &i : instructions(f))
+      if (auto *c = dyn_cast<IntrinsicInst>(&i);
+          c && (c->getIntrinsicID() == Intrinsic::ctlz || c->getIntrinsicID() == Intrinsic::cttz) &&
+          cast<ConstantInt>(c->getArgOperand(1))->isOne())
+        calls.push_back(c);
+    if (calls.empty())
+      continue;
+    DominatorTree dt(f);
+    for (IntrinsicInst *c : calls) {
+      Value *arg = c->getArgOperand(0);
+      unsigned budget = 32;
+      if (maskedCountZero(c, arg, budget))
+        continue;
+      if (isKnownNonZero(arg, SimplifyQuery(m.getDataLayout(), &dt, nullptr, c,
+                                           /*UseInstrInfo=*/false, /*CanUseUndef=*/false)))
+        continue;
+      IRBuilder<> b(c);
+      b.SetCurrentDebugLocation(c->getDebugLoc());
+      Value *ok = b.CreateICmpNE(arg, Constant::getNullValue(arg->getType()));
+      if (auto *vt = dyn_cast<FixedVectorType>(arg->getType())) {
+        Value *all = b.getTrue();
+        for (unsigned lane = 0; lane < vt->getNumElements(); ++lane)
+          all = b.CreateAnd(all, b.CreateExtractElement(ok, b.getInt32(lane)));
+        ok = all;
+      }
+      FunctionCallee check = m.getOrInsertFunction("__vereda_check_count_zero",
+                                                  b.getVoidTy(), b.getInt1Ty());
+      b.CreateCall(check, {ok});
+      // The check now owns the precondition; do not let LLVM exploit poison.
+      c->setArgOperand(1, b.getFalse());
+    }
+  }
+}
+
+static void dropSafeChecks(Module &m, StringRef name) {
+  Function *check = m.getFunction(name);
   if (!check)
     return;
   for (User *user : make_early_inc_range(check->users()))
@@ -1022,7 +1086,7 @@ static Error runPipeline(Module &m, StringRef pipeline) {
 // that calls the passes created (bcmp from memcmp) find theirs too. The
 // models went through the same passes when built; calls into them whose
 // type differs from the definition are converted as lowerCalls does.
-static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck) {
+static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool countZeroCheck) {
   SmallString<128> path(dir);
   sys::path::append(path, "models-" + std::to_string(m.getDataLayout().getPointerSizeInBits()) +
                               ".bc");
@@ -1036,6 +1100,8 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck) {
   models->setDataLayout(m.getDataLayout());
   if (divByZeroCheck)
     checkDivisors(*models);
+  if (countZeroCheck)
+    checkCountZeros(*models);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1232,7 +1298,7 @@ static void threadBoolPhis(Module &m) {
 }
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
-                                       StringRef entry, bool divByZeroCheck) {
+                                       StringRef entry, bool divByZeroCheck, bool countZeroCheck) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1252,6 +1318,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   lowerLongjmp(*module);
   if (divByZeroCheck)
     checkDivisors(*module);
+  if (countZeroCheck)
+    checkCountZeros(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))
     return std::move(e);
   lowerCalls(*module); // before InstCombine, which folds tests of constants
@@ -1266,7 +1334,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
                             "function(instcombine<no-verify-fixpoint>,"
                             "scalarizer<load-store;variable-insert-extract>)"))
     return std::move(e);
-  dropSafeDivisors(*module);
+  dropSafeChecks(*module, "__vereda_check_divisor");
+  dropSafeChecks(*module, "__vereda_check_count_zero");
   for (GlobalVariable *g : written)
     g->setConstant(true);
   // InstCombine drops safe sanitizer calls; discard their diagnostic globals
@@ -1284,7 +1353,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
-  if (Error e = linkModels(*module, models, divByZeroCheck))
+  if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck))
     return std::move(e);
   // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before

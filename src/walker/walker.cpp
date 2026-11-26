@@ -1382,13 +1382,29 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
-    if (name == "__vereda_check_divisor") {
+    if (name == "__ubsan_handle_invalid_builtin_abort") {
+      auto *data = dyn_cast<GlobalVariable>(c.getArgOperand(0)->stripPointerCasts());
+      auto *init = data && data->hasInitializer() ? dyn_cast<ConstantStruct>(data->getInitializer())
+                                                 : nullptr;
+      auto *kind = init ? dyn_cast<ConstantInt>(init->getOperand(1)) : nullptr;
+      if (!kind || kind->getZExtValue() > 2)
+        throw Unsupported("unknown builtin precondition");
+      // Clang also instruments __builtin_assume(false); it remains an assumption.
+      if (kind->getZExtValue() < 2 && counts(false))
+        assertion(c, guard, "__builtin_clz/ctz of zero is undefined", "", nullptr,
+                  checks::Property::CountZero);
+      return t.boolean(false);
+    }
+    if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero") {
       Term holds = enc.isTrue(c.getArgOperand(0));
       if (t.isTrue(holds))
         return guard;
       if (counts(false))
-        assertion(c, t.land(guard, t.lnot(holds)), "division by zero", "", nullptr,
-                  checks::Property::DivisionByZero);
+        assertion(c, t.land(guard, t.lnot(holds)),
+                  name == "__vereda_check_divisor" ? "division by zero"
+                                                  : "__builtin_clz/ctz of zero is undefined",
+                  "", nullptr, name == "__vereda_check_divisor"
+                                   ? checks::Property::DivisionByZero : checks::Property::CountZero);
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
