@@ -1292,7 +1292,8 @@ private:
         mem.copy(st, enc.value(c.getArgOperand(0)), enc.value(c.getArgOperand(1)),
                  isX86_64(c) ? 24 : 4);
         return guard;
-      case Intrinsic::vaend: return guard;
+      case Intrinsic::vaend:
+      case Intrinsic::prefetch: return guard;
       default: break;
       }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed

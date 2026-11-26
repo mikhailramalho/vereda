@@ -3,6 +3,7 @@
 
 #include <llvm/Analysis/CFG.h>
 #include <llvm/IR/InstIterator.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Module.h>
 
 using namespace llvm;
@@ -69,7 +70,9 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (name == "__ubsan_handle_float_cast_overflow_abort")
     return counted.preconditions;
   if (f->isIntrinsic())
-    return name.starts_with("llvm.ubsantrap") ? counted.traps : f->doesNotAccessMemory();
+    return name.starts_with("llvm.ubsantrap")
+               ? counted.traps
+               : f->getIntrinsicID() == Intrinsic::prefetch || f->doesNotAccessMemory();
   if (name == "reach_error" && counted.reachError)
     return true;
   // A loop in the callee may not end, which would stop the loop being
