@@ -1,7 +1,6 @@
-// A long double (x86_fp80) is held as its bits: negation and fabsl are bit
-// operations on its sign and work; arithmetic and comparisons are
-// unsupported (float_long_double_cmp.c).
+// Negation and fabsl on long double (x86_fp80).
 // RUN: -m64
+// RUN: -m64 --fp2bv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern long double fabsl(long double);
 extern long double x;

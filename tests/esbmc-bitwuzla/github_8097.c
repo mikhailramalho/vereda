@@ -17,6 +17,3 @@ int main()
 // Imported from ESBMC regression/bitwuzla/github_8097
 // RUN: --solver bitwuzla -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

@@ -19,4 +19,4 @@ int main(void)
 // EXPECT: nexttowardf\(1.0f, 2.0L\) == 1.0f$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED

@@ -29,10 +29,11 @@ static std::string describe(const Type *ty) {
   return str;
 }
 
-// The format of a floating-point type that is an IEEE interchange format;
-// null for x86_fp80 and ppc_fp128, which are not.
+// The format of a supported floating-point type (IEEE interchange formats and
+// x86_fp80, which differs only by its explicit integer bit); null for
+// ppc_fp128.
 static const fltSemantics *ieee(Type *ty) {
-  if (!ty->isFloatingPointTy() || ty->isX86_FP80Ty() || ty->isPPC_FP128Ty())
+  if (!ty->isFloatingPointTy() || ty->isPPC_FP128Ty())
     return nullptr;
   return &ty->getFltSemantics();
 }
@@ -96,7 +97,7 @@ SMTSortRef Encoder::sort(Type *ty) {
   if (ty->isIntegerTy(1))
     return s.mkBoolSort();
   if (ieee(ty))
-    return native() ? fpSort(ty) : s.mkBVSort(ty->getPrimitiveSizeInBits());
+    return useNative(ty) ? fpSort(ty) : s.mkBVSort(ty->getPrimitiveSizeInBits());
   if (unsigned w = vectorElementWidth(ty))
     return s.mkBVSort(w * cast<FixedVectorType>(ty)->getNumElements());
   if (ty->isPointerTy())
@@ -112,6 +113,9 @@ Term Encoder::fresh(Type *ty, const std::string &name) {
   // it points to no object the program kept to itself (memory.h, #137).
   if (ty->isPointerTy())
     return mem.fromAddress(t.symbol(id, s.mkBVSort(mem.pointerBits())));
+  // A canonical x86_fp80 has 79 independent bits; bit 63 is 1 iff exp != 0.
+  if (ty->isX86_FP80Ty())
+    return ieee79ToFP80(t.symbol(id, s.mkBVSort(79)));
   return t.symbol(id, sort(ty));
 }
 
@@ -214,27 +218,51 @@ Term Encoder::gep(const GEPOperator &g) {
   return mem.advance(value(g.getPointerOperand()), delta);
 }
 
-SMTSortRef Encoder::fpSort(Type *ty) {
+// x86_fp80 stores an explicit integer bit at bit 63 (0 when the 15-bit biased
+// exponent is zero, 1 otherwise); SMT-LIB's (_ FloatingPoint 15 64) omits it,
+// giving a 79-bit IEEE interchange layout.
+Term Encoder::fp80ToIEEE79(Term bv80) {
+  return t.concat(t.extract(bv80, 79, 64), t.extract(bv80, 62, 0));
+}
+
+Term Encoder::ieee79ToFP80(Term bv79) {
+  Term signExp = t.extract(bv79, 78, 63);
+  Term exp = t.extract(bv79, 77, 63);
+  Term intBit = t.ite(t.eq(exp, t.bv(0, 15)), t.bv(0, 1), t.bv(1, 1));
+  return t.concat(t.concat(signExp, intBit), t.extract(bv79, 62, 0));
+}
+
+SMTSortRef Encoder::fpSort(Type *ty) { return fpSort(ty, fpEncodingOf(ty)); }
+
+SMTSortRef Encoder::fpSort(Type *ty, camada::FPEncoding encoding) {
   const fltSemantics *sem = ieee(ty);
   if (!sem)
     throw Unsupported("type " + describe(ty));
-  unsigned precision = APFloat::semanticsPrecision(*sem); // with the hidden bit
-  return s.mkFPSort(APFloat::semanticsSizeInBits(*sem) - precision, precision - 1,
-                    fpEncoding);
+  unsigned precision = APFloat::semanticsPrecision(*sem); // with the hidden/integer bit
+  unsigned expBits = ty->isX86_FP80Ty() ? 15 : APFloat::semanticsSizeInBits(*sem) - precision;
+  return s.mkFPSort(expBits, precision - 1, encoding);
 }
 
 camada::SMTExprRef Encoder::fp(const Value *v) {
-  SMTSortRef sort = fpSort(v->getType()); // throws for x86_fp80, held as bits
-  camada::SMTExprRef x = t.solverTerm(value(v));
-  return native() ? x : s.mkBVToIEEEFP(x, sort);
+  Type *ty = v->getType();
+  SMTSortRef sort = fpSort(ty);
+  Term x = value(v);
+  if (useNative(ty))
+    return t.solverTerm(x);
+  if (ty->isX86_FP80Ty())
+    x = fp80ToIEEE79(x);
+  return s.mkBVToIEEEFP(t.solverTerm(x), sort);
 }
 
-Term Encoder::bits(const camada::SMTExprRef &f) {
-  return t.fromSolver(native() ? f : s.mkIEEEFPToBV(f));
+Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
+  if (useNative(ty))
+    return t.fromSolver(f);
+  Term b = t.fromSolver(s.mkIEEEFPToBV(f));
+  return ty->isX86_FP80Ty() ? ieee79ToFP80(b) : b;
 }
 
 Term Encoder::toBits(Term v, Type *ty) {
-  if (!native() || !ieee(ty))
+  if (!useNative(ty) || !ieee(ty))
     return v;
   const fltSemantics *sem = ieee(ty);
   // A constant's bits, except a NaN's, which are any NaN's as for every NaN term.
@@ -242,22 +270,25 @@ Term Encoder::toBits(Term v, Type *ty) {
       it != floatBits.end() && !APFloat(*sem, it->second).isNaN())
     return t.bv(it->second);
   Term b = t.fromSolver(s.mkIEEEFPToBV(t.solverTerm(v)));
+  if (ty->isX86_FP80Ty())
+    b = ieee79ToFP80(b);
   bitsFloat.try_emplace({b.id(), sem}, v);
   return b;
 }
 
 Term Encoder::fromBits(Term b, Type *ty) {
-  if (!native() || !ieee(ty))
+  if (!useNative(ty) || !ieee(ty))
     return b;
   const fltSemantics *sem = ieee(ty);
   if (auto it = bitsFloat.find({b.id(), sem}); it != bitsFloat.end())
     return it->second;
   const APInt *c = t.constant(b);
+  Term ieeeBits = ty->isX86_FP80Ty() ? fp80ToIEEE79(b) : b;
   if (!c)
-    return t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
+    return t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(ieeeBits), fpSort(ty)));
   Term &f = floatTerms[{sem, *c}];
   if (!f) {
-    f = t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty)));
+    f = t.fromSolver(s.mkBVToIEEEFP(t.solverTerm(ieeeBits), fpSort(ty)));
     floatBits.try_emplace(f.id(), *c);
   }
   return f;
@@ -269,7 +300,7 @@ std::optional<APFloat> Encoder::constFloat(const Value *v) {
     return std::nullopt;
   Term e = value(v);
   const APInt *c = nullptr;
-  if (!native())
+  if (!useNative(v->getType()))
     c = t.constant(e);
   else if (auto it = floatBits.find(e.id()); it != floatBits.end())
     c = &it->second;
@@ -292,12 +323,14 @@ Term Encoder::signBit(const Value *v) {
   return t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
 }
 
-camada::SMTExprRef Encoder::rm(camada::RM mode) { return s.mkRM(mode, fpEncoding); }
+camada::SMTExprRef Encoder::rm(camada::RM mode, Type *ty) {
+  return s.mkRM(mode, fpEncodingOf(ty));
+}
 
 Term Encoder::fpClass(const Term &x, Type *ty, unsigned mask) {
   if (!ieee(ty))
     throw Unsupported("type " + describe(ty));
-  if (native()) {
+  if (useNative(ty)) {
     // The theory has one NaN, so either NaN class means any NaN; the sign
     // of a zero is told by structural equality, which -0 and +0 fail.
     const fltSemantics &sem = *ieee(ty);
@@ -320,14 +353,15 @@ Term Encoder::fpClass(const Term &x, Type *ty, unsigned mask) {
     return r;
   }
   const fltSemantics &sem = *ieee(ty);
-  unsigned w = x.width(), sig = APFloat::semanticsPrecision(sem) - 1;
-  Term exp = t.extract(x, w - 2, sig), mant = t.extract(x, sig - 1, 0);
-  Term neg = t.eq(t.extract(x, w - 1, w - 1), t.bv(1, 1));
+  Term b = ty->isX86_FP80Ty() ? fp80ToIEEE79(x) : x;
+  unsigned w = b.width(), sig = APFloat::semanticsPrecision(sem) - 1;
+  Term exp = t.extract(b, w - 2, sig), mant = t.extract(b, sig - 1, 0);
+  Term neg = t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
   Term top = t.eq(exp, t.bvnot(t.bv(0, w - 1 - sig)));
   Term low = t.eq(exp, t.bv(0, w - 1 - sig));
   Term noMant = t.eq(mant, t.bv(0, sig));
   Term nan = t.land(top, t.lnot(noMant));
-  Term quiet = t.eq(t.extract(x, sig - 1, sig - 1), t.bv(1, 1));
+  Term quiet = t.eq(t.extract(b, sig - 1, sig - 1), t.bv(1, 1));
   Term inf = t.land(top, noMant), zero = t.land(low, noMant);
   Term sub = t.land(low, t.lnot(noMant));
   Term normal = t.lnot(t.lor(top, low));
@@ -414,8 +448,10 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       return floatValue(r, dst);
     }
     camada::SMTExprRef x = t.solverTerm(a);
-    return bits(opcode == Instruction::SIToFP ? s.mkSBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN))
-                                              : s.mkUBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
+    return bits(opcode == Instruction::SIToFP
+                    ? s.mkSBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN, dst))
+                    : s.mkUBVToFP(x, fpSort(dst), rm(camada::RM::ROUND_TO_EVEN, dst)),
+                dst);
   }
   case Instruction::FPExt:
   case Instruction::FPTrunc:
@@ -425,7 +461,24 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       if (Term r = folded(*c, dst))
         return r;
     }
-    return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN)));
+    if (useNative(src) != useNative(dst)) {
+      // Converting between a native FP format and a BV-encoded one (x86_fp80 /
+      // bfloat): do the conversion in camada's BV FP encoding so both sides
+      // share one encoding.
+      Term srcBits = toBits(a, src);
+      if (src->isX86_FP80Ty())
+        srcBits = fp80ToIEEE79(srcBits);
+      camada::SMTExprRef from =
+          s.mkBVToIEEEFP(t.solverTerm(srcBits), fpSort(src, camada::FPEncoding::BV));
+      camada::SMTExprRef conv =
+          s.mkFPToFP(from, fpSort(dst, camada::FPEncoding::BV),
+                     s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV));
+      Term dstBits = t.fromSolver(s.mkIEEEFPToBV(conv));
+      if (dst->isX86_FP80Ty())
+        dstBits = ieee79ToFP80(dstBits);
+      return fromBits(dstBits, dst);
+    }
+    return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN, dst)), dst);
   default:
     break;
   }
@@ -480,10 +533,14 @@ Term Encoder::isTrue(const Value *v) {
   if (ieee(v->getType())) { // nonzero, as C reads a scalar: NaN is true
     if (auto c = constFloat(v))
       return t.boolean(!c->isZero());
-    Term zero = fromBits(t.bv(0, v->getType()->getPrimitiveSizeInBits()), v->getType());
+    Type *ty = v->getType();
+    Term zero = fromBits(t.bv(0, ty->getPrimitiveSizeInBits()), ty);
     camada::SMTExprRef f = fp(v), z = t.solverTerm(zero);
-    if (!native())
-      z = s.mkBVToIEEEFP(z, fpSort(v->getType()));
+    if (!useNative(ty)) {
+      if (ty->isX86_FP80Ty())
+        zero = fp80ToIEEE79(zero);
+      z = s.mkBVToIEEEFP(t.solverTerm(zero), fpSort(ty));
+    }
     return t.lnot(t.fromSolver(s.mkFPEqual(f, z)));
   }
   Term t = value(v);
@@ -504,12 +561,13 @@ Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
       if (Term r = folded(*x, lhs->getType()))
         return r;
     }
-    camada::SMTExprRef a = fp(lhs), b = fp(rhs), even = rm(camada::RM::ROUND_TO_EVEN);
+    Type *ty = lhs->getType();
+    camada::SMTExprRef a = fp(lhs), b = fp(rhs), even = rm(camada::RM::ROUND_TO_EVEN, ty);
     switch (opcode) {
-    case Instruction::FAdd: return bits(s.mkFPAdd(a, b, even));
-    case Instruction::FSub: return bits(s.mkFPSub(a, b, even));
-    case Instruction::FMul: return bits(s.mkFPMul(a, b, even));
-    case Instruction::FDiv: return bits(s.mkFPDiv(a, b, even));
+    case Instruction::FAdd: return bits(s.mkFPAdd(a, b, even), ty);
+    case Instruction::FSub: return bits(s.mkFPSub(a, b, even), ty);
+    case Instruction::FMul: return bits(s.mkFPMul(a, b, even), ty);
+    case Instruction::FDiv: return bits(s.mkFPDiv(a, b, even), ty);
     default: // frem is C's fmod, which truncates; SMT's fp.rem rounds to nearest
       throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
     }
@@ -552,8 +610,9 @@ void Encoder::encode(Instruction &inst) {
     if (auto c = constFloat(inst.getOperand(0)); c && !c->isNaN())
       r = floatValue(-*c, inst.getType());
     else
-      r = native() && ieee(inst.getType()) ? t.fromSolver(s.mkFPNeg(t.solverTerm(a)))
-                                           : t.bvxor(a, t.bv(APInt::getSignMask(a.width())));
+      r = useNative(inst.getType()) && ieee(inst.getType())
+              ? t.fromSolver(s.mkFPNeg(t.solverTerm(a)))
+              : t.bvxor(a, t.bv(APInt::getSignMask(a.width())));
   } else if (auto *fc = dyn_cast<FCmpInst>(&inst)) {
     r = fcmp(fc->getPredicate(), fc->getOperand(0), fc->getOperand(1));
   } else if (auto *cmp = dyn_cast<ICmpInst>(&inst)) {
@@ -649,14 +708,15 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   Intrinsic::ID id = c.getCalledFunction()->getIntrinsicID();
   auto arg = [&](unsigned i) { return c.getArgOperand(i); };
   auto integral = [&](camada::RM mode) {
-    return bits(s.mkFPToIntegral(fp(arg(0)), rm(mode)));
+    Type *ty = arg(0)->getType();
+    return bits(s.mkFPToIntegral(fp(arg(0)), rm(mode, ty)), ty);
   };
   Term r;
   switch (id) {
   case Intrinsic::fabs:
   case Intrinsic::copysign: { // operations on the sign, NaN or not
     Term a = value(arg(0));
-    if (native() && ieee(arg(0)->getType())) { // x86_fp80 stays bits
+    if (useNative(arg(0)->getType()) && ieee(arg(0)->getType())) {
       if (auto c = constFloat(arg(0)); c && !c->isNaN()) {
         r = floatValue(abs(*c), arg(0)->getType());
         if (id == Intrinsic::copysign) // a constant sign folds the ite
@@ -684,18 +744,20 @@ bool Encoder::fpIntrinsic(CallBase &c) {
     else if (c && ty->isDoubleTy())
       r = folded(APFloat(std::sqrt(c->convertToDouble())), ty);
     if (!r)
-      r = bits(s.mkFPSqrt(fp(arg(0)), rm(camada::RM::ROUND_TO_EVEN)));
+      r = bits(s.mkFPSqrt(fp(arg(0)), rm(camada::RM::ROUND_TO_EVEN, ty)), ty);
     break;
   }
   case Intrinsic::fma:
-  case Intrinsic::fmuladd: // fused: one rounding, which fmuladd allows
+  case Intrinsic::fmuladd: { // fused: one rounding, which fmuladd allows
+    Type *ty = arg(0)->getType();
     if (auto x = constFloat(arg(0)), y = constFloat(arg(1)), z = constFloat(arg(2)); x && y && z) {
       x->fusedMultiplyAdd(*y, *z, APFloat::rmNearestTiesToEven);
-      if ((r = folded(*x, arg(0)->getType())))
+      if ((r = folded(*x, ty)))
         break;
     }
-    r = bits(s.mkFPFMA(fp(arg(0)), fp(arg(1)), fp(arg(2)), rm(camada::RM::ROUND_TO_EVEN)));
+    r = bits(s.mkFPFMA(fp(arg(0)), fp(arg(1)), fp(arg(2)), rm(camada::RM::ROUND_TO_EVEN, ty)), ty);
     break;
+  }
   case Intrinsic::floor: r = integral(camada::RM::ROUND_TO_MINUS_INF); break;
   case Intrinsic::ceil: r = integral(camada::RM::ROUND_TO_PLUS_INF); break;
   case Intrinsic::trunc: r = integral(camada::RM::ROUND_TO_ZERO); break;
@@ -721,7 +783,7 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::is_fpclass:
     // Natively either NaN class is any NaN, as fpClass has it; with fp2bv
     // fpClass reads the constant's bits and folds.
-    if (auto c = constFloat(arg(0)); c && native()) {
+    if (auto c = constFloat(arg(0)); c && useNative(arg(0)->getType())) {
       unsigned mask = cast<ConstantInt>(arg(1))->getZExtValue();
       r = t.boolean(mask & (c->isNaN() ? fcNan : c->classify()));
       break;

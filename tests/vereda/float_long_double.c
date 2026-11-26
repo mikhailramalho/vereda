@@ -1,7 +1,11 @@
-// long double is x86_fp80, not an IEEE interchange format: unsupported, even
-// when only its class is tested, rather than a crash.
+// long double (x86_fp80) classification (isnan / llvm.is.fpclass).
 // RUN: -m64
-// EXPECT: ^VERIFICATION UNKNOWN: unsupported: (type|value) x86_fp80
+// RUN: -m64 --fp2bv
+// EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <math.h>
+extern void __VERIFIER_assert(int);
 static long double g;
-int main(void) { return isnan(g); }
+int main(void) {
+  __VERIFIER_assert(!isnan(g));
+  return 0;
+}

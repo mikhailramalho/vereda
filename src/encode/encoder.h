@@ -108,12 +108,24 @@ private:
   Term castTo(unsigned opcode, const llvm::Value *op, llvm::Type *dst);
   Term gep(const llvm::GEPOperator &g);
   camada::SMTSortRef fpSort(llvm::Type *ty);
+  camada::SMTSortRef fpSort(llvm::Type *ty, camada::FPEncoding encoding);
   // v as a float of the theory or encoding, for camada's operations on floats.
   camada::SMTExprRef fp(const llvm::Value *v);
-  Term bits(const camada::SMTExprRef &fp); // an operation's result as a value
+  Term bits(const camada::SMTExprRef &fp, llvm::Type *ty); // an operation's result as a value
+  Term fp80ToIEEE79(Term bv80);
+  Term ieee79ToFP80(Term bv79);
   bool native() const { return fpEncoding == camada::FPEncoding::Native; }
+  // Bitwuzla's native FP theory supports only IEEE interchange formats
+  // (half, float, double, fp128); x86_fp80 and bfloat always use camada's
+  // bit-vector FP encoding.
+  bool useNative(llvm::Type *ty) const {
+    return native() && !ty->isX86_FP80Ty() && !ty->isBFloatTy();
+  }
+  camada::FPEncoding fpEncodingOf(llvm::Type *ty) const {
+    return useNative(ty) ? camada::FPEncoding::Native : camada::FPEncoding::BV;
+  }
   Term signBit(const llvm::Value *v); // true when v's sign bit is set
-  camada::SMTExprRef rm(camada::RM mode);
+  camada::SMTExprRef rm(camada::RM mode, llvm::Type *ty);
   Term fcmp(llvm::CmpInst::Predicate p, const llvm::Value *a, const llvm::Value *b);
   // Whether the float with these bits is in one of the classes of mask, as
   // llvm.is.fpclass takes it.

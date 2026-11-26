@@ -15,4 +15,4 @@ int main()
 // EXPECT: FAILED\s+\[main.assertion.2\].*ldexpl
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED
