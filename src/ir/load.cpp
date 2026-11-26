@@ -604,11 +604,11 @@ static void nondetLocals(Module &m) {
   opaque->setMemoryEffects(MemoryEffects::argMemOnly(ModRefInfo::Mod));
   opaque->addParamAttr(0, Attribute::getWithCaptureInfo(m.getContext(), CaptureInfo::none()));
   auto markUninitialised = [&](IRBuilder<> &b, AllocaInst *a) { b.CreateCall(opaque, {a}); };
-  // The types the encoder gives a value of their own: not long double
-  // (x86_fp80) or bfloat, which a local only stores and loads as bits.
+  // The types the encoder gives a value of their own: not bfloat or
+  // ppc_fp128, which a local only stores and loads as bits.
   auto scalar = [](Type *ty) {
     return (ty->isIntegerTy() && !ty->isIntegerTy(1)) || ty->isPointerTy() || ty->isHalfTy() ||
-           ty->isFloatTy() || ty->isDoubleTy() || ty->isFP128Ty();
+           ty->isFloatTy() || ty->isDoubleTy() || ty->isX86_FP80Ty() || ty->isFP128Ty();
   };
   for (Function &f : m) {
     if (f.isDeclaration())

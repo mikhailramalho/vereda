@@ -14,4 +14,4 @@ int main()
 // EXPECT: FAILED\s+\[main.assertion.2\].*r == 1.25
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED

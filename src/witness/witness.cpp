@@ -38,6 +38,8 @@ WitnessModuleInfo extractModuleInfo(const Module &m) {
       ret.kind = WitnessModuleInfo::RetKind::Float;
     else if (rt->isDoubleTy())
       ret.kind = WitnessModuleInfo::RetKind::Double;
+    else if (rt->isX86_FP80Ty())
+      ret.kind = WitnessModuleInfo::RetKind::LongDouble;
     else if (rt->isIntegerTy())
       ret.kind = WitnessModuleInfo::RetKind::Integer;
     ret.hasSExt = f.hasRetAttribute(Attribute::SExt);
@@ -234,19 +236,32 @@ static std::string constraint(solver::Model &model, const walker::Trace &trace,
   if (ret.kind == WitnessModuleInfo::RetKind::Pointer)
     return v.isZero() ? "\\result == 0" : "\\result != 0";
   if (ret.kind == WitnessModuleInfo::RetKind::Float ||
-      ret.kind == WitnessModuleInfo::RetKind::Double) {
+      ret.kind == WitnessModuleInfo::RetKind::Double ||
+      ret.kind == WitnessModuleInfo::RetKind::LongDouble) {
     // No constant compares equal to a NaN, and an infinity is beyond the
     // largest finite value. The sign of a zero does not show: -0.0 == 0.0.
     const fltSemantics &sem = ret.kind == WitnessModuleInfo::RetKind::Float
                                   ? APFloat::IEEEsingle()
-                                  : APFloat::IEEEdouble();
-    APFloat x(sem, v);
+                                  : ret.kind == WitnessModuleInfo::RetKind::Double
+                                        ? APFloat::IEEEdouble()
+                                        : APFloat::x87DoubleExtended();
+    APInt bits = v;
+    if (ret.kind == WitnessModuleInfo::RetKind::LongDouble && bits.getBitWidth() == 79) {
+      // Native FP terms for x86_fp80 omit the explicit integer bit; restore it
+      // (0 for zero/subnormal, 1 otherwise) for APFloat::x87DoubleExtended.
+      APInt signExp = bits.extractBits(16, 63);
+      APInt exp = bits.extractBits(15, 63);
+      APInt intBit(1, !exp.isZero());
+      bits = signExp.concat(intBit).concat(bits.extractBits(63, 0));
+    }
+    APFloat x(sem, bits);
     if (x.isNaN())
       return "";
+    const char *suffix = ret.kind == WitnessModuleInfo::RetKind::LongDouble ? "L" : "";
     if (x.isInfinity())
       return std::string("\\result ") + (x.isNegative() ? "< " : "> ") +
-             hex(APFloat::getLargest(x.getSemantics(), x.isNegative()));
-    return "\\result == " + hex(x);
+             hex(APFloat::getLargest(x.getSemantics(), x.isNegative())) + suffix;
+    return "\\result == " + hex(x) + suffix;
   }
   // The ABI returns an __int128 as { i64, i64 }, whose packed bits, the
   // first field lowest, are the integer's.

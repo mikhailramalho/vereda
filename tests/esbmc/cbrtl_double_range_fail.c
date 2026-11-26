@@ -14,4 +14,4 @@ int main()
 // EXPECT: FAILED\s+\[main.assertion.2\].*r == 0x1p341L
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict FAILED
