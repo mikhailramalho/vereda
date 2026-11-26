@@ -1027,14 +1027,93 @@ Term Memory::load(State &st, Term p, Type *ty) {
     if (const APInt *id = t.constant(object(p)); id && fieldStorage.count(id->getZExtValue()))
       throw Unsupported("field array access with an unresolved offset");
   p = mapped;
+  unsigned n = storeBits(dl, ty) / 8;
+  uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+  auto finishLoad = [&](const State::Cell &first, Term bits) -> Term {
+    if (ty->isPointerTy()) {
+      // The provenance of the first byte stands for the pointer.
+      Term obj = first.prov;
+      // Bytes of an integer, among them a pointer made from one (see store),
+      // which an object allocated since may now cover: the address is
+      // converted now, as a fresh conversion would be (#75).
+      Term isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
+      if (t.isTrue(isInt))
+        return fromAddress(bits);
+      Term r = t.isFalse(isInt)
+                   ? ptr(obj, t.sub(bits, base(obj)))
+                   : t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
+      // r == null() iff bits == 0 and (isInt || obj == 0): avoids both
+      // fromAddress(bits) and select(bases, obj), while still distinguishing
+      // a wild out-of-bounds pointer (obj != 0, bits == 0) from null.
+      if (!t.constant(r) && !nullEq.count(r.id()))
+        nullEq[r.id()] = {r, t.land(t.eq(bits, t.bv(0, ptrBits)),
+                                    t.lor(isInt, t.eq(obj, t.bv(0, ObjBits))))};
+      return r;
+    }
+    if (ty->isIntegerTy(1))
+      return t.eq(t.extract(bits, 0, 0), t.bv(1, 1));
+    unsigned width = ty->getPrimitiveSizeInBits();
+    return width < bits.width() ? t.extract(bits, width - 1, 0) : bits;
+  };
+  // Fold loads from a known object whose symbolic offset is bounded to a small
+  // finite domain of known bytes (before prepare() flushes st.known): when all
+  // candidates hold the same value (e.g. a pointer table pointing to one
+  // object), return it directly; for a small table of distinct pointers, keep
+  // their known object IDs via an ite chain instead of flattening into memory.
+  if (!key(p)) {
+    if (const APInt *id = t.constant(object(p))) {
+      Term off = offset(p);
+      encode::Terms::Known bounds = known ? encode::Terms::Known(known) : encode::Terms::Known{};
+      if (std::optional<encode::Terms::Range> r = t.range(off, bounds)) {
+        constexpr uint64_t MaxFoldDomain = 16;
+        constexpr uint64_t MaxPtrChoices = 8;
+        uint64_t count = r->lo == r->hi ? 1 : (r->hi - r->lo) / r->stride + 1;
+        if (count >= 1 && count <= MaxFoldDomain) {
+          uint64_t objId = id->getZExtValue();
+          bool allKnown = true;
+          for (uint64_t i = 0; i < count && allKnown; ++i) {
+            uint64_t pos = r->lo + i * r->stride;
+            for (unsigned b = 0; b < n; ++b)
+              if (!st.known.find({objId, (pos + b) & mask})) {
+                allKnown = false;
+                break;
+              }
+          }
+          if (allKnown) {
+            SmallVector<std::pair<State::Cell, Term>, 16> raw;
+            raw.reserve(count);
+            bool allSame = true;
+            for (uint64_t i = 0; i < count; ++i) {
+              uint64_t pos = r->lo + i * r->stride;
+              State::Cell first = *st.known.find({objId, pos & mask});
+              Term bits = first.data;
+              for (unsigned b = 1; b < n; ++b)
+                bits = t.concat(st.known.find({objId, (pos + b) & mask})->data, bits);
+              if (i > 0 && (bits != raw[0].second ||
+                            (ty->isPointerTy() && first.prov != raw[0].first.prov)))
+                allSame = false;
+              raw.emplace_back(first, bits);
+            }
+            if (allSame)
+              return finishLoad(raw[0].first, raw[0].second);
+            if (ty->isPointerTy() && count <= MaxPtrChoices) {
+              Term res = finishLoad(raw.back().first, raw.back().second);
+              for (uint64_t i = count - 1; i > 0; --i)
+                res = t.ite(t.eq(off, t.bv(r->lo + (i - 1) * r->stride, ptrBits)),
+                            finishLoad(raw[i - 1].first, raw[i - 1].second), res);
+              return res;
+            }
+          }
+        }
+      }
+    }
+  }
   prepare(st, p);
   if (std::optional<uint64_t> o = element(p, ty))
     return t.select(st.separate.find({*o, 0})->data, index(*o, p));
-  unsigned n = storeBits(dl, ty) / 8;
   State::Cell first;
   Term bits;
   if (std::optional<Key> k = key(p)) {
-    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
     auto readAt = [&](uint64_t i) -> State::Cell {
       Key ki{k->first, (k->second + i) & mask};
       if (const State::Cell *c = st.known.find(ki))
@@ -1051,30 +1130,7 @@ Term Memory::load(State &st, Term p, Type *ty) {
     for (unsigned i = 1; i < n; ++i)
       bits = t.concat(readByte(st, bytePtr(p, i), false).data, bits);
   }
-  if (ty->isPointerTy()) {
-    // The provenance of the first byte stands for the pointer.
-    Term obj = first.prov;
-    // Bytes of an integer, among them a pointer made from one (see store),
-    // which an object allocated since may now cover: the address is
-    // converted now, as a fresh conversion would be (#75).
-    Term isInt = t.eq(obj, t.bv(IntProvenance, ObjBits));
-    if (t.isTrue(isInt))
-      return fromAddress(bits);
-    Term r = t.isFalse(isInt)
-                 ? ptr(obj, t.sub(bits, base(obj)))
-                 : t.ite(isInt, fromAddress(bits), ptr(obj, t.sub(bits, base(obj))));
-    // r == null() iff bits == 0 and (isInt || obj == 0): avoids both
-    // fromAddress(bits) and select(bases, obj), while still distinguishing
-    // a wild out-of-bounds pointer (obj != 0, bits == 0) from null.
-    if (!t.constant(r) && !nullEq.count(r.id()))
-      nullEq[r.id()] = {r, t.land(t.eq(bits, t.bv(0, ptrBits)),
-                                  t.lor(isInt, t.eq(obj, t.bv(0, ObjBits))))};
-    return r;
-  }
-  if (ty->isIntegerTy(1))
-    return t.eq(t.extract(bits, 0, 0), t.bv(1, 1));
-  unsigned width = ty->getPrimitiveSizeInBits();
-  return width < bits.width() ? t.extract(bits, width - 1, 0) : bits;
+  return finishLoad(first, bits);
 }
 
 // One array store per byte, so a large zeroed global or memset is
