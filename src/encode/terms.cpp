@@ -518,6 +518,7 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
 Ref Terms::extract(const Ref &a, unsigned hi, unsigned lo) {
   if (lo == 0 && hi + 1 == a.width()) return a;
   if (const APInt *ca = constant(a)) return bv(ca->extractBits(hi - lo + 1, lo));
+  if (hi < zeros(a)) return bv(0, hi - lo + 1);
   if (Ref r = lift(a, [&](const Ref &x) { return extract(x, hi, lo); }))
     return r;
   if (const Node *n = node(a)) {

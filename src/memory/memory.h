@@ -52,6 +52,10 @@
 // A summarised loop (issue #36) leaves the object it wrote with arrays that
 // are lambdas over the ones before (terms.h): a read of an element the loop
 // wrote reduces to the value its iteration stored there.
+// Non-escaping struct arrays can partition disjoint fields into storage-only
+// objects. Loads and stores project source offsets into those arrays; source
+// pointers, sizes and read-only checks still refer to the original object.
+// Its backing arrays retain padding and fields not accessed by the program.
 #pragma once
 #include "encode/terms.h"
 #include "memory/cellmap.h"
@@ -154,6 +158,15 @@ public:
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
   void own(State &st, encode::Term p, unsigned bits = 8);
+  struct Field {
+    uint64_t offset;
+    unsigned bytes;
+    bool pointer; // the field may carry pointer provenance, including through copies
+  };
+  // Disjoint fields of a non-exposed object, with power-of-two stride/widths;
+  // the walker proves that accesses can be projected before calling this.
+  void ownFields(State &st, encode::Term p, uint64_t stride,
+                 const std::vector<Field> &fields);
   // Iteration n, a pointer-width term: whether it stored, and the value.
   using Iteration = std::function<std::pair<encode::Term, encode::Term>(
       const encode::Term &n)>;
@@ -192,6 +205,7 @@ public:
   static constexpr uint64_t MinSeparate = 1024;
 
 private:
+  encode::Term fieldPointer(encode::Term p, unsigned bytes = 1);
   encode::Term fromAddress(encode::Term a, unsigned &budget);
   encode::Term bytePtr(encode::Term p, uint64_t i);
   void ensureLayout(uint64_t id);
@@ -252,7 +266,8 @@ private:
   bool fillObject(State &st, encode::Term p, encode::Term byte, uint64_t n);
   // An array-level copy of n bytes from src to dst, if handled without
   // byte-by-byte stores: true when done.
-  bool copyArray(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  bool copyArray(State &st, encode::Term dst, encode::Term src, uint64_t n,
+                 bool backing = false);
   // A partial-range lambda over the arrays below for n >= MinSeparate bytes
   // at p in constant object o: returns true when handled.
   bool applyRange(State &st, uint64_t o, encode::Term p, uint64_t n, const char *name,
@@ -299,6 +314,16 @@ private:
   llvm::DenseMap<uint64_t, State::Cell> owned; // object id -> its initial arrays
   // Object id -> log2 of its element's bytes, for an object of elements.
   llvm::DenseMap<uint64_t, unsigned> shifts;
+  struct FieldStorage {
+    Field field;
+    uint64_t object;
+  };
+  struct StructStorage {
+    unsigned shift;
+    std::vector<FieldStorage> fields;
+  };
+  llvm::DenseMap<uint64_t, StructStorage> fieldStorage;
+  llvm::DenseMap<uint64_t, uint64_t> fieldOwners;
   // Provenance array source for a lambda provenance array: when fromObject is
   // set, only bytes belonging to *fromObject are read from array (indexed by
   // offset if byOffset, else by whole pointer); otherwise array is the same
@@ -318,6 +343,7 @@ private:
   llvm::DenseMap<const void *, std::pair<encode::Term, encode::Term>> nullEq;
   unsigned fresh = 0;
   encode::Term context;
+  bool initialising = false;
   // Which side of a split pointer the context picks: 1, 0, or -1 for both.
   int side(const encode::Term &c);
 };
