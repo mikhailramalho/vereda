@@ -10,6 +10,10 @@ set(REGRESS_MEMORY_LIMIT 4096 CACHE STRING "Per-test memory limit in MB (address
 
 # The registration-only fixture has no verifier library or C++ toolchain.
 if(TARGET libvereda)
+  add_test(NAME vereda/libc_assertions
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/libc_assertions.py"
+            "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
+  set_tests_properties(vereda/libc_assertions PROPERTIES LABELS vereda TIMEOUT 60)
   add_test(NAME vereda/output_readers COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/output_readers.py")
   set_tests_properties(vereda/output_readers PROPERTIES LABELS vereda)
   add_test(NAME vereda/test_configurations COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/test_configurations.py")

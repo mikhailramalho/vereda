@@ -1,4 +1,5 @@
 #include "ir/load.h"
+#include "util/assert.h"
 
 #include <llvm/ADT/DepthFirstIterator.h>
 #include <llvm/ADT/SetVector.h>
@@ -1222,12 +1223,14 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   dropUninitialisedRecords(*module);
   if (Error e = linkModels(*module, models, divByZeroCheck))
     return std::move(e);
-  // Vereda intercepts __assert_fail as an assertion check and never passes its
+  // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before
   // function-attrs so callers do not appear to expose assert message literals.
-  if (Function *af = module->getFunction("__assert_fail"); af && af->isDeclaration()) {
+  for (Function &af : *module) {
+    if (!af.isDeclaration() || !isAssertFail(af.getName(), af.arg_size()))
+      continue;
     Attribute noCap = Attribute::getWithCaptureInfo(module->getContext(), CaptureInfo::none());
-    for (Argument &arg : af->args())
+    for (Argument &arg : af.args())
       if (arg.getType()->isPointerTy())
         arg.addAttr(noCap);
   }
