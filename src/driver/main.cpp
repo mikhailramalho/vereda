@@ -234,7 +234,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
-                                     !noPointerCheck, !noVLASizeCheck, !noAssertions};
+                                     !noPointerCheck, !noVLASizeCheck, !noAssertions, multiProperty};
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
                                                                checks, trace);
@@ -369,7 +369,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      !witnessFile.empty(),
                                                      !noPointerCheck,
                                                      !noVLASizeCheck,
-                                                     !noAssertions};
+                                                     !noAssertions,
+                                                     multiProperty};
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
                                                      freshState->trace)) {

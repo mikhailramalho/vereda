@@ -1,4 +1,5 @@
 #include "walker/walker.h"
+#include "util/assert.h"
 
 #include "analysis/loops.h"
 #include "ir/debug.h"
@@ -672,10 +673,13 @@ private:
     std::string locDisplay;
     if (opts.showIterations)
       locDisplay = loopLocation(l).display();
+    Term entryGuard = t.boolean(false);
     for (unsigned i = start;; ++i) {
       auto it = frame.arrivals.find(header);
       if (it == frame.arrivals.end() || it->second.empty())
         return;
+      if (i == start)
+        entryGuard = anyGuard(it->second);
       if (i > 0) {
         Term reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
@@ -700,7 +704,10 @@ private:
         }
         // Without --unwind, whether another iteration is reachable; term
         // folding settles most of these without the solver.
-        if (!opts.unwind && i > knownBackedges && unreachable(reached)) {
+        // Parameter-bound loops can fold at the call site even when SCEV
+        // cannot count them. Defer repeated queries on their unchanged guard.
+        bool unchanged = i <= SmallConstantLoop && reached == entryGuard;
+        if (!opts.unwind && i > knownBackedges && !unchanged && unreachable(reached)) {
           it->second.clear();
           return;
         }
@@ -1337,7 +1344,7 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
-    if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
+    if (isAssertFail(name, c.arg_size()) || name == "reach_error" || name == "__VERIFIER_error") {
       if (opts.assertions && counts(false))
         assertion(c, guard, name.str(), "");
       return t.boolean(false);
@@ -1353,6 +1360,8 @@ private:
         return t.land(guard, holds);
       }
       assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
+      if (!opts.multiProperty && t.isFalse(holds))
+        return t.boolean(false);
       return guard;
     }
     if (name == "__vereda_object_size") { // for the realloc model
