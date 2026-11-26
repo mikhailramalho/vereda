@@ -63,7 +63,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/SV_COMP_03
-// Needs: --context-bound 3 --no-assertions --data-race-check
+// Needs: --context-bound 3 --data-race-check
 // RUN: --context-bound 3 --no-assertions --data-race-check -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

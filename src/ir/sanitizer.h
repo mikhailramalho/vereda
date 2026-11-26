@@ -1,11 +1,49 @@
-// Stage ir: what a sanitizer check that clang compiled to
-// llvm.ubsantrap(i8 code) was checking. The code is clang's SanitizerHandler
-// index (clang/lib/CodeGen/SanitizerHandler.h) as of LLVM 23; recheck the
-// list when moving to a new LLVM version.
+// Stage ir: decodes clang sanitizer trap codes and integer operand descriptors.
+// Trap codes are SanitizerHandler indices (clang/lib/CodeGen/SanitizerHandler.h)
+// as of LLVM 23; recheck the codes and descriptor ABI when upgrading LLVM.
 #pragma once
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/Support/Endian.h>
 #include <string>
 
 namespace vereda::ir {
+
+// DivremOverflowData points to an integer (kind 0) or BitInt (kind 2)
+// TypeDescriptor. TypeInfo encodes a power-of-two width above its signedness
+// bit; signed BitInt also records its exact width. Wide ValueHandles point to storage.
+inline unsigned divremOperandBits(const llvm::CallBase &call) {
+  auto initialiser = [](const llvm::Value *v) -> const llvm::ConstantStruct * {
+    auto *g = llvm::dyn_cast<llvm::GlobalVariable>(v->stripPointerCasts());
+    return g && g->hasInitializer() ? llvm::dyn_cast<llvm::ConstantStruct>(g->getInitializer())
+                                   : nullptr;
+  };
+  const auto *data = initialiser(call.getArgOperand(0));
+  const auto *type = data && data->getNumOperands() >= 2 ? initialiser(data->getOperand(1)) : nullptr;
+  if (!type || type->getNumOperands() < 2)
+    return 0;
+  auto *kind = llvm::dyn_cast<llvm::ConstantInt>(type->getOperand(0));
+  auto *info = llvm::dyn_cast<llvm::ConstantInt>(type->getOperand(1));
+  if (!kind || !(kind->isZero() || kind->equalsInt(2)) ||
+      !info || info->getValue().getActiveBits() > 16 ||
+      (info->getZExtValue() >> 1) > 23)
+    return 0;
+  if (kind->equalsInt(2) && (info->getZExtValue() & 1)) {
+    auto *name = type->getNumOperands() >= 3
+                     ? llvm::dyn_cast<llvm::ConstantDataArray>(type->getOperand(2)) : nullptr;
+    if (!name || !name->isString())
+      return 0;
+    llvm::StringRef bytes = name->getRawDataValues();
+    size_t end = bytes.find('\0');
+    if (end == llvm::StringRef::npos || bytes.size() - end < 5)
+      return 0;
+    // Signed BitInt descriptors append the exact width after the name.
+    unsigned width = llvm::support::endian::read32le(bytes.data() + end + 1);
+    return width && width <= llvm::IntegerType::MAX_INT_BITS ? width : 0;
+  }
+  return 1u << (info->getZExtValue() >> 1);
+}
 
 inline std::string sanitizerCheck(unsigned code) {
   static const char *const names[] = {

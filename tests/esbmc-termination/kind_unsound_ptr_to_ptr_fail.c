@@ -16,7 +16,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/kind_unsound_ptr_to_ptr_fail
-// Needs: --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// Needs: --termination --max-inductive-step 3 --interval-analysis
 // RUN: --k-step 2 --unlimited-k-steps --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

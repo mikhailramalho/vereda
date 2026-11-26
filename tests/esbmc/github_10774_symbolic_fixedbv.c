@@ -18,4 +18,5 @@ int main()
 // Imported from ESBMC regression/esbmc/github_10774_symbolic_fixedbv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// RUN: --no-div-by-zero-check
 // Vereda: verdict FAILED

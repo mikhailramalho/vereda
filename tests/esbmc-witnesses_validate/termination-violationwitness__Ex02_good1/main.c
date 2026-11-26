@@ -22,7 +22,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/witnesses_validate/termination-violationwitness/Ex02_good1
-// Needs: --force-realloc-success --no-assertions --termination --max-inductive-step 3 --interval-analysis --validate-violation-witness --witness witness.yml
+// Needs: --force-realloc-success --termination --max-inductive-step 3 --interval-analysis --validate-violation-witness --witness witness.yml
 // RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check -m64 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis --validate-violation-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

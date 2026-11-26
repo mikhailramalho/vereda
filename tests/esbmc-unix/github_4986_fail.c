@@ -33,7 +33,7 @@ int main(void)
   return y;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4986_fail
-// Needs: --force-realloc-success --no-assertions
+// Needs: --force-realloc-success
 // RUN: -m64 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --no-vla-size-check --no-pointer-check --no-bounds-check --overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

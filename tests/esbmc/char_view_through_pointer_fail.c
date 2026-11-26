@@ -9,6 +9,3 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/char_view_through_pointer_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

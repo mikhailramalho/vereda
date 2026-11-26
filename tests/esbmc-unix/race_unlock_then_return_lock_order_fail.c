@@ -28,7 +28,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_unlock_then_return_lock_order_fail
-// Needs: --data-race-check --no-assertions --lock-order-check
+// Needs: --data-race-check --lock-order-check
 // RUN: --data-race-check --no-assertions --lock-order-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@global

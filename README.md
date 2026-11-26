@@ -28,7 +28,7 @@ Supported today:
 
 Anything else, such as floats, function pointers, threads or unmodelled
 library calls, ends the run with `VERIFICATION UNKNOWN` and names what was
-missing. Memory safety, overflow, k-induction, witnesses and concurrency are
+missing. General memory safety, k-induction and concurrency checks are
 planned (`docs/plan.md`, section 9).
 
 ## Build
@@ -113,12 +113,27 @@ The main verifier flags:
 | `--entry F` | Entry function (default `main`) |
 | `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
 | `--force-malloc-success` | `malloc` never returns null |
+| `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
+| `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
+| `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs |
+| `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
+| `--data-race-check` | Request data-race checking; currently errors because it is not implemented (`--data-races-check` is an alias) |
+| `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
 | `--no-vla-size-check` | Do not report stack allocations above `PTRDIFF_MAX`; their paths still end at the allocation |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--incremental-solver` | Keep one incremental solver across checks (with `bv-cnf-scope=permanent` on Bitwuzla) instead of fresh non-incremental solves |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
 | `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve |
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |
+
+Assertions, the current pointer checks, integer division/remainder-by-zero checks,
+and unwinding checks are enabled by default. General pointer bounds, lifetime and
+valid-free checks are not implemented yet. Signed overflow, unsigned overflow
+and shift checks are opt-in through the frontend flags above; existing Rust
+overflow and bounds panics remain program failures. Leak, race and deadlock flags
+are disabled by default and the binary rejects an enabled request with error
+exit code 6, before loading the input. `--no-assertions` conflicts with an
+unreach-call property request. A selected property reports only its own failures.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or

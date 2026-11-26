@@ -32,6 +32,11 @@ for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
         assert not import_esbmc.import_test(str(src), str(dest), 'suite/internal', None).endswith('.c')
         assert not dest.with_suffix('.c').exists()
 
+assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
+    ["--no-assertions", "--no-div-by-zero-check"], [], [])
+for flag in ("--memory-leak-check", "--deadlock-check"):
+    assert import_esbmc.translate(flag, ".") == ([], [], [flag])
+
 ignored = sorted(import_esbmc.IGNORED_FLAGS)
 for flag in ignored:
     for token in (flag, flag + "=true", flag + "=false"):

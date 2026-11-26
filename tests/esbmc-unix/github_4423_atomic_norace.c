@@ -96,7 +96,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4423_atomic_norace
-// Needs: --data-races-check-only --no-assertions --context-bound 3
+// Needs: --data-races-check-only --context-bound 3
 // RUN: --data-races-check-only --no-assertions --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

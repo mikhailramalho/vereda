@@ -30,7 +30,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_c11_mtx_unlock_then_join_fail
-// Needs: --data-races-check-only --no-assertions
+// Needs: --data-races-check-only
 // RUN: --data-races-check-only --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

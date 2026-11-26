@@ -40,7 +40,7 @@ int main(void)
   return sink;
 }
 // Imported from ESBMC regression/termination/lasso_eca_period2
-// Needs: --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// Needs: --termination --max-inductive-step 3 --interval-analysis
 // RUN: --no-div-by-zero-check --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // EXPECT: ^Recurrent set shows a non-terminating execution$
 // EXPECT: ^VERIFICATION FAILED$

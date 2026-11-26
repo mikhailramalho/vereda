@@ -33,7 +33,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4442_memcleanup
-// Needs: --memory-leak-check --no-assertions
+// Needs: --memory-leak-check
 // RUN: --memory-leak-check --no-assertions --incremental-bmc --k-step 2 -m64
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: forgotten memory:

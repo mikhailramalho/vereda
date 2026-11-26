@@ -8821,6 +8821,6 @@ NTSTATUS ZwClose(HANDLE Handle )
 }
 }
 // Imported from ESBMC regression/esbmc/31_cdaudio
-// RUN: --unwind 1 --no-unwinding-assertions --no-pointer-check
+// RUN: --unwind 1 --no-unwinding-assertions --no-pointer-check --no-div-by-zero-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: THOROUGH

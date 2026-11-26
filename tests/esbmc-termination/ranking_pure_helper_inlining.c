@@ -30,7 +30,7 @@ int main(void)
     return 0;
 }
 // Imported from ESBMC regression/termination/ranking_pure_helper_inlining
-// Needs: --force-realloc-success --no-assertions --termination --max-inductive-step 3
+// Needs: --force-realloc-success --termination --max-inductive-step 3
 // RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

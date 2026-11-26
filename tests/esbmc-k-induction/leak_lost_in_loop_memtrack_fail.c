@@ -19,7 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/k-induction/leak_lost_in_loop_memtrack_fail
-// Needs: --k-induction --max-inductive-step 3 --memory-leak-check --no-reachable-memory-leak --no-assertions
+// Needs: --k-induction --max-inductive-step 3 --memory-leak-check --no-reachable-memory-leak
 // RUN: --k-induction --max-inductive-step 3 --k-step 2 --unlimited-k-steps --memory-leak-check --no-reachable-memory-leak --no-assertions
 // MODE: FUTURE
 // EXPECT: cannot check for leaks the objects a loop allocated

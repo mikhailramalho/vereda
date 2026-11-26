@@ -35,5 +35,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4433_calloc_overflow_norace
-// RUN: --force-malloc-success --no-vla-size-check -m32 --no-pointer-check
+// RUN: --no-div-by-zero-check --force-malloc-success --no-vla-size-check -m32 --no-pointer-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -18,7 +18,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_via_global
-// Needs: --sv-comp --data-races-check-only --no-assertions
+// Needs: --sv-comp --data-races-check-only
 // RUN: -m32 --sv-comp --no-div-by-zero-check --force-malloc-success --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race.*$

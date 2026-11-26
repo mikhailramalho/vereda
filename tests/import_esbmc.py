@@ -64,7 +64,7 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--overflow-check", "--unsigned-overflow-check",
         "--ub-shift-check", "--unlimited-k-steps", "--no-summarize-array-loops",
-        "--no-pointer-check", "--no-vla-size-check"}
+        "--no-pointer-check", "--no-vla-size-check", "--no-assertions", "--no-div-by-zero-check"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
     "--unlimited-k-step": ["--unlimited-k-steps"],
@@ -108,7 +108,7 @@ IGNORED_WITH_VALUE = {
     "--neurosym-model-prog", "--unwindsetname", "--unwindset",
 }
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
-           "--no-div-by-zero-check", "--no-align-check", "--no-pointer-relation-check",
+           "--no-align-check", "--no-pointer-relation-check",
            "--no-simplify", "--no-slice"} | IGNORED_FLAGS
 
 
