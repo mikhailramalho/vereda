@@ -57,6 +57,13 @@ static cl::opt<bool> noPointerCheck(
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
 static cl::opt<bool> noDivByZeroCheck(
     "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
+static cl::opt<bool> ubCountZeroCheck(
+    "ub-count-zero-check", cl::desc("Check undefined zero arguments to count-leading/trailing-zeros"));
+static cl::opt<bool> ubFloatCastOverflowCheck(
+    "ub-float-cast-overflow-check",
+    cl::desc("Check out-of-range floating-point to integer conversions"));
+static cl::opt<bool> ubAlignmentCheck(
+    "ub-alignment-check", cl::desc("Check alignment of typed memory accesses"));
 static cl::opt<bool> ubUninitCheck(
     "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
 static cl::opt<bool> memoryLeakCheck(
@@ -213,7 +220,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   auto &state = retained ? *retained : local;
   bool checkUninit = ubUninitCheck && property == Property::All;
   if (!state || !state->resumable()) {
-    Expected<camada::SMTSolverRef> created = vereda::solver::create(solverKind, incrementalSolver);
+    Expected<camada::SMTSolverRef> created =
+        vereda::solver::create(solverKind, incrementalSolver || incrementalBMC);
     if (!created) {
       errs() << "vereda: " << toString(created.takeError()) << "\n";
       return ErrorExit;
@@ -308,7 +316,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     else if (!(incrementalBMC && terms.isTrue(c.violated)))
       hasNonConstUnwind = true;
   }
-  bool mayRewalk = !incrementalSolver && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
+  bool useIncremental = incrementalSolver || state->resumable();
+  bool mayRewalk = !useIncremental && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
   if (releaseModule && !mayRewalk)
     releaseModule->reset();
 
@@ -360,7 +369,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   std::unique_ptr<BMCState> freshState;
   bool initialSolverUsed = false;
   vereda::solver::Verdict verdict =
-      incrementalSolver
+      useIncremental
           ? vereda::solver::decide(terms, checks, multiProperty,
                                    [&](const vereda::checks::Check &c) {
                                      onViolated(terms, checks, trace, &c - checks.data());
@@ -506,6 +515,9 @@ int main(int argc, char **argv) {
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck,
+                       ubCountZeroCheck && property == Property::All,
+                       ubFloatCastOverflowCheck && property == Property::All,
+                       ubAlignmentCheck && property == Property::All,
                        ubUninitCheck && property == Property::All);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";

@@ -45,8 +45,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_ffs
-// Needs: --clz-zero-check
-// RUN: --clz-zero-check
-// MODE: FUTURE
+// RUN: --ub-count-zero-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

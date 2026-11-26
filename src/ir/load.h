@@ -15,11 +15,17 @@ namespace vereda::ir {
 // (models-<pointer bits>.bc in models, a directory; none when empty or
 // missing) for the functions the module still calls without defining.
 // With divByZeroCheck, preserves integer divisor checks before optimisation.
+// With countZeroCheck, checks poison-on-zero count intrinsics before optimisation.
+// With floatCastOverflowCheck, checks out-of-range fptosi/fptoui before optimisation.
+// With alignmentCheck, preserves typed memory alignment checks before InstCombine.
 // With uninitCheck, keeps uninitialised locals in memory for read checking.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
                                                    llvm::StringRef entry = "",
                                                    bool divByZeroCheck = true,
+                                                   bool countZeroCheck = false,
+                                                   bool floatCastOverflowCheck = false,
+                                                   bool alignmentCheck = false,
                                                    bool uninitCheck = false);
 
 } // namespace vereda::ir

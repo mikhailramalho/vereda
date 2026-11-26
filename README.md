@@ -120,6 +120,9 @@ The main verifier flags:
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
 | `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
 | `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs |
+| `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
+| `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
+| `--ub-alignment-check` | Check alignment of typed memory accesses (opt-in) |
 | `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in) |
 | `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
 | `--data-race-check` | Request data-race checking; currently errors because it is not implemented (`--data-races-check` is an alias) |

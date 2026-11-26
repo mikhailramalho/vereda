@@ -76,8 +76,279 @@ static void checkDivisors(Module &m) {
   }
 }
 
-static void dropSafeDivisors(Module &m) {
-  Function *check = m.getFunction("__vereda_check_divisor");
+// Preserve checks even when the result is unused or the operand is constant zero.
+// Clang's defined-zero builtins mask the poison result with a select, sometimes
+// after a cast (clzg/ctzg) or an add (ffs).
+static bool maskedCountZero(Value *v, Value *arg, unsigned &budget) {
+  if (!budget || v->use_empty())
+    return false;
+  --budget;
+  for (User *u : v->users()) {
+    auto *op = dyn_cast<BinaryOperator>(u);
+    if (isa<CastInst>(u) || (op && op->getOpcode() == Instruction::Add)) {
+      if (!maskedCountZero(u, arg, budget))
+        return false;
+      continue;
+    }
+    auto *sel = dyn_cast<SelectInst>(u);
+    auto *cmp = sel ? dyn_cast<ICmpInst>(sel->getCondition()) : nullptr;
+    if (!cmp || !cmp->isEquality() || cmp->getOperand(0) != arg ||
+        !isa<Constant>(cmp->getOperand(1)) ||
+        !cast<Constant>(cmp->getOperand(1))->isNullValue())
+      return false;
+    bool zeroOnTrue = cmp->getPredicate() == ICmpInst::ICMP_EQ;
+    if ((zeroOnTrue ? sel->getFalseValue() : sel->getTrueValue()) != v ||
+        (zeroOnTrue ? sel->getTrueValue() : sel->getFalseValue()) == v)
+      return false;
+  }
+  return true;
+}
+
+static void checkCountZeros(Module &m) {
+  for (Function &f : m) {
+    SmallVector<IntrinsicInst *, 8> calls;
+    for (Instruction &i : instructions(f))
+      if (auto *c = dyn_cast<IntrinsicInst>(&i);
+          c && (c->getIntrinsicID() == Intrinsic::ctlz || c->getIntrinsicID() == Intrinsic::cttz) &&
+          cast<ConstantInt>(c->getArgOperand(1))->isOne())
+        calls.push_back(c);
+    if (calls.empty())
+      continue;
+    DominatorTree dt(f);
+    for (IntrinsicInst *c : calls) {
+      Value *arg = c->getArgOperand(0);
+      if (!arg->getType()->isIntegerTy() && !isa<FixedVectorType>(arg->getType()))
+        continue;
+      unsigned budget = 32;
+      if (maskedCountZero(c, arg, budget))
+        continue;
+      if (isKnownNonZero(arg, SimplifyQuery(m.getDataLayout(), &dt, nullptr, c,
+                                           /*UseInstrInfo=*/false, /*CanUseUndef=*/false)))
+        continue;
+      IRBuilder<> b(c);
+      b.SetCurrentDebugLocation(c->getDebugLoc());
+      Value *ok = b.CreateICmpNE(arg, Constant::getNullValue(arg->getType()));
+      if (auto *vt = dyn_cast<FixedVectorType>(arg->getType())) {
+        Value *all = b.getTrue();
+        for (unsigned lane = 0; lane < vt->getNumElements(); ++lane)
+          all = b.CreateAnd(all, b.CreateExtractElement(ok, b.getInt32(lane)));
+        ok = all;
+      }
+      FunctionCallee check = m.getOrInsertFunction("__vereda_check_count_zero",
+                                                   b.getVoidTy(), b.getInt1Ty());
+      b.CreateCall(check, {ok});
+      // The check now owns the precondition; do not let LLVM exploit poison.
+      c->setArgOperand(1, b.getFalse());
+    }
+  }
+}
+
+// Instrument typed memory accesses (load, store, atomicrmw, cmpxchg) with their
+// source-level alignment before SROA/InstCombine can eliminate misaligned
+// accesses through pointers to packed members or raise alignment from UB
+// assumptions. Direct accesses to allocas whose own alignment already satisfies
+// the access alignment are skipped so mem2reg still promotes aligned locals;
+// parameter 0 is marked non-capturing so it does not expose objects or block
+// array ownership.
+static void checkAlignments(Module &m) {
+  Function *check = nullptr;
+  auto getCheck = [&]() -> Function * {
+    if (!check) {
+      LLVMContext &ctx = m.getContext();
+      check = cast<Function>(
+          m.getOrInsertFunction("__vereda_check_alignment",
+                                FunctionType::get(Type::getVoidTy(ctx),
+                                                  {PointerType::getUnqual(ctx), Type::getInt64Ty(ctx)},
+                                                  false))
+              .getCallee());
+      check->setMemoryEffects(MemoryEffects::none());
+      check->addParamAttr(0, Attribute::getWithCaptureInfo(ctx, CaptureInfo::none()));
+    }
+    return check;
+  };
+  for (Function &f : m) {
+    if (f.isDeclaration())
+      continue;
+    SmallVector<std::tuple<Instruction *, Value *, uint64_t>, 16> accesses;
+    for (Instruction &i : instructions(f)) {
+      Value *ptr = nullptr;
+      uint64_t align = 1;
+      if (auto *l = dyn_cast<LoadInst>(&i)) {
+        ptr = l->getPointerOperand();
+        align = l->getAlign().value();
+      } else if (auto *s = dyn_cast<StoreInst>(&i)) {
+        ptr = s->getPointerOperand();
+        align = s->getAlign().value();
+      } else if (auto *a = dyn_cast<AtomicRMWInst>(&i)) {
+        ptr = a->getPointerOperand();
+        align = a->getAlign().value();
+      } else if (auto *c = dyn_cast<AtomicCmpXchgInst>(&i)) {
+        ptr = c->getPointerOperand();
+        align = c->getAlign().value();
+      }
+      if (!ptr || align <= 1 || ptr->getType()->getPointerAddressSpace() != 0)
+        continue;
+      // Direct access to an alloca whose own alignment already satisfies align.
+      if (auto *a = dyn_cast<AllocaInst>(ptr); a && a->getAlign().value() >= align)
+        continue;
+      accesses.emplace_back(&i, ptr, align);
+    }
+    for (auto &[inst, ptr, align] : accesses) {
+      IRBuilder<> b(inst);
+      b.SetCurrentDebugLocation(inst->getDebugLoc());
+      b.CreateCall(getCheck(), {ptr, b.getInt64(align)});
+    }
+  }
+}
+
+// True only when the immediate predecessor branches on a Clang ubsan
+// float-cast-overflow guard whose fcmp bounds provably cover this specific
+// cast's operand and required [lo, hi) range (preventing a wider guard such as
+// double->i32 from suppressing instrumentation on a narrower cast like double->i8).
+static bool hasUbsanFloatCastGuard(const CastInst &cast, const APFloat &loVal,
+                                   CmpInst::Predicate loPred, const APFloat &hiVal) {
+  const BasicBlock *bb = cast.getParent();
+  const BasicBlock *pred = bb->getSinglePredecessor();
+  if (!pred)
+    return false;
+  auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+  if (!br || br->getSuccessor(0) != bb)
+    return false;
+  bool callsHandler = false;
+  for (const Instruction &i : *br->getSuccessor(1))
+    if (auto *call = dyn_cast<CallBase>(&i))
+      if (const Function *f = call->getCalledFunction())
+        if (f->getName() == "__ubsan_handle_float_cast_overflow_abort") {
+          callsHandler = true;
+          break;
+        }
+  if (!callsHandler)
+    return false;
+  auto *cond = dyn_cast<BinaryOperator>(br->getCondition());
+  if (!cond || cond->getOpcode() != Instruction::And)
+    return false;
+  const Value *src = cast.getOperand(0);
+  bool loCovered = false, hiCovered = false;
+  for (unsigned idx = 0; idx < 2; ++idx) {
+    auto *fc = dyn_cast<FCmpInst>(cond->getOperand(idx));
+    if (!fc || fc->getOperand(0) != src)
+      continue;
+    auto *cf = dyn_cast<ConstantFP>(fc->getOperand(1));
+    if (!cf)
+      continue;
+    APFloat c = cf->getValueAPF();
+    if (&c.getSemantics() != &loVal.getSemantics() || c.isNaN())
+      continue;
+    CmpInst::Predicate p = fc->getPredicate();
+    if (p == CmpInst::FCMP_OLT) {
+      if (c.compare(hiVal) != APFloat::cmpGreaterThan)
+        hiCovered = true;
+    } else if (p == CmpInst::FCMP_OLE) {
+      if (c.compare(hiVal) == APFloat::cmpLessThan)
+        hiCovered = true;
+    } else if (p == CmpInst::FCMP_OGT) {
+      if (loPred == CmpInst::FCMP_OGT) {
+        if (c.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      } else if (loPred == CmpInst::FCMP_OGE) {
+        // x > c implies x >= loVal iff nextUp(c) >= loVal (e.g. Clang's
+        // fcmp ogt float %x, nextDown(-2^31) for float -> i32).
+        APFloat next = c;
+        next.next(/*nextDown=*/false);
+        if (next.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      }
+    } else if (p == CmpInst::FCMP_OGE) {
+      if (loPred == CmpInst::FCMP_OGT) {
+        if (c.compare(loVal) == APFloat::cmpGreaterThan)
+          loCovered = true;
+      } else if (loPred == CmpInst::FCMP_OGE) {
+        if (c.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      }
+    }
+  }
+  return loCovered && hiCovered;
+}
+
+// Instrument raw fptosi/fptoui instructions with exact C11 6.3.1.4p1 range
+// checks (open bounds on the truncated value, rejecting NaN and infinities)
+// without rounded floating-point limit constants.
+static void checkFloatCasts(Module &m) {
+  for (Function &f : m) {
+    SmallVector<CastInst *, 8> casts;
+    for (Instruction &i : instructions(f))
+      if (auto *c = dyn_cast<CastInst>(&i);
+          c && (c->getOpcode() == Instruction::FPToSI || c->getOpcode() == Instruction::FPToUI))
+        casts.push_back(c);
+    for (CastInst *c : casts) {
+      Value *src = c->getOperand(0);
+      Type *srcTy = src->getType(), *dstTy = c->getType();
+      if (isa<ScalableVectorType>(srcTy) || isa<ScalableVectorType>(dstTy))
+        continue;
+      Type *fpScalar = srcTy->getScalarType();
+      Type *intScalar = dstTy->getScalarType();
+      if (!fpScalar->isFloatingPointTy() || fpScalar->isPPC_FP128Ty() || !intScalar->isIntegerTy())
+        continue;
+      const fltSemantics &sem = fpScalar->getFltSemantics();
+      unsigned width = intScalar->getIntegerBitWidth();
+      unsigned prec = APFloat::semanticsPrecision(sem);
+      int maxExp = APFloat::semanticsMaxExponent(sem);
+      bool isSigned = c->getOpcode() == Instruction::FPToSI;
+      auto splat = [&](const APFloat &val) -> Constant * {
+        Constant *sc = ConstantFP::get(m.getContext(), val);
+        if (auto *vt = dyn_cast<FixedVectorType>(srcTy))
+          return ConstantVector::getSplat(vt->getElementCount(), sc);
+        return sc;
+      };
+      // Upper bound: trunc(x) <= 2^E - 1  <=>  x < 2^E (exact power of two, or +inf).
+      unsigned hiExp = isSigned ? width - 1 : width;
+      APFloat hiVal = hiExp <= static_cast<unsigned>(maxExp)
+                          ? scalbn(APFloat(sem, 1), static_cast<int>(hiExp),
+                                   APFloat::rmNearestTiesToEven)
+                          : APFloat::getInf(sem, false);
+      // Lower bound: unsigned is x > -1.0; signed is x > -(2^(W-1) + 1) when
+      // exact in sem (W <= prec), else x >= -2^(W-1) (no float lies between
+      // -2^(W-1) and -2^(W-1) - 1 when ULP >= 2), or x > -inf if W-1 > maxExp.
+      APFloat loVal(sem);
+      CmpInst::Predicate loPred = CmpInst::FCMP_OGT;
+      if (!isSigned) {
+        loVal = APFloat(sem, 1);
+        loVal.changeSign();
+      } else if (width - 1 > static_cast<unsigned>(maxExp)) {
+        loVal = APFloat::getInf(sem, true);
+      } else if (width <= prec) {
+        APInt mag = APInt::getOneBitSet(width + 1, width - 1) + 1;
+        loVal.convertFromAPInt(mag, /*IsSigned=*/false, APFloat::rmNearestTiesToEven);
+        loVal.changeSign();
+      } else {
+        loVal = scalbn(APFloat(sem, 1), static_cast<int>(width - 1),
+                       APFloat::rmNearestTiesToEven);
+        loVal.changeSign();
+        loPred = CmpInst::FCMP_OGE;
+      }
+      if (!isa<FixedVectorType>(srcTy) && hasUbsanFloatCastGuard(*c, loVal, loPred, hiVal))
+        continue;
+      IRBuilder<> b(c);
+      b.SetCurrentDebugLocation(c->getDebugLoc());
+      Value *loOk = b.CreateFCmp(loPred, src, splat(loVal));
+      Value *hiOk = b.CreateFCmpOLT(src, splat(hiVal));
+      Value *ok = b.CreateAnd(loOk, hiOk);
+      if (auto *vt = dyn_cast<FixedVectorType>(srcTy)) {
+        Value *all = b.getTrue();
+        for (unsigned lane = 0; lane < vt->getNumElements(); ++lane)
+          all = b.CreateAnd(all, b.CreateExtractElement(ok, b.getInt32(lane)));
+        ok = all;
+      }
+      FunctionCallee check = m.getOrInsertFunction("__vereda_check_float_cast_overflow",
+                                                   b.getVoidTy(), b.getInt1Ty());
+      b.CreateCall(check, {ok});
+    }
+  }
+}
+
+static void dropSafeChecks(Module &m, StringRef name) {
+  Function *check = m.getFunction(name);
   if (!check)
     return;
   for (User *user : make_early_inc_range(check->users()))
@@ -1022,7 +1293,8 @@ static Error runPipeline(Module &m, StringRef pipeline) {
 // that calls the passes created (bcmp from memcmp) find theirs too. The
 // models went through the same passes when built; calls into them whose
 // type differs from the definition are converted as lowerCalls does.
-static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck) {
+static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool countZeroCheck,
+                        bool floatCastOverflowCheck, bool alignmentCheck) {
   SmallString<128> path(dir);
   sys::path::append(path, "models-" + std::to_string(m.getDataLayout().getPointerSizeInBits()) +
                               ".bc");
@@ -1036,6 +1308,12 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck) {
   models->setDataLayout(m.getDataLayout());
   if (divByZeroCheck)
     checkDivisors(*models);
+  if (countZeroCheck)
+    checkCountZeros(*models);
+  if (floatCastOverflowCheck)
+    checkFloatCasts(*models);
+  if (alignmentCheck)
+    checkAlignments(*models);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1232,7 +1510,9 @@ static void threadBoolPhis(Module &m) {
 }
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
-                                       StringRef entry, bool divByZeroCheck, bool uninitCheck) {
+                                       StringRef entry, bool divByZeroCheck, bool countZeroCheck,
+                                       bool floatCastOverflowCheck, bool alignmentCheck,
+                                       bool uninitCheck) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1248,10 +1528,16 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
   lowerRustMain(*module);
+  if (alignmentCheck)
+    checkAlignments(*module);
   nondetLocals(*module, uninitCheck);
   lowerLongjmp(*module);
   if (divByZeroCheck)
     checkDivisors(*module);
+  if (countZeroCheck)
+    checkCountZeros(*module);
+  if (floatCastOverflowCheck)
+    checkFloatCasts(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))
     return std::move(e);
   lowerCalls(*module); // before InstCombine, which folds tests of constants
@@ -1266,7 +1552,9 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
                             "function(instcombine<no-verify-fixpoint>,"
                             "scalarizer<load-store;variable-insert-extract>)"))
     return std::move(e);
-  dropSafeDivisors(*module);
+  dropSafeChecks(*module, "__vereda_check_divisor");
+  dropSafeChecks(*module, "__vereda_check_count_zero");
+  dropSafeChecks(*module, "__vereda_check_float_cast_overflow");
   for (GlobalVariable *g : written)
     g->setConstant(true);
   // InstCombine drops safe sanitizer calls; discard their diagnostic globals
@@ -1284,7 +1572,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
-  if (Error e = linkModels(*module, models, divByZeroCheck))
+  if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
+                           alignmentCheck))
     return std::move(e);
   // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before

@@ -28,7 +28,7 @@ struct Counted {
   bool assertions; // assert, __VERIFIER_assert, __assert_fail, a bodyless reach_error
   bool traps;      // llvm.ubsantrap, a clang sanitizer check
   bool reachError; // reach_error by name, under unreach-call
-  bool divisors;   // integer division and remainder by zero
+  bool preconditions; // integer divisors and undefined count-zero arguments
 };
 
 struct Summary {

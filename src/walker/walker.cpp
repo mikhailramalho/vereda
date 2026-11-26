@@ -179,21 +179,40 @@ public:
 
   bool resumable() const { return stopped.has_value(); }
 
+  void finalizeStopped() {
+    if (stopped && !stopped->immediate &&
+        (t.constraintsEpoch() != stopped->epoch || mem.objectCount() != stopped->objects))
+      stopped.reset();
+  }
+
   void advance(Function &f, unsigned bound) {
     opts.unwind = bound;
+    truncatedInner = false;
     if (!stopped) {
       entry(f);
+      finalizeStopped();
       return;
     }
     Stopped saved = std::move(*stopped);
     stopped.reset();
     checks.resize(saved.checks);
+    for (size_t j = 0; j < saved.checks; ++j)
+      checks[j].violated = saved.violated[j];
     trace.truncate(saved.trace);
-    claims.erase({saved.loop, nullptr});
+    if (saved.immediate) {
+      claims.erase({saved.loop, nullptr});
+    } else {
+      claims = std::move(saved.claims);
+      assertionNumber = std::move(saved.assertionNumber);
+      assertionsIn = std::move(saved.assertionsIn);
+      recursionNumber = std::move(saved.recursionNumber);
+      recursionsIn = std::move(saved.recursionsIn);
+      summarised = std::move(saved.summarised);
+    }
     stack.push_back(&f);
     FunctionInfo &fi = info(f);
     loop(saved.frame, fi, saved.loop, saved.iteration);
-    if (!stopped) {
+    if (!stopped || !stopped->immediate) {
       bool after = false;
       for (BasicBlock *bb : fi.regionBlocks[nullptr]) {
         if (after) {
@@ -201,13 +220,14 @@ public:
             loop(saved.frame, fi, l);
           else
             block(saved.frame, *bb);
-          if (stopped)
+          if (stopped && stopped->immediate)
             break;
         }
         after |= bb == saved.loop->getHeader();
       }
     }
     stack.pop_back();
+    finalizeStopped();
   }
 
 private:
@@ -498,7 +518,8 @@ private:
             access = store->getValueOperand()->getType();
         } else if (auto *call = dyn_cast<CallBase>(u)) {
           if (call->getCalledFunction() &&
-              call->getCalledFunction()->getName() == "__vereda_uninitialised")
+              (call->getCalledFunction()->getName() == "__vereda_uninitialised" ||
+               call->getCalledFunction()->getName() == "__vereda_check_alignment"))
             continue;
           bool copy = false;
           if (at.value == v && bytes && isMemoryCopyOrSet(call, copy)) {
@@ -619,7 +640,7 @@ private:
         block(frame, *bb);
       else
         loop(frame, fi, inner);
-      if (stopped)
+      if (stopped && stopped->immediate)
         return;
     }
   }
@@ -729,6 +750,36 @@ private:
         Term reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
+          bool canCheckpoint = incremental && !l->getParentLoop() && stack.size() == 1 &&
+                               !stopped && !truncatedInner && !t.isFalse(reached);
+          bool immediateCheckpoint = canCheckpoint && frame.arrivals.size() == 1 &&
+                                     frame.returns.empty() && t.isTrue(reached);
+          // Snapshot before unwound() when the suffix still needs to run (symbolic
+          // exits, early returns, or sibling arrivals): the next bound rolls back
+          // the suffix and extends this loop from iteration i.
+          if (canCheckpoint && !immediateCheckpoint) {
+            Stopped cp;
+            cp.frame = frame;
+            cp.loop = l;
+            cp.iteration = i;
+            cp.checks = beforeChecks;
+            cp.trace = beforeTrace;
+            cp.violated.reserve(beforeChecks);
+            for (size_t j = 0; j < beforeChecks; ++j)
+              cp.violated.push_back(checks[j].violated);
+            cp.claims = claims;
+            cp.assertionNumber = assertionNumber;
+            cp.assertionsIn = assertionsIn;
+            cp.recursionNumber = recursionNumber;
+            cp.recursionsIn = recursionsIn;
+            cp.summarised = summarised;
+            cp.epoch = t.constraintsEpoch();
+            cp.objects = mem.objectCount();
+            cp.immediate = false;
+            stopped = std::move(cp);
+          } else if (!canCheckpoint && !stopped && !t.isFalse(reached)) {
+            truncatedInner = true;
+          }
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
           // Even when the loop has symbolic early exits, a constant SCEV max
           // backedge-taken count bounds how far incremental BMC needs to grow
@@ -737,12 +788,19 @@ private:
             if (auto *n = dyn_cast<SCEVConstant>(
                     loopsFor(fi, *header->getParent()).scev().getConstantMaxBackedgeTakenCount(l)))
               checks[c->second].unwindsAt = n->getAPInt().getLimitedValue(UINT_MAX - 1) + 1;
-          // Nothing after this prefix has been walked. Keep its live header
-          // instead of rebuilding it at the next bound; exits need fresh walks.
-          if (incremental && !l->getParentLoop() && stack.size() == 1 &&
-              frame.arrivals.size() == 1 && frame.returns.empty() && t.isTrue(reached) &&
-              checks.size() == beforeChecks + 1) {
-            stopped = Stopped{std::move(frame), l, i, beforeChecks, beforeTrace};
+          // Fast path: nothing after this prefix is reachable yet.
+          if (immediateCheckpoint && checks.size() == beforeChecks + 1) {
+            Stopped cp;
+            cp.frame = std::move(frame);
+            cp.loop = l;
+            cp.iteration = i;
+            cp.checks = beforeChecks;
+            cp.trace = beforeTrace;
+            cp.violated.reserve(beforeChecks);
+            for (size_t j = 0; j < beforeChecks; ++j)
+              cp.violated.push_back(checks[j].violated);
+            cp.immediate = true;
+            stopped = std::move(cp);
             return;
           }
           it->second.clear();
@@ -1382,13 +1440,66 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
-    if (name == "__vereda_check_divisor") {
-      Term holds = enc.isTrue(c.getArgOperand(0));
+    if (name == "__ubsan_handle_invalid_builtin_abort") {
+      auto *data = dyn_cast<GlobalVariable>(c.getArgOperand(0)->stripPointerCasts());
+      auto *init = data && data->hasInitializer() ? dyn_cast<ConstantStruct>(data->getInitializer())
+                                                 : nullptr;
+      auto *kind = init ? dyn_cast<ConstantInt>(init->getOperand(1)) : nullptr;
+      if (!kind || kind->getZExtValue() > 2)
+        throw Unsupported("unknown builtin precondition");
+      // Clang also instruments __builtin_assume(false); it remains an assumption.
+      if (kind->getZExtValue() < 2 && counts(false))
+        assertion(c, guard, "__builtin_clz/ctz of zero is undefined", "", nullptr,
+                  checks::Property::CountZero);
+      return t.boolean(false);
+    }
+    if (name == "__ubsan_handle_float_cast_overflow_abort") {
+      if (counts(false))
+        assertion(c, guard, "float cast overflow", "", nullptr,
+                  checks::Property::FloatCastOverflow);
+      return t.boolean(false);
+    }
+    if (name == "__vereda_check_alignment") {
+      uint64_t align = cast<ConstantInt>(c.getArgOperand(1))->getZExtValue();
+      if (align <= 1)
+        return guard;
+      Term p = enc.value(c.getArgOperand(0));
+      Term mask = t.bv(align - 1, mem.pointerBits());
+      Term zero = t.bv(0, mem.pointerBits());
+      // When p targets one known object whose base already satisfies align,
+      // only the offset matters (avoids forcing address layout).
+      Term addr;
+      if (const APInt *id = t.constant(mem.object(p));
+          id && !id->isZero() && mem.objectAlign(id->getZExtValue()) >= align)
+        addr = mem.offset(p);
+      else
+        addr = mem.address(p);
+      Term holds = t.eq(t.bvand(addr, mask), zero);
       if (t.isTrue(holds))
         return guard;
       if (counts(false))
-        assertion(c, t.land(guard, t.lnot(holds)), "division by zero", "", nullptr,
-                  checks::Property::DivisionByZero);
+        assertion(c, t.land(guard, t.lnot(holds)),
+                  "dereference failure: Incorrect alignment when accessing data object", "",
+                  nullptr, checks::Property::Alignment);
+      enc.learn(holds, enc.facts);
+      return t.land(guard, holds);
+    }
+    if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero" ||
+        name == "__vereda_check_float_cast_overflow") {
+      Term holds = enc.isTrue(c.getArgOperand(0));
+      if (t.isTrue(holds))
+        return guard;
+      bool isDiv = name == "__vereda_check_divisor";
+      bool isCount = name == "__vereda_check_count_zero";
+      if (counts(false))
+        assertion(c, t.land(guard, t.lnot(holds)),
+                  isDiv ? "division by zero"
+                        : isCount ? "__builtin_clz/ctz of zero is undefined"
+                                  : "float cast overflow",
+                  "", nullptr,
+                  isDiv ? checks::Property::DivisionByZero
+                        : isCount ? checks::Property::CountZero
+                                  : checks::Property::FloatCastOverflow);
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -1546,6 +1657,8 @@ private:
         unsigned &number = recursionNumber[&c];
         if (!number)
           number = ++recursionsIn[c.getFunction()];
+        if (!stopped && !t.isFalse(guard))
+          truncatedInner = true;
         unwound(Unwound::Recursion, number, ir::location(c), guard, &c);
         cut = true;
       } else if (!opts.unwind && unreachable(guard)) {
@@ -2110,11 +2223,22 @@ private:
   bool incremental;
   struct Stopped {
     Frame frame;
-    Loop *loop;
-    unsigned iteration;
-    size_t checks, trace;
+    Loop *loop = nullptr;
+    unsigned iteration = 0;
+    size_t checks = 0, trace = 0;
+    SmallVector<encode::Term, 16> violated;
+    DenseMap<ClaimKey, unsigned> claims;
+    DenseMap<ClaimKey, unsigned> assertionNumber;
+    DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
+    DenseMap<const CallBase *, unsigned> recursionNumber;
+    DenseMap<const Function *, unsigned> recursionsIn;
+    SmallPtrSet<const Loop *, 8> summarised;
+    uint64_t epoch = 0;
+    size_t objects = 0;
+    bool immediate = false;
   };
   std::optional<Stopped> stopped;
+  bool truncatedInner = false;
   bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global

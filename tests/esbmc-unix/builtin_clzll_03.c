@@ -12,8 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/builtin_clzll_03
-// Needs: --clz-zero-check
-// RUN: --clz-zero-check
-// MODE: FUTURE
+// RUN: --ub-count-zero-check
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
