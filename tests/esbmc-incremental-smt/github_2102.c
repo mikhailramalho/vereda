@@ -47,8 +47,8 @@ int main()
   __VERIFIER_assert(iA == iB); // iA and iB must be equal
 }
 // Imported from ESBMC regression/incremental-smt/github_2102
-// Needs: --context-bound 3 --smt-during-symex
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unwind 3 --context-bound 3 --smt-during-symex --z3
+// Needs: --context-bound 3
+// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unwind 3 --context-bound 3 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

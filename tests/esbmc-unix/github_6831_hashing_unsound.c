@@ -22,8 +22,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_hashing_unsound
-// Needs: --state-hashing
-// RUN: --state-hashing
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

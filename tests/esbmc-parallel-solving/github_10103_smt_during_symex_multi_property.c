@@ -14,9 +14,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/github_10103_smt_during_symex_multi_property
-// Needs: --smt-during-symex
-// RUN: --multi-property --smt-during-symex
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^\[COUNTEREXAMPLE\]$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

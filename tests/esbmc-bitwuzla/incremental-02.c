@@ -13,8 +13,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/incremental-02
-// Needs: --smt-during-symex --smt-symex-guard
-// RUN: --smt-during-symex --smt-symex-guard --bitwuzla
+// Needs: --smt-symex-guard
+// RUN: --smt-symex-guard --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

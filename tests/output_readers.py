@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """The timing reader accepts both sides of a performance comparison."""
 import re
+from pathlib import Path
+import tempfile
 import import_esbmc
 import run
 
@@ -8,6 +10,60 @@ assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == 
     ["--no-assertions", "--no-div-by-zero-check"], [], [])
 for flag in ("--memory-leak-check", "--data-races-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
+ignored = ("--tuple-sym-flattener", "--state-hashing", "--smt-during-symex",
+           "--add-symex-value-sets", "--goto-functions-only")
+for flag in ignored:
+    for token in (flag, flag + "=true", flag + "=false"):
+        assert import_esbmc.translate(token + " --z3", ".") == (["--solver", "z3"], [], [])
+        lines = import_esbmc.header("suite/internal_flag", "CORE", token, [], ".", [])
+        assert not any(s.startswith(("// RUN:", "// Needs:", "// MODE:")) for s in lines), lines
+        args = f"'{token}' --k-induction -DMSG='keep {flag} text'"
+        lines = import_esbmc.header("suite/unsupported", "CORE", args, [], ".", [])
+        assert "// Needs: --k-induction" in lines, lines
+        assert f"// RUN: --k-induction -DMSG='keep {flag} text'" in lines, lines
+lines = import_esbmc.header("suite/internal_flags", "CORE", " ".join(ignored) + " --z3",
+                           [], ".", ["__ESBMC_forall"])
+assert "// RUN: --solver z3" in lines, lines
+assert "// Needs: __ESBMC_forall" in lines, lines
+assert "// MODE: FUTURE" in lines, lines
+lines = import_esbmc.header("suite/requirement", "CORE", " ".join(ignored),
+                           ["REQUIRES uchar_h"], ".", [])
+assert "// RUN:" in lines, lines
+assert "// Needs: REQUIRES uchar_h" in lines, lines
+
+with tempfile.TemporaryDirectory() as directory:
+    src = Path(directory) / "source"
+    src.mkdir()
+    (src / "main.c").write_text("int main(void) { return 0; }\n")
+    expected = [r"^VERIFICATION SUCCESSFUL$", r"^  division by zero$",
+                r"^ +ASSIGN x=1;$", r"^\(check-sat\)$", "SMT formula written to out.smt2",
+                r"return_value\$_more\$1\?1!", "CHECK_FILE out.smt2 contains bvneg"]
+    for name in ("smt-formula", "goto-program", "goto-functions", "program"):
+        for suffix in ("only", "too"):
+            mode = "--" + name + "-" + suffix
+            assert import_esbmc.expectations(expected, src, mode) == expected[:2], mode
+    assert r"^ +ASSIGN x=1;$" in import_esbmc.expectations(expected, src)
+    assert not import_esbmc.output_mode("-DMSG='--program-only'")
+    dest = Path(directory) / "copied"
+    old = dest.with_suffix(".c")
+    old.write_text("stale fixture\n")
+    (src / "test.desc").write_text("CORE\nmain.c\n--program-only\n^ +ASSIGN x=1;$\n")
+    assert import_esbmc.import_test(str(src), str(dest), "suite/dump", None) == (
+        "ESBMC-specific dump output only")
+    assert not old.exists()
+    (src / "test.desc").write_text("CORE\nmain.c\n--program-too\n"
+                                   "^VERIFICATION SUCCESSFUL$\n^ +ASSIGN x=1;$\n")
+    assert import_esbmc.import_test(str(src), str(dest), "suite/verdict", None) == str(old)
+    copied = old.read_text()
+    assert "// EXPECT: ^VERIFICATION SUCCESSFUL$" in copied, copied
+    assert "ASSIGN" not in copied and "// MODE:" not in copied, copied
+    (src / "main.c").write_text('int main(void) { __ESBMC_assert(0, "b"); }\n')
+    row = r"^ +FAILED +\[main\.assertion\.2\] +line 10 +b$"
+    filtered = import_esbmc.expectations([row, "^VERIFICATION FAILED$"], src, "--smt-formula-too")
+    assert len(filtered) == 2, filtered
+    assert re.search(filtered[0], "  FAILED  [main.assertion.2]  line 10  __VERIFIER_assert"), filtered
+    assert not re.search(filtered[0], "  FAILED  [main.assertion.1]  line 10  __VERIFIER_assert"), filtered
+
 for args in ("--std c11", "--std=c11"):
     assert import_esbmc.translate(args + " --z3", ".") == (
         ["--std", "c11", "--solver", "z3"], [], [])

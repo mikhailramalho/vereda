@@ -22,8 +22,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/github_31
-// Needs: --smt-during-symex --smt-symex-guard
-// RUN: --no-bounds-check --no-pointer-check --no-div-by-zero-check --smt-during-symex --smt-symex-guard --z3 --unwind 1
+// Needs: --smt-symex-guard
+// RUN: --no-bounds-check --no-pointer-check --no-div-by-zero-check --smt-symex-guard --z3 --unwind 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

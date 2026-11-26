@@ -34,8 +34,8 @@ int main(void)
   return sink;
 }
 // Imported from ESBMC regression/termination/lasso_eca_no_repeat_short
-// Needs: --state-hashing --add-symex-value-sets --termination --max-inductive-step 3 --interval-analysis
-// RUN: --no-div-by-zero-check --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// Needs: --termination --max-inductive-step 3 --interval-analysis
+// RUN: --no-div-by-zero-check --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -8,6 +8,5 @@ int main()
 // Needs: --bitwuzllob --bitwuzllob-prog fake-mallob.sh
 // RUN: --bitwuzllob --bitwuzllob-prog fake-mallob.sh --smt-formula-too
 // MODE: FUTURE
-// EXPECT: SMT formula written to
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

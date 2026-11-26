@@ -18,8 +18,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_push_pop_fail
-// Needs: --smt-during-symex --smt-symex-assert
-// RUN: --smt-during-symex --smt-symex-assert
+// Needs: --smt-symex-assert
+// RUN: --smt-symex-assert
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

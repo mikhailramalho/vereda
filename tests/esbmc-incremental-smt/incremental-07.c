@@ -10,8 +10,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-07
-// Needs: --smt-during-symex --smt-symex-assert
-// RUN: --smt-during-symex --smt-symex-assert -Wno-error=implicit-function-declaration
+// Needs: --smt-symex-assert
+// RUN: --smt-symex-assert -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

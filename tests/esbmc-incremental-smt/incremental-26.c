@@ -1658,8 +1658,8 @@ SSL_METHOD *sslv3_base_method() {
   return method;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-26
-// Needs: --k-induction --add-symex-value-sets --smt-during-symex
-// RUN: --k-induction --add-symex-value-sets --k-step 7 --no-pointer-check --smt-during-symex
+// Needs: --k-induction
+// RUN: --k-induction --k-step 7 --no-pointer-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

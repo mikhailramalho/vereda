@@ -78,8 +78,8 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/14_popl20-figure1
-// Needs: --state-hashing --add-symex-value-sets --no-por --context-bound 4
-// RUN: --no-div-by-zero-check --force-malloc-success --state-hashing --add-symex-value-sets --no-align-check --k-step 2 --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1 --context-bound 4
+// Needs: --no-por --context-bound 4
+// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps  --32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1 --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

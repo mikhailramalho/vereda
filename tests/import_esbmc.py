@@ -74,12 +74,16 @@ RENAMED = {
 }
 RENAMED_WITH_VALUE = {"--function": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
-# --summarize-array-loops, which Vereda does by default, and numeric encoding
-# selectors: floating-point values always use Vereda's supported encoding.
-ENCODING_FLAGS = {"--floatbv", "--fixedbv"}
+# --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
+# pipeline switches and numeric selectors in both normal and fallback commands.
+PROGRAM_OUTPUT_FLAGS = {"--" + name + "-" + suffix
+                        for name in ("goto-program", "goto-functions", "program")
+                        for suffix in ("only", "too")}
+IGNORED_FLAGS = {"--floatbv", "--fixedbv", "--tuple-sym-flattener", "--state-hashing",
+                 "--smt-during-symex", "--add-symex-value-sets"} | PROGRAM_OUTPUT_FLAGS
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
            "--no-align-check", "--no-pointer-relation-check",
-           "--no-simplify", "--no-slice"} | ENCODING_FLAGS
+           "--no-simplify", "--no-slice"} | IGNORED_FLAGS
 
 
 def translate(args, test_dir):
@@ -100,7 +104,7 @@ def translate(args, test_dir):
             flags.append(tok)
         elif tok in RENAMED:
             flags += RENAMED[tok]
-        elif tok in DROPPED or tok.startswith("-Wno-"):  # clang already relaxes these
+        elif tok in DROPPED or name in IGNORED_FLAGS or tok.startswith("-Wno-"):
             continue
         elif tok.startswith("-D"):
             flags.append(tok if len(tok) > 2 else tok + next(tokens, ""))
@@ -116,6 +120,12 @@ def suite_name(suite):
 
 # test.desc lines that are not output regexes.
 DIRECTIVES = ("REQUIRES", "CHECK_JSON", "CHECK_FILE", "SEED_FILE")
+OUTPUT_MODES = PROGRAM_OUTPUT_FLAGS | {"--smt-formula-only", "--smt-formula-too"}
+
+
+def output_mode(args):
+    """Whether the test asks for an ESBMC formula or program dump."""
+    return any(token.partition("=")[0] in OUTPUT_MODES for token in shlex.split(args))
 
 
 def header(origin, mode, args, expected, test_dir, builtins):
@@ -141,16 +151,16 @@ def header(origin, mode, args, expected, test_dir, builtins):
     if missing or builtins:
         mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     if missing:
-        # Keep unsupported options visible without restoring discarded encodings.
+        # Keep unsupported options visible without restoring ignored flags.
         lexer = shlex.shlex(args, posix=True)
         lexer.whitespace_split, lexer.commenters = True, ""
         raw_args, start = [], 0
         for token in lexer:
             end = lexer.instream.tell()
-            if token not in ENCODING_FLAGS:
+            if token.partition("=")[0] not in IGNORED_FLAGS:
                 raw_args.append(args[start:end])
             start = end
-        lines += ["// Needs: " + " ".join(missing), "// RUN: " + "".join(raw_args).strip()]
+        lines += ["// Needs: " + " ".join(missing), ("// RUN: " + "".join(raw_args).strip()).rstrip()]
     elif flags:
         lines.append("// RUN: " + " ".join(flags))
     # Keep both the summarized and unrolled decrement performance regressions.
@@ -229,11 +239,41 @@ def as_vereda(regex):
     return regex
 
 
-def expectations(lines, src):
+def expectations(lines, src, args=""):
     """The output regexes of a test.desc, without the ones only ESBMC's
     output matches, made to match Vereda's counterexample."""
     messages = assert_messages(src)
-    return [as_vereda(r.strip()) for r in lines if r.strip() and not esbmc_output(r.strip(), messages)]
+    dump = output_mode(args)
+    result = []
+    for line in lines:
+        regex = line.strip()
+        if not regex:
+            continue
+        # Keep the claim, status and location while dropping ESBMC's label.
+        if dump and "assertion" in regex and r"\[" in regex and re.search(r"\b(?:FAILED|PASSED)\b", regex):
+            for message in messages:
+                for separator in (" +", r"\s+", " "):
+                    suffix = separator + re.escape(message) + "$"
+                    if regex.endswith(suffix):
+                        regex = regex[:-len(suffix)] + r"(?:\s|$)"
+        if not esbmc_output(regex, messages) and not (dump and dump_output(regex)):
+            result.append(as_vereda(regex))
+    return result
+
+
+def dump_output(regex):
+    """ESBMC's GOTO/SSA/SMT representation, not a verdict or counterexample."""
+    if regex.split()[0] in ("CHECK_FILE", "CHECK_JSON"):
+        return True
+    plain = re.sub(r"\\(.)", r"\1", regex)
+    return bool(re.search(
+        r"\b(?:ASSIGN|ASSERT|DECL|DEAD|GOTO|FUNCTION_CALL|END_FUNCTION|START_THREAD|"
+        r"ATOMIC_BEGIN|ATOMIC_END)\b|\bc:@[FS]@|anon_pad#|"
+        r"return_value\$|\?\d+!|"
+        r"\((?:set-|check-|declare-|define-|assert\b|bv\w+)|"
+        r"SMT formula|Solving claim|Encoding to solver time|Field-sensitive SSA|"
+        r"Checking (?:forward condition|inductive step)", plain)) or bool(
+            re.fullmatch(r"bv\w+", plain.strip("^$")))
 
 
 def outside(test_dir, path):
@@ -639,13 +679,15 @@ def import_test(src, dest, origin, tracked):
         return "unreadable flags"
     if any(outside(src, p) for p in paths):
         return "files outside the test"
+    regexes = expectations(lines[3:], src, args)
     reason = SKIPPED_TESTS.get(origin) or esbmc_only(src, args)
+    if output_mode(args) and not any(run.EXPECTED.fullmatch(r) for r in regexes):
+        reason = reason or "ESBMC-specific dump output only"
     if reason:
         shutil.rmtree(dest, ignore_errors=True)  # an earlier copy
         if os.path.exists(dest + ".c"):
             os.remove(dest + ".c")
         return reason
-    regexes = expectations(lines[3:], src)
 
     entry = copy_files(src, dest, source, tracked)
     if not entry:

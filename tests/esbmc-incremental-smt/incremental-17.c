@@ -13,8 +13,8 @@ int main()
   }
 }
 // Imported from ESBMC regression/incremental-smt/incremental-17
-// Needs: --smt-during-symex --smt-symex-assert --smt-symex-guard --add-symex-value-sets
-// RUN: --smt-during-symex --smt-symex-assert --smt-symex-guard --add-symex-value-sets
+// Needs: --smt-symex-assert --smt-symex-guard
+// RUN: --smt-symex-assert --smt-symex-guard
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none
