@@ -84,7 +84,8 @@ static bool maskedCountZero(Value *v, Value *arg, unsigned &budget) {
     return false;
   --budget;
   for (User *u : v->users()) {
-    if (isa<CastInst>(u) || isa<BinaryOperator>(u)) {
+    auto *op = dyn_cast<BinaryOperator>(u);
+    if (isa<CastInst>(u) || (op && op->getOpcode() == Instruction::Add)) {
       if (!maskedCountZero(u, arg, budget))
         return false;
       continue;
@@ -116,6 +117,8 @@ static void checkCountZeros(Module &m) {
     DominatorTree dt(f);
     for (IntrinsicInst *c : calls) {
       Value *arg = c->getArgOperand(0);
+      if (!arg->getType()->isIntegerTy() && !isa<FixedVectorType>(arg->getType()))
+        continue;
       unsigned budget = 32;
       if (maskedCountZero(c, arg, budget))
         continue;

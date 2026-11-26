@@ -273,7 +273,7 @@ def main():
             no_divisor = not eq or value in ("", "true", "1")
         if name == "--ub-count-zero-check":
             count_zero = not eq or value in ("", "true", "1")
-    if count_zero and any(i.endswith((".c", ".i")) for i in inputs):
+    if count_zero and selected.property == "all" and any(i.endswith((".c", ".i")) for i in inputs):
         flags += ["-fsanitize=builtin", "-fno-sanitize-recover=builtin",
                   "-fsanitize-debug-trap-reasons=none"]
     if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all" and not no_divisor:

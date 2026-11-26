@@ -136,3 +136,77 @@ define i32 @main(i8 %x) {
                       "int main(void) { __VERIFIER_assert(0); int x = __builtin_clz(0); }\n")
     out = check(command + [str(source), flag, "--multi-property"], 1, "main.assertion.1")
     assert "main.count-zero.1" in out, out
+
+    # Excluded checks must not restrict the domain of another property.
+    source.write_text('''extern unsigned __VERIFIER_nondet_uint(void);
+extern void reach_error(void);
+int main(void) {
+ unsigned x = __VERIFIER_nondet_uint();
+ int unused = __builtin_ctz(x);
+ if (x == 0) reach_error();
+}
+''')
+    out = check(command + [str(source), flag, "--property", "unreach-call"],
+                1, "VERIFICATION FAILED")
+    assert "count-zero." not in out, out
+    source.write_text('''extern unsigned __VERIFIER_nondet_uint(void);
+int main(void) {
+ unsigned x = __VERIFIER_nondet_uint();
+ int unused = __builtin_ctz(x);
+ if (x == 0) { int n = 2147483647; n += 1; }
+}
+''')
+    check(command + [str(source), flag, "--property", "no-overflow", "--overflow-check"],
+          1, "VERIFICATION FAILED")
+    ir.write_text('''declare i32 @llvm.cttz.i32(i32, i1 immarg)
+declare void @reach_error()
+declare void @llvm.ubsantrap(i8 immarg)
+define i32 @main(i32 %x) {
+ %unused = call i32 @llvm.cttz.i32(i32 %x, i1 true)
+ %zero = icmp eq i32 %x, 0
+ br i1 %zero, label %bad, label %done
+bad:
+ call void @reach_error()
+ call void @llvm.ubsantrap(i8 0)
+ unreachable
+done:
+ ret i32 0
+}
+''')
+    for prop in ("unreach-call", "no-overflow"):
+        if prop == "no-overflow":
+            ir.write_text(ir.read_text().replace(" call void @reach_error()\n", ""))
+        check([binary, str(ir), flag, "--property", prop], 1, "VERIFICATION FAILED")
+
+    # An assumption can stop a loop before completion; it is not a checked exit.
+    source.write_text('''extern void reach_error(void);
+int main(void) {
+ int a[400];
+ for (int i = 0; i < 400; ++i) {
+  __builtin_assume(i < 100);
+  a[i] = i;
+ }
+ reach_error();
+}
+''')
+    check(command + [str(source), flag], 0, "VERIFICATION SUCCESSFUL")
+
+    # Division consumes poison even when its result is subsequently masked.
+    ir.write_text('''declare i32 @llvm.ctlz.i32(i32, i1 immarg)
+define i32 @main(i32 %x) {
+ %c = call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+ %q = udiv i32 %c, 1
+ %zero = icmp eq i32 %x, 0
+ %r = select i1 %zero, i32 0, i32 %q
+ ret i32 %r
+}
+''')
+    check([binary, str(ir), flag], 1, "main.count-zero.1")
+    ir.write_text('''declare <vscale x 2 x i32> @llvm.cttz.nxv2i32(<vscale x 2 x i32>, i1 immarg)
+define i32 @main(<vscale x 2 x i32> %x) {
+ %r = call <vscale x 2 x i32> @llvm.cttz.nxv2i32(<vscale x 2 x i32> %x, i1 true)
+ %lane = extractelement <vscale x 2 x i32> %r, i32 0
+ ret i32 %lane
+}
+''')
+    check([binary, str(ir), flag], 2, "VERIFICATION UNKNOWN")

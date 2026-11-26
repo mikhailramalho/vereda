@@ -754,6 +754,8 @@ bool Encoder::intrinsic(CallBase &c) {
     return true;
   }
   if (f->getIntrinsicID() == Intrinsic::ctlz || f->getIntrinsicID() == Intrinsic::cttz) {
+    if (!c.getType()->isIntegerTy())
+      return false;
     unsigned w = c.getType()->getIntegerBitWidth();
     Term a = value(c.getArgOperand(0));
     if (w == 1)
