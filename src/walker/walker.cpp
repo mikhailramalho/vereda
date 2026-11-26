@@ -518,7 +518,8 @@ private:
             access = store->getValueOperand()->getType();
         } else if (auto *call = dyn_cast<CallBase>(u)) {
           if (call->getCalledFunction() &&
-              call->getCalledFunction()->getName() == "__vereda_uninitialised")
+              (call->getCalledFunction()->getName() == "__vereda_uninitialised" ||
+               call->getCalledFunction()->getName() == "__vereda_check_alignment"))
             continue;
           bool copy = false;
           if (at.value == v && bytes && isMemoryCopyOrSet(call, copy)) {
@@ -1457,6 +1458,31 @@ private:
         assertion(c, guard, "float cast overflow", "", nullptr,
                   checks::Property::FloatCastOverflow);
       return t.boolean(false);
+    }
+    if (name == "__vereda_check_alignment") {
+      uint64_t align = cast<ConstantInt>(c.getArgOperand(1))->getZExtValue();
+      if (align <= 1)
+        return guard;
+      Term p = enc.value(c.getArgOperand(0));
+      Term mask = t.bv(align - 1, mem.pointerBits());
+      Term zero = t.bv(0, mem.pointerBits());
+      // When p targets one known object whose base already satisfies align,
+      // only the offset matters (avoids forcing address layout).
+      Term addr;
+      if (const APInt *id = t.constant(mem.object(p));
+          id && !id->isZero() && mem.objectAlign(id->getZExtValue()) >= align)
+        addr = mem.offset(p);
+      else
+        addr = mem.address(p);
+      Term holds = t.eq(t.bvand(addr, mask), zero);
+      if (t.isTrue(holds))
+        return guard;
+      if (counts(false))
+        assertion(c, t.land(guard, t.lnot(holds)),
+                  "dereference failure: Incorrect alignment when accessing data object", "",
+                  nullptr, checks::Property::Alignment);
+      enc.learn(holds, enc.facts);
+      return t.land(guard, holds);
     }
     if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero" ||
         name == "__vereda_check_float_cast_overflow") {

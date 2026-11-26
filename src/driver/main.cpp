@@ -62,6 +62,8 @@ static cl::opt<bool> ubCountZeroCheck(
 static cl::opt<bool> ubFloatCastOverflowCheck(
     "ub-float-cast-overflow-check",
     cl::desc("Check out-of-range floating-point to integer conversions"));
+static cl::opt<bool> ubAlignmentCheck(
+    "ub-alignment-check", cl::desc("Check alignment of typed memory accesses"));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
 static cl::opt<bool> dataRaceCheck(
@@ -508,7 +510,8 @@ int main(int argc, char **argv) {
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck,
                        ubCountZeroCheck && property == Property::All,
-                       ubFloatCastOverflowCheck && property == Property::All);
+                       ubFloatCastOverflowCheck && property == Property::All,
+                       ubAlignmentCheck && property == Property::All);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;

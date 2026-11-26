@@ -91,6 +91,7 @@ public:
 
   unsigned pointerBits() const { return ptrBits; }
   size_t objectCount() const { return objects.size(); }
+  uint64_t objectAlign(uint64_t id) const { return id < objects.size() ? objects[id].align : 1; }
   const llvm::DataLayout &layout() const { return dl; }
   camada::SMTSortRef pointerSort();
   encode::Term null();

@@ -18,6 +18,10 @@ if(TARGET libvereda)
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/float_cast_overflow.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
   set_tests_properties(vereda/float_cast_overflow PROPERTIES LABELS vereda TIMEOUT 120)
+  add_test(NAME vereda/alignment_check
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/alignment_check.py"
+            "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
+  set_tests_properties(vereda/alignment_check PROPERTIES LABELS vereda TIMEOUT 120)
   add_test(NAME vereda/libc_assertions
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/libc_assertions.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
