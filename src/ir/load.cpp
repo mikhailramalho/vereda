@@ -1248,23 +1248,32 @@ static void fixIrreducible(Module &m) {
 
 // InstCombine deletes a write into a constant global as undefined
 // behaviour, which the walker checks (a write into a string literal or an
-// object defined const). This makes the constant globals a store, memset,
-// memcpy or memmove may write writable, and returns them for the caller to
-// make constant again once InstCombine has run. A library call it turns
-// into such a copy (strcpy from a constant string) is still deleted.
+// object defined const). This makes the constant globals a store, memory
+// intrinsic, or non-readonly call may write writable, and returns them for
+// the caller to make constant again once InstCombine has run.
 static SmallVector<GlobalVariable *, 4> unconstantWritten(Module &m) {
   SmallSetVector<GlobalVariable *, 4> written;
+  auto mark = [&](const Value *ptr) {
+    SmallVector<const Value *, 4> objects;
+    getUnderlyingObjects(ptr, objects, nullptr, 0);
+    for (const Value *o : objects)
+      if (auto *g = dyn_cast<GlobalVariable>(o); g && g->isConstant())
+        written.insert(const_cast<GlobalVariable *>(g));
+  };
   for (Function &f : m)
     for (Instruction &i : instructions(f)) {
-      auto *s = dyn_cast<StoreInst>(&i);
-      auto *mi = dyn_cast<MemIntrinsic>(&i);
-      if (!s && !mi)
-        continue;
-      SmallVector<const Value *, 4> objects;
-      getUnderlyingObjects(s ? s->getPointerOperand() : mi->getRawDest(), objects, nullptr, 0);
-      for (const Value *o : objects)
-        if (auto *g = dyn_cast<GlobalVariable>(o); g && g->isConstant())
-          written.insert(const_cast<GlobalVariable *>(g));
+      if (auto *s = dyn_cast<StoreInst>(&i)) {
+        mark(s->getPointerOperand());
+      } else if (auto *mi = dyn_cast<MemIntrinsic>(&i)) {
+        mark(mi->getRawDest());
+      } else if (auto *cb = dyn_cast<CallBase>(&i); cb && !cb->onlyReadsMemory()) {
+        for (unsigned idx = 0; idx < cb->arg_size(); ++idx) {
+          const Value *arg = cb->getArgOperand(idx);
+          if (arg->getType()->isPointerTy() && !cb->onlyReadsMemory(idx) &&
+              !cb->doesNotAccessMemory(idx))
+            mark(arg);
+        }
+      }
     }
   for (GlobalVariable *g : written)
     g->setConstant(false);
