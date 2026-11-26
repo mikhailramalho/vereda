@@ -219,10 +219,26 @@ Term Encoder::gep(const GEPOperator &g) {
 }
 
 // x86_fp80 stores an explicit integer bit at bit 63 (0 when the 15-bit biased
-// exponent is zero, 1 otherwise); SMT-LIB's (_ FloatingPoint 15 64) omits it,
-// giving a 79-bit IEEE interchange layout.
+// exponent is zero, 1 otherwise for canonical values); SMT-LIB's
+// (_ FloatingPoint 15 64) omits it, giving a 79-bit IEEE interchange layout.
+// Normalize x87 pseudo-denormals (exp == 0, bit 63 == 1) to exp == 1 (same
+// numeric value, e.g. LDBL_MIN when frac == 0), and map unsupported x87
+// encodings (exp != 0, bit 63 == 0: unnormal, pseudo-infinity, pseudo-NaN) to
+// a quiet NaN, matching x87 hardware (#IA -> QNaN / unordered).
 Term Encoder::fp80ToIEEE79(Term bv80) {
-  return t.concat(t.extract(bv80, 79, 64), t.extract(bv80, 62, 0));
+  Term sign = t.extract(bv80, 79, 79);
+  Term exp = t.extract(bv80, 78, 64);
+  Term intBit = t.extract(bv80, 63, 63);
+  Term frac = t.extract(bv80, 62, 0);
+  Term expZero = t.eq(exp, t.bv(0, 15));
+  Term intZero = t.eq(intBit, t.bv(0, 1));
+  Term pseudoDenorm = t.land(expZero, t.lnot(intZero));
+  Term unsupported = t.land(t.lnot(expZero), intZero);
+  Term ieeeExp =
+      t.ite(unsupported, t.bvnot(t.bv(0, 15)), t.ite(pseudoDenorm, t.bv(1, 15), exp));
+  Term qnanFrac = t.bv(APInt::getSignMask(63)); // bit 62 set (quiet NaN)
+  Term ieeeFrac = t.ite(unsupported, qnanFrac, frac);
+  return t.concat(t.concat(sign, ieeeExp), ieeeFrac);
 }
 
 Term Encoder::ieee79ToFP80(Term bv79) {
