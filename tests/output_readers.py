@@ -106,6 +106,29 @@ for walk_tag, solve_tag in (("", ""), ("", "[PROGRESS] "), ("[INFO] ", "[INFO] "
               f"{solve_tag}Solving time: 0.250s (peak memory 60 MB)\n")
     assert run.numbers(output) == (0.125, 0.25, 60)
 
+# Literal prefiltering must retain the old anchors and Unicode word boundary.
+for prefix in ("", "\n", "prefix ", "prefix\n", "\r"):
+    for status in ("SUCCESSFUL", "FAILED", "UNKNOWN", "INVALID"):
+        for suffix in ("", "\n", "\r\n", "suffix", "_", "é", ": detail"):
+            output = prefix + "VERIFICATION " + status + suffix
+            expected = run.VERDICT.findall(output)
+            assert run.verdicts(output) == expected, repr(output)
+            assert run.verdict_of(output) == (expected[-1] if expected else "none")
+output = ("[PROGRESS] Unwinding loop 0 iteration 1\n" * 20000 +
+          "VERIFICATION SUCCESSFUL\nVERIFICATION FAILED\nVERIFICATION UNKNOWN: bound\n")
+assert run.verdicts(output) == ["SUCCESSFUL", "FAILED", "UNKNOWN"]
+assert run.verdict_of(output) == "UNKNOWN"
+legacy_oom = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|MemoryError")
+for message in ("std::bad_alloc", "Out of memory", "out of memory", "Cannot allocate memory",
+                "MemoryError", "OUT OF MEMORY", "ordinary memory", "out of\nmemory", ""):
+    assert run.out_of_memory("prefix " + message + " suffix") == bool(legacy_oom.search(message))
+assert not run.out_of_memory(output)
+assert run.out_of_memory(output + "MemoryError")
+assert run.numbers("[INFO] Walk time: 0.125s (1 check, 0 symbols, peak memory 20 MB)\n"
+                   "[PROGRESS] Solving time: 0.25s (peak memory 30 MB)\n"
+                   "Walk time: 0.375s (1 check, 0 symbols, peak memory 25 MB)\n"
+                   "Solving time: 0.5s (peak memory 28 MB)\n") == (0.5, 0.75, 30)
+
 cases = [
     (r"^  PASSED .*line   7  arithmetic overflow on add$",
      "  SUCCESS      [main.assertion.1]  line 7  arithmetic overflow on add"),

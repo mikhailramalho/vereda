@@ -64,7 +64,8 @@ OUT_OF_MEMORY = 3
 # Exit code of a KNOWNBUG or FUTURE test whose verdict is not the recorded one.
 VERDICT_CHANGED = 4
 # What Vereda, clang and the solvers print when an allocation fails.
-NO_MEMORY = re.compile(r"std::bad_alloc|[Oo]ut of memory|Cannot allocate memory|MemoryError")
+MEMORY_ERRORS = ("std::bad_alloc", "Out of memory", "out of memory",
+                 "Cannot allocate memory", "MemoryError")
 # Some allocations fail without a message: the binary crashes instead. A run
 # that ends with no verdict after reaching this share of the limit ran out.
 NEAR_LIMIT = 0.9
@@ -73,6 +74,16 @@ VERDICT = re.compile(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", re.MULTILIN
 WALK = re.compile(r"^(?:\[INFO\] )?Walk time: ([\d.]+)s .*peak memory (\d+) MB", re.MULTILINE)
 SOLVE = re.compile(r"^(?:\[(?:INFO|PROGRESS)\] )?Solving time: ([\d.]+)s \(peak memory (\d+) MB",
                    re.MULTILINE)
+
+
+def verdicts(out):
+    """Find literal candidates cheaply, retaining the anchored verdict syntax."""
+    return [match.group(1) for candidate in re.finditer("VERIFICATION ", out)
+            if (match := VERDICT.match(out, candidate.start()))]
+
+
+def out_of_memory(out):
+    return any(message in out for message in MEMORY_ERRORS)
 
 
 def numbers(out):
@@ -97,20 +108,18 @@ def split_run(name):
     return (match[1], int(match[2])) if match else (name, 1)
 
 
-def record(test, start, out, verdict=None, index=1):
-    """Writes the numbers of the test's run, started at the monotonic time
-    start (None for a run that timed out), to $REGRESS_STATS when it is set."""
+def record(test, wall, out, verdict=None, index=1):
+    """Writes execution time (None for timeouts) and metadata to $REGRESS_STATS."""
     stats = os.environ.get("REGRESS_STATS")
     if not stats:
         return
-    wall = None if start is None else time.monotonic() - start
     stem = os.path.dirname(test) if os.path.basename(test) == "main.c" else test
     name = (os.path.basename(os.path.dirname(stem)) + "/"
             + os.path.splitext(os.path.basename(stem))[0])
     name = run_name(name, index)
     if verdict is None:
-        verdicts = VERDICT.findall(out)
-        verdict = verdicts[-1] if verdicts else "ERROR"
+        values = verdicts(out)
+        verdict = values[-1] if values else "ERROR"
     walk, solve, peak = numbers(out)
     os.makedirs(stats, exist_ok=True)
     with open(os.path.join(stats, name.replace("/", "__") + ".json"), "w", encoding="utf-8") as f:
@@ -155,15 +164,18 @@ def clip(out):
 
 def verdict_of(out):
     """The run's verdict, or 'none' when it printed none."""
-    verdicts = re.findall(r"^VERIFICATION (SUCCESSFUL|FAILED|UNKNOWN)\b", out, re.MULTILINE)
-    return verdicts[-1] if verdicts else "none"
+    values = verdicts(out)
+    return values[-1] if values else "none"
 
 
-def changed(desc, out, cmd):
+def changed(desc, out, cmd, now=None):
     """Whether a marked test's verdict is not the one --mark recorded;
     prints the run and how it changed if so."""
-    now, then = verdict_of(out), desc["VERDICT"]
-    if desc["MODE"] not in FAIL_MODES or not then or now == then:
+    then = desc["VERDICT"]
+    if desc["MODE"] not in FAIL_MODES or not then:
+        return False
+    now = verdict_of(out) if now is None else now
+    if now == then:
         return False
     expected = next((m.group(1) for r in desc["EXPECT"] if (m := EXPECTED.fullmatch(r))), None)
     if then == expected:
@@ -273,6 +285,7 @@ def main():
     start = time.monotonic()
     out = execute(cmd, args.timeout, args.memory_limit,
                   desc["CWD"].replace("%S", os.path.dirname(test)) or None)
+    wall = time.monotonic() - start
     if out is None or out.endswith(STOPPED_NOTE):
         why = (f"TIMEOUT after {args.timeout:g} s" if out is None
                else f"OUTPUT past {OUTPUT_LIMIT >> 20} MB, as a timeout")
@@ -283,9 +296,10 @@ def main():
     # Peak resident memory, in KB, of the largest process the run waited for.
     peak = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
     near_limit = args.memory_limit and peak >= NEAR_LIMIT * (args.memory_limit << 10)
-    no_verdict = not re.search(r"^VERIFICATION ", out, re.MULTILINE)
-    if args.memory_limit and (NO_MEMORY.search(out) or (near_limit and no_verdict)):
-        record(test, start, out, "MEMOUT", index)
+    if args.memory_limit and (out_of_memory(out) or
+                             (near_limit and not (out.startswith("VERIFICATION ") or
+                                                  "\nVERIFICATION " in out))):
+        record(test, wall, out, "MEMOUT", index)
         if desc["MODE"] == "KNOWNBUG":
             print(f"OUT OF MEMORY past {args.memory_limit} MB, a known bug; skipped")
             return SKIPPED
@@ -294,9 +308,10 @@ def main():
         print(f"OUT OF MEMORY: the run needed more than {args.memory_limit} MB")
         return OUT_OF_MEMORY
 
-    record(test, start, out, index=index)
-    print(f"verdict: {verdict_of(out)}")
-    if not os.environ.get("REGRESS_REMARK") and changed(desc, out, cmd):
+    now = verdict_of(out)
+    record(test, wall, out, "ERROR" if now == "none" else now, index)
+    print(f"verdict: {now}")
+    if not os.environ.get("REGRESS_REMARK") and changed(desc, out, cmd, now):
         return VERDICT_CHANGED
     unmet = [f"EXPECT: {r}" for r in desc["EXPECT"] if not re.search(r, out, re.MULTILINE)]
     unmet += [f"EXPECT-NOT: {r}" for r in desc["EXPECT-NOT"] if re.search(r, out, re.MULTILINE)]

@@ -151,11 +151,11 @@ def finish(started_run, deadline):
     if verdict is None and run.stopped_note(out.name):  # as run.py, a timeout
         wall, verdict = None, TIMEOUT
     if verdict is None:
-        verdicts = run.VERDICT.findall(text)
+        verdicts = run.verdicts(text)
         if verdicts:
             verdict = verdicts[-1]
         else:
-            stopped = proc.returncode in KILLED_STATUS or run.NO_MEMORY.search(text)
+            stopped = proc.returncode in KILLED_STATUS or run.out_of_memory(text)
             verdict = KILLED if stopped else f"ERROR {proc.returncode}"
     return (wall, *run.numbers(text), verdict)
 
