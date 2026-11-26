@@ -1,8 +1,8 @@
-// Skipping the bounds a long loop of known trip count still needs doubles
-// the bound at most, so a bug in its third iteration is found at bound 4
-// without a walk of all million (#175).
+// Assertion continuation guards make this loop conditional, preventing the
+// unconditional-prefix bound jump (#175). Its third-iteration bug is found
+// at bound 3 without a walk of all million iterations.
 // RUN: --no-summarize-array-loops --incremental-bmc --unlimited-k-steps
-// EXPECT: Checking bound k = 4$
+// EXPECT: Checking bound k = 3$
 // EXPECT-NOT: Checking bound k = 8$
 // EXPECT: ^VERIFICATION FAILED$
 extern int __VERIFIER_nondet_int(void);
