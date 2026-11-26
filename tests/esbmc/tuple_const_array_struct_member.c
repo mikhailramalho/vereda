@@ -80,6 +80,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/tuple_const_array_struct_member
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: KNOWNBUG
-// Vereda: exceeds the 4 GiB regression memory limit
-// Vereda: verdict none
