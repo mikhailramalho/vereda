@@ -193,5 +193,3 @@ int main(void)
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

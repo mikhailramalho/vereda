@@ -191,5 +191,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/tuple_const_array_member_reads
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none
