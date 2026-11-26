@@ -13,8 +13,8 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_199
-// Needs: --error-label ERROR --smt-during-symex --smt-symex-guard
-// RUN: --error-label ERROR --smt-during-symex --smt-symex-guard --z3 --unwind 1 --no-unwinding-assertions
+// Needs: --error-label ERROR --smt-symex-guard
+// RUN: --error-label ERROR --smt-symex-guard --z3 --unwind 1 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

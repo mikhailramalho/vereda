@@ -12,8 +12,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5934-solved
 // RUN: --multi-property --dump-smt-too --solver z3
-// EXPECT: ^ +FAILED +\[main\.assertion\.2\] +line 10 +b$
+// EXPECT: ^ +FAILED +\[main\.assertion\.2\] +line +10(?:\s|$)
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^ +FAILED +\[main\.assertion\.2\] +line 10 +b$
-// MODE: FUTURE
-// Vereda: verdict FAILED

@@ -20,8 +20,8 @@ int main()
   assert(*r1 == x || *r1 == y);
 }
 // Imported from ESBMC regression/incremental-smt/incremental-18
-// Needs: --smt-during-symex --smt-symex-assert --smt-symex-guard --k-induction --add-symex-value-sets
-// RUN: --smt-during-symex --smt-symex-assert --smt-symex-guard --k-induction --add-symex-value-sets
+// Needs: --smt-symex-assert --smt-symex-guard --k-induction
+// RUN: --smt-symex-assert --smt-symex-guard --k-induction
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

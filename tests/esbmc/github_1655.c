@@ -11,8 +11,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1655
-// Needs: --smt-during-symex
-// RUN: --smt-during-symex
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

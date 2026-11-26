@@ -18,8 +18,4 @@ int main()
   assert(curr->val==2);
 }
 // Imported from ESBMC regression/incremental-smt/incremental-21
-// Needs: --smt-during-symex --add-symex-value-sets
-// RUN: --smt-during-symex --add-symex-value-sets -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

@@ -18,8 +18,8 @@ int main()
   assert(x == 0);
 }
 // Imported from ESBMC regression/incremental-smt/incremental-10
-// Needs: --smt-during-symex --smt-symex-assert --k-induction
-// RUN: --smt-during-symex --smt-symex-assert --k-induction -Wno-error=implicit-function-declaration
+// Needs: --smt-symex-assert --k-induction
+// RUN: --smt-symex-assert --k-induction -Wno-error=implicit-function-declaration
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

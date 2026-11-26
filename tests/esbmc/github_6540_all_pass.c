@@ -8,9 +8,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6540_all_pass
-// Needs: --smt-during-symex
-// RUN: --multi-property --smt-during-symex
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: 2 passed
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

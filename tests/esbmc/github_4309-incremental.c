@@ -17,8 +17,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4309-incremental
-// Needs: --all-witnesses --smt-during-symex
-// RUN: --all-witnesses --smt-during-symex
+// Needs: --all-witnesses
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 2 witnesses\]

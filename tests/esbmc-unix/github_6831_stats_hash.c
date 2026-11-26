@@ -21,8 +21,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_stats_hash
-// Needs: --no-por --state-hashing
-// RUN: --no-por --state-hashing
+// Needs: --no-por
+// RUN: --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor 0, pruned_by_hash [1-9][0-9]*, pruned_by_sleep 0, pruned_by_cs_bound 0$

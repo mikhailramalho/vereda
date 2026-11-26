@@ -14,8 +14,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/github_10103_smt_during_symex
-// Needs: --parallel-solving --smt-during-symex
-// RUN: --parallel-solving --smt-during-symex
+// Needs: --parallel-solving
+// RUN: --parallel-solving
 // MODE: FUTURE
 // EXPECT: ^ERROR: --parallel-solving cannot be combined with --smt-during-symex$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

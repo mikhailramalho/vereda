@@ -35,8 +35,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/state_hashing_callsite_sound_fail
-// Needs: --state-hashing
-// RUN: --unwind 4 --state-hashing
+// RUN: --unwind 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

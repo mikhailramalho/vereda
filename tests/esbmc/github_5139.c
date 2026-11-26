@@ -43,8 +43,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5139
-// Needs: --memory-leak-check --no-reachable-memory-leak --force-realloc-success --add-symex-value-sets
-// RUN: --memory-leak-check --no-reachable-memory-leak --force-malloc-success --force-realloc-success --add-symex-value-sets --incremental-bmc
+// Needs: --memory-leak-check --no-reachable-memory-leak --force-realloc-success
+// RUN: --memory-leak-check --no-reachable-memory-leak --force-malloc-success --force-realloc-success --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none
