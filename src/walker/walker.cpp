@@ -529,7 +529,7 @@ private:
       auto it = frame.arrivals.find(header);
       if (it == frame.arrivals.end() || it->second.empty())
         return;
-      if (i == 0)
+      if (i == start)
         entryGuard = anyGuard(it->second);
       if (i > 0) {
         Term reached = anyGuard(it->second);
@@ -1211,10 +1211,8 @@ private:
         return t.land(guard, holds);
       }
       assertion(c, t.land(guard, t.lnot(holds)), name.str(), ir::callArgumentText(c));
-      if (!opts.multiProperty) {
-        enc.learn(holds, enc.facts);
-        return t.land(guard, holds);
-      }
+      if (!opts.multiProperty && t.isFalse(holds))
+        return t.boolean(false);
       return guard;
     }
     if (name == "__vereda_object_size") { // for the realloc model
