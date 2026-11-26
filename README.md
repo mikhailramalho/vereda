@@ -75,9 +75,13 @@ configure.
 ## Run
 
 ```sh
-./vereda.py --clang build/deps/llvm/LLVM-23.1.6-Linux-X64/bin/clang file.c --unwind 5
+./vereda.py file.c --unwind 5
 ./vereda.py file.rs --unwind 5
 ```
+
+The C compiler defaults to `CLANG`, then the LLVM compiler recorded by CMake,
+then `clang` on PATH. Use `--clang <path>` to override it. Its major version must
+match the verifier's LLVM version; multi-file inputs use its sibling `llvm-link`.
 
 The version banner comes before compilation and includes the executable's
 build commit immediately after the camada version. Rebuilding refreshes the
