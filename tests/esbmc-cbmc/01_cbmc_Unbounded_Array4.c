@@ -29,7 +29,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Unbounded_Array4
-// RUN: -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none

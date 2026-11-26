@@ -31,7 +31,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_multibyte_array_fail
-// RUN:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict UNKNOWN

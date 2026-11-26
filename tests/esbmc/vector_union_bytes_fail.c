@@ -14,5 +14,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vector_union_bytes_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

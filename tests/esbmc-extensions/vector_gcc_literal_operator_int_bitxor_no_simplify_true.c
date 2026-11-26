@@ -14,7 +14,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_operator_int_bitxor_no_simplify_true
-// RUN: --no-simplify
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none

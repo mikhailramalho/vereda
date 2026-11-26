@@ -14,7 +14,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_07_overrides_global
-// RUN: --unwind 3
+// RUN: --unwind 3 --unwindsetname compute_sum:0:11
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: verdict none
+// Needs: --unwindsetname compute_sum:0:11

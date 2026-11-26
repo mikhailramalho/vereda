@@ -29,7 +29,7 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc-unix2/pthread_cleanup8_fail
-// RUN: --incremental-bmc --z3
+// RUN: --incremental-bmc --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

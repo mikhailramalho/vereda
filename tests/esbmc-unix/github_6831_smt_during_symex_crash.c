@@ -30,7 +30,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_smt_during_symex_crash
-// RUN: --bitwuzla
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

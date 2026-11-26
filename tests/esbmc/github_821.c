@@ -15,7 +15,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_821
-// RUN: --no-simplify --incremental-bmc
-// MODE: FUTURE
+// RUN: --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

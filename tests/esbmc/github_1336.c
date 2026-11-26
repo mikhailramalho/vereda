@@ -81,6 +81,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1336
-// Needs: --no-unwinding-assertions
 // RUN: --unwind 1 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$

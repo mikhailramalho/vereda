@@ -18,8 +18,5 @@ int main(int argc, char **argv)
 	f(atoi(argv[1]), atoi(argv[2]));
 }
 // Imported from ESBMC regression/esbmc/align-deref_success
-// Needs: --entry f
-// RUN: --entry f -Wno-error=implicit-function-declaration
-// MODE: FUTURE
+// RUN: --entry f
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

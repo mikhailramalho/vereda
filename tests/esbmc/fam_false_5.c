@@ -15,7 +15,7 @@ main() {
   free(matrix);
 }
 // Imported from ESBMC regression/esbmc/fam_false_5
-// RUN: --force-malloc-success -Wno-error=implicit-function-declaration -Wno-error=implicit-int
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

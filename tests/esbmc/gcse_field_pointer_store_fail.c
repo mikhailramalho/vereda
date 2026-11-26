@@ -20,5 +20,4 @@ int main()
   assert(b == a);
 }
 // Imported from ESBMC regression/esbmc/gcse_field_pointer_store_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

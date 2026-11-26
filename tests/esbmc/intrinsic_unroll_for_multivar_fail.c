@@ -14,7 +14,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_for_multivar_fail
-// RUN:
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 3 to loop
 // EXPECT: ^VERIFICATION FAILED$

@@ -17,5 +17,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/endianness_04
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -19,9 +19,9 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scalarize_structs_fail
-// RUN: --unwind 5 --no-unwinding-assertions --no-slice
+// RUN: --unwind 5 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^  s\.total = 18; // 00000000 00000000 00000000 00010010$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED

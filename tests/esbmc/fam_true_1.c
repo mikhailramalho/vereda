@@ -10,7 +10,7 @@ main() {
   free(ptr);
 }
 // Imported from ESBMC regression/esbmc/fam_true_1
-// RUN: --force-malloc-success -Wno-error=implicit-function-declaration -Wno-error=implicit-int
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

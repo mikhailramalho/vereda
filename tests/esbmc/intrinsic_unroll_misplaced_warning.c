@@ -15,7 +15,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_misplaced_warning
 // Needs: __ESBMC_unroll
-// RUN:
 // MODE: FUTURE
 // EXPECT: __ESBMC_unroll at .* is not directly followed by a loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$

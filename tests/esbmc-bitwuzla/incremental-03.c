@@ -13,7 +13,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/incremental-03
-// RUN: --bitwuzla
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

@@ -16,5 +16,4 @@ int main()
   free(p);
 }
 // Imported from ESBMC regression/esbmc/gcse_heap_alias_kill
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

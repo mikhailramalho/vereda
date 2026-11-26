@@ -13,7 +13,4 @@ int main()
 	assert(b == -13.0f);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv20
-// RUN: --no-slice --no-simplify -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

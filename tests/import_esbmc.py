@@ -69,12 +69,12 @@ SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
     "--unlimited-k-step": ["--unlimited-k-steps"],
     "--no-unwinding-assertion": ["--no-unwinding-assertions"],
-    "--no-standard-check": ["--no-standard-checks"],
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
-    "--data-races-check": ["--data-race-check"],
     "--bitwuzla": ["--solver", "bitwuzla"], "--z3": ["--solver", "z3"],
-    "--cvc": ["--solver", "cvc5"],
+    "--cvc": ["--solver", "cvc5"], "--cvc5": ["--solver", "cvc5"],
 }
+UNSUPPORTED_ALIASES = {"--data-races-check": "--data-race-check",
+                       "--no-standard-check": "--no-standard-checks"}
 RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
@@ -99,13 +99,13 @@ IGNORED_FLAGS |= {
     "--neurosym", "--smt-formula-only", "--smt-formula-too", "--dump-smt-only",
     "--array-flattener", "--mathsat", "--no-irep2-native-body", "--show-vcc",
     "--tuple-node-flattener", "--no-goto-merge", "--show-goto-value-sets",
-    "--ts-push-pop", "--show-symex-value-sets", "--all-runs", "--cvc5",
-    "--ts-check", "--ts-no-fallback", "-D__builtin_unreachable()",
+    "--ts-push-pop", "--show-symex-value-sets", "--all-runs",
+    "--ts-check", "--ts-no-fallback",
 }
 IGNORED_WITH_VALUE = {
     "--verbosity",
     "--bitwuzllob-prog", "--bitwuzllob-model-prog", "--neurosym-prog",
-    "--neurosym-model-prog", "--unwindsetname", "--unwindset",
+    "--neurosym-model-prog",
 }
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
            "--no-align-check", "--no-pointer-relation-check",
@@ -131,8 +131,8 @@ def translate(args, test_dir):
             flags += [RENAMED_WITH_VALUE.get(name, name), value]
         elif tok in SAME:
             flags.append(tok)
-        elif name == "--data-races-check":
-            flags.append("--data-race-check" + ("=" + value if eq else ""))
+        elif name in UNSUPPORTED_ALIASES:
+            missing.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else ""))
         elif tok in RENAMED:
             flags += RENAMED[tok]
         elif tok in DROPPED or name in IGNORED_FLAGS or tok.startswith("-Wno-"):
@@ -202,10 +202,10 @@ def header(origin, mode, args, expected, test_dir, builtins):
                 skip_value = False
             elif name in IGNORED_WITH_VALUE:
                 skip_value = not eq
+            elif name in UNSUPPORTED_ALIASES:
+                raw_args.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else "") + " ")
             elif name in RENAMED:
                 renamed = shlex.join(RENAMED[name])
-                if name == "--data-races-check" and eq:
-                    renamed += "=" + value
                 raw_args.append(renamed + " ")
             elif name in RENAMED_WITH_VALUE:
                 raw_args.append(RENAMED_WITH_VALUE[name] + ("=" + value if eq else " "))

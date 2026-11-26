@@ -9,6 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-promote
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*NOT CHECKED)[\s\S]*\Z

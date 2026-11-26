@@ -19,7 +19,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/Interval-analysis-ibex-contractor/13-PR1638-fail
-// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
+// Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction
 // RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

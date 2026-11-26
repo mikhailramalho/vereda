@@ -8,7 +8,7 @@ void f(void *restrict a, void *restrict b)
   assert(a != b);
 }
 // Imported from ESBMC regression/esbmc/restrict_assume_null_fail
-// Needs: --entry f --restrict-assume
+// Needs: --restrict-assume
 // RUN: --entry f --restrict-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

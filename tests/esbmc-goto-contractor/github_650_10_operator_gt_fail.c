@@ -14,7 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/goto-contractor/github_650_10_operator_gt_fail
-// Needs: --interval-analysis --goto-contractor --incremental --unlimited-k-steps
+// Needs: --interval-analysis --goto-contractor --incremental
 // RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

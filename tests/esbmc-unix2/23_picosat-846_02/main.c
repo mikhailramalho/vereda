@@ -95,7 +95,7 @@ for(counter=0; counter<argc; counter++)
 }
 // Imported from ESBMC regression/esbmc-unix2/23_picosat-846_02
 // Needs: --partial-loops
-// RUN: app.c picosat.c --unwind 1 --partial-loops --function picosat_print
+// RUN: app.c picosat.c --unwind 1 --partial-loops --entry picosat_print
 // FILES: app.c picosat.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

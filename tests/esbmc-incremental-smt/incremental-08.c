@@ -10,7 +10,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-08
-// RUN: -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none

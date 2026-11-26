@@ -15,5 +15,4 @@ int main()
   assert(y == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_index_alias_direct_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

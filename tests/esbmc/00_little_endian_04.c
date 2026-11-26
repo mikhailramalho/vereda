@@ -12,7 +12,4 @@ int main() {
 //  assert(0);
 } 
 // Imported from ESBMC regression/esbmc/00_little_endian_04
-// RUN: -Wno-error=implicit-function-declaration
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -7,7 +7,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/no_propagation_03_unsafe
-// RUN:
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict SUCCESSFUL

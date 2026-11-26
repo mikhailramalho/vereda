@@ -42,3 +42,4 @@ int main(void)
 // EXPECT: ^\s*dereference failure: NULL pointer
 // MODE: FUTURE
 // Vereda: verdict SUCCESSFUL
+// Needs: -m64

@@ -11,5 +11,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/array
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

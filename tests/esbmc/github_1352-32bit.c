@@ -63,7 +63,6 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1352-32bit
-// Needs: --no-unwinding-assertions
 // RUN: --unwind 1 --no-unwinding-assertions --force-malloc-success -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -19,5 +19,4 @@ int main()
   assert(y == 6);
 }
 // Imported from ESBMC regression/esbmc/gcse_call_ret_stale
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

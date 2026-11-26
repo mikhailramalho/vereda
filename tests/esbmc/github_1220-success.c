@@ -12,6 +12,5 @@ void f(unsigned k, unsigned v)
 	assert(w == v);
 }
 // Imported from ESBMC regression/esbmc/github_1220-success
-// Needs: --entry f
 // RUN: --entry f
 // EXPECT: ^VERIFICATION SUCCESSFUL$

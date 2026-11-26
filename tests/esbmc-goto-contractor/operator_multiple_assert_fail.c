@@ -16,7 +16,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/goto-contractor/operator_multiple_assert_fail
-// Needs: --interval-analysis --goto-contractor --unlimited-k-steps
+// Needs: --interval-analysis --goto-contractor
 // RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental-bmc --unlimited-k-steps --k-step 100
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/proof_cache_cold
-// Needs: --proof-cache proof-store fp.tsv CHECK_FILE fp.tsv contains UNSAT
+// Needs: --proof-cache proof-store fp.tsv
 // RUN: --multi-property --proof-cache proof-store fp.tsv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

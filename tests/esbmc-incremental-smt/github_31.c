@@ -22,7 +22,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/github_31
-// RUN: --no-bounds-check --no-pointer-check --no-div-by-zero-check --z3 --unwind 1
+// RUN: --no-pointer-check --no-div-by-zero-check --solver z3 --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

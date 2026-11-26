@@ -8,8 +8,7 @@ int main()
   __VERIFIER_assert(0); // show
 }
 // Imported from ESBMC regression/esbmc/github_9937_byte_fail
-// RUN: --no-slice
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[main.assertion.1\]  line 8  show
-// Vereda: verdict none
+// Vereda: verdict FAILED

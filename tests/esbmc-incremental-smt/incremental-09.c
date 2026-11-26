@@ -19,7 +19,7 @@ int main() {
 }
 // Imported from ESBMC regression/incremental-smt/incremental-09
 // Needs: --k-induction
-// RUN: --k-induction --z3 --max-k-step 5
+// RUN: --k-induction --solver z3 --max-k-step 5
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: KNOWNBUG
 // Vereda: verdict none

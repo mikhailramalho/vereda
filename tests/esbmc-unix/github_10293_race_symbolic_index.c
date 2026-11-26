@@ -32,7 +32,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_10293_race_symbolic_index
 // Needs: --data-races-check-only
-// RUN: --data-races-check-only --incremental-bmc --max-k-step 2 --z3
+// RUN: --data-races-check-only --incremental-bmc --max-k-step 2 --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

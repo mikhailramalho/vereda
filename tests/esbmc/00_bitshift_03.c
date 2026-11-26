@@ -11,7 +11,4 @@ int main()
 
 
 // Imported from ESBMC regression/esbmc/00_bitshift_03
-// RUN: --no-slice -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

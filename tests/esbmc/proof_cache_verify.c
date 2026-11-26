@@ -9,7 +9,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/proof_cache_verify
-// Needs: --proof-cache proof-store --proof-cache-verify fp.tsv CHECK_FILE fp.tsv contains lines8
+// Needs: --proof-cache proof-store --proof-cache-verify fp.tsv
 // RUN: --multi-property --proof-cache proof-store --proof-cache-verify fp.tsv
 // MODE: FUTURE
 // EXPECT: ^Proof cache: 1 claim\(s\) reused, 1 solved$

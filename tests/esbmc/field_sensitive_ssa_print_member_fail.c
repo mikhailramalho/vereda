@@ -19,8 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_member_fail
-// RUN: --no-slice
 // MODE: FUTURE
 // EXPECT: ^  v\.un\.i = 9; //
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict FAILED

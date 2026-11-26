@@ -15,5 +15,4 @@ L:
   return x;
 }
 // Imported from ESBMC regression/esbmc/gcse_goto_guard_stale_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

@@ -12,7 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/incremental-smt/incremental-13
-// RUN: --incremental-bmc --unlimited-k-steps --z3
+// RUN: --incremental-bmc --unlimited-k-steps --solver z3
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none

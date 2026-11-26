@@ -18,7 +18,6 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix2/github_1213
-// RUN: --no-slice
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

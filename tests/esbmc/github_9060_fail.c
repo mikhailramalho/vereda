@@ -25,5 +25,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9060_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

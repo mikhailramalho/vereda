@@ -18,9 +18,8 @@ int main(int argc, char **argv)
 	f(atoi(argv[1]), atoi(argv[2]));
 }
 // Imported from ESBMC regression/esbmc/align-deref_fail
-// Needs: --entry f
-// RUN: --entry f -Wno-error=implicit-function-declaration
+// RUN: --entry f
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b
-// Vereda: verdict none
+// Vereda: verdict FAILED

@@ -12,5 +12,4 @@ int main()
   b1 ^= main_b2;
 }
 // Imported from ESBMC regression/esbmc/github_7992_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

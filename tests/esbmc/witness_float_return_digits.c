@@ -8,7 +8,7 @@ int main(void)
   __VERIFIER_assert(!(x == 0x1.400016p+3f && y == 0x1.0000000000001p+0)); // target
 }
 // Imported from ESBMC regression/esbmc/witness_float_return_digits
-// Needs: --witness-output-yaml w.yml CHECK_FILE w.yml contains '\\result' == 1.00000105e+1f CHECK_FILE w.yml contains '\\result' == 1.0000000000000002e+0
+// Needs: --witness-output-yaml w.yml
 // RUN: -m64 --witness-output-yaml w.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

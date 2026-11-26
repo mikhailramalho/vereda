@@ -14,5 +14,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8008_member_load
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

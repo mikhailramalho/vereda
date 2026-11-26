@@ -18,5 +18,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_push_pop_fail
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

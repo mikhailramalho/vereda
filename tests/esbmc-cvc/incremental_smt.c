@@ -20,5 +20,5 @@ int main(){
     }
 }
 // Imported from ESBMC regression/cvc/incremental_smt
-// RUN:
+// RUN: --solver cvc5
 // EXPECT: ^VERIFICATION FAILED$

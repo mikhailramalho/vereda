@@ -27,7 +27,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_opaque_whole_read_fail
-// RUN:
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 2 struct object\(s\)$
 // EXPECT: ^VERIFICATION FAILED$

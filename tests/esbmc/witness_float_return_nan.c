@@ -6,7 +6,7 @@ int main(void)
   __VERIFIER_assert(x == x); // target
 }
 // Imported from ESBMC regression/esbmc/witness_float_return_nan
-// Needs: --witness-output-yaml w.yml CHECK_FILE w.yml absent function_return
+// Needs: --witness-output-yaml w.yml
 // RUN: -m64 --witness-output-yaml w.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

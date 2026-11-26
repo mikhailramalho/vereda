@@ -13,5 +13,4 @@ int main()
   assert(b == 6);
 }
 // Imported from ESBMC regression/esbmc/gcse_nested_deref_read
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

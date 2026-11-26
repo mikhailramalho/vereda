@@ -12,7 +12,6 @@ void f(unsigned k, unsigned v)
 	assert(w == v);
 }
 // Imported from ESBMC regression/esbmc/github_1220-fail
-// Needs: --entry f
 // RUN: --entry f --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

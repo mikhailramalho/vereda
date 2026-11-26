@@ -31,7 +31,7 @@ int main() /* check_inverse */
     return 0;
 }
 // Imported from ESBMC regression/floats-regression/nn-logistic_5_unsafe
-// Needs: -I . REQUIRES long_timeout
+// Needs: -I .
 // RUN: -I .
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

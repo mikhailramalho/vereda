@@ -16,5 +16,4 @@ int main()
   return (int)(y + w);
 }
 // Imported from ESBMC regression/esbmc/gcse_subexpr_stale
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

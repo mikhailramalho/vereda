@@ -6,7 +6,6 @@ int main()
   __VERIFIER_assert(a + b == a + c); // A2
 }
 // Imported from ESBMC regression/esbmc/github_7023
-// RUN:
 // MODE: FUTURE
 // EXPECT: ^\[RESULTS\]$
 // EXPECT: ^ +PASSED .*line +5 +A1$

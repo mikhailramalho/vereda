@@ -14,7 +14,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_09_usr_effective
-// RUN: --unwind 3
+// RUN: --unwind 3 --unwindsetname c:@F@compute_sum#:0:11
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict FAILED
+// Vereda: verdict none
+// Needs: --unwindsetname c:@F@compute_sum#:0:11

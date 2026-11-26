@@ -6,5 +6,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/no_propagation_02
-// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

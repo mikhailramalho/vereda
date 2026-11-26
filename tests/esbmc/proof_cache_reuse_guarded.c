@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/proof_cache_reuse_guarded
-// Needs: --proof-cache proof-store fp.tsv CHECK_FILE fp.tsv contains UNSAT CHECK_FILE fp.tsv absent lines10
+// Needs: --proof-cache proof-store fp.tsv
 // RUN: --multi-property --proof-cache proof-store fp.tsv
 // MODE: FUTURE
 // EXPECT: ^Proof cache: 1 claim\(s\) reused, 1 solved$

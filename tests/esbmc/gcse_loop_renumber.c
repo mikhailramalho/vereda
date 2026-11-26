@@ -30,5 +30,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_loop_renumber
-// RUN:
 // EXPECT: ^VERIFICATION FAILED$

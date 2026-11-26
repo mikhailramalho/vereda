@@ -19,7 +19,4 @@ main()
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/00_c_enum
-// RUN: --no-slice -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none

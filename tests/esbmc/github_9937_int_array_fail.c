@@ -10,7 +10,5 @@ int main()
   __VERIFIER_assert(0); // reachable
 }
 // Imported from ESBMC regression/esbmc/github_9937_int_array_fail
-// RUN: -m64 --no-slice
-// MODE: FUTURE
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
