@@ -1206,6 +1206,9 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   dropSafeDivisors(*module);
   for (GlobalVariable *g : written)
     g->setConstant(true);
+  // InstCombine drops safe sanitizer calls; discard their diagnostic globals
+  // too, before their pointer initialisers add irrelevant layout constraints.
+  pruneUnreachable(*module, entry);
   // After InstCombine, which sets fixIrreducible's guard on a way in from a
   // block it finds dead, or reached only by undefined behaviour, to poison,
   // where the walker may still walk; before loop-simplify and lcssa, which

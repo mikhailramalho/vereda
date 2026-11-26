@@ -48,6 +48,17 @@ with tempfile.TemporaryDirectory() as directory:
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
         check(command + [str(source)] + flags, 1, "division by zero")
     check(command + [str(source), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
+
+    # Safe compiler checks leave neither a handler nor diagnostic address constraints.
+    source.write_text("extern void __VERIFIER_assert(int);\n"
+                      "int main(int n, char **argv) { int d = 1; __VERIFIER_assert(n / d == n); }\n")
+    prepared = check(command + [str(source), "--dump-ir-only"], 0, "define")
+    assert "__ubsan_handle_divrem_overflow_abort" not in prepared, prepared
+    assert "@.src" not in prepared, prepared
+    output = check(command + [str(source), "--dump-smt-only"], 0, "set-logic")
+    assert "base#" not in output, output
+
+    source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     check(command + [str(source), "--no-div-by-zero-check=false"], 1, "division by zero")
     for flags, status in ((["--no-div-by-zero-check", "--no-div-by-zero-check=false"], 1),
                           (["--no-div-by-zero-check=false", "--no-div-by-zero-check"], 0)):
@@ -84,6 +95,16 @@ with tempfile.TemporaryDirectory() as directory:
                   " %unused = sdiv i32 7, 0\n ret i32 0\n}\n")
     output = check([binary, str(ir), "--multi-property"], 1, "division by zero")
     assert "__VERIFIER_assert" in output, output
+    # Cleaning a dead handler must preserve the other side of a symbolic branch.
+    ir.write_text("declare void @__VERIFIER_error() noreturn\n"
+                  "declare void @__ubsan_handle_divrem_overflow_abort(ptr, i64, i64) noreturn\n"
+                  "define i32 @main(i1 %which) {\n"
+                  " br i1 %which, label %bad, label %safe\n"
+                  "bad:\n call void @__VERIFIER_error()\n unreachable\n"
+                  "safe:\n br i1 true, label %done, label %dead\n"
+                  "dead:\n call void @__ubsan_handle_divrem_overflow_abort(ptr null, i64 7, i64 1)\n"
+                  " unreachable\ndone:\n ret i32 0\n}\n")
+    check([binary, str(ir)], 1, "__VERIFIER_error")
     ir.write_text('@type = constant {i16, i16, [4 x i8]} {i16 0, i16 13, [4 x i8] c"i64\\00"}\n'
                   '@data = constant {{ptr, i32, i32}, ptr} {{ptr, i32, i32} zeroinitializer, ptr @type}\n'
                   "declare void @__ubsan_handle_divrem_overflow_abort(ptr, i64, i64) noreturn\n"
