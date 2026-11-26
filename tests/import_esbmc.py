@@ -677,6 +677,7 @@ ESBMC_ONLY = [
 
 # Single tests left out, by ESBMC path, with the reason.
 SKIPPED_TESTS = {
+    "esbmc/github_243": "64-bit CIL Linux driver benchmark run under -m32; OOMs over 4 GiB in CI",
     "esbmc/vasprintf_unbounded_s_no_overflow": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
     "esbmc/vasprintf_unbounded_s_overflow_fail": "tests ESBMC's INT_MAX/2 vasprintf cap on an unconstrained symbolic string",
     "z3/github_10316": "rounds ties away from zero, which C cannot set",
@@ -688,7 +689,6 @@ SKIPPED_TESTS = {
 # as KNOWNBUG, with the reason.
 KNOWN_BUGS = {
     "esbmc/tuple_const_array_struct_member": "exceeds the 4 GiB regression memory limit",
-    "esbmc/github_243": "solver exceeds the 4 GiB regression limit with the 32-bit target",
     "esbmc/array_loop_summary_counter": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_decrement": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_store": "out of memory, over 16 GB",
