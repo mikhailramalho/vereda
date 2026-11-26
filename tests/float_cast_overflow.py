@@ -168,3 +168,27 @@ define i32 @main(float %x) {
 }
 ''')
     check([binary, str(ir), flag], 1, "main.float-cast-overflow.1")
+
+    # A wider ubsan guard (double -> i32) in the predecessor must NOT suppress
+    # instrumentation of a narrower cast (double -> i8) in the same block.
+    ir.write_text('''
+declare void @__ubsan_handle_float_cast_overflow_abort(ptr, i64)
+declare void @__VERIFIER_assume(i1)
+define i32 @main(double %x) {
+entry:
+  %eq = fcmp oeq double %x, 128.0
+  call void @__VERIFIER_assume(i1 %eq)
+  %lo = fcmp ogt double %x, -2147483649.0
+  %hi = fcmp olt double %x, 2147483648.0
+  %ok = and i1 %lo, %hi
+  br i1 %ok, label %cont, label %handler
+handler:
+  call void @__ubsan_handle_float_cast_overflow_abort(ptr null, i64 0)
+  unreachable
+cont:
+  %wide = fptosi double %x to i32
+  %narrow = fptosi double %x to i8
+  ret i32 %wide
+}
+''')
+    check([binary, str(ir), flag], 1, "main.float-cast-overflow.2")

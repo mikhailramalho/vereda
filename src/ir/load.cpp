@@ -143,22 +143,74 @@ static void checkCountZeros(Module &m) {
   }
 }
 
-static bool hasUbsanFloatCastGuard(const Instruction &inst) {
-  const BasicBlock *bb = inst.getParent();
+// True only when the immediate predecessor branches on a Clang ubsan
+// float-cast-overflow guard whose fcmp bounds provably cover this specific
+// cast's operand and required [lo, hi) range (preventing a wider guard such as
+// double->i32 from suppressing instrumentation on a narrower cast like double->i8).
+static bool hasUbsanFloatCastGuard(const CastInst &cast, const APFloat &loVal,
+                                   CmpInst::Predicate loPred, const APFloat &hiVal) {
+  const BasicBlock *bb = cast.getParent();
   const BasicBlock *pred = bb->getSinglePredecessor();
   if (!pred)
     return false;
   auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
-  if (!br)
+  if (!br || br->getSuccessor(0) != bb)
     return false;
-  const BasicBlock *other =
-      br->getSuccessor(0) == bb ? br->getSuccessor(1) : br->getSuccessor(0);
-  for (const Instruction &i : *other)
+  bool callsHandler = false;
+  for (const Instruction &i : *br->getSuccessor(1))
     if (auto *call = dyn_cast<CallBase>(&i))
       if (const Function *f = call->getCalledFunction())
-        if (f->getName() == "__ubsan_handle_float_cast_overflow_abort")
-          return true;
-  return false;
+        if (f->getName() == "__ubsan_handle_float_cast_overflow_abort") {
+          callsHandler = true;
+          break;
+        }
+  if (!callsHandler)
+    return false;
+  auto *cond = dyn_cast<BinaryOperator>(br->getCondition());
+  if (!cond || cond->getOpcode() != Instruction::And)
+    return false;
+  const Value *src = cast.getOperand(0);
+  bool loCovered = false, hiCovered = false;
+  for (unsigned idx = 0; idx < 2; ++idx) {
+    auto *fc = dyn_cast<FCmpInst>(cond->getOperand(idx));
+    if (!fc || fc->getOperand(0) != src)
+      continue;
+    auto *cf = dyn_cast<ConstantFP>(fc->getOperand(1));
+    if (!cf)
+      continue;
+    APFloat c = cf->getValueAPF();
+    if (&c.getSemantics() != &loVal.getSemantics() || c.isNaN())
+      continue;
+    CmpInst::Predicate p = fc->getPredicate();
+    if (p == CmpInst::FCMP_OLT) {
+      if (c.compare(hiVal) != APFloat::cmpGreaterThan)
+        hiCovered = true;
+    } else if (p == CmpInst::FCMP_OLE) {
+      if (c.compare(hiVal) == APFloat::cmpLessThan)
+        hiCovered = true;
+    } else if (p == CmpInst::FCMP_OGT) {
+      if (loPred == CmpInst::FCMP_OGT) {
+        if (c.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      } else if (loPred == CmpInst::FCMP_OGE) {
+        // x > c implies x >= loVal iff nextUp(c) >= loVal (e.g. Clang's
+        // fcmp ogt float %x, nextDown(-2^31) for float -> i32).
+        APFloat next = c;
+        next.next(/*nextDown=*/false);
+        if (next.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      }
+    } else if (p == CmpInst::FCMP_OGE) {
+      if (loPred == CmpInst::FCMP_OGT) {
+        if (c.compare(loVal) == APFloat::cmpGreaterThan)
+          loCovered = true;
+      } else if (loPred == CmpInst::FCMP_OGE) {
+        if (c.compare(loVal) != APFloat::cmpLessThan)
+          loCovered = true;
+      }
+    }
+  }
+  return loCovered && hiCovered;
 }
 
 // Instrument raw fptosi/fptoui instructions with exact C11 6.3.1.4p1 range
@@ -172,8 +224,6 @@ static void checkFloatCasts(Module &m) {
           c && (c->getOpcode() == Instruction::FPToSI || c->getOpcode() == Instruction::FPToUI))
         casts.push_back(c);
     for (CastInst *c : casts) {
-      if (hasUbsanFloatCastGuard(*c))
-        continue;
       Value *src = c->getOperand(0);
       Type *srcTy = src->getType(), *dstTy = c->getType();
       if (isa<ScalableVectorType>(srcTy) || isa<ScalableVectorType>(dstTy))
@@ -219,6 +269,8 @@ static void checkFloatCasts(Module &m) {
         loVal.changeSign();
         loPred = CmpInst::FCMP_OGE;
       }
+      if (!isa<FixedVectorType>(srcTy) && hasUbsanFloatCastGuard(*c, loVal, loPred, hiVal))
+        continue;
       IRBuilder<> b(c);
       b.SetCurrentDebugLocation(c->getDebugLoc());
       Value *loOk = b.CreateFCmp(loPred, src, splat(loVal));
