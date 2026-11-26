@@ -224,7 +224,11 @@ public:
   struct Range {
     uint64_t lo, hi, stride;
   };
-  std::optional<Range> range(const Ref &e) { return range(e, {}, 0); }
+  std::optional<Range> range(const Ref &e, Known known = {}) {
+    if (known)
+      scratch.clear();
+    return range(e, known, 0);
+  }
   // Whether cmp, an =, <, <= (unsigned or signed) or the negation of one,
   // holds for every value the ranges of its sides take under known (1), for
   // none (0), or neither (-1).
