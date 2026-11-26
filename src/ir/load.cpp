@@ -143,6 +143,64 @@ static void checkCountZeros(Module &m) {
   }
 }
 
+// Instrument typed memory accesses (load, store, atomicrmw, cmpxchg) with their
+// source-level alignment before SROA/InstCombine can eliminate misaligned
+// accesses through pointers to packed members or raise alignment from UB
+// assumptions. Direct accesses to allocas whose own alignment already satisfies
+// the access alignment are skipped so mem2reg still promotes aligned locals;
+// parameter 0 is marked non-capturing so it does not expose objects or block
+// array ownership.
+static void checkAlignments(Module &m) {
+  Function *check = nullptr;
+  auto getCheck = [&]() -> Function * {
+    if (!check) {
+      LLVMContext &ctx = m.getContext();
+      check = cast<Function>(
+          m.getOrInsertFunction("__vereda_check_alignment",
+                                FunctionType::get(Type::getVoidTy(ctx),
+                                                  {PointerType::getUnqual(ctx), Type::getInt64Ty(ctx)},
+                                                  false))
+              .getCallee());
+      check->setMemoryEffects(MemoryEffects::none());
+      check->addParamAttr(0, Attribute::getWithCaptureInfo(ctx, CaptureInfo::none()));
+    }
+    return check;
+  };
+  for (Function &f : m) {
+    if (f.isDeclaration())
+      continue;
+    SmallVector<std::tuple<Instruction *, Value *, uint64_t>, 16> accesses;
+    for (Instruction &i : instructions(f)) {
+      Value *ptr = nullptr;
+      uint64_t align = 1;
+      if (auto *l = dyn_cast<LoadInst>(&i)) {
+        ptr = l->getPointerOperand();
+        align = l->getAlign().value();
+      } else if (auto *s = dyn_cast<StoreInst>(&i)) {
+        ptr = s->getPointerOperand();
+        align = s->getAlign().value();
+      } else if (auto *a = dyn_cast<AtomicRMWInst>(&i)) {
+        ptr = a->getPointerOperand();
+        align = a->getAlign().value();
+      } else if (auto *c = dyn_cast<AtomicCmpXchgInst>(&i)) {
+        ptr = c->getPointerOperand();
+        align = c->getAlign().value();
+      }
+      if (!ptr || align <= 1 || ptr->getType()->getPointerAddressSpace() != 0)
+        continue;
+      // Direct access to an alloca whose own alignment already satisfies align.
+      if (auto *a = dyn_cast<AllocaInst>(ptr); a && a->getAlign().value() >= align)
+        continue;
+      accesses.emplace_back(&i, ptr, align);
+    }
+    for (auto &[inst, ptr, align] : accesses) {
+      IRBuilder<> b(inst);
+      b.SetCurrentDebugLocation(inst->getDebugLoc());
+      b.CreateCall(getCheck(), {ptr, b.getInt64(align)});
+    }
+  }
+}
+
 // True only when the immediate predecessor branches on a Clang ubsan
 // float-cast-overflow guard whose fcmp bounds provably cover this specific
 // cast's operand and required [lo, hi) range (preventing a wider guard such as
@@ -1236,7 +1294,7 @@ static Error runPipeline(Module &m, StringRef pipeline) {
 // models went through the same passes when built; calls into them whose
 // type differs from the definition are converted as lowerCalls does.
 static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool countZeroCheck,
-                        bool floatCastOverflowCheck) {
+                        bool floatCastOverflowCheck, bool alignmentCheck) {
   SmallString<128> path(dir);
   sys::path::append(path, "models-" + std::to_string(m.getDataLayout().getPointerSizeInBits()) +
                               ".bc");
@@ -1254,6 +1312,8 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool coun
     checkCountZeros(*models);
   if (floatCastOverflowCheck)
     checkFloatCasts(*models);
+  if (alignmentCheck)
+    checkAlignments(*models);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1451,7 +1511,7 @@ static void threadBoolPhis(Module &m) {
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
-                                       bool floatCastOverflowCheck) {
+                                       bool floatCastOverflowCheck, bool alignmentCheck) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1467,6 +1527,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
   lowerRustMain(*module);
+  if (alignmentCheck)
+    checkAlignments(*module);
   nondetLocals(*module);
   lowerLongjmp(*module);
   if (divByZeroCheck)
@@ -1509,7 +1571,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
-  if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck))
+  if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
+                           alignmentCheck))
     return std::move(e);
   // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before

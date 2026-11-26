@@ -55,6 +55,8 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
     auto *ok = dyn_cast<ConstantInt>(c.getArgOperand(0));
     return (ok && ok->isOne()) || counted.preconditions;
   }
+  if (name == "__vereda_check_alignment")
+    return counted.preconditions;
   if (name == "__ubsan_handle_divrem_overflow_abort")
     return counted.preconditions && counted.traps;
   if (name == "__ubsan_handle_invalid_builtin_abort") {
