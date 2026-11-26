@@ -234,6 +234,23 @@ def main():
         fail("vereda.py: clang compiles the overflow checks in, so they need C inputs, "
              "not .ll or .bc")
 
+    # Clang can fold a literal zero division before emitting IR. The binary
+    # validates property names; inspect its selection here only for instrumentation.
+    selection = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    selection.add_argument("--property", default="all")
+    selection.error = error
+    selected, _ = selection.parse_known_args(forwarded)
+    no_divisor = False
+    for flag in forwarded:
+        name, eq, value = flag.partition("=")
+        if name == "--no-div-by-zero-check":
+            no_divisor = not eq or value in ("", "true", "1")
+    if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all" and not no_divisor:
+        # The nonreturning handler retains the operands, unlike ubsantrap's
+        # shared code for zero division and signed division overflow.
+        flags += ["-fsanitize=integer-divide-by-zero", "-fno-sanitize-recover=integer-divide-by-zero",
+                  "-fsanitize-debug-trap-reasons=none"]
+
     def run(cmd):
         if args.verbose:
             print("+", " ".join(cmd), file=sys.stderr)

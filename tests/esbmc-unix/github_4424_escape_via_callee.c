@@ -8,7 +8,7 @@ int main(void) { pthread_t id; int i = 0; set_ptr(&i);
   i++;                                          /* RACE */
   pthread_join(id, 0); return 0; }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_via_callee
-// Needs: --sv-comp --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only --no-assertions
+// Needs: --sv-comp --smt-symex-guard --cswitch-skip-readonly-globals --data-races-check-only
 // RUN: --32 --sv-comp --no-div-by-zero-check --force-malloc-success --smt-symex-guard --cswitch-skip-readonly-globals --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

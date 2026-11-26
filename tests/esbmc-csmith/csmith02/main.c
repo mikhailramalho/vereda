@@ -2966,7 +2966,7 @@ FYI: the random generator makes assumptions about the integer size. See platform
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith02
-// Needs: --partial-loops --full-inlining --no-library --no-return-value-opt --no-assertions
+// Needs: --partial-loops --full-inlining --no-library --no-return-value-opt
 // RUN: --no-unwinding-assertions --unwind 15 --partial-loops --full-inlining --no-library --no-return-value-opt --no-assertions
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

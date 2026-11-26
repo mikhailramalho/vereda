@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7525_option_value_fail
-// Needs: --smtlib-solver-prog --no-assertions
+// Needs: --smtlib-solver-prog
 // RUN: --smtlib-solver-prog --no-assertions --unwind 1
 // MODE: FUTURE
 // EXPECT: ^WARNING: .--smtlib-solver-prog. takes a value, so .--no-assertions. was read as that value

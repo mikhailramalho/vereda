@@ -29,7 +29,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_2384
-// Needs: --no-por --context-bound 5 --data-races-check --no-assertions
+// Needs: --no-por --context-bound 5 --data-races-check
 // RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --no-por --context-bound 5 --no-pointer-check --no-bounds-check --data-races-check --no-assertions --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

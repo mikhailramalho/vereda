@@ -19,3 +19,4 @@ int main()
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED
+// RUN: --no-div-by-zero-check

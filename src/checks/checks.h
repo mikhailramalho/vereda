@@ -9,7 +9,7 @@
 
 namespace vereda::checks {
 
-enum class Property { Assertion, ArithmeticOverflow, ArrayBounds, Unwinding, Recursion };
+enum class Property { Assertion, ArithmeticOverflow, DivisionByZero, ArrayBounds, Unwinding, Recursion };
 
 struct Check {
   Property property;
@@ -30,6 +30,7 @@ struct Check {
   std::string id() const {
     const char *kind = property == Property::Assertion ? "assertion"
                        : property == Property::ArithmeticOverflow ? "arithmetic-overflow"
+                       : property == Property::DivisionByZero ? "division-by-zero"
                        : property == Property::ArrayBounds ? "array-bounds-violated"
                        : property == Property::Unwinding ? "unwind"
                                                           : "recursion";

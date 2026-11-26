@@ -64,7 +64,7 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--overflow-check", "--unsigned-overflow-check",
         "--ub-shift-check", "--unlimited-k-steps", "--no-summarize-array-loops",
-        "--no-pointer-check", "--no-vla-size-check"}
+        "--no-pointer-check", "--no-vla-size-check", "--no-assertions", "--no-div-by-zero-check"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
@@ -82,7 +82,7 @@ PROGRAM_OUTPUT_FLAGS = {"--" + name + "-" + suffix
 IGNORED_FLAGS = {"--floatbv", "--fixedbv", "--tuple-sym-flattener", "--state-hashing",
                  "--smt-during-symex", "--add-symex-value-sets"} | PROGRAM_OUTPUT_FLAGS
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
-           "--no-div-by-zero-check", "--no-align-check", "--no-pointer-relation-check",
+           "--no-align-check", "--no-pointer-relation-check",
            "--no-simplify", "--no-slice"} | IGNORED_FLAGS
 
 

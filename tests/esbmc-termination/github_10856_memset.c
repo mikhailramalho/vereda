@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/termination/github_10856_memset
-// Needs: --termination --no-assertions --max-inductive-step 3
+// Needs: --termination --max-inductive-step 3
 // RUN: --termination --no-pointer-check --no-bounds-check --no-assertions --k-step 2 --max-k-step 40 --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^Forward condition shows all executions terminate \(k = 33\)$

@@ -439,7 +439,8 @@ private:
     if (!fi.loops)
       fi.loops = std::make_unique<analysis::Loops>(
           f, fi.dt, fi.li, tlii,
-          analysis::Counted{counts(false), counts(true), opts.property == Property::UnreachCall},
+          analysis::Counted{opts.assertions && counts(false), counts(true),
+                            opts.property == Property::UnreachCall, counts(false)},
           threads);
     return *fi.loops;
   }
@@ -966,7 +967,7 @@ private:
       // the path ends there. Anywhere else it is __builtin_unreachable,
       // which ESBMC checks by default.
       auto *prev = dyn_cast_or_null<CallBase>(term.getPrevNode());
-      if ((!prev || !prev->doesNotReturn()) && counts(false))
+      if ((!prev || !prev->doesNotReturn()) && opts.assertions && counts(false))
         assertion(term, guard, "__builtin_unreachable", "");
     } else if (isa<InvokeInst>(term)) {
       throw Unsupported("exception unwinding (invoke) is not supported at " + ir::location(term).str() +
@@ -1038,6 +1039,22 @@ private:
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
+    if (name == "__ubsan_handle_divrem_overflow_abort") {
+      Term divisor = enc.value(c.getArgOperand(2));
+      unsigned width = ir::divremOperandBits(c);
+      if (!width)
+        throw Unsupported("integer division sanitizer with an unknown type descriptor");
+      if (width > mem.pointerBits())
+        divisor = mem.load(st, mem.fromAddress(divisor), IntegerType::get(c.getContext(), width));
+      Term zero = t.eq(divisor, t.bv(0, divisor.width()));
+      if (counts(false) && !t.isFalse(zero))
+        assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
+                  checks::Property::DivisionByZero);
+      if (counts(true) && !t.isTrue(zero))
+        assertion(c, t.land(guard, t.lnot(zero)), "arithmetic overflow on division", "", nullptr,
+                  checks::Property::ArithmeticOverflow);
+      return t.boolean(false);
+    }
     // Rust lowers assertions and checked arithmetic and indexing to panic calls.
     // Recognise Rust symbols only, including when their bodies are linked in.
     if (name.starts_with("_R") || name.starts_with("_ZN")) {
@@ -1073,7 +1090,7 @@ private:
         checks::Property kind = overflow ? checks::Property::ArithmeticOverflow
                                 : bounds ? checks::Property::ArrayBounds
                                          : checks::Property::Assertion;
-        if (counts(overflow))
+        if (counts(overflow) && (overflow || bounds || opts.assertions))
           assertion(c, guard, message, "", nullptr, kind);
         return t.boolean(false);
       }
@@ -1162,12 +1179,24 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
-    if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
+    if (name == "__vereda_check_divisor") {
+      Term holds = enc.isTrue(c.getArgOperand(0));
+      if (t.isTrue(holds))
+        return guard;
       if (counts(false))
+        assertion(c, t.land(guard, t.lnot(holds)), "division by zero", "", nullptr,
+                  checks::Property::DivisionByZero);
+      enc.learn(holds, enc.facts);
+      return t.land(guard, holds);
+    }
+    if (name == "__assert_fail" || name == "reach_error" || name == "__VERIFIER_error") {
+      if (opts.assertions && counts(false))
         assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
     if (name == "__VERIFIER_assert" || (name == "assert" && c.arg_size() == 1)) {
+      if (!opts.assertions)
+        return guard;
       // assert without <assert.h> is an implicitly declared function; ESBMC's
       // front end treats it as the assertion it was meant to be.
       Term holds = enc.isTrue(c.getArgOperand(0));

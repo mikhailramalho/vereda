@@ -26,7 +26,7 @@ int main(void)
     return 0;
 }
 // Imported from ESBMC regression/termination/ranking_lexicographic_2d
-// Needs: --force-realloc-success --no-assertions --termination --max-inductive-step 3
+// Needs: --force-realloc-success --termination --max-inductive-step 3
 // RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

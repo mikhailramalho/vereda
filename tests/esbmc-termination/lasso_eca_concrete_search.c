@@ -900,7 +900,7 @@ int main()
 }
 
 // Imported from ESBMC regression/termination/lasso_eca_concrete_search
-// Needs: --no-assertions --termination --max-inductive-step 3 --interval-analysis --timeout 30s
+// Needs: --termination --max-inductive-step 3 --interval-analysis --timeout 30s
 // RUN: --no-div-by-zero-check --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check --32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis --timeout 30s
 // MODE: FUTURE
 // EXPECT: ^Recurrent set shows a non-terminating execution$

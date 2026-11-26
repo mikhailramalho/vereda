@@ -28,7 +28,7 @@ int main()
   }
 }
 // Imported from ESBMC regression/k-induction/pointer_write_heap_fresh_leak_fail
-// Needs: --k-induction --memory-leak-check --no-assertions
+// Needs: --k-induction --memory-leak-check
 // RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --memory-leak-check --no-assertions
 // MODE: FUTURE
 // EXPECT: Disabling inductive step

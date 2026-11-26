@@ -72,6 +72,3 @@ int main(){
 // RUN: --unwind 1 --no-unwinding-assertions --fp2bv
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdivision by zero\b
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

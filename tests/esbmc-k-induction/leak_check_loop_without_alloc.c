@@ -15,7 +15,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/k-induction/leak_check_loop_without_alloc
-// Needs: --k-induction --max-inductive-step 3 --memory-leak-check --no-assertions
+// Needs: --k-induction --max-inductive-step 3 --memory-leak-check
 // RUN: --k-induction --max-inductive-step 3 --memory-leak-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

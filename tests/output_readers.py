@@ -6,6 +6,10 @@ import tempfile
 import import_esbmc
 import run
 
+assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
+    ["--no-assertions", "--no-div-by-zero-check"], [], [])
+for flag in ("--memory-leak-check", "--data-races-check", "--deadlock-check"):
+    assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 ignored = ("--tuple-sym-flattener", "--state-hashing", "--smt-during-symex",
            "--add-symex-value-sets", "--goto-functions-only")
 for flag in ignored:

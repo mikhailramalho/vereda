@@ -47,6 +47,12 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (!f)
     return false;
   StringRef name = f->getName();
+  if (name == "__vereda_check_divisor") {
+    auto *ok = dyn_cast<ConstantInt>(c.getArgOperand(0));
+    return (ok && ok->isOne()) || counted.divisors;
+  }
+  if (name == "__ubsan_handle_divrem_overflow_abort")
+    return counted.divisors && counted.traps;
   if (f->isIntrinsic())
     return name.starts_with("llvm.ubsantrap") ? counted.traps : f->doesNotAccessMemory();
   if (name == "reach_error" && counted.reachError)

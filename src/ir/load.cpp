@@ -5,6 +5,7 @@
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
+#include <llvm/Analysis/SimplifyQuery.h>
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
@@ -35,6 +36,56 @@
 using namespace llvm;
 
 namespace vereda::ir {
+
+// Keep the check even when mem2reg or InstCombine removes an unused division.
+static void checkDivisors(Module &m) {
+  for (Function &f : m) {
+    SmallVector<Instruction *, 16> divisions;
+    for (Instruction &i : instructions(f))
+      if (i.getOpcode() == Instruction::SDiv || i.getOpcode() == Instruction::UDiv ||
+          i.getOpcode() == Instruction::SRem || i.getOpcode() == Instruction::URem)
+        divisions.push_back(&i);
+    if (divisions.empty())
+      continue;
+    DominatorTree dt(f);
+    for (Instruction *i : divisions) {
+      IRBuilder<> b(i);
+      Value *divisor = i->getOperand(1);
+      // Clang's sanitizer or a source branch may already exclude zero here.
+      if (isKnownNonZero(divisor, SimplifyQuery(m.getDataLayout(), &dt, nullptr, i,
+                                               /*UseInstrInfo=*/false, /*CanUseUndef=*/false)))
+        continue;
+      Value *ok;
+      if (auto *vt = dyn_cast<FixedVectorType>(divisor->getType())) {
+        ok = b.getTrue();
+        for (unsigned lane = 0; lane < vt->getNumElements(); ++lane) {
+          Value *element = b.CreateExtractElement(divisor, b.getInt32(lane));
+          ok = b.CreateAnd(ok, b.CreateICmpNE(element, Constant::getNullValue(element->getType())));
+        }
+      } else {
+        ok = b.CreateICmpNE(divisor, Constant::getNullValue(divisor->getType()));
+        if (ok->getType()->isVectorTy())
+          ok = b.CreateAndReduce(ok);
+      }
+      if (auto *c = dyn_cast<ConstantInt>(ok); c && c->isOne())
+        continue;
+      FunctionCallee check = m.getOrInsertFunction("__vereda_check_divisor", b.getVoidTy(), b.getInt1Ty());
+      b.CreateCall(check, {ok});
+    }
+  }
+}
+
+static void dropSafeDivisors(Module &m) {
+  Function *check = m.getFunction("__vereda_check_divisor");
+  if (!check)
+    return;
+  for (User *user : make_early_inc_range(check->users()))
+    if (auto *call = dyn_cast<CallInst>(user))
+      if (auto *ok = dyn_cast<ConstantInt>(call->getArgOperand(0)); ok && ok->isOne())
+        call->eraseFromParent();
+  if (check->use_empty())
+    check->eraseFromParent();
+}
 
 // Poison-generating flags, attributes and metadata let LLVM assume no
 // undefined behaviour; the walker must not. Strip them before InstCombine
@@ -970,7 +1021,7 @@ static Error runPipeline(Module &m, StringRef pipeline) {
 // that calls the passes created (bcmp from memcmp) find theirs too. The
 // models went through the same passes when built; calls into them whose
 // type differs from the definition are converted as lowerCalls does.
-static Error linkModels(Module &m, StringRef dir) {
+static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck) {
   SmallString<128> path(dir);
   sys::path::append(path, "models-" + std::to_string(m.getDataLayout().getPointerSizeInBits()) +
                               ".bc");
@@ -982,6 +1033,8 @@ static Error linkModels(Module &m, StringRef dir) {
     return createStringError(inconvertibleErrorCode(), "cannot read " + path);
   models->setTargetTriple(m.getTargetTriple());
   models->setDataLayout(m.getDataLayout());
+  if (divByZeroCheck)
+    checkDivisors(*models);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1116,7 +1169,7 @@ static void pruneUnreachable(Module &m, StringRef entry) {
 }
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
-                                       StringRef entry) {
+                                       StringRef entry, bool divByZeroCheck) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1134,6 +1187,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   lowerRustMain(*module);
   nondetLocals(*module);
   lowerLongjmp(*module);
+  if (divByZeroCheck)
+    checkDivisors(*module);
   if (Error e = runPipeline(*module, "function(mem2reg,sroa)"))
     return std::move(e);
   lowerCalls(*module); // before InstCombine, which folds tests of constants
@@ -1148,8 +1203,12 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
                             "function(instcombine<no-verify-fixpoint>,"
                             "scalarizer<load-store;variable-insert-extract>)"))
     return std::move(e);
+  dropSafeDivisors(*module);
   for (GlobalVariable *g : written)
     g->setConstant(true);
+  // InstCombine drops safe sanitizer calls; discard their diagnostic globals
+  // too, before their pointer initialisers add irrelevant layout constraints.
+  pruneUnreachable(*module, entry);
   // After InstCombine, which sets fixIrreducible's guard on a way in from a
   // block it finds dead, or reached only by undefined behaviour, to poison,
   // where the walker may still walk; before loop-simplify and lcssa, which
@@ -1161,7 +1220,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
-  if (Error e = linkModels(*module, models))
+  if (Error e = linkModels(*module, models, divByZeroCheck))
     return std::move(e);
   // Vereda intercepts __assert_fail as an assertion check and never passes its
   // string arguments outside; mark its pointer parameters non-capturing before

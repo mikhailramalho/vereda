@@ -30,7 +30,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_7768_call_result_norace
-// Needs: --data-races-check-only --no-assertions --context-bound 2
+// Needs: --data-races-check-only --context-bound 2
 // RUN: --data-races-check-only --no-assertions --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

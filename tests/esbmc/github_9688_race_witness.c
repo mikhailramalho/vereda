@@ -19,7 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness
-// Needs: --data-races-check --no-assertions
+// Needs: --data-races-check
 // RUN: --data-races-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
