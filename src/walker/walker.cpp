@@ -166,6 +166,13 @@ struct ActiveCall {
   const CallState *state;
 };
 
+// Floats a counterexample prints as values: half, float, double, x86 long
+// double and fp128 (a bfloat's 16 bits would read as a half's).
+static bool printedFloat(Type *ty) {
+  return ty->isHalfTy() || ty->isFloatTy() || ty->isDoubleTy() || ty->isX86_FP80Ty() ||
+         ty->isFP128Ty();
+}
+
 class Walk {
 public:
   Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
@@ -1364,7 +1371,7 @@ private:
   // block not walked in this pass; the trace skips it.
   Term traceValue(const Value *v) {
     Type *ty = v->getType();
-    if (!ty->isIntegerTy() && !ty->isFloatTy() && !ty->isDoubleTy() && !ty->isX86_FP80Ty())
+    if (!ty->isIntegerTy() && !printedFloat(ty))
       return {};
     if (isa<Instruction>(v) || isa<Argument>(v))
       return enc.bound(v);
@@ -2370,7 +2377,7 @@ private:
       // A source store into a named variable kept in memory (a global, an
       // array, a local whose address is taken) is an assignment to show.
       Type *ty = v->getType();
-      bool isFloat = ty->isFloatTy() || ty->isDoubleTy();
+      bool isFloat = printedFloat(ty);
       if (w->getDebugLoc() && ((ty->isIntegerTy() && !ty->isIntegerTy(1)) || isFloat))
         if (auto *var = namedObject(w->getPointerOperand()))
           trace.add(Step::Assignment, guard, ir::location(*w), var->first, bits, false, 0,

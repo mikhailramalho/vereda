@@ -20,7 +20,8 @@ struct Step {
   // ir::branchSite) taken one way, for the witness.
   enum Kind : uint8_t { Assignment, Assumption, Check, Call, Branch } kind;
   bool isUnsigned = false; // from the debug type; bitvectors carry no sign
-  bool isFloat = false;    // a float, double or x86 long double, printed from its bits
+  bool isFloat = false; // a half, float, double, x86 long double or fp128,
+                        // printed from its bits
   // Interned indices into Trace's location and string tables: a long unrolled
   // loop repeats the same few source locations and variable names hundreds of
   // thousands of times.

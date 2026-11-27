@@ -1,10 +1,8 @@
 #include "witness/counterexample.h"
 
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <limits>
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/StringExtras.h>
@@ -31,7 +29,7 @@ struct LastValue {
 
 static void writeGroupedBits(raw_ostream &os, const APInt &v) {
   unsigned w = v.getBitWidth();
-  char buf[96]; // at most 80 bits + 9 spaces
+  char buf[144]; // at most 128 bits + 15 spaces
   size_t len = 0;
   for (unsigned i = w; i-- > 0;) {
     if (len && (i + 1) % 8 == 0)
@@ -41,16 +39,20 @@ static void writeGroupedBits(raw_ostream &os, const APInt &v) {
   WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << StringRef(buf, len);
 }
 
-// A float, double or x86 long double as ESBMC prints it, as a C constant:
-// %.6e with the exponent unpadded, an f or L suffix, +INFINITY, -NAN and so
-// on. The host's long double holds each exactly, and its printf rounds
-// exactly (APFloat's toString truncates before it rounds to the digits asked
-// for and gets the last digit wrong now and then).
+// A half, float, double, x86 long double or fp128 as ESBMC prints a float,
+// as a C constant: %.6e with the exponent unpadded, a suffix (f for a float,
+// L for a long double, Q for an fp128 as GCC and clang read __float128, none
+// for a half), +INFINITY, -NAN and so on. Every format converts exactly to
+// binary128, which glibc's strfromf128 rounds exactly (APFloat's toString
+// truncates before it rounds to the digits asked for and gets the last digit
+// wrong now and then).
 static void writeFloat(raw_ostream &os, const APInt &v) {
   unsigned w = v.getBitWidth();
-  APFloat f(w == 32   ? APFloat::IEEEsingle()
+  APFloat f(w == 16   ? APFloat::IEEEhalf()
+            : w == 32 ? APFloat::IEEEsingle()
             : w == 64 ? APFloat::IEEEdouble()
-                      : APFloat::x87DoubleExtended(),
+            : w == 80 ? APFloat::x87DoubleExtended()
+                      : APFloat::IEEEquad(),
             v);
   const char *sign = f.isNegative() ? "-" : "+";
   if (f.isInfinity() || f.isNaN()) {
@@ -58,18 +60,16 @@ static void writeFloat(raw_ostream &os, const APInt &v) {
     return;
   }
   bool lost;
-  f.convert(std::numeric_limits<long double>::digits == 64 ? APFloat::x87DoubleExtended()
-                                                           : APFloat::IEEEquad(),
-            APFloat::rmNearestTiesToEven, &lost);
+  f.convert(APFloat::IEEEquad(), APFloat::rmNearestTiesToEven, &lost);
   APInt bits = f.bitcastToAPInt();
-  long double ld;
-  std::memcpy(&ld, bits.getRawData(), bits.getBitWidth() / 8);
-  char buf[32];
-  std::snprintf(buf, sizeof buf, "%.6Le", ld);
+  _Float128 q;
+  std::memcpy(&q, bits.getRawData(), sizeof q);
+  char buf[48];
+  strfromf128(buf, sizeof buf, "%.6e", q);
   auto [digits, exponent] = StringRef(buf).split('e');
   int e = std::atoi(exponent.data());
   os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e)
-     << (w == 32 ? "f" : w == 80 ? "L" : "");
+     << (w == 32 ? "f" : w == 80 ? "L" : w == 128 ? "Q" : "");
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
@@ -156,8 +156,9 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     } else if (step.value.isBool()) {
       kind = LastValue::Bool;
       val = v->isOne();
-    } else if (step.isFloat && (v->getBitWidth() == 32 || v->getBitWidth() == 64 ||
-                                v->getBitWidth() == 80)) {
+    } else if (step.isFloat && (v->getBitWidth() == 16 || v->getBitWidth() == 32 ||
+                                v->getBitWidth() == 64 || v->getBitWidth() == 80 ||
+                                v->getBitWidth() == 128)) {
       kind = LastValue::Float;
       wideBits = toString(*v, 16, false);
     } else if (v->getBitWidth() > 64) {
