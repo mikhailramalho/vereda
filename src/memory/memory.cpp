@@ -2135,11 +2135,12 @@ void Memory::set(State &st, Term p, Term byte, Term len, std::optional<uint64_t>
   if (trackInit)
     initRange(st, p, len, t.boolean(true));
   State::Cell c{byte, t.bv(IntProvenance, ObjBits)};
+  const char *why = nullptr;
   if ((!bound || *bound >= MinSeparate) &&
-      writeRange(st, p, len, "fill", [c](const Term &, bool) { return c; }, {}))
+      !(why = writeRange(st, p, len, "fill", [c](const Term &, bool) { return c; }, {})))
     return;
   if (!bound || *bound > MaxBytes)
-    throw Unsupported("a fill of a symbolic size into an object of elements or fields");
+    throw Unsupported(std::string("a fill of a symbolic size ") + why);
   prepare(st, p);
   writeBytes(st, p, std::vector<State::Cell>(*bound, c), len);
 }
@@ -2150,6 +2151,7 @@ void Memory::copy(State &st, Term dst, Term src, Term len, std::optional<uint64_
   if (trackInit)
     copyInitRange(st, dst, src, len);
   std::vector<uint64_t> srcObjs = candidates(src);
+  const char *why = "from an object of fields";
   if ((!bound || *bound >= MinSeparate) &&
       none_of(srcObjs, [&](uint64_t o) { return fieldStorage.count(o); })) {
     // The source as it is before the write, which overlapping ranges need.
@@ -2169,23 +2171,24 @@ void Memory::copy(State &st, Term dst, Term src, Term len, std::optional<uint64_
     auto value = [this, before, src](const Term &d, bool withProvenance) {
       return readArrays(before, advance(src, d), withProvenance);
     };
-    if (writeRange(st, dst, len, "copy", value, from))
+    if (!(why = writeRange(st, dst, len, "copy", value, from)))
       return;
   }
   if (!bound || *bound > MaxBytes)
-    throw Unsupported("a copy of a symbolic size with objects of elements or fields");
+    throw Unsupported(std::string("a copy of a symbolic size ") + why);
   prepare(st, src);
   prepare(st, dst);
   writeBytes(st, dst, readBytes(st, src, *bound), len);
 }
 
-bool Memory::writeRange(State &st, Term dst, Term len, const char *name,
-                        const std::function<State::Cell(const Term &, bool)> &value,
-                        llvm::ArrayRef<ProvEdge> from) {
+const char *Memory::writeRange(State &st, Term dst, Term len, const char *name,
+                               const std::function<State::Cell(const Term &, bool)> &value,
+                               llvm::ArrayRef<ProvEdge> from) {
   std::vector<uint64_t> objs = candidates(dst);
-  if (objs.empty() ||
-      any_of(objs, [&](uint64_t o) { return fieldStorage.count(o) || shifts.count(o); }))
-    return false;
+  if (objs.empty())
+    return "through a pointer into no known object";
+  if (any_of(objs, [&](uint64_t o) { return fieldStorage.count(o) || shifts.count(o); }))
+    return "into an object of elements or fields";
   for (uint64_t o : objs)
     flush(st, o);
   Term dObj = object(dst), dOff = offset(dst), intProv = t.bv(IntProvenance, ObjBits);
@@ -2247,7 +2250,7 @@ bool Memory::writeRange(State &st, Term dst, Term len, const char *name,
     State::Cell after = wrap({st.data, st.prov}, std::nullopt);
     st.data = after.data, st.prov = after.prov;
   }
-  return true;
+  return nullptr;
 }
 
 std::vector<State::Cell> Memory::readBytes(State &st, Term p, uint64_t n) {

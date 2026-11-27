@@ -382,11 +382,11 @@ private:
   llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
   // The lambdas of set and copy with a symbolic len, byte d of the range
   // getting value(d, provenance too), whose pointers come from the arrays
-  // from: false, changing nothing, where an object dst may point into has
-  // elements or fields.
-  bool writeRange(State &st, encode::Term dst, encode::Term len, const char *name,
-                  const std::function<State::Cell(const encode::Term &, bool)> &value,
-                  llvm::ArrayRef<ProvEdge> from);
+  // from. Null when done, else why it cannot be, having changed nothing: dst
+  // points into no known object, or into one of elements or fields.
+  const char *writeRange(State &st, encode::Term dst, encode::Term len, const char *name,
+                         const std::function<State::Cell(const encode::Term &, bool)> &value,
+                         llvm::ArrayRef<ProvEdge> from);
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
   // Pointers whose null comparison simplifies without expanding fromAddress()
