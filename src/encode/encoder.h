@@ -94,9 +94,10 @@ public:
   // a + b (opcode FAdd) or a - b (FSub) on two values of the floating-point
   // type ty, rounded to nearest even as the instructions round.
   Term fpBinary(unsigned opcode, Term a, Term b, llvm::Type *ty);
-  // minnum/maxnum (a NaN operand gives the other; of equal operands, either)
-  // or minimum/maximum (a NaN operand gives NaN; -0 below +0) of two values
-  // of the floating-point type ty; id is the intrinsic's.
+  // minnum/maxnum (a NaN operand gives the other; of equal operands, either),
+  // minimum/maximum (a NaN operand gives NaN; -0 below +0) or
+  // minimumnum/maximumnum (a NaN operand gives the other; -0 below +0) of two
+  // values of the floating-point type ty; id is the intrinsic's.
   Term fpMinMax(unsigned id, Term a, Term b, llvm::Type *ty);
   // A fresh unconstrained term of v's type, named after its origin (nondet
   // calls, arguments); for a pointer, a fresh address converted to one.

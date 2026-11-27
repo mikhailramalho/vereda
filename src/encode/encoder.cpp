@@ -317,7 +317,7 @@ Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
 }
 
 Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty) {
-  bool min = id == Intrinsic::minnum || id == Intrinsic::minimum;
+  bool min = id == Intrinsic::minnum || id == Intrinsic::minimum || id == Intrinsic::minimumnum;
   camada::SMTExprRef x = fp(a, ty), y = fp(b, ty);
   Term first = t.fromSolver(min ? s.mkFPLe(x, y) : s.mkFPGe(x, y));
   Term nanA = t.fromSolver(s.mkFPIsNaN(x)), nanB = t.fromSolver(s.mkFPIsNaN(y));
@@ -327,7 +327,9 @@ Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty) {
   Term zeros = t.land(t.fromSolver(s.mkFPIsZero(x)), t.fromSolver(s.mkFPIsZero(y)));
   Term negA = signBit(a, ty);
   Term takeA = t.ite(zeros, min ? negA : t.lnot(negA), first);
-  return t.ite(nanA, a, t.ite(nanB, b, t.ite(takeA, a, b)));
+  // maximum/minimum give the NaN operand, maximumnum/minimumnum the other.
+  bool num = id == Intrinsic::maximumnum || id == Intrinsic::minimumnum;
+  return t.ite(nanA, num ? b : a, t.ite(nanB, num ? a : b, t.ite(takeA, a, b)));
 }
 
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
@@ -853,6 +855,12 @@ bool Encoder::fpIntrinsic(CallBase &c) {
     r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
     break;
   }
+  case Intrinsic::minimum:
+  case Intrinsic::maximum:
+  case Intrinsic::minimumnum:
+  case Intrinsic::maximumnum:
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
+    break;
   case Intrinsic::is_fpclass:
     // Natively either NaN class is any NaN, as fpClass has it; with fp2bv
     // fpClass reads the constant's bits and folds.
