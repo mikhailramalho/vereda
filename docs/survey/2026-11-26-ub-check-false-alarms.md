@@ -1,5 +1,7 @@
 # False alarms in --ub-uninit-check and --ub-alignment-check
 
+Recorded 2026-11-26.
+
 ## Uninitialised reads that only copy
 
 `--ub-uninit-check` checked every load. Clang copies a struct by loading it
