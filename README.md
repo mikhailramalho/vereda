@@ -164,7 +164,8 @@ each after the flag that controls it: `assertions`, `unwinding-assertions`,
 `pointer`, `div-by-zero` and `vla-size` by default, then the opt-in ones given
 (`signed-overflow`, `unsigned-overflow`, `shift`, `float-cast-overflow`,
 `count-zero`, `alignment`, `uninit`); under `--property`, `reach-error` or
-`valid-free` and the property's own checks.
+`valid-free` and the property's own checks. Run on IR directly, the binary
+also lists the sanitizer checks whose traps the IR holds.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
