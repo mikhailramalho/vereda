@@ -1339,7 +1339,8 @@ private:
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
             trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned, 0, nullptr, {},
-                      a->value->getType()->isFloatingPointTy());
+                      a->value->getType()->isFloatTy() || a->value->getType()->isDoubleTy() ||
+                      a->value->getType()->isX86_FP80Ty());
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
@@ -1364,7 +1365,7 @@ private:
   // block not walked in this pass; the trace skips it.
   Term traceValue(const Value *v) {
     Type *ty = v->getType();
-    if (!ty->isIntegerTy() && !ty->isFloatTy() && !ty->isDoubleTy())
+    if (!ty->isIntegerTy() && !ty->isFloatTy() && !ty->isDoubleTy() && !ty->isX86_FP80Ty())
       return {};
     if (isa<Instruction>(v) || isa<Argument>(v))
       return enc.bound(v);

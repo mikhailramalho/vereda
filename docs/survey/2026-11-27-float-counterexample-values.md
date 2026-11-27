@@ -12,5 +12,4 @@ in the comment, as for integers. ESBMC's format was kept so that its tests'
 expectations, rewritten by `tests/import_esbmc.py`, keep matching:
 `esbmc-floats/github_9350` now passes as imported. A hexadecimal constant
 (`0x1.4p+1`, exact, as the witness writes them) was not adopted for that
-reason. Only float and double are printed; x86 long double, half and
-fp128 assignments stay out, as do pointers, which #311 also lists.
+reason. Float, double and x86 long double are printed, a long double with an `L` suffix and its 80 bits in the comment; half and fp128 assignments stay out, as do pointers, which #311 also lists. A long double goes through the host's `long double` and `printf`, since APFloat's own `toString` truncates the bits before it rounds to the digits asked for and gets the last digit wrong now and then.

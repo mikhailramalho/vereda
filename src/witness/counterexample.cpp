@@ -3,8 +3,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <limits>
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/SmallString.h>
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/Support/WithColor.h>
@@ -22,38 +25,50 @@ struct LastValue {
   const void *termId = nullptr;
   bool isUnsigned = false;
   uint64_t val = 0;
-  std::string wide; // > 64-bit binary string, only when kind == Wide
+  std::string wide; // > 64-bit binary string, only when kind is Wide (binary) or Float (hexadecimal)
 };
 } // namespace
 
 static void writeGroupedBits(raw_ostream &os, const APInt &v) {
   unsigned w = v.getBitWidth();
-  char buf[72]; // at most 64 bits + 7 spaces
+  char buf[96]; // at most 80 bits + 9 spaces
   size_t len = 0;
-  uint64_t raw = v.getZExtValue();
   for (unsigned i = w; i-- > 0;) {
     if (len && (i + 1) % 8 == 0)
       buf[len++] = ' ';
-    buf[len++] = ((raw >> i) & 1) ? '1' : '0';
+    buf[len++] = v[i] ? '1' : '0';
   }
   WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << StringRef(buf, len);
 }
 
-// A float or double as ESBMC prints it, as a C constant: %.6e with the
-// exponent unpadded, an f suffix for a float, +INFINITY, -NAN and so on.
+// A float, double or x86 long double as ESBMC prints it, as a C constant:
+// %.6e with the exponent unpadded, an f or L suffix, +INFINITY, -NAN and so
+// on. The host's long double holds each exactly, and its printf rounds
+// exactly (APFloat's toString truncates before it rounds to the digits asked
+// for and gets the last digit wrong now and then).
 static void writeFloat(raw_ostream &os, const APInt &v) {
-  bool single = v.getBitWidth() == 32;
-  APFloat f(single ? APFloat::IEEEsingle() : APFloat::IEEEdouble(), v);
+  unsigned w = v.getBitWidth();
+  APFloat f(w == 32   ? APFloat::IEEEsingle()
+            : w == 64 ? APFloat::IEEEdouble()
+                      : APFloat::x87DoubleExtended(),
+            v);
   const char *sign = f.isNegative() ? "-" : "+";
   if (f.isInfinity() || f.isNaN()) {
     os << sign << (f.isNaN() ? "NAN" : "INFINITY");
     return;
   }
+  bool lost;
+  f.convert(std::numeric_limits<long double>::digits == 64 ? APFloat::x87DoubleExtended()
+                                                           : APFloat::IEEEquad(),
+            APFloat::rmNearestTiesToEven, &lost);
+  APInt bits = f.bitcastToAPInt();
+  long double ld;
+  std::memcpy(&ld, bits.getRawData(), bits.getBitWidth() / 8);
   char buf[32];
-  std::snprintf(buf, sizeof buf, "%.6e", single ? f.convertToFloat() : f.convertToDouble());
+  std::snprintf(buf, sizeof buf, "%.6Le", ld);
   auto [digits, exponent] = StringRef(buf).split('e');
   int e = std::atoi(exponent.data());
-  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e) << (single ? "f" : "");
+  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e) << (w == 32 ? "f" : w == 80 ? "L" : "");
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
@@ -140,9 +155,10 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     } else if (step.value.isBool()) {
       kind = LastValue::Bool;
       val = v->isOne();
-    } else if (step.isFloat && (v->getBitWidth() == 32 || v->getBitWidth() == 64)) {
+    } else if (step.isFloat && (v->getBitWidth() == 32 || v->getBitWidth() == 64 ||
+                                v->getBitWidth() == 80)) {
       kind = LastValue::Float;
-      val = v->getZExtValue();
+      wideBits = toString(*v, 16, false);
     } else if (v->getBitWidth() > 64) {
       kind = LastValue::Wide;
       wideBits.reserve(v->getBitWidth());
@@ -158,7 +174,8 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     }
 
     bool same = prev.kind == kind &&
-                (kind == LastValue::Wide ? prev.wide == wideBits : prev.val == val);
+                (kind == LastValue::Wide || kind == LastValue::Float ? prev.wide == wideBits
+                                                                     : prev.val == val);
     if (same) {
       prev.termId = step.value.id();
       prev.isUnsigned = isUnsigned;
@@ -168,7 +185,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     prev.termId = step.value.id();
     prev.isUnsigned = isUnsigned;
     prev.val = val;
-    if (kind == LastValue::Wide)
+    if (kind == LastValue::Wide || kind == LastValue::Float)
       prev.wide = std::move(wideBits);
     else
       prev.wide.clear();
