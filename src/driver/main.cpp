@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <numeric>
 
 using namespace llvm;
 using vereda::util::progress;
@@ -53,11 +54,16 @@ static cl::opt<bool> noSummarizeArrayLoops(
              "replacing them by their effect"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
-static cl::opt<bool> noPointerCheck(
-    "no-pointer-check", cl::desc("Do not check writes into string literals and const objects"));
+static cl::opt<bool> ubPointerCheck(
+    "ub-pointer-check",
+    cl::desc("Check writes into string literals and const objects, and frees (default on; "
+             "=false disables)"),
+    cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
-static cl::opt<bool> noDivByZeroCheck(
-    "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
+static cl::opt<bool> ubDivByZeroCheck(
+    "ub-div-by-zero-check",
+    cl::desc("Check integer division and remainder by zero (default on; =false disables)"),
+    cl::init(true));
 static cl::opt<bool> ubCountZeroCheck(
     "ub-count-zero-check", cl::desc("Check undefined zero arguments to count-leading/trailing-zeros"));
 static cl::opt<bool> ubFloatCastOverflowCheck(
@@ -69,13 +75,14 @@ static cl::opt<bool> ubUninitCheck(
     "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
-static cl::opt<bool> dataRaceCheck(
-    "data-race-check", cl::desc("Check for data races (not implemented)"));
-static cl::alias dataRacesCheck("data-races-check", cl::aliasopt(dataRaceCheck));
+static cl::opt<bool> ubDataRaceCheck(
+    "ub-data-race-check", cl::desc("Check for data races (not implemented)"));
 static cl::opt<bool> deadlockCheck(
     "deadlock-check", cl::desc("Check for deadlocks (not implemented)"));
-static cl::opt<bool> noVLASizeCheck(
-    "no-vla-size-check", cl::desc("Do not report stack allocations above PTRDIFF_MAX"));
+static cl::opt<bool> vlaSizeCheck(
+    "vla-size-check",
+    cl::desc("Check stack allocations above PTRDIFF_MAX (default on; =false disables)"),
+    cl::init(true));
 static cl::opt<bool> incrementalBMC(
     "incremental-bmc",
     cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
@@ -111,6 +118,8 @@ static cl::opt<Property> property(
                clEnumValN(Property::UnreachCall, "unreach-call",
                           "a call to reach_error, whose body is not walked"),
                clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check"),
+               clEnumValN(Property::ValidFree, "valid-free",
+                          "a free of a pointer no allocator returned, or already freed"),
                clEnumValN(Property::Termination, "termination",
                           "every run ends: TRUE when SCEV bounds every loop and nothing "
                           "recurses, or when the bound unwinds every loop; never FALSE")),
@@ -261,8 +270,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
-                                     !noPointerCheck,
-                                     !noVLASizeCheck,
+                                     ubPointerCheck,
+                                     vlaSizeCheck,
                                      !noAssertions,
                                      multiProperty,
                                      checkUninit,
@@ -400,8 +409,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      /*showIterations=*/false,
                                                      !noSummarizeArrayLoops,
                                                      !witnessFile.empty(),
-                                                     !noPointerCheck,
-                                                     !noVLASizeCheck,
+                                                     ubPointerCheck,
+                                                     vlaSizeCheck,
                                                      !noAssertions,
                                                      multiProperty,
                                                      checkUninit,
@@ -445,7 +454,13 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     results();
     std::string lastUnit;
     unsigned checked = 0, failed = 0;
-    for (size_t i = 0; i < checks.size(); ++i) {
+    vereda::checks::number(checks);
+    std::vector<size_t> order(checks.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+      return vereda::checks::before(checks[a], checks[b]);
+    });
+    for (size_t i : order) {
       if (verdict.status[i] == Status::NotChecked)
         continue;
       const vereda::checks::Check &c = checks[i];
@@ -472,6 +487,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     // failure of termination, which shows no non-termination.
     svcomp(!bug || property == Property::Termination ? "UNKNOWN"
            : property == Property::UnreachCall ? "FALSE_REACH"
+           : property == Property::ValidFree   ? "FALSE_FREE"
                                                : "FALSE_OVERFLOW");
     return finish(1);
   }
@@ -495,7 +511,7 @@ int main(int argc, char **argv) {
   if (!cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n", &errs()))
     return ErrorExit;
   for (auto [enabled, flag] : {std::pair{bool(memoryLeakCheck), "--memory-leak-check"},
-                              {bool(dataRaceCheck), "--data-race-check"},
+                              {bool(ubDataRaceCheck), "--ub-data-race-check"},
                               {bool(deadlockCheck), "--deadlock-check"}}) {
     if (enabled) {
       errs() << "vereda: " << flag << " is not implemented\n";
@@ -508,6 +524,10 @@ int main(int argc, char **argv) {
   }
   if (noAssertions && property == Property::UnreachCall) {
     errs() << "vereda: --no-assertions conflicts with --property unreach-call\n";
+    return ErrorExit;
+  }
+  if (!ubPointerCheck && property == Property::ValidFree) {
+    errs() << "vereda: --ub-pointer-check=false conflicts with --property valid-free\n";
     return ErrorExit;
   }
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {
@@ -524,7 +544,7 @@ int main(int argc, char **argv) {
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
-                       !noDivByZeroCheck && property == Property::All,
+                       ubDivByZeroCheck && property == Property::All,
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,

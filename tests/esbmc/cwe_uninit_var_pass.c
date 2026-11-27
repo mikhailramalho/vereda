@@ -10,8 +10,5 @@ int main(void)
   return x;
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_var_pass
-// Needs: --uninitialised-vars-check
-// RUN: --uninitialised-vars-check --incremental-bmc
-// MODE: FUTURE
+// RUN: --ub-uninit-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

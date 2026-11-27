@@ -54,7 +54,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_1200
 // Needs: --k-induction
-// RUN: --unwind 1 --k-induction --overflow
+// RUN: --unwind 1 --k-induction --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -37,13 +37,17 @@ CLANG_FLAGS = [
     "-fbracket-depth=1024",
 ]
 
-# ESBMC's flags for the checks clang's sanitizers insert. They trap into
-# llvm.ubsantrap, which the binary takes as a failed check.
+# The checks clang's sanitizers insert, each under its own flag. They trap
+# into llvm.ubsantrap, which the binary takes as a failed check. Unsigned
+# arithmetic wraps by definition (C11 6.2.5p9), so its flag has no ub- prefix.
 SANITIZERS = {
-    "--overflow-check": "signed-integer-overflow",
+    "--ub-signed-overflow-check": "signed-integer-overflow",
     "--unsigned-overflow-check": "unsigned-integer-overflow",
     "--ub-shift-check": "shift",
 }
+# --overflow-check: both. ESBMC's checks signed overflow, shifts and
+# float-to-integer conversions instead (tests/import_esbmc.py maps it).
+OVERFLOW = ("--ub-signed-overflow-check", "--unsigned-overflow-check")
 # SV-COMP property formula -> (the binary's --property, sanitizers). Only
 # signed overflow: SV-COMP's no-overflow is a signed result out of range,
 # and clang's shift checks also flag negative operands, which are not.
@@ -75,6 +79,17 @@ def read_property(path):
         fail(f"vereda.py: unsupported property in {path}; "
              "supported: unreach-call, no-overflow, termination")
     return (checks[0].group(1),) + PROPERTIES[formula]
+
+
+def boolean(arg):
+    """The value of a --flag or --flag=<bool> argument, as LLVM's
+    cl::opt<bool> parses it."""
+    name, _, value = arg.partition("=")
+    if value in ("", "true", "TRUE", "True", "1"):
+        return True
+    if value in ("false", "FALSE", "False", "0"):
+        return False
+    return fail(f"vereda.py: {name} takes true or false, not '{value}'")
 
 
 def find_binary():
@@ -192,9 +207,13 @@ def main():
                         help="write the IR handed to the binary next to the input as <input>.ll")
     parser.add_argument("--property-file",
                         help="SV-COMP property file: unreach-call, no-overflow or termination")
+    # Parsed below, since argparse takes no --flag=false; listed for -h.
     for flag, check in SANITIZERS.items():
-        parser.add_argument(flag, dest="sanitize", action="append_const", const=check,
-                            default=[], help=f"check with clang's -fsanitize={check}")
+        parser.add_argument(flag, action="store_true",
+                            help=f"check with clang's -fsanitize={check}; =false turns it off")
+    parser.add_argument("--overflow-check", action="store_true",
+                        help="both --ub-signed-overflow-check and --unsigned-overflow-check; "
+                        "unlike ESBMC's, no shifts or float-to-integer conversions")
     parser.add_argument("-v", "--verbose", action="store_true", help="echo every command run")
 
     # argparse exits with 2, the UNKNOWN code, on a bad option.
@@ -202,7 +221,17 @@ def main():
         parser.print_usage(sys.stderr)
         fail(f"{parser.prog}: error: {message}")
     parser.error = error
-    args, rest = parser.parse_known_args()
+    # The last flag naming a check decides it.
+    checks, argv = {}, []
+    for arg in sys.argv[1:]:
+        name = arg.partition("=")[0]
+        if name in SANITIZERS or name == "--overflow-check":
+            for flag in OVERFLOW if name == "--overflow-check" else (name,):
+                checks[flag] = boolean(arg)
+        else:
+            argv.append(arg)
+    args, rest = parser.parse_known_args(argv)
+    sanitize = {SANITIZERS[flag] for flag, on in checks.items() if on}
     # Clang's default -ffp-contract=on turns a * b + c into llvm.fmuladd even
     # at -O0, leaving the rounding to the back end: x86-64 without FMA rounds
     # the product and the sum apart, as ESBMC and SV-COMP's verdicts assume,
@@ -212,8 +241,8 @@ def main():
     if args.std is not None:
         flags.append("-std=" + args.std)
     if args.property_file:
-        entry, prop, sanitize = read_property(args.property_file)
-        args.sanitize += sanitize
+        entry, prop, required = read_property(args.property_file)
+        sanitize.update(required)
         rest += ["--entry", entry, "--property", prop]
         # As ESBMC's SV-COMP runs (esbmc-wrapper.py): no largest bound, so the
         # time limit ends the run, and a step of 2. A step of 8 answered more
@@ -221,9 +250,8 @@ def main():
         # where others fail (docs/survey/2026-11-24-k-step-2.md).
         if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
             rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "2"])
-    if args.sanitize:
-        flags += [f + ",".join(sorted(set(args.sanitize)))
-                  for f in ("-fsanitize=", "-fsanitize-trap=")]
+    if sanitize:
+        flags += [f + ",".join(sorted(sanitize)) for f in ("-fsanitize=", "-fsanitize-trap=")]
         # Since clang 22, a trap's location is line 0 of an artificial
         # function inlined at the check, which names the reason; without it,
         # the trap is at the check itself.
@@ -247,7 +275,7 @@ def main():
             fail("vereda.py: --std selects a C language standard and does not apply to Rust")
         if args.m32:
             fail("vereda.py: Rust source currently supports the host 64-bit target only")
-        if args.sanitize or args.property_file or args.I or args.D:
+        if checks or args.property_file or args.I or args.D:
             fail("vereda.py: Rust source does not support C sanitizer, property-file, -I or -D flags")
         args.rustc = args.rustc or find_rustc(binary)
         version = subprocess.run([args.rustc, "--version"], capture_output=True, text=True,
@@ -266,17 +294,20 @@ def main():
     selection.add_argument("--property", default="all")
     selection.error = error
     selected, _ = selection.parse_known_args(forwarded)
-    no_divisor = False
+    div_by_zero = True
     count_zero = False
     float_cast_overflow = False
+    alignment = False
     for flag in forwarded:
-        name, eq, value = flag.partition("=")
-        if name == "--no-div-by-zero-check":
-            no_divisor = not eq or value in ("", "true", "1")
+        name = flag.partition("=")[0]
+        if name == "--ub-div-by-zero-check":
+            div_by_zero = boolean(flag)
         if name == "--ub-count-zero-check":
-            count_zero = not eq or value in ("", "true", "1")
+            count_zero = boolean(flag)
         if name == "--ub-float-cast-overflow-check":
-            float_cast_overflow = not eq or value in ("", "true", "1")
+            float_cast_overflow = boolean(flag)
+        if name == "--ub-alignment-check":
+            alignment = boolean(flag)
     if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all":
         if count_zero:
             flags += ["-fsanitize=builtin", "-fno-sanitize-recover=builtin",
@@ -284,7 +315,11 @@ def main():
         if float_cast_overflow:
             flags += ["-fsanitize=float-cast-overflow", "-fno-sanitize-recover=float-cast-overflow",
                       "-fsanitize-debug-trap-reasons=none"]
-        if not no_divisor:
+        if alignment:
+            # A memcpy the user calls stays a library call, so the binary
+            # checks only the intrinsic ones, clang's struct copies.
+            flags += ["-fno-builtin-memcpy", "-fno-builtin-memmove"]
+        if div_by_zero:
             # The nonreturning handler retains the operands, unlike ubsantrap's
             # shared code for zero division and signed division overflow.
             flags += ["-fsanitize=integer-divide-by-zero",

@@ -14,6 +14,7 @@
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
@@ -144,14 +145,61 @@ static void checkCountZeros(Module &m) {
   }
 }
 
+// The type a pointer to an alloca, a global or a GEP points to, else null.
+static Type *pointee(const Value *p) {
+  if (auto *a = dyn_cast<AllocaInst>(p))
+    return a->getAllocatedType();
+  if (auto *g = dyn_cast<GlobalVariable>(p))
+    return g->getValueType();
+  if (auto *g = dyn_cast<GEPOperator>(p))
+    return g->getResultElementType();
+  return nullptr;
+}
+
+// Clang gives an access through a cast of a declared object's address the
+// alignment it proves from the declaration and offsets, not the type's
+// (EmitPointerWithAlignment in its CGExpr.cpp): *(int *)(buf + 1) loads with
+// align 1, and *(struct S *)(buf + o) copies with a memcpy of align 1, which
+// -fsanitize=alignment misses too. In clang's unoptimised IR such a pointer
+// is a chain of array or pointer-arithmetic GEPs from an alloca or a global.
+// Clang's own accesses below the type's alignment are left out: a GEP into a
+// struct field (packed members, argument coercions), a byte offset from a
+// struct (bitfields of a packed struct) and a GEP to a struct (a member of a
+// packed union, which has no field GEP).
+static bool castFromDeclaration(const Value *p) {
+  auto *outer = dyn_cast<GEPOperator>(p);
+  if (!outer || isa<StructType>(outer->getResultElementType()) ||
+      isa_and_present<StructType>(pointee(outer->getPointerOperand())))
+    return false;
+  while (auto *g = dyn_cast<GEPOperator>(p)) {
+    for (gep_type_iterator i = gep_type_begin(g), e = gep_type_end(g); i != e; ++i)
+      if (i.isStruct())
+        return false;
+    p = g->getPointerOperand();
+  }
+  return isa<AllocaInst>(p) || isa<GlobalVariable>(p);
+}
+
+static bool compiledByClang(const Module &m) {
+  if (const NamedMDNode *ident = m.getNamedMetadata("llvm.ident"))
+    for (const MDNode *n : ident->operands())
+      if (auto *s = n->getNumOperands() ? dyn_cast_or_null<MDString>(n->getOperand(0)) : nullptr;
+          s && s->getString().contains("clang"))
+        return true;
+  return false;
+}
+
 // Instrument typed memory accesses (load, store, atomicrmw, cmpxchg) with their
 // source-level alignment before SROA/InstCombine can eliminate misaligned
 // accesses through pointers to packed members or raise alignment from UB
 // assumptions. Direct accesses to allocas whose own alignment already satisfies
 // the access alignment are skipped so mem2reg still promotes aligned locals;
 // parameter 0 is marked non-capturing so it does not expose objects or block
-// array ownership.
-static void checkAlignments(Module &m) {
+// array ownership. fromClang: the module is clang's unoptimised IR, where a
+// load, store or aggregate copy through castFromDeclaration needs the
+// alignment clang dropped.
+static void checkAlignments(Module &m, bool fromClang) {
+  const DataLayout &dl = m.getDataLayout();
   Function *check = nullptr;
   auto getCheck = [&]() -> Function * {
     if (!check) {
@@ -186,7 +234,27 @@ static void checkAlignments(Module &m) {
       } else if (auto *c = dyn_cast<AtomicCmpXchgInst>(&i)) {
         ptr = c->getPointerOperand();
         align = c->getAlign().value();
+      } else if (auto *c = dyn_cast<MemTransferInst>(&i); c && fromClang) {
+        // Only clang's aggregate copies are intrinsics: the front end makes a
+        // user's memcpy a library call. Such a copy needs the aggregate's
+        // alignment, as the other side has it: its type's, unless clang gave
+        // it less (a packed aggregate whose layout is natural keeps its type's).
+        auto *length = dyn_cast<ConstantInt>(c->getLength());
+        for (auto [side, sideAlign, other, otherAlign] :
+             {std::tuple(c->getRawDest(), c->getDestAlign(), c->getRawSource(), c->getSourceAlign()),
+              std::tuple(c->getRawSource(), c->getSourceAlign(), c->getRawDest(), c->getDestAlign())}) {
+          Type *t = pointee(other);
+          if (!length || !t || !t->isAggregateType() || !t->isSized() ||
+              dl.getTypeAllocSize(t) != length->getZExtValue())
+            continue;
+          Align need = std::min(dl.getABITypeAlign(t), otherAlign.valueOrOne());
+          if (need > sideAlign.valueOrOne() && side->getType()->getPointerAddressSpace() == 0 &&
+              castFromDeclaration(side))
+            accesses.emplace_back(&i, side, need.value());
+        }
       }
+      if (fromClang && (isa<LoadInst>(i) || isa<StoreInst>(i)) && castFromDeclaration(ptr))
+        align = std::max(align, dl.getABITypeAlign(getLoadStoreType(&i)).value());
       if (!ptr || align <= 1 || ptr->getType()->getPointerAddressSpace() != 0)
         continue;
       // Direct access to an alloca whose own alignment already satisfies align.
@@ -272,6 +340,130 @@ static bool hasUbsanFloatCastGuard(const CastInst &cast, const APFloat &loVal,
   return loCovered && hiCovered;
 }
 
+// Gives a check the comment ESBMC gives the same check (ir::checkComment).
+static void nameCheck(Instruction &check, const Twine &comment) {
+  LLVMContext &ctx = check.getContext();
+  check.setMetadata("vereda.check", MDNode::get(ctx, MDString::get(ctx, comment.str())));
+}
+
+// ESBMC names the destination by its internal type: signedbv or unsignedbv.
+static std::string floatCastComment(const Instruction &cast) {
+  return std::string("floating-point conversion out of range of ") +
+         (cast.getOpcode() == Instruction::FPToSI ? "signedbv" : "unsignedbv") + " on typecast";
+}
+
+// The operation a clang sanitizer check at call guards: the first
+// instrumented one on from the branch into the check's block, past the
+// checks clang chains in front of it (whose blocks end in unreachable).
+static Instruction *guardedOperation(CallBase &call) {
+  BasicBlock *check = call.getParent();
+  BasicBlock *pred = check->getSinglePredecessor();
+  auto *br = pred ? dyn_cast<CondBrInst>(pred->getTerminator()) : nullptr;
+  BasicBlock *next = br ? br->getSuccessor(br->getSuccessor(0) == check) : nullptr;
+  for (unsigned n = 0; next && n < 8; ++n) {
+    for (Instruction &i : *next) {
+      if (i.hasMetadata(LLVMContext::MD_nosanitize))
+        continue;
+      switch (i.getOpcode()) {
+      case Instruction::SDiv: case Instruction::SRem: case Instruction::UDiv:
+      case Instruction::URem: case Instruction::Shl: case Instruction::LShr:
+      case Instruction::AShr: case Instruction::FPToSI: case Instruction::FPToUI:
+        return &i;
+      }
+    }
+    br = dyn_cast<CondBrInst>(next->getTerminator());
+    if (!br)
+      return nullptr;
+    BasicBlock *a = br->getSuccessor(0), *b = br->getSuccessor(1);
+    next = isa<UnreachableInst>(a->getTerminator())   ? b
+           : isa<UnreachableInst>(b->getTerminator()) ? a
+                                                      : nullptr;
+  }
+  return nullptr;
+}
+
+// Names clang's division-overflow, shift and float-cast checks as ESBMC
+// does, by the operation each guards, which InstCombine may move or merge
+// later. Clang checks a signed shl's exponent and base in one branch; ESBMC
+// reports a non-negative base that loses bits as an arithmetic overflow
+// and the rest as undefined behaviour, so its trap is split in two.
+static void nameSanitizerChecks(Module &m) {
+  SmallVector<CallBase *, 8> calls;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f))
+      if (auto *c = dyn_cast<CallBase>(&i))
+        if (Function *callee = c->getCalledFunction())
+          if (callee->getName() == "llvm.ubsantrap" ||
+              callee->getName() == "__ubsan_handle_divrem_overflow_abort" ||
+              callee->getName() == "__ubsan_handle_float_cast_overflow_abort")
+            calls.push_back(c);
+  for (CallBase *c : calls) {
+    Instruction *op = guardedOperation(*c);
+    if (!op)
+      continue;
+    StringRef callee = c->getCalledFunction()->getName();
+    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
+    switch (op->getOpcode()) {
+    case Instruction::SDiv:
+    case Instruction::SRem:
+      if (callee == "__ubsan_handle_divrem_overflow_abort" ||
+          (code && code->equalsInt(3))) // DivremOverflow
+        nameCheck(*c, std::string("arithmetic overflow on ") +
+                          (op->getOpcode() == Instruction::SDiv ? "div" : "modulus"));
+      break;
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr: {
+      if (!code || !code->equalsInt(20)) // ShiftOutOfBounds
+        break;
+      nameCheck(*c, Twine("undefined behavior on shift operation ") + op->getOpcodeName());
+      // Split only clang's signed shl shape: the predecessor branches on
+      // exponent-ok and a phi of the base check, straight into the shl's
+      // block. The base, defined above that block, then dominates the
+      // predecessor and so the check's block.
+      BasicBlock *check = c->getParent();
+      BasicBlock *pred = check->getSinglePredecessor();
+      auto *br = cast<CondBrInst>(pred->getTerminator());
+      auto *both = dyn_cast<BinaryOperator>(br->getCondition());
+      Value *base = op->getOperand(0);
+      auto *baseInst = dyn_cast<Instruction>(base);
+      if (op->getOpcode() != Instruction::Shl || !both || both->getOpcode() != Instruction::And ||
+          isa<PHINode>(both->getOperand(0)) == isa<PHINode>(both->getOperand(1)) ||
+          op->getParent()->getSinglePredecessor() != pred ||
+          (baseInst && baseInst->getParent() == op->getParent()) || c != &check->front())
+        break;
+      Value *exponentOk = isa<PHINode>(both->getOperand(0)) ? both->getOperand(1)
+                                                             : both->getOperand(0);
+      LLVMContext &ctx = m.getContext();
+      Function *f = check->getParent();
+      BasicBlock *overflow = BasicBlock::Create(ctx, "shl.overflow", f);
+      BasicBlock *undefined = BasicBlock::Create(ctx, "shl.undefined", f);
+      for (BasicBlock *to : {overflow, undefined}) {
+        Instruction *copy = c->clone();
+        copy->insertInto(to, to->end());
+        new UnreachableInst(ctx, to);
+        if (to == overflow)
+          nameCheck(*copy, "arithmetic overflow on shl");
+      }
+      check->getTerminator()->eraseFromParent();
+      c->eraseFromParent();
+      // Overflow as the second successor walks first, so a run that stops at
+      // the first failure reports it before the undefined shift, as ESBMC.
+      IRBuilder<> b(check);
+      b.SetCurrentDebugLocation(op->getDebugLoc());
+      Value *negative = b.CreateICmpSLT(base, Constant::getNullValue(base->getType()));
+      b.CreateCondBr(b.CreateOr(b.CreateNot(exponentOk), negative), undefined, overflow);
+      break;
+    }
+    case Instruction::FPToSI:
+    case Instruction::FPToUI:
+      if (callee == "__ubsan_handle_float_cast_overflow_abort")
+        nameCheck(*c, floatCastComment(*op));
+      break;
+    }
+  }
+}
+
 // Instrument raw fptosi/fptoui instructions with exact C11 6.3.1.4p1 range
 // checks (open bounds on the truncated value, rejecting NaN and infinities)
 // without rounded floating-point limit constants.
@@ -343,7 +535,7 @@ static void checkFloatCasts(Module &m) {
       }
       FunctionCallee check = m.getOrInsertFunction("__vereda_check_float_cast_overflow",
                                                    b.getVoidTy(), b.getInt1Ty());
-      b.CreateCall(check, {ok});
+      nameCheck(*b.CreateCall(check, {ok}), floatCastComment(*c));
     }
   }
 }
@@ -1346,7 +1538,7 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool coun
   if (floatCastOverflowCheck)
     checkFloatCasts(*models);
   if (alignmentCheck)
-    checkAlignments(*models);
+    checkAlignments(*models, false);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1592,10 +1784,11 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);
   if (alignmentCheck)
-    checkAlignments(*module);
+    checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);
   lowerLongjmp(*module);
   if (divByZeroCheck)

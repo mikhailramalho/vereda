@@ -17,6 +17,3 @@ int main()
 // Imported from ESBMC regression/esbmc/builtin_free-fail
 // RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

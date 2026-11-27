@@ -32,8 +32,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4431_nonatomic_ptr_race
-// Needs: --data-race-check
-// RUN: --data-race-check
+// Needs: --ub-data-race-check
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

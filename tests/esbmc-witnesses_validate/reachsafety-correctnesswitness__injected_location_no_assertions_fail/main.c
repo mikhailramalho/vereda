@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/injected_location_no_assertions_fail
 // Needs: --validate-correctness-witness --witness witness.yml
-// RUN: --no-assertions --overflow-check --no-pointer-check --no-bounds-check --validate-correctness-witness --witness witness.yml
+// RUN: --no-assertions --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --ub-pointer-check=false --no-bounds-check --validate-correctness-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  witness invariant$

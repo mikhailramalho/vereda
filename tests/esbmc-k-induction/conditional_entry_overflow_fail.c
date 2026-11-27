@@ -20,7 +20,7 @@ mid:
 }
 // Imported from ESBMC regression/k-induction/conditional_entry_overflow_fail
 // Needs: --k-induction
-// RUN: --k-induction --overflow-check --no-assertions
+// RUN: --k-induction --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on add

@@ -1659,7 +1659,7 @@ SSL_METHOD *sslv3_base_method() {
 }
 // Imported from ESBMC regression/incremental-smt/incremental-26
 // Needs: --k-induction
-// RUN: --k-induction --k-step 7 --no-pointer-check
+// RUN: --k-induction --k-step 7 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

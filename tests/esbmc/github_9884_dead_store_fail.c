@@ -16,7 +16,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9884_dead_store_fail
 // Needs: --witness-output-yaml -
-// RUN: --overflow-check --no-assertions --witness-output-yaml -
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"

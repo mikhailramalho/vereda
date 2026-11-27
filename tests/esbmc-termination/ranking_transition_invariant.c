@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/termination/ranking_transition_invariant
 // Needs: --termination --max-inductive-step 3 --witness-output-yaml -
-// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --no-pointer-check --no-bounds-check --witness-output-yaml -
+// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --ub-pointer-check=false --no-bounds-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: type: "loop_transition_invariant"

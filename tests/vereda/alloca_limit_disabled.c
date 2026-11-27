@@ -1,4 +1,4 @@
-// RUN: --no-vla-size-check
+// RUN: --vla-size-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT-NOT: alloca: size exceeds PTRDIFF_MAX
 extern int __VERIFIER_nondet_int(void);

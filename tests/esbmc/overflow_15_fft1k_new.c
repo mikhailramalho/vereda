@@ -154,5 +154,5 @@ void init_w(int n)
     }
 }
 // Imported from ESBMC regression/esbmc/overflow_15_fft1k_new
-// RUN: --unwind 10 --overflow-check --no-unwinding-assertions
+// RUN: --unwind 10 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -110,7 +110,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/github_1513_1
 // Needs: --memory-leak-check --timeout 30
-// RUN: --overflow --memory-leak-check --timeout 30 --unwind 1 --multi-property
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --memory-leak-check --timeout 30 --unwind 1 --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

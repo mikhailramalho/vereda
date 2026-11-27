@@ -36,6 +36,7 @@ llvm_map_components_to_libnames(llvm_libs core irreader support passes linker)
 add_library(libvereda STATIC
   src/analysis/loops.cpp
   src/analysis/termination.cpp
+  src/analysis/writes.cpp
   src/ir/load.cpp
   src/ir/source.cpp
   src/encode/encoder.cpp

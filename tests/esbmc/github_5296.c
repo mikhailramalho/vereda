@@ -67,5 +67,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5296
-// RUN: -m64 --incremental-bmc --no-pointer-check --force-malloc-success
+// RUN: -m64 --incremental-bmc --ub-pointer-check=false --force-malloc-success
 // EXPECT: \A(?![\s\S]*missing argument for parameter)[\s\S]*VERIFICATION SUCCESSFUL[\s\S]*\Z

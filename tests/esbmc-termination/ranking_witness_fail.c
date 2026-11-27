@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/termination/ranking_witness_fail
 // Needs: --termination --max-inductive-step 3 --witness-output-yaml witness.yml
-// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --no-pointer-check --no-bounds-check --witness-output-yaml witness.yml
+// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --ub-pointer-check=false --no-bounds-check --witness-output-yaml witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Recurrent state shows a non-terminating execution.*$

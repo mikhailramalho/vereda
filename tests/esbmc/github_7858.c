@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7858
 // Needs: --witness-output-graphml -
-// RUN: -m64 --overflow-check --witness-output-graphml -
+// RUN: -m64 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">d-&gt;devnum == -?\d+;
 // MODE: FUTURE

@@ -373,6 +373,6 @@ int main(int argc, char *argv[])
   return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_06_jfdctint_new
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$

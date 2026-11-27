@@ -1,6 +1,7 @@
-// --no-pointer-check, as ESBMC's, leaves writes into a string literal or a
-// const object unchecked: the write happens and the run goes on.
-// RUN: --no-pointer-check
+// --ub-pointer-check=false, as ESBMC's --no-pointer-check, leaves writes
+// into a string literal or a const object unchecked: the write happens and
+// the run goes on.
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  __VERIFIER_assert$
 // EXPECT-NOT: dereference failure

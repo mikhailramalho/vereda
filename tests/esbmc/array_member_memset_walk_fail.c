@@ -17,6 +17,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/array_member_memset_walk_fail
 // RUN: --unwind 13
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

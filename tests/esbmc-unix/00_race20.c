@@ -30,8 +30,8 @@ int main() {
    exit(EXIT_SUCCESS);
 }
 // Imported from ESBMC regression/esbmc-unix/00_race20
-// Needs: --data-race-check --context-bound 3
-// RUN: --data-race-check --context-bound 3
+// Needs: --ub-data-race-check --context-bound 3
+// RUN: --ub-data-race-check --context-bound 3
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

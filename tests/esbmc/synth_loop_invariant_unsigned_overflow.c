@@ -21,7 +21,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_unsigned_overflow
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants --unsigned-overflow-check --unwind 12
+// RUN: --synthesise-loop-invariants --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --unwind 12
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^VERIFICATION SUCCESSFUL$

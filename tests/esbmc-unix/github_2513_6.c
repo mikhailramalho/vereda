@@ -6057,7 +6057,7 @@ main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_2513_6
 // Needs: --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check -m64 --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --unwind 5
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --witness-output witness.graphml --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --unwind 5
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: KNOWNBUG
 // Vereda: verdict none
