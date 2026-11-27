@@ -1830,8 +1830,11 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
             for (const ProvEdge &edge : it->second.second) {
               if (!edge.fromObject)
                 work.push_back(edge.array);
-              else
-                walk(edge.array, edge.fromObject, edge.toObject ? edge.toObject : dest,
+              // Pointers copied into another object than the one whose
+              // bytes are followed are not its; those copied into it go on
+              // to dest, which a later copy may have taken them into.
+              else if (!source || !edge.toObject || *edge.toObject == *source)
+                walk(edge.array, edge.fromObject, dest ? dest : edge.toObject,
                      edge.byOffset);
             }
           } else {
