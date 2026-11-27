@@ -43,7 +43,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/k-induction/is_pointer_invariant_list
-// Needs: --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
+// Needs: --interval-analysis --k-induction --max-inductive-step 3
 // RUN: --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: KNOWNBUG

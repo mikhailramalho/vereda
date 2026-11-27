@@ -62,7 +62,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/19_time_var_mutex_true-unreach-call
-// Needs: --error-label ERROR --context-bound 2
+// Needs: --context-bound 2
 // RUN: --error-label ERROR --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

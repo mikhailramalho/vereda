@@ -14,6 +14,7 @@
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
@@ -36,6 +37,8 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/FixIrreducible.h>
 #include <llvm/Transforms/Utils/LowerSwitch.h>
+
+#include <set>
 
 using namespace llvm;
 
@@ -381,6 +384,72 @@ static Instruction *guardedOperation(CallBase &call) {
                                                       : nullptr;
   }
   return nullptr;
+}
+
+// Records the clang sanitizers whose traps the module holds, as -fsanitize=
+// names them, in the named metadata vereda.sanitized, for the driver's
+// [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
+// it: an overflow trap is signed or unsigned by the overflow intrinsics in
+// the blocks that branch to it (with optimisation, clang shares one trap
+// block between the checks of a function), and a division trap checks a
+// divisor of zero or a signed overflow by what their branches compare.
+static void recordSanitizers(Module &m) {
+  std::set<std::string> names;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f)) {
+      auto *c = dyn_cast<CallBase>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if (!callee || callee->getName() != "llvm.ubsantrap")
+        continue;
+      switch (cast<ConstantInt>(c->getArgOperand(0))->getZExtValue()) {
+      case 20: // ShiftOutOfBounds
+        names.insert("shift");
+        break;
+      case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+        for (BasicBlock *pred : predecessors(c->getParent())) {
+          auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+          SmallVector<Value *, 4> conditions;
+          if (br)
+            conditions.push_back(br->getCondition());
+          while (!conditions.empty()) {
+            auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+            if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+              if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+                names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+            } else if (cond && cond->getType()->isIntegerTy(1) &&
+                       (cond->getOpcode() == Instruction::And ||
+                        cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
+              conditions.append(cond->op_begin(), cond->op_end());
+            }
+          }
+        }
+        break;
+      case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
+        for (BasicBlock *pred : predecessors(c->getParent()))
+          for (Instruction &p : *pred)
+            if (auto *ii = dyn_cast<IntrinsicInst>(&p))
+              switch (ii->getIntrinsicID()) {
+              case Intrinsic::sadd_with_overflow:
+              case Intrinsic::ssub_with_overflow:
+              case Intrinsic::smul_with_overflow:
+                names.insert("signed-integer-overflow");
+                break;
+              case Intrinsic::uadd_with_overflow:
+              case Intrinsic::usub_with_overflow:
+              case Intrinsic::umul_with_overflow:
+                names.insert("unsigned-integer-overflow");
+                break;
+              default:
+                break;
+              }
+        break;
+      }
+    }
+  if (names.empty())
+    return;
+  NamedMDNode *md = m.getOrInsertNamedMetadata("vereda.sanitized");
+  for (const std::string &name : names)
+    md->addOperand(MDNode::get(m.getContext(), MDString::get(m.getContext(), name)));
 }
 
 // Names clang's division-overflow, shift and float-cast checks as ESBMC
@@ -1767,6 +1836,25 @@ static void threadBoolPhis(Module &m) {
   }
 }
 
+// --error-label: a call to the bodyless __vereda_error_label, a failed
+// check for the walker, at each debug label record named label, as ESBMC's
+// assert(false) at the C label. It goes before the instruction the record
+// is attached to, at the label's location.
+static void markErrorLabels(Module &m, StringRef label) {
+  SmallVector<std::pair<Instruction *, DebugLoc>, 1> at;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f))
+      for (DbgRecord &r : i.getDbgRecordRange())
+        if (auto *l = dyn_cast<DbgLabelRecord>(&r); l && l->getLabel()->getName() == label)
+          at.push_back({&i, l->getDebugLoc()});
+  if (at.empty())
+    return;
+  FunctionCallee error =
+      m.getOrInsertFunction("__vereda_error_label", Type::getVoidTy(m.getContext()));
+  for (auto &[i, loc] : at)
+    CallInst::Create(error, "", i->getIterator())->setDebugLoc(loc);
+}
+
 // Turns a scalar global that only the entry function uses into a local of
 // it, so that mem2reg and SCEV see a loop over a global counter as they see
 // one over a local, and its array loop is summarised (#380, cause 5). Sound
@@ -1839,7 +1927,7 @@ static bool promoteEntryGlobals(Module &m, StringRef entry) {
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
-                                       bool uninitCheck) {
+                                       bool uninitCheck, StringRef errorLabel) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1854,9 +1942,12 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  recordSanitizers(*module);
   nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);
+  if (!errorLabel.empty())
+    markErrorLabels(*module, errorLabel);
   if (alignmentCheck)
     checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);
