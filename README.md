@@ -17,7 +17,9 @@ Supported today:
 - Properties: reachability of `reach_error`/`__VERIFIER_error`/`__assert_fail`,
   `__VERIFIER_assert`, plus unwinding and recursion assertions that check the
   bound was enough. With `--property-file`, one SV-COMP property: unreach-call,
-  or no-overflow through clang's signed-overflow sanitizer.
+  no-overflow through clang's signed-overflow sanitizer, or termination, shown
+  when SCEV bounds every loop and nothing recurses, or when the bound unwinds
+  every loop and recursion (never FALSE).
 - SV-COMP's `__VERIFIER_nondet_*` and `__VERIFIER_assume`, and `abort`/`exit`.
 - Stack allocations and VLAs above the target's `PTRDIFF_MAX` are reported as
   `alloca: size exceeds PTRDIFF_MAX`; exactly the limit remains valid.
@@ -89,9 +91,22 @@ short commit hash; builds without Git metadata report `commit unknown`.
 
 `vereda.py` takes C (`.c`, `.i`), Rust (`.rs`) or IR (`.ll`, `.bc`) inputs and its own
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
-`--property-file`, `-v`, and ESBMC's `--overflow-check`,
-`--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
-sanitizer checks), and forwards everything else to the binary.
+`--property-file`, `-v`, and the checks it compiles in with clang's
+sanitizers: `--ub-signed-overflow-check`, `--unsigned-overflow-check`,
+`--ub-shift-check`, `--overflow-check` for both overflow checks, and
+`--ub-checks`), and forwards everything else to the binary. Each check flag
+checks one thing and takes `=true` or `=false`; the last one naming a check
+wins. `--ub-checks` turns on every opt-in undefined-behaviour check: signed
+overflow, shifts, floating-point to integer conversions, count-zero builtins,
+alignment and uninitialised reads (not unsigned overflow, which is defined, nor
+data races, which are not implemented). It stands for those six flags in its
+place, so `--ub-checks --ub-shift-check=false` leaves shifts out, an earlier
+`--ub-shift-check=false` is overridden, and `--ub-checks=false` turns all six
+off. Like the sanitizer flags, it needs C input. Unsigned
+arithmetic wraps by definition (C11 6.2.5p9), so its check has no `ub-`
+prefix. Unlike ESBMC's `--overflow-check`, which checks signed overflow,
+shifts and floating-point to integer conversions, Vereda's checks signed and
+unsigned overflow only; `tests/import_esbmc.py` translates ESBMC's flags.
 `vereda.py -h` lists both sets.
 
 Rust source is compiled with edition 2024, debug info, no optimisation,
@@ -115,19 +130,19 @@ The main verifier flags:
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
 | `--entry F` | Entry function (default `main`) |
-| `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
+| `--property unreach-call\|no-overflow\|valid-free\|termination` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW`, `FALSE_FREE` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets unreach-call, no-overflow and termination |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
-| `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
-| `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs unless `--property` is given |
+| `--ub-pointer-check` | Check writes into string literals and const objects, and invalid frees (default on; `=false` disables) |
+| `--ub-div-by-zero-check` | Check integer division/remainder by zero (default on for C and IR inputs unless `--property` is given; `=false` disables) |
 | `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
 | `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
 | `--ub-alignment-check` | Check alignment of typed memory accesses (opt-in) |
 | `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in) |
 | `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
-| `--data-race-check` | Request data-race checking; currently errors because it is not implemented (`--data-races-check` is an alias) |
+| `--ub-data-race-check` | Request data-race checking; currently errors because it is not implemented |
 | `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
-| `--no-vla-size-check` | Do not report stack allocations above `PTRDIFF_MAX`; their paths still end at the allocation |
+| `--vla-size-check` | Report stack allocations above `PTRDIFF_MAX`, an implementation limit rather than undefined behaviour (default on; `=false` disables; their paths still end at the allocation) |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--incremental-solver` | Keep one incremental solver across checks and bounds (with `bv-cnf-scope=permanent` on Bitwuzla) instead of a fresh one per solving phase |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
@@ -135,13 +150,21 @@ The main verifier flags:
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |
 
 Assertions, the current pointer checks, integer division/remainder-by-zero checks,
-and unwinding checks are enabled by default. General pointer bounds, lifetime and
-valid-free checks are not implemented yet. Signed overflow, unsigned overflow
+and unwinding checks are enabled by default. The pointer checks include ESBMC's
+checks on `free` and `realloc`: a pointer made from an integer, one into a
+non-heap object or into the middle of a heap object, and a second free. General
+pointer bounds and lifetime checks are not implemented yet. Signed overflow, unsigned overflow
 and shift checks are opt-in through the frontend flags above; existing Rust
 overflow and bounds panics remain program failures. Leak, race and deadlock flags
 are disabled by default and the binary rejects an enabled request with error
 exit code 6, before loading the input. `--no-assertions` conflicts with an
-unreach-call property request. A selected property reports only its own failures.
+unreach-call property request, `--ub-pointer-check=false` with valid-free, `--no-unwinding-assertions` with termination. A selected property reports only its own failures.
+An `[INFO] Checks:` line before the walk names the checks the run counts,
+each after the flag that controls it: `assertions`, `unwinding-assertions`,
+`pointer`, `div-by-zero` and `vla-size` by default, then the opt-in ones given
+(`signed-overflow`, `unsigned-overflow`, `shift`, `float-cast-overflow`,
+`count-zero`, `alignment`, `uninit`); under `--property`, `reach-error` or
+`valid-free` and the property's own checks.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or

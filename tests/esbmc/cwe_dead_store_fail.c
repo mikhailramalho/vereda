@@ -5,7 +5,7 @@ int main(void)
   return 1 / (x - 6); // division by zero: x - 6 == 0
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_store_fail
-// Needs: --dead-store-check --sarif-output -
+// Needs: --dead-store-check --sarif-output
 // RUN: --dead-store-check --sarif-output - --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

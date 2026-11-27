@@ -9,13 +9,18 @@ void free(void *);
 void *memcpy(void *, const void *, size_t);
 // The bytes from p to the end of its object; the walker computes it.
 size_t __vereda_object_size(const void *p);
+// The walker's checks of free(p), without the free.
+void __vereda_check_free(void *p);
+void *memalign(size_t, size_t);
 
 // A new object with the old contents up to the smaller size, as glibc
 // does; realloc(p, 0) frees p and returns null, as glibc does. On failure
-// the old object stays.
+// the old object stays. A p that free could not take is undefined even
+// where the allocation fails (C17 7.22.3.5p3), so it is checked first.
 void *realloc(void *p, size_t n) {
   if (!p)
     return malloc(n);
+  __vereda_check_free(p);
   if (!n) {
     free(p);
     return NULL;
@@ -38,6 +43,42 @@ int rand(void) {
   __VERIFIER_assume(r >= 0 && r <= 2147483647); // glibc's RAND_MAX
   return r;
 }
+
+// C17 7.22.3.1: null for an alignment the implementation does not support,
+// here one that is not a power of two (errno EINVAL, as glibc); C17 dropped
+// C11's rule that n be a multiple of it. The object comes from malloc, so
+// free takes it, at an address that is a multiple of align.
+void *aligned_alloc(size_t align, size_t n) {
+  if (!align || (align & (align - 1))) {
+    errno = EINVAL;
+    return NULL;
+  }
+  void *p = malloc(n);
+  __VERIFIER_assume(((uintptr_t)p & (align - 1)) == 0);
+  return p;
+}
+
+// POSIX: align must be a power of two and a multiple of sizeof(void *);
+// there is no condition on n. *p is written only on success, and a null
+// from malloc(0) is a success.
+int posix_memalign(void **p, size_t align, size_t n) {
+  if (!align || (align & (align - 1)) || align % sizeof(void *))
+    return EINVAL;
+  void *q = aligned_alloc(align, n);
+  if (n && !q)
+    return ENOMEM;
+  *p = q;
+  return 0;
+}
+
+// The obsolete memalign (glibc's <malloc.h>) does not fail on an alignment
+// that is not a power of two: glibc takes 0 to 16 as malloc does and rounds
+// a larger one up. Such an alignment is plain malloc here, which promises
+// less alignment than glibc gives. valloc aligns to the page, 4096 bytes.
+void *memalign(size_t align, size_t n) {
+  return !align || (align & (align - 1)) ? malloc(n) : aligned_alloc(align, n);
+}
+void *valloc(size_t n) { return aligned_alloc(4096, n); }
 
 // Quotient and remainder, truncated toward zero (C17 7.22.6.2); imaxdiv is
 // <inttypes.h>'s (C17 7.8.2.2). A struct result of a bodyless call is

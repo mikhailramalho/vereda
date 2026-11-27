@@ -38,7 +38,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/atexit-3
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --force-malloc-success --no-simplify --no-unwinding-assertions --unwind 2
+// RUN: --memory-leak-check --force-malloc-success --no-unwinding-assertions --unwind 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

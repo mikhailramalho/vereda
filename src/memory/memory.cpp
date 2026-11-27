@@ -121,9 +121,10 @@ Term Memory::fits(Term size) {
                                     t.bv(1, ptrBits)));
 }
 
-Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
+Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed, Kind kind) {
   unsigned id = objects.size();
   Term b = t.symbol("base#" + std::to_string(id), s.mkBVSort(ptrBits));
+  baseToObj[b.id()] = id;
   Term e = t.add(b, size);
   // Ordered with a gap, aligned, not wrapping: objects never overlap, and a
   // one-past-the-end address belongs to its own object only. A constant-size
@@ -160,7 +161,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
     // object's base address is first observed. Because all deferred objects
     // fit within a quarter of the address space, laying out any subset in any
     // order remains satisfiable and non-overlapping.
-    objects.push_back({b, size, exists, align, exposed, false});
+    objects.push_back({b, size, exists, align, exposed, false, kind});
     return ptr(obj, t.bv(0, ptrBits));
   }
   Term layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
@@ -170,7 +171,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   t.addConstraint(unconditional ? layout : t.implies(exists, layout));
   if (bases && exposed)
     t.addConstraint(t.eq(t.select(bases, obj), b));
-  objects.push_back({b, size, exists, align, exposed, true});
+  objects.push_back({b, size, exists, align, exposed, true, kind});
   end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
@@ -180,7 +181,7 @@ void Memory::allocateGlobals(const Module &m,
   for (const GlobalVariable &g : m.globals()) {
     uint64_t size = dl.getTypeAllocSize(g.getValueType());
     globals[&g] = allocate(t.bv(size, ptrBits), g.getPointerAlignment(dl).value(),
-                           t.boolean(true), exposed(&g));
+                           t.boolean(true), exposed(&g), Kind::Static);
     if (g.isConstant())
       objects.back().constant = &g;
   }
@@ -188,7 +189,7 @@ void Memory::allocateGlobals(const Module &m,
   // pointer to it is an ordinary pointer: stored, compared and called.
   for (const Function &f : m)
     if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true)) {
-      globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f));
+      globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f), Kind::Static);
       objects.back().constant = &f;
     }
 }
@@ -266,21 +267,91 @@ Term Memory::equal(Term p, Term q) {
                t.land(t.lnot(outside), t.eq(p, q)));
 }
 
-Term Memory::fromAddress(Term a) {
-  unsigned budget = 32;
-  return fromAddress(a, budget);
+std::optional<uint64_t> Memory::directBase(Term a, unsigned depth) const {
+  if (auto it = baseToObj.find(a.id()); it != baseToObj.end())
+    return objects[it->second].exposed ? std::optional<uint64_t>(it->second) : std::nullopt;
+  if (depth >= 4)
+    return std::nullopt;
+  Term x, y;
+  if (t.isAdd(a, x, y)) {
+    if (auto id = directBase(x, depth + 1))
+      return id;
+    return directBase(y, depth + 1);
+  }
+  if (t.isSub(a, x, y))
+    return directBase(x, depth + 1);
+  return std::nullopt;
 }
 
-Term Memory::fromAddress(Term a, unsigned &budget) {
+bool Memory::hasFoldableAddress(Term a, unsigned &budget,
+                                llvm::DenseSet<const void *> &seen) const {
+  if (const APInt *v = t.constant(a); v && v->isZero())
+    return true;
+  if (directBase(a))
+    return true;
+  if (!budget || !seen.insert(a.id()).second)
+    return false;
+  --budget;
+  Term c, x, y;
+  if (t.choice(a, c, x, y))
+    return hasFoldableAddress(x, budget, seen) || hasFoldableAddress(y, budget, seen);
+  if (t.isAdd(a, x, y))
+    return hasFoldableAddress(x, budget, seen) || hasFoldableAddress(y, budget, seen);
+  return false;
+}
+
+Term Memory::fromAddress(Term a) {
+  unsigned budget = 32;
+  llvm::DenseMap<const void *, Term> memo;
+  return fromAddress(a, budget, memo);
+}
+
+Term Memory::fromAddress(Term a, unsigned &budget,
+                         llvm::DenseMap<const void *, Term> &memo) {
   // Address 0 is null: objects start above 0 (end starts at 1), so no
   // allocated object can hold 0.
   if (const APInt *v = t.constant(a); v && v->isZero())
     return null();
-  Term c, left, right;
-  if (budget && t.sumChoice(a, c, left, right)) {
-    --budget;
-    Term x = fromAddress(left, budget), y = fromAddress(right, budget);
-    return t.ite(c, x, y);
+  if (auto it = memo.find(a.id()); it != memo.end())
+    return it->second;
+  // Fast path: an address built directly from an exposed object's base often
+  // folds to that object without scanning every exposed object.
+  if (std::optional<uint64_t> id = directBase(a)) {
+    ensureLayout(*id);
+    const Object &o = objects[*id];
+    Term x = t.sub(a, o.base);
+    Term within = t.ule(x, o.size);
+    if (known) {
+      int d = t.decide(within, known);
+      if (d >= 0)
+        within = t.boolean(d);
+    }
+    Term inside = t.land(o.exists, within);
+    if (t.isTrue(inside) || (context && t.entails(context, inside))) {
+      Term r = ptr(t.bv(*id, ObjBits), x);
+      memo[a.id()] = r;
+      return r;
+    }
+  }
+  // Only split an ite address when at least one branch can fold (to null or a
+  // known base); splitting purely symbolic branches would duplicate the
+  // exposed-object scan for every leaf.
+  if (budget) {
+    unsigned probe = budget;
+    llvm::DenseSet<const void *> seen;
+    Term c, left, right;
+    if (hasFoldableAddress(a, probe, seen) && t.sumChoice(a, c, left, right)) {
+      if (int pick = side(c); pick >= 0) {
+        Term r = fromAddress(pick ? left : right, budget, memo);
+        memo[a.id()] = r;
+        return r;
+      }
+      --budget;
+      Term x = fromAddress(left, budget, memo), y = fromAddress(right, budget, memo);
+      Term r = t.ite(c, x, y);
+      memo[a.id()] = r;
+      return r;
+    }
   }
   // One comparison per exposed object created so far. The object and the
   // offset are built apart, so that object() of the result is a choice
@@ -305,8 +376,11 @@ Term Memory::fromAddress(Term a, unsigned &budget) {
         within = t.boolean(d);
     }
     Term inside = t.land(o.exists, within);
-    if (t.isTrue(inside) || (context && t.entails(context, inside)))
-      return ptr(t.bv(id, ObjBits), x);
+    if (t.isTrue(inside) || (context && t.entails(context, inside))) {
+      Term r = ptr(t.bv(id, ObjBits), x);
+      memo[a.id()] = r;
+      return r;
+    }
     obj = t.ite(inside, t.bv(id, ObjBits), obj);
     off = t.ite(inside, x, off);
   }
@@ -318,6 +392,7 @@ Term Memory::fromAddress(Term a, unsigned &budget) {
   // No allocated object holds address 0, so fromAddress(a) == null() iff a == 0.
   if (!t.constant(r))
     nullEq[r.id()] = {r, t.eq(a, t.bv(0, ptrBits))};
+  memo[a.id()] = r;
   return r;
 }
 
@@ -328,7 +403,41 @@ State Memory::initial() {
            t.constArray(index, t.bv(IntProvenance, ObjBits))};
   if (trackInit)
     st.init = t.constArray(index, t.boolean(true));
+  st.dead = t.constArray(s.mkBVSort(ObjBits), t.boolean(false));
   return st;
+}
+
+Memory::InvalidFree Memory::invalidFree(const State &st, Term p) {
+  Term no = t.boolean(false);
+  InvalidFree r{no, no, no, no};
+  Term obj = object(p), atStart = t.eq(offset(p), t.bv(0, ptrBits));
+  Term heap = no;
+  for (uint64_t o : candidates(p)) {
+    Term in = t.eq(obj, t.bv(o, ObjBits));
+    if (o >= objects.size())
+      r.integer = t.lor(r.integer, in);
+    else if (o == 0) // null is valid; any other address in object 0 is outside
+      r.integer = t.lor(r.integer, t.land(in, t.lnot(atStart)));
+    else if (objects[o].kind != Kind::Heap)
+      r.nonHeap = t.lor(r.nonHeap, in);
+    else
+      heap = t.lor(heap, in);
+  }
+  // A pointer into an object exists where the object does, so dead alone
+  // tells a freed one; one read of it serves every candidate.
+  r.dead = t.land(heap, t.select(st.dead, obj));
+  // Checked for every object, as ESBMC does: one not from the heap fails
+  // nonHeap too.
+  r.offset = t.land(t.lnot(t.eq(obj, t.bv(0, ObjBits))), t.lnot(atStart));
+  return r;
+}
+
+void Memory::free(State &st, Term p) {
+  // free(NULL) does nothing; object 0 stays live, the array constant.
+  Term obj = object(p);
+  if (const APInt *id = t.constant(obj); id && id->isZero())
+    return;
+  st.dead = t.store(st.dead, obj, t.boolean(true));
 }
 
 void Memory::markInitialisedObject(State &st, uint64_t o) {
@@ -430,8 +539,12 @@ void Memory::writeInitRange(State &st, Term p, uint64_t n, Term val) {
     writeInitBytes(st, p, n, val);
     return;
   }
+  initRange(st, p, t.bv(n, ptrBits), val);
+}
+
+void Memory::initRange(State &st, Term p, Term len, Term val) {
   flushInitFor(st, p);
-  Term prev = st.init, obj = object(p), off = offset(p), len = t.bv(n, ptrBits);
+  Term prev = st.init, obj = object(p), off = offset(p);
   st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
                      "init#" + std::to_string(fresh++),
                      [this, obj, off, len, val, prev](const Term &j) {
@@ -447,9 +560,13 @@ void Memory::copyInitBytes(State &st, Term dst, Term src, uint64_t n) {
     setInitBytes(st, dst, initBytes(st, src, n));
     return;
   }
+  copyInitRange(st, dst, src, t.bv(n, ptrBits));
+}
+
+void Memory::copyInitRange(State &st, Term dst, Term src, Term len) {
   flushInitFor(st, src);
   flushInitFor(st, dst);
-  Term prev = st.init, dObj = object(dst), dOff = offset(dst), len = t.bv(n, ptrBits);
+  Term prev = st.init, dObj = object(dst), dOff = offset(dst);
   st.init = t.lambda(s.mkArraySort(pointerSort(), s.mkBoolSort()),
                      "init#" + std::to_string(fresh++),
                      [this, dObj, dOff, src, len, prev](const Term &j) {
@@ -937,7 +1054,9 @@ void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term co
                              below.data, misses),
                     below.prov};
   // An object of elements has no provenance array: it holds no pointer.
-  if (!shift) {
+  // When below.prov already holds only IntProvenance, writing integers keeps
+  // it that constant array instead of wrapping it in a lambda.
+  if (!shift && t.filledWith(below.prov) != intProv) {
     after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)), "summary_provenance#" + n,
                           [=, this](const Term &j) {
                             Term old = t.select(below.prov, j);
@@ -1155,6 +1274,7 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
     State r{t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
             mergeSeparate(c, a0, b0)};
     mergeInit(c, a0, b0, r);
+    r.dead = t.ite(c, a0.dead, b0.dead);
     return r;
   }
   // An object whose bytes would become a choice between two values that
@@ -1196,6 +1316,7 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
   State r{t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov), std::move(known),
           mergeSeparate(c, a, b)};
   mergeInit(c, a, b, r);
+  r.dead = t.ite(c, a.dead, b.dead);
   if (r.known.size() > MaxKnown)
     flush(r);
   return r;
@@ -1686,7 +1807,11 @@ void Memory::havocCall(State &st, llvm::ArrayRef<Term> written,
 void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
                        bool constants) {
   Term c, x, y;
-  if (t.split(p, c, x, y)) {
+  if (n && t.split(p, c, x, y)) {
+    if (int pick = side(c); pick >= 0) {
+      havocWith(st, pick ? x : y, n, prov, constants);
+      return;
+    }
     State a = st, b = st;
     havocWith(a, x, n, prov, constants);
     havocWith(b, y, n, prov, constants);
@@ -1695,10 +1820,28 @@ void Memory::havocWith(State &st, Term p, std::optional<uint64_t> n, Term prov,
   }
   const APInt *obj = t.constant(object(p));
   if (!obj) { // each object p may point into, where it does
+    Term objTerm = object(p);
     for (uint64_t o : candidates(p)) {
+      if (o >= objects.size() || (objects[o].constant && !constants))
+        continue;
+      Term cond = t.eq(objTerm, t.bv(o, ObjBits));
+      if (o == 0)
+        cond = t.land(cond, t.lnot(isNull(p)));
+      if (t.isFalse(cond))
+        continue;
+      if (t.isTrue(cond)) {
+        if (!n)
+          havocObject(st, o, prov);
+        else
+          havocWith(st, ptr(t.bv(o, ObjBits), offset(p)), n, prov, constants);
+        return;
+      }
       State a = st;
-      havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov, constants);
-      st = ite(t.eq(object(p), t.bv(o, ObjBits)), a, st);
+      if (!n)
+        havocObject(a, o, prov);
+      else
+        havocWith(a, ptr(t.bv(o, ObjBits), offset(p)), n, prov, constants);
+      st = ite(cond, a, st);
     }
     return;
   }
@@ -1822,8 +1965,12 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
             for (const ProvEdge &edge : it->second.second) {
               if (!edge.fromObject)
                 work.push_back(edge.array);
-              else
-                walk(edge.array, edge.fromObject, dest, edge.byOffset);
+              // Pointers copied into another object than the one whose
+              // bytes are followed are not its; those copied into it go on
+              // to dest, which a later copy may have taken them into.
+              else if (!source || !edge.toObject || *edge.toObject == *source)
+                walk(edge.array, edge.fromObject, dest ? dest : edge.toObject,
+                     edge.byOffset);
             }
           } else {
             throw Unsupported("memory whose provenance is not known");
@@ -1871,7 +2018,8 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n, bool backing) 
       for (uint64_t o : candidates(p))
         if (fieldStorage.count(o))
           return false;
-  if (n < MinSeparate)
+  static constexpr uint64_t MinCopyLambda = 64;
+  if (n < MinCopyLambda)
     return false;
   if (ptrBits < 64 && n >= (uint64_t(1) << ptrBits))
     return false;
@@ -1894,6 +2042,10 @@ bool Memory::copyArray(State &st, Term dst, Term src, uint64_t n, bool backing) 
   if (!dstObjId || dstObjId->isZero() || dstObjId->uge(objects.size()))
     return false;
   uint64_t dstObj = dstObjId->getZExtValue();
+  // Objects already backed by their own array benefit from a lambda copy well
+  // below MinSeparate (e.g. memmove on a 1000-byte array inside a loop).
+  if (n < MinSeparate && !owned.count(dstObj) && !st.separate.find({dstObj, 0}))
+    return false;
 
   // Flush all objects src may point into so their arrays are up to date.
   std::vector<uint64_t> srcObjs = candidates(src);
@@ -2116,12 +2268,138 @@ void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
   // Read everything first, so overlapping ranges copy as memmove does.
   prepare(st, src);
   prepare(st, dst);
+  writeBytes(st, dst, readBytes(st, src, n));
+}
+
+void Memory::set(State &st, Term p, Term byte, Term len, std::optional<uint64_t> bound) {
+  if (trackInit)
+    initRange(st, p, len, t.boolean(true));
+  State::Cell c{byte, t.bv(IntProvenance, ObjBits)};
+  const char *why = nullptr;
+  if ((!bound || *bound >= MinSeparate) &&
+      !(why = writeRange(st, p, len, "fill", [c](const Term &, bool) { return c; }, {})))
+    return;
+  if (!bound || *bound > MaxBytes)
+    throw Unsupported(std::string("a fill of a symbolic size ") + why);
+  prepare(st, p);
+  writeBytes(st, p, std::vector<State::Cell>(*bound, c), len);
+}
+
+void Memory::copy(State &st, Term dst, Term src, Term len, std::optional<uint64_t> bound) {
+  if (dst == src)
+    return;
+  if (trackInit)
+    copyInitRange(st, dst, src, len);
+  std::vector<uint64_t> srcObjs = candidates(src);
+  const char *why = "from an object of fields";
+  if ((!bound || *bound >= MinSeparate) &&
+      none_of(srcObjs, [&](uint64_t o) { return fieldStorage.count(o); })) {
+    // The source as it is before the write, which overlapping ranges need.
+    for (uint64_t o : srcObjs)
+      flush(st, o);
+    State before = st;
+    before.known.clear();
+    llvm::SmallVector<ProvEdge, 2> from;
+    for (uint64_t o : srcObjs) {
+      if (shifts.count(o))
+        continue;
+      const State::Cell *own = before.separate.find({o, 0});
+      Term prov = own ? own->prov : before.prov;
+      if (t.filledWith(prov) != t.bv(IntProvenance, ObjBits))
+        from.push_back({prov, o, own && owned.count(o)});
+    }
+    auto value = [this, before, src](const Term &d, bool withProvenance) {
+      return readArrays(before, advance(src, d), withProvenance);
+    };
+    if (!(why = writeRange(st, dst, len, "copy", value, from)))
+      return;
+  }
+  if (!bound || *bound > MaxBytes)
+    throw Unsupported(std::string("a copy of a symbolic size ") + why);
+  prepare(st, src);
+  prepare(st, dst);
+  writeBytes(st, dst, readBytes(st, src, *bound), len);
+}
+
+const char *Memory::writeRange(State &st, Term dst, Term len, const char *name,
+                               const std::function<State::Cell(const Term &, bool)> &value,
+                               llvm::ArrayRef<ProvEdge> from) {
+  std::vector<uint64_t> objs = candidates(dst);
+  if (objs.empty())
+    return "through a pointer into no known object";
+  if (any_of(objs, [&](uint64_t o) { return fieldStorage.count(o) || shifts.count(o); }))
+    return "into an object of elements or fields";
+  for (uint64_t o : objs)
+    flush(st, o);
+  Term dObj = object(dst), dOff = offset(dst), intProv = t.bv(IntProvenance, ObjBits);
+  std::string id = std::to_string(fresh++);
+  // below with byte d of the range replaced by value(d): below holds the
+  // bytes of object o, indexed by offset if own() gave o its arrays, or
+  // (no o) the shared arrays.
+  auto wrap = [&](const State::Cell &below, std::optional<uint64_t> o) {
+    bool byOffset = o && owned.count(*o);
+    SMTSortRef index = byOffset ? s.mkBVSort(ptrBits) : pointerSort();
+    auto inRange = [=, this](const Term &j) -> std::pair<Term, Term> {
+      Term in = t.eq(byOffset ? t.bv(*o, ObjBits) : object(j), dObj);
+      if (t.isFalse(in))
+        return {in, {}};
+      Term d = t.sub(byOffset ? j : offset(j), dOff);
+      return {t.land(in, t.ult(d, len)), d};
+    };
+    auto misses = [=, this](const Term &j) { return t.isFalse(inRange(j).first); };
+    auto def = [=, this](bool prov) {
+      return [=, this](const Term &j) {
+        auto [in, d] = inRange(j);
+        Term old = t.select(prov ? below.prov : below.data, j);
+        if (t.isFalse(in))
+          return old;
+        State::Cell c = value(d, prov);
+        return t.ite(in, prov ? c.prov : c.data, old);
+      };
+    };
+    State::Cell after{t.lambda(s.mkArraySort(index, s.mkBVSort(8)), name + ("#" + id),
+                               def(false), below.data, misses),
+                      below.prov};
+    if (!from.empty() || t.filledWith(below.prov) != intProv) {
+      after.prov = t.lambda(s.mkArraySort(index, s.mkBVSort(ObjBits)),
+                            name + ("_provenance#" + id), def(true), below.prov, misses);
+      // The shared arrays' pointers go to the objects of their indices,
+      // which for those copied are the source's: name the destinations.
+      llvm::SmallVector<ProvEdge, 2> edges;
+      for (const ProvEdge &e : from) {
+        if (o)
+          edges.push_back(e);
+        else
+          for (uint64_t to : objs)
+            if (!st.separate.find({to, 0}))
+              edges.push_back({e.array, e.fromObject, e.byOffset, to});
+      }
+      edges.push_back({below.prov, std::nullopt, byOffset});
+      provBelow[after.prov.id()] = {after.prov, std::move(edges)};
+    }
+    return after;
+  };
+  bool shared = false;
+  for (uint64_t o : objs) {
+    if (const State::Cell *own = st.separate.find({o, 0}))
+      st.separate.set({o, 0}, wrap(*own, o));
+    else
+      shared = true;
+  }
+  if (shared) {
+    State::Cell after = wrap({st.data, st.prov}, std::nullopt);
+    st.data = after.data, st.prov = after.prov;
+  }
+  return nullptr;
+}
+
+std::vector<State::Cell> Memory::readBytes(State &st, Term p, uint64_t n) {
   uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
   std::vector<State::Cell> bytes;
   bytes.reserve(n);
-  if (std::optional<Key> sk = key(src)) {
+  if (std::optional<Key> k = key(p)) {
     for (uint64_t i = 0; i < n; ++i) {
-      Key ki{sk->first, (sk->second + i) & mask};
+      Key ki{k->first, (k->second + i) & mask};
       if (const State::Cell *c = st.known.find(ki))
         bytes.push_back(*c);
       else
@@ -2129,17 +2407,29 @@ void Memory::copy(State &st, Term dst, Term src, uint64_t n) {
     }
   } else {
     for (uint64_t i = 0; i < n; ++i)
-      bytes.push_back(readByte(st, bytePtr(src, i)));
+      bytes.push_back(readByte(st, bytePtr(p, i)));
   }
-  if (std::optional<Key> dk = key(dst)) {
-    for (uint64_t i = 0; i < n; ++i) {
-      st.known.set(*key(fieldPointer(ptr({dk->first, (dk->second + i) & mask}))), bytes[i]);
+  return bytes;
+}
+
+void Memory::writeBytes(State &st, Term p, std::vector<State::Cell> bytes, Term len) {
+  if (len) {
+    std::vector<State::Cell> old = readBytes(st, p, bytes.size());
+    for (uint64_t i = 0; i < bytes.size(); ++i) {
+      Term in = t.ult(t.bv(i, ptrBits), len);
+      bytes[i] = {t.ite(in, bytes[i].data, old[i].data), t.ite(in, bytes[i].prov, old[i].prov)};
+    }
+  }
+  uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+  if (std::optional<Key> k = key(p)) {
+    for (uint64_t i = 0; i < bytes.size(); ++i) {
+      st.known.set(*key(fieldPointer(ptr({k->first, (k->second + i) & mask}))), bytes[i]);
       if (st.known.size() > MaxKnown)
         flush(st);
     }
   } else {
-    for (uint64_t i = 0; i < n; ++i)
-      writeByte(st, bytePtr(dst, i), bytes[i]);
+    for (uint64_t i = 0; i < bytes.size(); ++i)
+      writeByte(st, bytePtr(p, i), bytes[i]);
   }
 }
 

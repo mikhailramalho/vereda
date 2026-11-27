@@ -115,8 +115,10 @@ void Terms::releaseWalkTables() {
   decltype(implied)().swap(implied);
   decltype(arith)().swap(arith);
   decltype(filled)().swap(filled);
+  decltype(constArrays)().swap(constArrays);
   decltype(lambdas)().swap(lambdas);
   decltype(under)().swap(under);
+  decltype(constrained)().swap(constrained);
   decltype(reduced)().swap(reduced);
   decltype(selects)().swap(selects);
   decltype(scratch)().swap(scratch);
@@ -133,37 +135,59 @@ Ref Terms::fromSolver(const camada::SMTExprRef &e) const {
   return it == made.end() ? Ref(e) : it->second;
 }
 
-bool Terms::entails(const Ref &guard, const Ref &lit) { return entails(guard, lit, 0); }
+bool Terms::entails(const Ref &guard, const Ref &lit) {
+  static constexpr size_t MaxImplied = 1 << 16;
+  if (implied.size() >= MaxImplied)
+    implied.clear();
+  unsigned budget = 512;
+  return entails(guard, lit, 0, budget);
+}
 
-bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth) {
+bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth, unsigned &budget) {
   if (guard == lit || isTrue(lit) || isFalse(guard))
     return true;
   const Node *n = node(guard);
-  // Deep guards give up, which only loses a fold.
+  // Deep or wide guards give up, which only loses a fold.
   if (!n || (n->op != Op::And && n->op != Op::Or) || depth > 1000)
     return false;
-  auto [it, fresh] = implied.try_emplace({guard.id(), lit.id()}, false);
-  if (!fresh)
+  if (auto it = implied.find({guard.id(), lit.id()}); it != implied.end())
     return it->second;
+  if (!budget)
+    return false;
+  --budget;
   Ref a = n->a, b = n->b;
-  bool r = n->op == Op::And ? entails(a, lit, depth + 1) || entails(b, lit, depth + 1)
-                            : entails(a, lit, depth + 1) && entails(b, lit, depth + 1);
-  implied[{guard.id(), lit.id()}] = r; // the map may have rehashed
+  bool r = n->op == Op::And ? entails(a, lit, depth + 1, budget) || entails(b, lit, depth + 1, budget)
+                            : entails(a, lit, depth + 1, budget) && entails(b, lit, depth + 1, budget);
+  if (r || budget)
+    implied[{guard.id(), lit.id()}] = r;
   return r;
 }
 
 void Terms::equalities(const Ref &cond, bool holds,
-                       llvm::function_ref<void(const Ref &, const Ref &)> f) const {
+                       llvm::function_ref<void(const Ref &, const Ref &)> f) {
   // Conditions share subterms, so a walk without a bound can take
   // exponential time; equalities sit near the top.
   unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
-    if (n.op != Op::Eq || !h || n.a.isBool())
+    if (n.op != Op::Eq || !h || !n.a.isBV())
       return;
-    if (constant(n.b) && !constant(n.a))
-      f(n.a, n.b);
-    else if (constant(n.a) && !constant(n.b))
-      f(n.b, n.a);
+    Ref x = n.a, c = n.b;
+    if (constant(x))
+      std::swap(x, c);
+    if (constant(x))
+      return;
+    f(x, c);
+    // Through extensions, while the constant is one they can give.
+    for (const Node *e; constant(c) && (e = node(x)) &&
+                        (e->op == Op::ZExt || e->op == Op::SExt);) {
+      const APInt &v = *constant(c);
+      unsigned w = e->a.width();
+      if (e->op == Op::ZExt ? !v.isIntN(w) : !v.isSignedIntN(w))
+        return;
+      x = e->a;
+      c = bv(v.trunc(w));
+      f(x, c);
+    }
   }, budget);
 }
 
@@ -244,24 +268,18 @@ Ref Terms::make(Node n) {
     n.x = it == nodes.end() ? 0 : it->second + 1;
   }
   if (!lambdas.empty() && (n.op == Op::Store || n.op == Op::Ite)) {
-    std::vector<Ref> reads;
-    auto add = [&](const Ref &l) {
-      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &x) { return x == l; }))
-        reads.push_back(l);
-    };
-    auto through = [&](const Ref &array) {
-      if (lambdas.count(array.id()))
-        add(array);
-      else if (auto u = under.find(array.id()); u != under.end())
-        for (const Ref &l : u->second)
-          add(l);
+    llvm::SmallVector<Ref, 2> kids;
+    auto add = [&](const Ref &array) {
+      if (lambdas.count(array.id()) || under.count(array.id()))
+        if (kids.empty() || kids[0] != array)
+          kids.push_back(array);
     };
     if (n.op == Op::Store)
-      through(n.a);
+      add(n.a);
     else
-      through(n.b), through(n.c);
-    if (!reads.empty())
-      under.emplace(r.id(), std::move(reads));
+      add(n.b), add(n.c);
+    if (!kids.empty())
+      under.try_emplace(r.id(), std::move(kids));
   }
   uint32_t idx = static_cast<uint32_t>(entries.size());
   entries.push_back(Entry{std::move(n), r});
@@ -367,6 +385,22 @@ Ref Terms::cancel(const Ref &sum, const Ref &part, unsigned &budget) {
     if (Ref r = cancel(n->b, part, budget)) return add(n->a, r);
   }
   return {};
+}
+
+bool Terms::isAdd(const Ref &e, Ref &a, Ref &b) const {
+  const Node *n = node(e);
+  if (!n || n->op != Op::Add)
+    return false;
+  a = n->a, b = n->b;
+  return true;
+}
+
+bool Terms::isSub(const Ref &e, Ref &a, Ref &b) const {
+  const Node *n = node(e);
+  if (!n || n->op != Op::Sub)
+    return false;
+  a = n->a, b = n->b;
+  return true;
 }
 
 bool Terms::sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth) {
@@ -488,10 +522,13 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
   // Past 1000 levels the join stops, which only loses a fold and
   // keeps the recursion off the end of the stack.
   if (nh && nl && nh->op == Op::Ite && nl->op == Op::Ite && nh->a == nl->a &&
-      joinDepth < 1000) {
+      joinDepth < 64 && (joinDepth == 0 || joinBudget > 0)) {
     Key k{Op::Concat, hi.id(), lo.id(), nullptr, 0, 0};
     if (Ref cached = memoFind(k))
       return cached;
+    if (joinDepth == 0)
+      joinBudget = 64;
+    --joinBudget;
     Ref c = nh->a, ha = nh->b, hb = nh->c, la = nl->b, lb = nl->c;
     ++joinDepth;
     Ref r = ite(c, concat(ha, la), concat(hb, lb));
@@ -767,6 +804,9 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
     if (arr != array)
       return select(arr, index);
   }
+  // A read where the last store wrote is the value stored.
+  if (const Node *n = node(arr); n && n->op == Op::Store && n->b == index)
+    return n->c;
   // A read of a constant array is its value, at any index.
   unsigned steps = 256;
   if (const APInt *ci = constant(index))
@@ -790,11 +830,22 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
   }
   bool fresh = !memoFind({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
   Ref r = make({Op::Select, arr, index});
-  if (!lambdas.empty())
-    if (auto u = under.find(arr.id()); fresh && u != under.end())
-      for (const Ref &l : std::vector<Ref>(u->second))
-        if (!memoFind({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
-          addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
+  if (!lambdas.empty() && fresh && under.count(arr.id())) {
+    llvm::SmallVector<Ref, 8> work{arr};
+    while (!work.empty()) {
+      Ref cur = work.pop_back_val();
+      if (!constrained.insert({cur.id(), index.id()}).second)
+        continue;
+      if (lambdas.count(cur.id())) {
+        if (!memoFind({Op::Select, cur.id(), index.id(), nullptr, 0, 0}))
+          addConstraint(eq(make({Op::Select, cur, index}), reduce(cur, index)));
+      } else if (auto u = under.find(cur.id()); u != under.end()) {
+        llvm::SmallVector<Ref, 2> kids = u->second;
+        for (const Ref &k : kids)
+          work.push_back(k);
+      }
+    }
+  }
   return r;
 }
 
@@ -1066,15 +1117,37 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
     if ((a = get(n.a)))
       r = right(*a, n.y);
     break;
-  case Op::ZExt:
+  case Op::ZExt: // any value of the operand's width, if nothing narrower
+    r = (a = get(n.a)) ? a : make(0, umax(n.a.width()), 1);
+    break;
   case Op::SExt: // below the sign bit, as zext
-    if ((a = get(n.a)) && (n.op == Op::ZExt || !(a->hi >> (n.a.width() - 1))))
+    if ((a = get(n.a)) && !(a->hi >> (n.a.width() - 1)))
       r = a;
     break;
   default:
     break;
   }
   return r;
+}
+
+// The least and greatest of a op b (+, - or *) over signed intervals a and
+// b, when no value wraps past w bits.
+static std::optional<std::pair<int64_t, int64_t>>
+signedOp(char op, std::pair<int64_t, int64_t> a, std::pair<int64_t, int64_t> b, unsigned w) {
+  using S = __int128;
+  S lo, hi;
+  if (op == '+') {
+    lo = S(a.first) + b.first, hi = S(a.second) + b.second;
+  } else if (op == '-') {
+    lo = S(a.first) - b.second, hi = S(a.second) - b.first;
+  } else {
+    S c[] = {S(a.first) * b.first, S(a.first) * b.second, S(a.second) * b.first,
+             S(a.second) * b.second};
+    lo = *std::min_element(c, c + 4), hi = *std::max_element(c, c + 4);
+  }
+  if (lo < smin(w) || hi > smax(w))
+    return std::nullopt;
+  return std::make_pair(int64_t(lo), int64_t(hi));
 }
 
 std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known known,
@@ -1091,9 +1164,16 @@ std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known kno
     meet(toSigned(r->lo, w), toSigned(r->hi, w));
   if (std::optional<Bounds> f = known ? known(e) : std::nullopt)
     meet(f->slo, f->shi);
-  if (const Node *n = node(e); n && n->op == Op::SExt && depth <= 32)
+  const Node *n = node(e);
+  if (n && n->op == Op::SExt && depth <= 32)
     if (auto a = srange(n->a, known, depth + 1))
       meet(a->first, a->second);
+  // Signed arithmetic that cannot wrap; few levels, as srange keeps no cache.
+  if (n && (n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul) && depth <= 8)
+    if (auto a = srange(n->a, known, depth + 1))
+      if (auto b = srange(n->b, known, depth + 1))
+        if (auto r = signedOp(n->op == Op::Add ? '+' : n->op == Op::Sub ? '-' : '*', *a, *b, w))
+          meet(r->first, r->second);
   if (lo > hi)
     return std::nullopt;
   return std::make_pair(lo, hi);
@@ -1116,13 +1196,17 @@ int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known know
 }
 
 int Terms::decide(const Ref &cmp, Known known) {
+  scratch.clear();
+  return decided(cmp, known);
+}
+
+int Terms::decided(const Ref &cmp, Known known) {
   const Node *n = node(cmp);
   if (!n)
     return -1;
-  scratch.clear();
   switch (n->op) {
   case Op::Not: {
-    int d = decide(n->a, known);
+    int d = decided(n->a, known);
     return d < 0 ? d : !d;
   }
   case Op::Ult:
@@ -1135,10 +1219,31 @@ int Terms::decide(const Ref &cmp, Known known) {
     std::optional<Range> x = range(n->a, known, 0), y = range(n->b, known, 0);
     if (x && y && (x->hi < y->lo || y->hi < x->lo))
       return 0;
+    if (x && y && x->lo == x->hi && y->lo == y->hi) // one value each, the same
+      return 1;
     auto sx = srange(n->a, known, 0), sy = srange(n->b, known, 0);
     if (sx && sy && (sx->second < sy->first || sy->second < sx->first))
       return 0;
     return -1;
+  }
+  case Op::UAddO:
+  case Op::USubO:
+  case Op::UMulO: { // no overflow when the result's extremes fit
+    using U = unsigned __int128;
+    std::optional<Range> x = range(n->a, known, 0), y = x ? range(n->b, known, 0) : std::nullopt;
+    if (!x || !y)
+      return -1;
+    if (n->op == Op::USubO)
+      return x->lo >= y->hi ? 0 : -1;
+    U hi = n->op == Op::UAddO ? U(x->hi) + y->hi : U(x->hi) * y->hi;
+    return hi <= umax(n->a.width()) ? 0 : -1;
+  }
+  case Op::SAddO:
+  case Op::SSubO:
+  case Op::SMulO: {
+    auto x = srange(n->a, known, 0), y = x ? srange(n->b, known, 0) : std::nullopt;
+    char op = n->op == Op::SAddO ? '+' : n->op == Op::SSubO ? '-' : '*';
+    return x && y && signedOp(op, *x, *y, n->a.width()) ? 0 : -1;
   }
   default:
     return -1;
@@ -1147,25 +1252,86 @@ int Terms::decide(const Ref &cmp, Known known) {
 
 void Terms::narrow(const Ref &cond, bool holds, Known known,
                    llvm::function_ref<void(const Ref &, const Bounds &)> set) {
+  // e's bounds under known as they are now.
+  auto now = [&](const Ref &e) {
+    unsigned w = e.width();
+    Bounds b{0, umax(w), smin(w), smax(w)};
+    scratch.clear(); // set may have moved a bound since the last query
+    if (std::optional<Range> r = range(e, known, 0))
+      b.ulo = r->lo, b.uhi = r->hi;
+    if (auto s = srange(e, known, 0))
+      b.slo = s->first, b.shi = s->second;
+    return b;
+  };
+  // Gives e the bounds b, when they are tighter than was and hold some
+  // value, and an extension's operand the part of them it can take.
+  std::function<void(const Ref &, const Bounds &, Bounds)> update =
+      [&](const Ref &e, const Bounds &was, Bounds b) {
+    unsigned w = e.width();
+    // Each order bounds the other on one side of the sign bit; twice
+    // carries a bound across both ways.
+    for (int i = 0; i < 2; ++i) {
+      if (b.ulo > b.uhi || b.slo > b.shi)
+        return;
+      if (oneSide(b.ulo, b.uhi, w))
+        b.slo = std::max(b.slo, toSigned(b.ulo, w)), b.shi = std::min(b.shi, toSigned(b.uhi, w));
+      if ((b.slo < 0) == (b.shi < 0))
+        b.ulo = std::max(b.ulo, toUnsigned(b.slo, w)), b.uhi = std::min(b.uhi, toUnsigned(b.shi, w));
+    }
+    if (b.ulo > b.uhi || b.slo > b.shi || b == was || constant(e))
+      return;
+    set(e, b);
+    // zext(x) <= 9 is x <= 9, and sext(x) >= -3 is x >= -3 as signed numbers.
+    const Node *x = node(e);
+    if (!x || (x->op != Op::ZExt && x->op != Op::SExt))
+      return;
+    Ref a = x->a;
+    Bounds ba = now(a), na = ba;
+    if (x->op == Op::ZExt)
+      na.ulo = std::max(ba.ulo, b.ulo), na.uhi = std::min(ba.uhi, b.uhi);
+    else
+      na.slo = std::max(ba.slo, b.slo), na.shi = std::min(ba.shi, b.shi);
+    update(a, ba, na);
+  };
   unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     bool sign = n.op == Op::Slt || n.op == Op::Sle;
-    if ((!sign && n.op != Op::Ult && n.op != Op::Ule) || n.a.width() > 64)
+    if ((!sign && n.op != Op::Ult && n.op != Op::Ule && n.op != Op::Eq) || !n.a.isBV() ||
+        n.a.width() > 64)
       return;
+    unsigned w = n.a.width();
+    if (n.op == Op::Eq) {
+      Bounds ba = now(n.a), bb = now(n.b);
+      if (h) { // a = b: each is within the other's bounds
+        Bounds both{std::max(ba.ulo, bb.ulo), std::min(ba.uhi, bb.uhi),
+                    std::max(ba.slo, bb.slo), std::min(ba.shi, bb.shi)};
+        update(n.a, ba, both);
+        update(n.b, bb, both);
+        return;
+      }
+      // x != c, where c is an end of x's bounds, moves that end off c.
+      auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
+        if (c.ulo != c.uhi || c.slo != c.shi)
+          return;
+        Bounds nb = b;
+        if (b.ulo != b.uhi && b.ulo == c.ulo)
+          ++nb.ulo;
+        else if (b.ulo != b.uhi && b.uhi == c.ulo)
+          --nb.uhi;
+        if (b.slo != b.shi && b.slo == c.slo)
+          ++nb.slo;
+        else if (b.slo != b.shi && b.shi == c.slo)
+          --nb.shi;
+        update(x, b, nb);
+      };
+      off(n.a, ba, bb);
+      off(n.b, bb, ba);
+      return;
+    }
     // x < y, or x <= y; when the literal fails, its sides swap: !(a < b) is
     // b <= a.
     bool strict = (n.op == Op::Ult || n.op == Op::Slt) == h;
     const Ref &x = h ? n.a : n.b, &y = h ? n.b : n.a;
-    unsigned w = x.width();
-    scratch.clear();
-    auto now = [&](const Ref &e) {
-      Bounds b{0, umax(w), smin(w), smax(w)};
-      if (std::optional<Range> r = range(e, known, 0))
-        b.ulo = r->lo, b.uhi = r->hi;
-      if (auto s = srange(e, known, 0))
-        b.slo = s->first, b.shi = s->second;
-      return b;
-    };
     Bounds bx = now(x), by = now(y), nx = bx, ny = by;
     // x <= max(y) - strict and y >= min(x) + strict; past the type's
     // limits, no execution takes the path.
@@ -1180,23 +1346,101 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
       nx.uhi = std::min(bx.uhi, by.uhi - strict);
       ny.ulo = std::max(by.ulo, bx.ulo + strict);
     }
-    auto update = [&](const Ref &e, const Bounds &was, Bounds b) {
-      // Each order bounds the other on one side of the sign bit; twice
-      // carries a bound across both ways.
-      for (int i = 0; i < 2; ++i) {
-        if (b.ulo > b.uhi || b.slo > b.shi)
-          return;
-        if (oneSide(b.ulo, b.uhi, w))
-          b.slo = std::max(b.slo, toSigned(b.ulo, w)), b.shi = std::min(b.shi, toSigned(b.uhi, w));
-        if ((b.slo < 0) == (b.shi < 0))
-          b.ulo = std::max(b.ulo, toUnsigned(b.slo, w)), b.uhi = std::min(b.uhi, toUnsigned(b.shi, w));
-      }
-      if (b.ulo <= b.uhi && b.slo <= b.shi && !(b == was) && !constant(e))
-        set(e, b);
-    };
     update(x, bx, nx);
     update(y, by, ny);
   }, budget);
+}
+
+Ref Terms::assumed(const Ref &x, Known known, llvm::DenseMap<const void *, Ref> &memo,
+                   unsigned &budget) {
+  const Node *n = node(x);
+  if (!n || !budget)
+    return x;
+  if (auto it = memo.find(x.id()); it != memo.end())
+    return it->second;
+  --budget;
+  // Operands in order, so that what the budget reaches does not depend on
+  // the compiler.
+  auto go = [&](const Ref &e) { return assumed(e, known, memo, budget); };
+  auto go2 = [&](const Ref &e, const Ref &f) {
+    Ref first = go(e);
+    return std::make_pair(first, go(f));
+  };
+  Ref a = n->a, b = n->b, c = n->c, r = x;
+  unsigned hi = n->x, lo = n->y;
+  switch (n->op) {
+  case Op::Eq:
+  case Op::Ult:
+  case Op::Ule:
+  case Op::Slt:
+  case Op::Sle:
+  case Op::UAddO:
+  case Op::SAddO:
+  case Op::USubO:
+  case Op::SSubO:
+  case Op::UMulO:
+  case Op::SMulO:
+    if (int d = decided(x, known); d >= 0)
+      r = boolean(d);
+    break;
+  case Op::Not: r = lnot(go(a)); break;
+  case Op::And: {
+    auto [p, q] = go2(a, b);
+    r = land(p, q);
+    break;
+  }
+  case Op::Or: {
+    auto [p, q] = go2(a, b);
+    r = lor(p, q);
+    break;
+  }
+  case Op::Ite: {
+    Ref d = go(a);
+    if (isTrue(d) || isFalse(d)) {
+      r = go(isTrue(d) ? b : c);
+    } else {
+      auto [p, q] = go2(b, c);
+      r = ite(d, p, q);
+    }
+    break;
+  }
+  case Op::Concat: {
+    auto [p, q] = go2(a, b);
+    r = concat(p, q);
+    break;
+  }
+  case Op::Extract: r = extract(go(a), hi, lo); break;
+  case Op::ZExt: r = zext(go(a), hi); break;
+  case Op::SExt: r = sext(go(a), hi); break;
+  case Op::Select: { // past the stores at indices b never equals
+    Ref arr = a, i, v, at;
+    while (budget && stored(arr, at, i, v)) {
+      --budget;
+      Ref same = eq(b, i);
+      int d = isTrue(same) ? 1 : isFalse(same) ? 0 : decided(same, known);
+      if (d == 1) {
+        r = v;
+        break;
+      }
+      if (d < 0)
+        break;
+      arr = at;
+    }
+    if (r == x && arr != a)
+      r = select(arr, b);
+    break;
+  }
+  default: break;
+  }
+  memo[x.id()] = r;
+  return r;
+}
+
+Ref Terms::assuming(const Ref &e, Known known) {
+  llvm::DenseMap<const void *, Ref> memo;
+  unsigned budget = 256;
+  scratch.clear(); // known stays as it is through the walk
+  return assumed(e, known, memo, budget);
 }
 
 unsigned Terms::zeros(const Ref &e, unsigned depth) {
@@ -1219,8 +1463,12 @@ Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
 }
 
 Ref Terms::constArray(const camada::SMTSortRef &index, const Ref &value) {
+  auto key = std::make_pair(static_cast<const void *>(index.get()), value.id());
+  if (auto it = constArrays.find(key); it != constArrays.end())
+    return it->second;
   Ref r(s.mkArrayConst(index, solverTerm(value)));
   filled.try_emplace(r.id(), r, value);
+  constArrays.try_emplace(key, r);
   return r;
 }
 

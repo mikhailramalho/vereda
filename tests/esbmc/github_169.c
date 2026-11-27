@@ -11,7 +11,7 @@ main(argc, argv) char **argv;
 }
 void h(f) { c(f, ); }
 // Imported from ESBMC regression/esbmc/github_169
-// RUN: --no-pointer-check --no-div-by-zero-check --incremental-bmc --max-k-step 10
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --incremental-bmc --max-k-step 10
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: unmet EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE

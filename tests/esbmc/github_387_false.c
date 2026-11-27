@@ -8,7 +8,7 @@ main() {
 }
 // Imported from ESBMC regression/esbmc/github_387_false
 // Needs: --memory-leak-check
-// RUN: --no-slice --memory-leak-check --z3 -Wno-error=implicit-function-declaration -Wno-error=implicit-int
+// RUN: --memory-leak-check --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

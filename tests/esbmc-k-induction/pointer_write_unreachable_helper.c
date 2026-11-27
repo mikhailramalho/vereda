@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/pointer_write_unreachable_helper
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check
+// RUN: --k-induction --max-k-step 12 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

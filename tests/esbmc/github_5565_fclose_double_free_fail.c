@@ -18,6 +18,3 @@ int main(void)
 // RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: invalidated dynamic object freed\b
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

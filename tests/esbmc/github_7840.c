@@ -10,5 +10,5 @@ long long f(long long T, long long s)
   return (long long)result;
 }
 // Imported from ESBMC regression/esbmc/github_7840
-// RUN: --overflow-check --entry f
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --entry f
 // EXPECT: ^VERIFICATION SUCCESSFUL$

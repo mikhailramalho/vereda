@@ -73,7 +73,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/01_cond_07
 // Needs: --context-bound 1
-// RUN: --no-unwinding-assertions --unwind 4 --context-bound 1 -Wno-error=implicit-function-declaration
+// RUN: --no-unwinding-assertions --unwind 4 --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -21,7 +21,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_5230_pointer_write_dynamic
 // Needs: --k-induction --max-inductive-step 3
-// RUN: --k-induction --max-inductive-step 3 --force-malloc-success --no-bounds-check
+// RUN: --k-induction --max-inductive-step 3 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: cannot havoc what a loop writes through a pointer

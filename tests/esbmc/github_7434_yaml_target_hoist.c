@@ -13,7 +13,7 @@ int main(void)
   return dst[0];
 }
 // Imported from ESBMC regression/esbmc/github_7434_yaml_target_hoist
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

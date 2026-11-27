@@ -229,8 +229,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10063_heap
-// Needs: --unwindset 6:65,3:4 --timeout 60s
-// RUN: --unwind 2 --unwindset 6:65,3:4 --no-unwinding-assertions --timeout 60s
+// Needs: --unwindset 6:65,3:4
+// RUN: --unwind 2 --unwindset 6:65,3:4 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

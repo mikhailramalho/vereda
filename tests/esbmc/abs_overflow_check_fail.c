@@ -10,7 +10,7 @@ int main()
   return abs(x);
 }
 // Imported from ESBMC regression/esbmc/abs_overflow_check_fail
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on abs
 // Vereda: unmet EXPECT: arithmetic overflow on abs

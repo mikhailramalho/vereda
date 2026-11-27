@@ -21,8 +21,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_race_guarded_fail
-// Needs: --partial-order --data-race-check
-// RUN: --partial-order --data-race-check
+// Needs: --partial-order --ub-data-race-check
+// RUN: --partial-order --ub-data-race-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -50,7 +50,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4986
 // Needs: --force-realloc-success
-// RUN: -m64 --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --no-vla-size-check --no-pointer-check --no-bounds-check --overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --solver bitwuzla
+// RUN: -m64 --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --vla-size-check=false --ub-pointer-check=false --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-assertions --incremental-bmc --k-step 2 --unlimited-k-steps --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

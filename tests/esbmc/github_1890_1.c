@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1890_1
 // Needs: --k-induction
-// RUN: --multi-property --overflow-check --k-induction
+// RUN: --multi-property --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdivision by zero\b

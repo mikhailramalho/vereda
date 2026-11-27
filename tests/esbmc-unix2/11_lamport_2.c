@@ -21,7 +21,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix2/11_lamport_2
 // Needs: --no-por
-// RUN: --unwind 1 --no-unwinding-assertions --no-por -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
+// RUN: --unwind 1 --no-unwinding-assertions --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

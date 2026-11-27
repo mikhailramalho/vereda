@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/pointer_write_heap_root_truncated_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success
+// RUN: --k-induction --max-k-step 12 --ub-pointer-check=false --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

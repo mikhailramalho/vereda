@@ -45,7 +45,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix2/11_bluetooth
 // Needs: --context-bound 2
-// RUN: --unwind 1 --no-unwinding-assertions --context-bound 2 -Wno-error=implicit-function-declaration
+// RUN: --unwind 1 --no-unwinding-assertions --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

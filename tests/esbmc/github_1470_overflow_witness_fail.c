@@ -14,8 +14,8 @@ int main(void)
   return result == 0;
 }
 // Imported from ESBMC regression/esbmc/github_1470_overflow_witness_fail
-// Needs: --witness-output-graphml -
-// RUN: --overflow-check --witness-output-graphml -
+// Needs: --witness-output-graphml
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: data == 9223372036854775807
 // EXPECT: ^VERIFICATION FAILED$

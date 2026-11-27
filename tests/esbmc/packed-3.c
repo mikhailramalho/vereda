@@ -13,7 +13,7 @@ void fun3(struct S *s)
 	s->s;
 }
 // Imported from ESBMC regression/esbmc/packed-3
-// RUN: --entry fun3 --no-pointer-check
+// RUN: --entry fun3 --ub-pointer-check=false
 // EXPECT: ^WARNING: not checking alignment .* packed struct struct S$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct struct S$

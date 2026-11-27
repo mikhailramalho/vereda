@@ -15,7 +15,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9883_ternary_waypoint
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

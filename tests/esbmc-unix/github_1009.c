@@ -30,5 +30,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

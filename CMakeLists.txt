@@ -35,6 +35,8 @@ llvm_map_components_to_libnames(llvm_libs core irreader support passes linker)
 # One static library for every stage; the driver and the unit tests link it.
 add_library(libvereda STATIC
   src/analysis/loops.cpp
+  src/analysis/termination.cpp
+  src/analysis/writes.cpp
   src/ir/load.cpp
   src/ir/source.cpp
   src/encode/encoder.cpp
@@ -90,8 +92,10 @@ endif()
 # their own mapping, unmapped when freed, as glibc does, instead of an arena
 # of their own that outlives them: on esbmc-cstd/scanf-false-3, CaDiCaL
 # growing a vector to 512 MiB ran out of address space at 2.4 GB resident.
-# Without a MIMALLOC_SOURCE_DIR (DOWNLOAD_DEPENDENCIES sets one), glibc's
-# malloc stays.
+# The driver registers mimalloc's error hook, so that an allocation that
+# fails outside operator new (Bitwuzla's calloc) ends the run as out of
+# memory too. Without a MIMALLOC_SOURCE_DIR (DOWNLOAD_DEPENDENCIES sets one),
+# glibc's malloc stays.
 if(MIMALLOC_SOURCE_DIR)
   set(MI_BUILD_SHARED OFF CACHE BOOL "" FORCE)
   set(MI_BUILD_STATIC OFF CACHE BOOL "" FORCE)
@@ -101,6 +105,8 @@ if(MIMALLOC_SOURCE_DIR)
   target_compile_definitions(mimalloc-obj PRIVATE # KiB
     MI_DEFAULT_ARENA_RESERVE=65536 MI_DEFAULT_ARENA_MAX_OBJECT_SIZE=32768)
   target_sources(vereda PRIVATE $<TARGET_OBJECTS:mimalloc-obj>)
+  target_include_directories(vereda PRIVATE "${MIMALLOC_SOURCE_DIR}/include")
+  target_compile_definitions(vereda PRIVATE VEREDA_MIMALLOC)
 endif()
 
 # The C library models (models/*.c) as one bitcode file per pointer width,

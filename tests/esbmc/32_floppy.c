@@ -8281,7 +8281,7 @@ NTSTATUS ZwClose(HANDLE Handle )
 }
 // Imported from ESBMC regression/esbmc/32_floppy
 // Needs: --error-label ERROR
-// RUN: --unwind 1 --no-bounds-check --no-pointer-check --no-div-by-zero-check --error-label ERROR -Wno-error=int-conversion
+// RUN: --unwind 1 --ub-pointer-check=false --ub-div-by-zero-check=false --error-label ERROR
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

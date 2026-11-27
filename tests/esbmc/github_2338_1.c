@@ -8,5 +8,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_2338_1
-// RUN: --unsigned-overflow-check
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

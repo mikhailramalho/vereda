@@ -35,6 +35,3 @@ int main() {
 // Imported from ESBMC regression/esbmc/realloc16
 // RUN: --unwind 6
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

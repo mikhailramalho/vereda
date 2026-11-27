@@ -124,6 +124,6 @@ int main(void)
 
 
 // Imported from ESBMC regression/esbmc/overflow_17_crc_new
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -41,8 +41,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_union_z3_fail
-// Needs: --timeout 60s
-// RUN: --z3 --no-pointer-check --no-bounds-check --timeout 60s
-// MODE: FUTURE
+// RUN: --solver z3 --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

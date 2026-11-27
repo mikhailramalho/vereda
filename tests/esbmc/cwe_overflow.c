@@ -6,7 +6,7 @@ int main(void)
   return x + 1;
 }
 // Imported from ESBMC regression/esbmc/cwe_overflow
-// RUN: --overflow-check --incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  arithmetic overflow on add$
 // EXPECT: ^  CWE: CWE-190, CWE-191$

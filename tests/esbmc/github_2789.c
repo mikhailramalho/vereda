@@ -11,8 +11,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2789
-// RUN: --overflow-check --no-unwinding-assertions --unwind 1
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-unwinding-assertions --unwind 1
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

@@ -33,7 +33,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread14
 // Needs: --no-por
-// RUN: --no-por -Wno-error=implicit-function-declaration -Wno-error=int-conversion
+// RUN: --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

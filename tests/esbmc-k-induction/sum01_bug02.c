@@ -13,7 +13,7 @@ int main() {
 }
 // Imported from ESBMC regression/k-induction/sum01_bug02
 // Needs: --k-induction
-// RUN: --k-induction  -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

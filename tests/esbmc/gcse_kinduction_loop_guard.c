@@ -67,7 +67,7 @@ ELSE:
 }
 // Imported from ESBMC regression/esbmc/gcse_kinduction_loop_guard
 // Needs: --sv-comp --interval-analysis --k-induction --max-inductive-step 3
-// RUN: --sv-comp --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --interval-analysis --no-bounds-check --k-induction --max-inductive-step 3 --max-k-step 6
+// RUN: --sv-comp --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --vla-size-check=false -m32 --ub-pointer-check=false --interval-analysis --k-induction --max-inductive-step 3 --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

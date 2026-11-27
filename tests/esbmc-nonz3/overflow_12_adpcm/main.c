@@ -472,6 +472,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/nonz3/overflow_12_adpcm
-// RUN: --unwind 100 --overflow-check --solver z3
+// RUN: --unwind 100 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --solver z3
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

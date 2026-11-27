@@ -21,7 +21,7 @@ main()
 
 // Imported from ESBMC regression/k-induction/sum_array_bug
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration -Wno-error=implicit-int
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

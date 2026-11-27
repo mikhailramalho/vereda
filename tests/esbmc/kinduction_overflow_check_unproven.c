@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/kinduction_overflow_check_unproven
 // Needs: --k-induction
-// RUN: --overflow-check --k-induction --max-k-step 6
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction --max-k-step 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

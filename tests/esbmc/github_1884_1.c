@@ -10,5 +10,5 @@ int main(){
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1884_1
-// RUN: --unsigned-overflow-check
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$

@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/github_9881_function_return_rparen_line
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: -m32 --no-pointer-check --no-bounds-check --validate-violation-witness --witness witness.yml
+// RUN: -m32 --ub-pointer-check=false --validate-violation-witness --witness witness.yml
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

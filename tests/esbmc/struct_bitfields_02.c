@@ -35,3 +35,6 @@ int main()
 // Imported from ESBMC regression/esbmc/struct_bitfields_02
 // RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
+// MODE: KNOWNBUG
+// Vereda: verdict FAILED

@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/fnptr_no_target
 // Needs: --k-induction --max-inductive-step 5
-// RUN: --k-induction --max-inductive-step 5 --no-pointer-check --no-bounds-check
+// RUN: --k-induction --max-inductive-step 5 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: Solution found by the inductive step

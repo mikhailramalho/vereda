@@ -46,7 +46,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread57
 // Needs: --context-bound 2
-// RUN: --force-malloc-success --incremental-bmc --context-bound 2 -Wno-error=implicit-function-declaration
+// RUN: --force-malloc-success --incremental-bmc --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

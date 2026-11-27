@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/incremental-smt/incremental-10
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

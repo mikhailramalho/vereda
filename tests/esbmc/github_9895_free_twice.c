@@ -12,6 +12,3 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: invalidated dynamic object freed
 // EXPECT: \A(?![\s\S]*invalidated dynamic object$)[\s\S]*\Z
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

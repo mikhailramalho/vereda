@@ -28,7 +28,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/pointer_write_store_through_top_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check
+// RUN: --k-induction --max-k-step 12 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

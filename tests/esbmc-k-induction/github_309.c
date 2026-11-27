@@ -25,7 +25,7 @@ int main() {
 
 // Imported from ESBMC regression/k-induction/github_309
 // Needs: --k-induction --max-inductive-step 3 --interval-analysis
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --k-induction --max-inductive-step 3 --no-pointer-check --no-bounds-check --interval-analysis
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --k-induction --max-inductive-step 3 --ub-pointer-check=false --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

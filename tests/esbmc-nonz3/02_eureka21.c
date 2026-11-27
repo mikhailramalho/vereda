@@ -45,7 +45,7 @@ int main()
 
 // Imported from ESBMC regression/nonz3/02_eureka21
 // Needs: --claim 1
-// RUN: --claim 1 --unwind 8 -Wno-error=implicit-function-declaration
+// RUN: --claim 1 --unwind 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

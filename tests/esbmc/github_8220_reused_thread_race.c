@@ -32,8 +32,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8220_reused_thread_race
-// Needs: --sv-comp --data-races-check-only --timeout 60s
-// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --no-pointer-check --no-bounds-check --timeout 60s
+// Needs: --sv-comp --data-races-check-only
+// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

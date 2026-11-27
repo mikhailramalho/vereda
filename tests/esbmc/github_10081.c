@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10081
 // Needs: --sv-comp
-// RUN: --sv-comp --force-malloc-success --no-pointer-check
+// RUN: --sv-comp --force-malloc-success --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

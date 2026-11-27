@@ -5,7 +5,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/target_after_bundled_initializer
 // Needs: --no-fp-overflow-check --validate-violation-witness --witness witness.yml
-// RUN: --overflow-check --no-fp-overflow-check --validate-violation-witness --witness witness.yml --incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --validate-violation-witness --witness witness.yml --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -27,7 +27,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6596_uninit_ptr_norace
 // Needs: --data-races-check-only
-// RUN: -m32 --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions
+// RUN: -m32 --ub-pointer-check=false --data-races-check-only --no-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

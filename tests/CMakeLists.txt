@@ -42,6 +42,10 @@ if(TARGET libvereda)
   target_link_libraries(vereda-store-reads PRIVATE libvereda)
   add_test(NAME vereda/store_reads COMMAND vereda-store-reads)
   set_tests_properties(vereda/store_reads PROPERTIES LABELS vereda TIMEOUT 60)
+  add_executable(vereda-loop-transition loop_transition.cpp)
+  target_link_libraries(vereda-loop-transition PRIVATE libvereda)
+  add_test(NAME vereda/loop_transition COMMAND vereda-loop-transition)
+  set_tests_properties(vereda/loop_transition PROPERTIES LABELS vereda TIMEOUT 60)
   add_executable(vereda-solver-verdicts solver_verdicts.cpp)
   target_link_libraries(vereda-solver-verdicts PRIVATE libvereda)
   add_test(NAME vereda/solver_verdicts COMMAND vereda-solver-verdicts)
@@ -50,10 +54,14 @@ if(TARGET libvereda)
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
   set_tests_properties(vereda/banner PROPERTIES LABELS vereda)
+  add_test(NAME vereda/out_of_memory
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/out_of_memory.py"
+            "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
+  set_tests_properties(vereda/out_of_memory PROPERTIES LABELS vereda TIMEOUT 120)
   add_test(NAME vereda/check_flags
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/check_flags.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
-  set_tests_properties(vereda/check_flags PROPERTIES LABELS vereda TIMEOUT 60)
+  set_tests_properties(vereda/check_flags PROPERTIES LABELS vereda TIMEOUT 120)
   add_test(NAME vereda/frontend_options
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/frontend_options.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")

@@ -13,7 +13,7 @@ short fun2(P *p, size_t i)
 	return p[i].b;
 }
 // Imported from ESBMC regression/esbmc/packed-2
-// RUN: --entry fun2 --no-pointer-check
+// RUN: --entry fun2 --ub-pointer-check=false
 // EXPECT: ^WARNING: not checking alignment .* packed struct .*P.*$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct .*P.*$

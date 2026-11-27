@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc-unix2/13_privatized_68
 // Needs: --no-por
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps -m32  --no-por --no-pointer-check --no-bounds-check --no-unwinding-assertions --unwind 1
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps -m32 --no-por --ub-pointer-check=false --no-unwinding-assertions --unwind 1
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -7,7 +7,7 @@ int main(void)
   return 10 / d;
 }
 // Imported from ESBMC regression/esbmc/github_7434_originfile_single_file
-// Needs: --witness-output-graphml -
+// Needs: --witness-output-graphml
 // RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

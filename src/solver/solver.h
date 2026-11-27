@@ -24,7 +24,9 @@ struct Verdict {
 // Incremental mode: asks one solver about each check under its own assumption,
 // assertions before unwinding assertions. Calls violated on each satisfiable
 // one while its model is available, and stops there unless all is set.
-Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
+// With skipUnwindModel, an unwinding check that folds to true fails without a solver call,
+// as in decideNonIncremental.
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool skipUnwindModel,
                llvm::function_ref<void(const checks::Check &)> violated);
 
 // Non-incremental mode: asserts each phase's disjunction directly and calls

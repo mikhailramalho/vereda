@@ -24,8 +24,8 @@ int main()
   pthread_create(&id2, NULL, t2, NULL);
 }
 // Imported from ESBMC regression/esbmc-unix/00_race04
-// Needs: --data-race-check
-// RUN: --data-race-check
+// Needs: --ub-data-race-check
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

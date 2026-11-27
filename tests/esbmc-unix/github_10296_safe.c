@@ -5,8 +5,8 @@ pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
 void *t(void *a) { pthread_mutex_lock(&m); x = x + 1; pthread_mutex_unlock(&m); return 0; }
 int main() { pthread_t a,b; pthread_create(&a,0,t,0); pthread_create(&b,0,t,0); pthread_join(a,0); pthread_join(b,0); assert(x == 2); return 0; }
 // Imported from ESBMC regression/esbmc-unix/github_10296_safe
-// Needs: --schedule --context-bound 1
-// RUN: --schedule --context-bound 1
+// Needs: --context-bound 1
+// RUN: --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

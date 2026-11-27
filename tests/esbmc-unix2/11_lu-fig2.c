@@ -44,7 +44,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix2/11_lu-fig2
 // Needs: --context-bound 2
-// RUN: --incremental-bmc --context-bound 2 -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
+// RUN: --incremental-bmc --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

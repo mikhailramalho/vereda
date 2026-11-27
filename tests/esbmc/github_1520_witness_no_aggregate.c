@@ -20,8 +20,8 @@ int main()
   assert(x);
 }
 // Imported from ESBMC regression/esbmc/github_1520_witness_no_aggregate
-// Needs: --witness-output-graphml -
-// RUN: --witness-output-graphml - -Wno-error=implicit-function-declaration
+// Needs: --witness-output-graphml
+// RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">x == 0;

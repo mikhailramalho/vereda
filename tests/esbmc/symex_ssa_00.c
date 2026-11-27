@@ -97,7 +97,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/symex_ssa_00
 // Needs: --memory-leak-check
-// RUN: --overflow-check --unsigned-overflow-check --memory-leak-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unsigned-overflow-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

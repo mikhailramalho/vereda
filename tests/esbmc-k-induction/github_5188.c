@@ -14,7 +14,7 @@ int g(int a, int b)
 }
 // Imported from ESBMC regression/k-induction/github_5188
 // Needs: --k-induction
-// RUN: --function g --k-induction --overflow-check
+// RUN: --function g --k-induction --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on add

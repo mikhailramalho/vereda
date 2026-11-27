@@ -10,8 +10,8 @@ int main(void)
   return next(__VERIFIER_nondet_int());
 }
 // Imported from ESBMC regression/esbmc/github_9885_yaml_target_return
-// Needs: --witness-output-yaml -
-// RUN: --overflow-check --witness-output-yaml -
+// Needs: --witness-output-yaml
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"\n.*\n.*\n.*\n\s*line: 5\n\s*column: 10$

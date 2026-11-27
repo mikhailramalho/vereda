@@ -8,8 +8,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6422_6
-// Needs: --schedule
-// RUN: --multi-property --schedule
-// MODE: FUTURE
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

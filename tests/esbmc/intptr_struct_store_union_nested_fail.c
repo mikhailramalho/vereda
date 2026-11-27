@@ -54,8 +54,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_union_nested_fail
-// Needs: --timeout 60s
-// RUN: --no-pointer-check --no-bounds-check --timeout 60s
-// MODE: FUTURE
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

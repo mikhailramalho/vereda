@@ -28,4 +28,9 @@ llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::L
                                                    bool alignmentCheck = false,
                                                    bool uninitCheck = false);
 
+// Whether the loader runs code g names, outside the entry's calls: a
+// constructor or destructor list, a global placed in one of their sections,
+// or an ifunc, whose resolver runs.
+bool runsAtLoad(const llvm::GlobalValue &g);
+
 } // namespace vereda::ir

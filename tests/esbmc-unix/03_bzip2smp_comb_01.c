@@ -6358,7 +6358,7 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc-unix/03_bzip2smp_comb_01
 // Needs: --claim 1 --context-bound 1 --depth 200
-// RUN: --no-pointer-check --no-bounds-check --no-div-by-zero-check --unwind 1 --claim 1 --context-bound 1 --no-unwinding-assertions --depth 200
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --unwind 1 --claim 1 --context-bound 1 --no-unwinding-assertions --depth 200
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

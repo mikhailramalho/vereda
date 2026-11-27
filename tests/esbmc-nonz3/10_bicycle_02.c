@@ -1304,8 +1304,8 @@ static void _ZN6Thread5startEv(struct l_class_OC_Thread *this) {
 /**********************VarMap.dat (Variable Name) Content************************/
 /******************************************************************************/
 // Imported from ESBMC regression/nonz3/10_bicycle_02
-// Needs: --context-bound 3 --schedule
-// RUN: --unwind 1 --no-pointer-check --no-unwinding-assertions  --context-bound 3 --no-slice --schedule
+// Needs: --context-bound 3
+// RUN: --unwind 1 --ub-pointer-check=false --no-unwinding-assertions --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

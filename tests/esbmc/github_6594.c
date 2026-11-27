@@ -59,7 +59,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_6594
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
-// RUN: -m32 --no-div-by-zero-check --force-malloc-success --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --incremental-bmc
+// RUN: -m32 --ub-div-by-zero-check=false --force-malloc-success --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

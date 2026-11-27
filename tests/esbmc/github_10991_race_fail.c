@@ -23,8 +23,8 @@ int main()
   return a;
 }
 // Imported from ESBMC regression/esbmc/github_10991_race_fail
-// Needs: --data-race-check
-// RUN: --data-race-check --unwind 6
+// Needs: --ub-data-race-check
+// RUN: --ub-data-race-check --unwind 6
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  R/W data race on c:@d$

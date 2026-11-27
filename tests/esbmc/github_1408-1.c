@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1408-1
 // Needs: --no-bound
-// RUN: --unwind 3 --no-pointer-check --no-bound --no-div-by-zero-check --no-slice -Wno-error=implicit-function-declaration
+// RUN: --unwind 3 --ub-pointer-check=false --no-bound --ub-div-by-zero-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -42,7 +42,7 @@ int main() {
 }
 // Imported from ESBMC regression/k-induction/is_pointer_invariant_list_bug
 // Needs: --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
-// RUN: --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3
+// RUN: --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

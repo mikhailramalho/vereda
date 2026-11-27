@@ -25,5 +25,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_int_base_pointer_member
-// RUN: --no-pointer-check
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$

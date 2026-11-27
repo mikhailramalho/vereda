@@ -7,8 +7,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/goto-coverage/github_6422_5
-// Needs: --assertion-coverage --schedule
-// RUN: --assertion-coverage --schedule
+// Needs: --assertion-coverage
+// RUN: --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^Total Asserts: 1
 // EXPECT: ^Total Assertion Instances: 1
