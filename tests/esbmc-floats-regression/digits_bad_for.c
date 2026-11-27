@@ -18,6 +18,3 @@ int main()
 
 // Imported from ESBMC regression/floats-regression/digits_bad_for
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

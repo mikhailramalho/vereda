@@ -12,6 +12,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/irep2_only_fma_lowering_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

@@ -202,18 +202,18 @@ def main():
         fail(f"{parser.prog}: error: {message}")
     parser.error = error
     args, rest = parser.parse_known_args()
-    flags = ["-m32"] * args.m32 + ["-m64"] * args.m64
+    # Clang's default -ffp-contract=on turns a * b + c into llvm.fmuladd even
+    # at -O0, leaving the rounding to the back end: x86-64 without FMA rounds
+    # the product and the sum apart, as ESBMC and SV-COMP's verdicts assume,
+    # while Vereda and InstCombine's folding fused it. Contraction off gives
+    # the fmul and fadd that build runs. An explicit fma() still fuses.
+    flags = ["-m32"] * args.m32 + ["-m64"] * args.m64 + ["-ffp-contract=off"]
     if args.std is not None:
         flags.append("-std=" + args.std)
     if args.property_file:
         entry, prop, sanitize = read_property(args.property_file)
         args.sanitize += sanitize
         rest += ["--entry", entry, "--property", prop]
-        # SV-COMP's expected verdicts, its validators and ESBMC round a * b and
-        # the + c apart, as x86-64 without FMA runs it; clang's default
-        # -ffp-contract=on lets a * b + c fuse into one rounding. An explicit
-        # fma() still fuses.
-        flags.append("-ffp-contract=off")
         # As ESBMC's SV-COMP runs (esbmc-wrapper.py): no largest bound, so the
         # time limit ends the run, and a step of 2. A step of 8 answered more
         # of the tasks that stopped at bound 50 but skipped the small bounds
