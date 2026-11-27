@@ -14,6 +14,7 @@
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
@@ -1835,6 +1836,25 @@ static void threadBoolPhis(Module &m) {
   }
 }
 
+// --error-label: a call to the bodyless __vereda_error_label, a failed
+// check for the walker, at each debug label record named label, as ESBMC's
+// assert(false) at the C label. It goes before the instruction the record
+// is attached to, at the label's location.
+static void markErrorLabels(Module &m, StringRef label) {
+  SmallVector<std::pair<Instruction *, DebugLoc>, 1> at;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f))
+      for (DbgRecord &r : i.getDbgRecordRange())
+        if (auto *l = dyn_cast<DbgLabelRecord>(&r); l && l->getLabel()->getName() == label)
+          at.push_back({&i, l->getDebugLoc()});
+  if (at.empty())
+    return;
+  FunctionCallee error =
+      m.getOrInsertFunction("__vereda_error_label", Type::getVoidTy(m.getContext()));
+  for (auto &[i, loc] : at)
+    CallInst::Create(error, "", i->getIterator())->setDebugLoc(loc);
+}
+
 // Turns a scalar global that only the entry function uses into a local of
 // it, so that mem2reg and SCEV see a loop over a global counter as they see
 // one over a local, and its array loop is summarised (#380, cause 5). Sound
@@ -1907,7 +1927,7 @@ static bool promoteEntryGlobals(Module &m, StringRef entry) {
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
-                                       bool uninitCheck) {
+                                       bool uninitCheck, StringRef errorLabel) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1926,6 +1946,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);
+  if (!errorLabel.empty())
+    markErrorLabels(*module, errorLabel);
   if (alignmentCheck)
     checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);

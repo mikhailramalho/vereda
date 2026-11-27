@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_2775-safe
-// Needs: --error-label ERROR --k-induction --max-inductive-step 3
+// Needs: --k-induction --max-inductive-step 3
 // RUN: --k-step 2 --unlimited-k-steps -m64 --error-label ERROR --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

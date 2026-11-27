@@ -62,6 +62,8 @@ for esbmc, vereda in (
          ["--ub-signed-overflow-check", "--ub-shift-check", "--ub-float-cast-overflow-check",
           "--unsigned-overflow-check"])):
     assert import_esbmc.translate(esbmc, ".") == (vereda, [], []), esbmc
+assert import_esbmc.translate("--error-label ERROR --unwind 1", ".") == (
+    ["--error-label", "ERROR", "--unwind", "1"], [], [])
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 

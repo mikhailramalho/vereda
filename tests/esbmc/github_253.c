@@ -460,8 +460,5 @@ ERROR : __VERIFIER_error();
 return ;
 }
 // Imported from ESBMC regression/esbmc/github_253
-// Needs: --error-label ERROR
 // RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --error-label ERROR --unwind 7 --no-unwinding-assertions
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

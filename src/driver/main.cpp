@@ -68,6 +68,8 @@ static cl::opt<bool> ubPointerCheck(
              "=false disables)"),
     cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
+static cl::opt<std::string> errorLabel("error-label", cl::value_desc("label"),
+                                       cl::desc("Check that the C label <label> is never reached"));
 static cl::opt<bool> ubDivByZeroCheck(
     "ub-div-by-zero-check",
     cl::desc("Check integer division and remainder by zero (default on; =false disables)"),
@@ -231,6 +233,11 @@ static std::string checkFamilies(const Module &m) {
     on.push_back("assertions");
   if (property == Property::UnreachCall)
     on.push_back("reach-error");
+  // As the walker counts an error label: as an assertion, or the error
+  // location under unreach-call.
+  std::string label = "error-label " + errorLabel;
+  if (!errorLabel.empty() && ((all && !noAssertions) || property == Property::UnreachCall))
+    on.push_back(label);
   if (!noUnwindingAssertions)
     on.push_back("unwinding-assertions");
   if (all && ubPointerCheck)
@@ -605,7 +612,7 @@ static int run(int argc, char **argv) {
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
-                       ubUninitCheck && property == Property::All);
+                       ubUninitCheck && property == Property::All, errorLabel);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
