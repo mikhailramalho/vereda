@@ -1,6 +1,7 @@
-; atomicrmw fmaximum orders -0 below +0: the maximum of x and -0 is -0
-; only when x is -0 (+0 gives +0, a NaN gives NaN), so this assertion fails
-; for that x only.
+; atomicrmw fmaximum orders -0 below +0: of x and +0 it stores x for every
+; x >= 0 except -0, for which it stores +0. So asserting that it stores x
+; when x >= 0 fails for x = -0 only, while an implementation that ignores
+; the sign of zero and keeps the first of two equal operands passes.
 ; RUN:
 ; RUN: --fp2bv
 ; EXPECT: ^VERIFICATION FAILED$
@@ -11,11 +12,14 @@ define i32 @main() {
   %p = alloca double
   %x = call double @__VERIFIER_nondet_double()
   store double %x, ptr %p
-  %o = atomicrmw fmaximum ptr %p, double -0.0 seq_cst
+  %o = atomicrmw fmaximum ptr %p, double 0.0 seq_cst
   %m = load double, ptr %p
-  %bits = bitcast double %m to i64
-  %c = icmp ne i64 %bits, -9223372036854775808
-  %a = zext i1 %c to i32
+  %mbits = bitcast double %m to i64
+  %xbits = bitcast double %x to i64
+  %same = icmp eq i64 %mbits, %xbits
+  %neg = fcmp ult double %x, 0.0
+  %ok = or i1 %neg, %same
+  %a = zext i1 %ok to i32
   call void @__VERIFIER_assert(i32 %a)
   ret i32 0
 }
