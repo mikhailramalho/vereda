@@ -131,4 +131,4 @@ geo3); skip-const for `--incremental-solver`; renew for Z3 and cvc5 in camada,
 which would retire the second walk; and a regression test for the renew before
 a walk resumes, which no test in the suite needs today.
 
-Follow-up issues: TBD
+Follow-up issues: #387, #388, #389, #390, #391.
