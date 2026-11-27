@@ -181,6 +181,21 @@ public:
   // as one constant array: calloc with a size that is not constant.
   void fill(State &st, encode::Term p, encode::Term byte);
   void copy(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  // set and copy of len bytes, a pointer-width term with several values
+  // (issue #292): the bytes below len change, the others keep theirs.
+  // bound, if any, is a constant len does not exceed on the path. Below
+  // MinSeparate, each byte up to it is an ite on len. Otherwise each array
+  // that holds bytes of an object dst may point into becomes a lambda, as
+  // for a partial fill or copy: an index is in the range where it is in
+  // dst's object at a distance from dst below len. A copy reads its source
+  // from the arrays as they were before, so the ranges may overlap. Where
+  // one of those objects has elements or fields, the bytes go one at a time
+  // again up to a bound of at most MaxBytes, and without one it is
+  // unsupported.
+  void set(State &st, encode::Term p, encode::Term byte, encode::Term len,
+           std::optional<uint64_t> bound);
+  void copy(State &st, encode::Term dst, encode::Term src, encode::Term len,
+            std::optional<uint64_t> bound);
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
@@ -324,6 +339,11 @@ private:
       setBytes(st, p, byte, n);
   }
   void writeByte(State &st, encode::Term at, const State::Cell &c);
+  // The n bytes from p, and writing bytes there: with len, only those below
+  // it, the others keeping their value.
+  std::vector<State::Cell> readBytes(State &st, encode::Term p, uint64_t n);
+  void writeBytes(State &st, encode::Term p, std::vector<State::Cell> bytes,
+                  encode::Term len = {});
   void storeBytes(State &st, encode::Term p, encode::Term bits,
                   encode::Term prov);
   void storeConstant(State &st, encode::Term p, const llvm::Constant *c,
@@ -367,15 +387,24 @@ private:
   // Provenance array source for a lambda provenance array: when fromObject is
   // set, only bytes belonging to *fromObject are read from array (indexed by
   // offset if byOffset, else by whole pointer); otherwise array is the same
-  // object's own array below.
+  // object's own array below. With toObject, the pointers read are held by
+  // that object, not by the objects of the indices they were stored at.
   struct ProvEdge {
     encode::Term array;
     std::optional<uint64_t> fromObject;
     bool byOffset;
+    std::optional<uint64_t> toObject = std::nullopt;
   };
   // A lambda's provenance array (kept alive) -> the arrays it reads from,
   // which together hold every pointer it may hold.
   llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
+  // The lambdas of set and copy with a symbolic len, byte d of the range
+  // getting value(d, provenance too), whose pointers come from the arrays
+  // from. Null when done, else why it cannot be, having changed nothing: dst
+  // points into no known object, or into one of elements or fields.
+  const char *writeRange(State &st, encode::Term dst, encode::Term len, const char *name,
+                         const std::function<State::Cell(const encode::Term &, bool)> &value,
+                         llvm::ArrayRef<ProvEdge> from);
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
   // Pointers whose null comparison simplifies without expanding fromAddress()
@@ -393,6 +422,10 @@ private:
   void writeInitBytes(State &st, encode::Term p, uint64_t n, encode::Term val);
   void writeInitRange(State &st, encode::Term p, uint64_t n, encode::Term val);
   void copyInitBytes(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  // The lambdas writeInitRange and copyInitBytes build past MaxBytes, for
+  // len bytes, a pointer-width term.
+  void initRange(State &st, encode::Term p, encode::Term len, encode::Term val);
+  void copyInitRange(State &st, encode::Term dst, encode::Term src, encode::Term len);
   void markInitialisedObject(State &st, uint64_t o);
   void mergeInit(encode::Term c, const State &a0, const State &b0, State &out);
 };

@@ -16,4 +16,4 @@ int main()
 // EXPECT: ^  dereference failure: memset length exceeds object bounds$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict SUCCESSFUL

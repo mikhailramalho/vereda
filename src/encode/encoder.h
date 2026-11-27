@@ -40,10 +40,7 @@ public:
   Encoder(Terms &t, memory::Memory &mem, bool fp2bv = false)
       : t(t), s(t.solver()), mem(mem),
         fpEncoding(fp2bv ? camada::FPEncoding::BV : camada::FPEncoding::Native) {
-    mem.known = [this](const Term &x) -> std::optional<Terms::Bounds> {
-      const Fact *f = facts.find(key(x));
-      return f ? f->bounds : std::nullopt;
-    };
+    mem.known = [this](const Term &x) { return known(facts, x); };
   }
   ~Encoder() { mem.known = {}; }
   camada::SMTSolver &solver() { return s; }
@@ -52,12 +49,14 @@ public:
 
   camada::SMTSortRef sort(llvm::Type *ty);
   // What the path being walked knows of a term from its assumptions and
-  // branches: a bitvector constant it equals (Terms::equalities), which
-  // value() returns in its place so that what is built from it folds, and
-  // bounds (Terms::narrow), by which a comparison of it folds as it is
-  // encoded. Keyed by the term's id; terms live as long as the solver.
+  // branches: a term it equals (Terms::equalities), a bitvector constant or
+  // a leaf such as a symbol, which value() returns in its place so that
+  // what is built from it folds, and bounds (Terms::narrow), by which a
+  // comparison of it folds as it is encoded. A term equal to a leaf keeps
+  // no bounds of its own: the leaf's, at the end of the chain, are both
+  // terms'. Keyed by the term's id; terms live as long as the solver.
   struct Fact {
-    Term constant;
+    Term equal;
     std::optional<Terms::Bounds> bounds;
     bool operator==(const Fact &o) const = default;
   };
@@ -72,6 +71,12 @@ public:
   void learn(const Term &cond, Facts &into);
   // What two paths' facts on one term both say, if anything: for a join.
   static std::optional<Fact> join(const Fact &a, const Fact &b);
+  // The term facts makes x equal to at the end of its chain, else x.
+  static Term root(const Facts &facts, Term x);
+  // The bounds facts gives x, if any.
+  static std::optional<Terms::Bounds> known(const Facts &facts, const Term &x);
+  // e as the path being walked sees it (Terms::assuming).
+  Term assuming(Term e);
   // The term bound to v, with facts applied, or a constant. Undef and
   // poison are a fresh value per use.
   Term value(const llvm::Value *v);

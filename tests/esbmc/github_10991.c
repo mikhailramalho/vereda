@@ -17,6 +17,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_10991
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

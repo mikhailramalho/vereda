@@ -1423,7 +1423,7 @@ private:
       Term anyCase = t.boolean(false);
       MapVector<BasicBlock *, Term> taken; // in case order, for a stable formula
       for (const auto &c : sw->cases()) {
-        Term eq = t.eq(cond, enc.value(c.getCaseValue()));
+        Term eq = enc.assuming(t.eq(cond, enc.value(c.getCaseValue())));
         anyCase = t.lor(anyCase, eq);
         Term &to = taken[c.getCaseSuccessor()];
         to = to ? t.lor(to, eq) : eq;
@@ -1528,7 +1528,7 @@ private:
         throw Unsupported("integer division sanitizer with an unknown type descriptor");
       if (width > mem.pointerBits())
         divisor = mem.load(st, mem.fromAddress(divisor), IntegerType::get(c.getContext(), width));
-      Term zero = t.eq(divisor, t.bv(0, divisor.width()));
+      Term zero = enc.assuming(t.eq(divisor, t.bv(0, divisor.width())));
       if (counts(false) && !t.isFalse(zero))
         assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
                   checks::Property::DivisionByZero);
@@ -2286,7 +2286,8 @@ private:
       } else {
         checkInitRead(p, l->getPointerOperand(), l->getType());
       }
-      enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
+      // What the path's facts settle in the value read, as an icmp's.
+      enc.bind(l, enc.fromBits(enc.assuming(mem.load(st, p, l->getType())), l->getType()));
       return true;
     }
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
@@ -2403,13 +2404,25 @@ private:
                 name == "memcpy" || name == "memmove";
     if (copy || name.starts_with("llvm.memset") || name == "memset") {
       Term dst = enc.value(c.getArgOperand(0)), v = enc.value(c.getArgOperand(1));
-      uint64_t n = constantSize(c.getArgOperand(2), guard, name);
-      if (n)
-        writes(c, guard, dst);
-      if (copy)
-        mem.copy(st, dst, v, n);
-      else
-        mem.set(st, dst, enc.resize(v, 8, false), n);
+      Term len = enc.value(c.getArgOperand(2));
+      if (std::optional<uint64_t> n = single(len, guard)) {
+        if (*n)
+          writes(c, guard, dst);
+        if (copy)
+          mem.copy(st, dst, v, *n);
+        else
+          mem.set(st, dst, enc.resize(v, 8, false), *n);
+      } else {
+        // Several sizes: the bytes below len change, at most as many as
+        // dst's object has left where the solver shows len stays within it.
+        len = enc.resize(len, mem.pointerBits(), false);
+        writes(c, t.land(guard, t.lnot(t.eq(len, t.bv(0, len.width())))), dst);
+        std::optional<uint64_t> bound = rangeBound(len, guard, {dst});
+        if (copy)
+          mem.copy(st, dst, v, len, bound);
+        else
+          mem.set(st, dst, enc.resize(v, 8, false), len, bound);
+      }
     } else if (name.starts_with("llvm.stackrestore")) {
       // Changes nothing until stack objects expire (#29).
     } else if (name.starts_with("llvm.stacksave")) {

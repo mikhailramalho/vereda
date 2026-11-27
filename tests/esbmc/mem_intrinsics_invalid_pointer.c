@@ -34,6 +34,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_invalid_pointer
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN
