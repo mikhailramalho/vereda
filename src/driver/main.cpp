@@ -107,7 +107,8 @@ static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for incr
                                   cl::init(100));
 static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
                                      cl::desc("No largest bound for incremental BMC: raise it "
-                                              "until a verdict or the time limit"));
+                                              "until a verdict or the time limit; "
+                                              "--dump-smt-only still stops at --max-k-step"));
 static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of incremental BMC by this"),
                                cl::init(1));
 static cl::opt<bool> multiProperty("multi-property",
@@ -734,6 +735,10 @@ static int run(int argc, char **argv) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }
+  // --dump-smt-only solves nothing, so no verdict would end an unlimited run
+  // on a loop that never finishes: it stops at the largest bound instead.
+  if (dumpSMTOnly)
+    unlimitedKSteps = false;
   // When bound k cuts a loop whose maximum trip count SCEV knows, the bounds
   // below the one that unwinds it only add iterations of that loop, and a bug
   // one of them finds, every larger bound finds too. Those bounds are skipped,
@@ -752,8 +757,11 @@ static int run(int argc, char **argv) {
     if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt, &retained); r != BoundTooSmall)
       return r;
   }
-  if (dumpSMTOnly)
+  if (dumpSMTOnly) {
+    info() << "Stopped at bound " << walked << " (--max-k-step " << maxKStep
+           << ") with loops still open\n";
     return finish(0);
+  }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
 }
 
