@@ -67,6 +67,22 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text("#include <assert.h>\nint main(void) { assert(0); }\n")
     check(command + [str(source), "--ub-pointer-check=false"], 1, "__assert_fail")
 
+    # Run directly on IR whose sanitizer traps clang compiled in, without
+    # vereda.py's --sanitized, the binary lists them too; with it, both.
+    kept = tmp / "main.c.ll"
+    source.write_text("int main(int argc, char **argv) { return (argc << argc) + argc; }\n")
+    check(command + [str(source), "--ub-shift-check", "--ub-signed-overflow-check", "--keep-ir"],
+          1, "VERIFICATION FAILED")
+    check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", shift, signed-overflow\n")
+    check([binary, str(kept), "--sanitized=unsigned-integer-overflow"], 1,
+          "[INFO] Checks: " + defaults + ", shift, signed-overflow, unsigned-overflow\n")
+    check([binary, str(kept), "--property", "unreach-call"], 0,
+          "[INFO] Checks: reach-error, unwinding-assertions\n")
+
+    source.write_text("int main(int argc, char **argv) { return (unsigned)argc * 3u; }\n")
+    check(command + [str(source), "--unsigned-overflow-check", "--keep-ir"], 1, "VERIFICATION FAILED")
+    check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", unsigned-overflow\n")
+
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
