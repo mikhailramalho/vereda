@@ -78,11 +78,9 @@ with tempfile.TemporaryDirectory() as directory:
           "[INFO] Checks: " + defaults + ", shift, signed-overflow, unsigned-overflow\n")
     check([binary, str(kept), "--property", "unreach-call"], 0,
           "[INFO] Checks: reach-error, unwinding-assertions\n")
-
     source.write_text("int main(int argc, char **argv) { return (unsigned)argc * 3u; }\n")
     check(command + [str(source), "--unsigned-overflow-check", "--keep-ir"], 1, "VERIFICATION FAILED")
     check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", unsigned-overflow\n")
-
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):

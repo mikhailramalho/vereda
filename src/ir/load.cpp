@@ -36,6 +36,8 @@
 #include <llvm/Transforms/Utils/FixIrreducible.h>
 #include <llvm/Transforms/Utils/LowerSwitch.h>
 
+#include <set>
+
 using namespace llvm;
 
 namespace vereda::ir {
@@ -380,6 +382,54 @@ static Instruction *guardedOperation(CallBase &call) {
                                                       : nullptr;
   }
   return nullptr;
+}
+
+// Records the clang sanitizers whose traps the module holds, as -fsanitize=
+// names them, in the named metadata vereda.sanitized, for the driver's
+// [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
+// it: an overflow trap is signed or unsigned by the overflow intrinsic in the
+// block that branches to it.
+static void recordSanitizers(Module &m) {
+  std::set<std::string> names;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f)) {
+      auto *c = dyn_cast<CallBase>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if (!callee || callee->getName() != "llvm.ubsantrap")
+        continue;
+      switch (cast<ConstantInt>(c->getArgOperand(0))->getZExtValue()) {
+      case 20: // ShiftOutOfBounds
+        names.insert("shift");
+        break;
+      case 3: // DivremOverflow
+        names.insert("signed-integer-overflow");
+        break;
+      case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
+        if (BasicBlock *pred = c->getParent()->getSinglePredecessor())
+          for (Instruction &p : *pred)
+            if (auto *ii = dyn_cast<IntrinsicInst>(&p))
+              switch (ii->getIntrinsicID()) {
+              case Intrinsic::sadd_with_overflow:
+              case Intrinsic::ssub_with_overflow:
+              case Intrinsic::smul_with_overflow:
+                names.insert("signed-integer-overflow");
+                break;
+              case Intrinsic::uadd_with_overflow:
+              case Intrinsic::usub_with_overflow:
+              case Intrinsic::umul_with_overflow:
+                names.insert("unsigned-integer-overflow");
+                break;
+              default:
+                break;
+              }
+        break;
+      }
+    }
+  if (names.empty())
+    return;
+  NamedMDNode *md = m.getOrInsertNamedMetadata("vereda.sanitized");
+  for (const std::string &name : names)
+    md->addOperand(MDNode::get(m.getContext(), MDString::get(m.getContext(), name)));
 }
 
 // Names clang's division-overflow, shift and float-cast checks as ESBMC
@@ -1784,6 +1834,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  recordSanitizers(*module);
   nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);

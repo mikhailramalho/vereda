@@ -221,9 +221,9 @@ static const int BoundTooSmall = -1;
 
 // The checks this run counts, each named after the flag that controls it,
 // for an [INFO] line that gives the verdict its scope. A property counts
-// only its own checks and the unwinding assertions (walker::counts).
-// The sanitizers are those vereda.py compiled in (--sanitized) and those
-// whose traps the IR holds.
+// only its own checks and the unwinding assertions (walker::counts). The
+// sanitizers are those vereda.py compiled in (--sanitized) and those whose
+// traps the IR holds.
 static std::string checkFamilies(const Module &m) {
   bool all = property == Property::All;
   SmallVector<StringRef, 12> on;
@@ -241,14 +241,10 @@ static std::string checkFamilies(const Module &m) {
     on.push_back("div-by-zero");
   if (all && vlaSizeCheck)
     on.push_back("vla-size");
-  // Add the sanitized flags that were passed to vereda.py
   std::set<std::string> sanitizers(sanitized.begin(), sanitized.end());
-  // Also add the sanitizers found in the IR
-  if (const NamedMDNode *md = m.getNamedMetadata("vereda.sanitized")) {
-    for (const MDNode *n : md->operands()) {
+  if (const NamedMDNode *md = m.getNamedMetadata("vereda.sanitized"))
+    for (const MDNode *n : md->operands())
       sanitizers.insert(cast<MDString>(n->getOperand(0))->getString().str());
-    }
-  }
   if (all || property == Property::NoOverflow)
     for (const std::string &s : sanitizers)
       on.push_back(StringSwitch<StringRef>(s)
