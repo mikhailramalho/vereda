@@ -631,20 +631,24 @@ Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
       // is nonzero and its sign is not x's: fmod's is then the remainder
       // moved by |y| towards x's sign, an exact sum as fmod's result is
       // representable.
-      // Natively, Bitwuzla's fp.rem is slow on unconstrained operands (#445),
-      // so it is computed in camada's bit-vector encoding, as ESBMC does.
-      camada::SMTExprRef r =
-          useNative(ty) ? t.solverTerm(fromBVFloat(
-                              s.mkFPRem(bvFloat(value(lhs), ty), bvFloat(value(rhs), ty)), ty))
-                        : s.mkFPRem(a, b);
-      camada::SMTExprRef absY = s.mkFPAbs(b);
-      camada::SMTExprRef zero = fp(ConstantFP::getZero(ty));
-      camada::SMTExprRef xNeg = s.mkFPLt(a, zero);
+      // Natively, Bitwuzla's fp.rem and this adjustment are slow on
+      // unconstrained operands (#445), so both are computed in camada's
+      // bit-vector encoding, as ESBMC does fp.rem.
+      bool bv = useNative(ty);
+      camada::SMTExprRef x = bv ? bvFloat(value(lhs), ty) : a;
+      camada::SMTExprRef y = bv ? bvFloat(value(rhs), ty) : b;
+      camada::SMTExprRef e =
+          bv ? s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV) : even;
+      camada::SMTExprRef r = s.mkFPRem(x, y), absY = s.mkFPAbs(y);
+      camada::SMTExprRef zero =
+          bv ? bvFloat(fromBits(t.bv(0, ty->getPrimitiveSizeInBits()), ty), ty)
+             : fp(ConstantFP::getZero(ty));
+      camada::SMTExprRef xNeg = s.mkFPLt(x, zero);
       camada::SMTExprRef fix =
           s.mkAnd(s.mkNot(s.mkFPIsZero(r)), s.mkXor(xNeg, s.mkFPLt(r, zero)));
-      return bits(
-          s.mkIte(fix, s.mkIte(xNeg, s.mkFPSub(r, absY, even), s.mkFPAdd(r, absY, even)), r),
-          ty);
+      camada::SMTExprRef res =
+          s.mkIte(fix, s.mkIte(xNeg, s.mkFPSub(r, absY, e), s.mkFPAdd(r, absY, e)), r);
+      return bv ? fromBVFloat(res, ty) : bits(res, ty);
     }
     default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
     }
