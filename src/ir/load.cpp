@@ -12,6 +12,7 @@
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
+#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
@@ -1766,6 +1767,75 @@ static void threadBoolPhis(Module &m) {
   }
 }
 
+// Turns a scalar global that only the entry function uses into a local of
+// it, so that mem2reg and SCEV see a loop over a global counter as they see
+// one over a local, and its array loop is summarised (#380, cause 5). Sound
+// only when nothing else can see the global: every use is a plain load or
+// store of its whole value in the entry function, which nothing calls (C
+// allows calling main), so no other function, constructor, destructor,
+// atexit handler or thread reaches it; the module has no inline assembly,
+// which names globals without a use; and no call in the entry function
+// returns twice. The initial value is stored at the entry. Runs after
+// linkModels, so that a model using a global of the same name still shares it.
+static bool promoteEntryGlobals(Module &m, StringRef entry) {
+  Function *f = m.getFunction(entry);
+  if (!f || f->isDeclaration() || !f->use_empty() || !m.getModuleInlineAsm().empty())
+    return false;
+  for (Function &g : m)
+    for (Instruction &i : instructions(g))
+      if (auto *c = dyn_cast<CallBase>(&i);
+          c && (c->isInlineAsm() || (&g == f && c->hasFnAttr(Attribute::ReturnsTwice))))
+        return false;
+  auto plainUse = [f](User *u, GlobalVariable &g) {
+    Type *ty = g.getValueType();
+    if (auto *l = dyn_cast<LoadInst>(u))
+      return l->getFunction() == f && l->isSimple() && l->getType() == ty;
+    if (auto *s = dyn_cast<StoreInst>(u))
+      return s->getFunction() == f && s->isSimple() && s->getPointerOperand() == &g &&
+             s->getValueOperand() != &g && s->getValueOperand()->getType() == ty;
+    return false;
+  };
+  SmallVector<GlobalVariable *, 4> promoted;
+  for (GlobalVariable &g : m.globals()) {
+    Type *ty = g.getValueType();
+    if (g.hasInitializer() && !g.isConstant() && !g.isThreadLocal() &&
+        !g.isExternallyInitialized() && !g.hasSection() &&
+        (g.hasLocalLinkage() || g.hasExternalLinkage()) &&
+        (ty->isIntegerTy() || ty->isPointerTy() || ty->isFloatingPointTy()) &&
+        llvm::all_of(g.users(), [&](User *u) { return plainUse(u, g); }))
+      promoted.push_back(&g);
+  }
+  // The global's debug variable becomes one of the entry function's, with a
+  // value record at each store, where the assignment is (mem2reg would put a
+  // declare's records at line 0, shown at the global's declaration). As for
+  // a global, the initial value gets none.
+  DIBuilder dib(m);
+  DISubprogram *sp = f->getSubprogram();
+  IRBuilder<> b(&*f->getEntryBlock().getFirstInsertionPt());
+  for (GlobalVariable *g : promoted) {
+    AllocaInst *a = b.CreateAlloca(g->getValueType(), nullptr, g->getName());
+    b.CreateStore(g->getInitializer(), a);
+    SmallVector<DIGlobalVariableExpression *, 1> vars;
+    g->getDebugInfo(vars);
+    if (sp && !vars.empty()) {
+      DIGlobalVariable *v = vars[0]->getVariable();
+      DILocalVariable *local =
+          dib.createAutoVariable(sp, v->getName(), v->getFile(), v->getLine(), v->getType());
+      DILocation *declared = DILocation::get(m.getContext(), v->getLine(), 0, sp);
+      for (User *u : g->users())
+        if (auto *s = dyn_cast<StoreInst>(u)) {
+          const DILocation *at = s->getDebugLoc() ? s->getDebugLoc().get() : declared;
+          dib.insertDbgValueIntrinsic(s->getValueOperand(), local, dib.createExpression(), at,
+                                      std::next(s->getIterator()));
+        }
+    }
+    g->replaceAllUsesWith(a);
+    g->eraseFromParent();
+  }
+  dib.finalize();
+  return !promoted.empty();
+}
+
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
@@ -1834,6 +1904,9 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
                            alignmentCheck))
     return std::move(e);
+  if (promoteEntryGlobals(*module, entry))
+    if (Error e = runPipeline(*module, "function(mem2reg,loop-simplify,lcssa)"))
+      return std::move(e);
   // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before
   // function-attrs so callers do not appear to expose assert message literals.
