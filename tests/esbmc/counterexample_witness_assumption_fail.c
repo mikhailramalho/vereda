@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_witness_assumption_fail
-// Needs: --witness-output-graphml -
+// Needs: --witness-output-graphml
 // RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^      <data key="assumption">p\.in == 7;</data>$

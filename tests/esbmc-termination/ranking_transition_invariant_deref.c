@@ -11,7 +11,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/termination/ranking_transition_invariant_deref
-// Needs: --termination --max-inductive-step 3 --witness-output-yaml -
+// Needs: --termination --max-inductive-step 3 --witness-output-yaml
 // RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --no-assertions --ub-pointer-check=false --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

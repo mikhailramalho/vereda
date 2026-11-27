@@ -5,7 +5,7 @@ int main(void)
   return x;
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_store_sarif
-// Needs: --dead-store-check --sarif-output -
+// Needs: --dead-store-check --sarif-output
 // RUN: --dead-store-check --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

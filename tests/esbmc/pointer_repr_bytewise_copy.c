@@ -22,8 +22,5 @@ int main()
   assert(*e.key == 1 && *e.value == 2);
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_bytewise_copy
-// Needs: --timeout 60s
-// RUN: --unwind 129 --timeout 60s
-// MODE: FUTURE
+// RUN: --unwind 129
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

@@ -8,7 +8,7 @@ int main()
     assert(0);
 }
 // Imported from ESBMC regression/esbmc/github_1520_witness_scalar_kept
-// Needs: --witness-output-graphml -
+// Needs: --witness-output-graphml
 // RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -7,8 +7,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/yices/github_536_yices
-// Needs: --smt-model
-// RUN: --smt-model
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

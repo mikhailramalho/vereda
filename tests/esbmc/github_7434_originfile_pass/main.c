@@ -8,7 +8,7 @@ int main(void)
   return helper_div(10, d);
 }
 // Imported from ESBMC regression/esbmc/github_7434_originfile_pass
-// Needs: --witness-output-graphml -
+// Needs: --witness-output-graphml
 // RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

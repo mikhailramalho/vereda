@@ -13,7 +13,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9914_or_condition_waypoint
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
