@@ -40,3 +40,5 @@ IR. `grow_amortized` returns a struct, so the result is VERIFICATION
 UNKNOWN; `try_allocate_in` returns nondet values and gives a false panic.
 Both need the standard library's bodies or models of those internals, not
 allocator models.
+
+Follow-up issues: #334
