@@ -60,7 +60,7 @@ static camada::SMTExprRef disjunction(camada::SMTSolver &s, ArrayRef<camada::SMT
   return s.mkOr(disjunction(s, exprs.take_front(mid)), disjunction(s, exprs.drop_front(mid)));
 }
 
-Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
+Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool skipUnwindModel,
                function_ref<void(const checks::Check &)> violated) {
   camada::SMTSolver &s = t.solver();
   // Assertions first, then unwinding assertions, as ESBMC's incremental BMC:
@@ -94,6 +94,21 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
         continue;
       if (t.isFalse(check.violated)) {
         v.status[i] = Status::Holds;
+        continue;
+      }
+      // As in decideNonIncremental: a constant failure needs no solver call,
+      // and a call would switch Bitwuzla to its incremental mode.
+      if (unwinding && skipUnwindModel && t.isTrue(check.violated)) {
+        if (!all) {
+          reportFirst(i);
+          return v;
+        }
+        v.status[i] = Status::Fails;
+        if (!v.check) {
+          v.kind = Verdict::Violated;
+          v.check = &checks[i];
+        }
+        violated(checks[i]);
         continue;
       }
       auto [it, fresh] = byId.try_emplace(check.violated.id(), groups.size());

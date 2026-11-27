@@ -383,7 +383,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   bool initialSolverUsed = false;
   vereda::solver::Verdict verdict =
       useIncremental
-          ? vereda::solver::decide(terms, checks, multiProperty,
+          ? vereda::solver::decide(terms, checks, multiProperty, incrementalBMC,
                                    [&](const vereda::checks::Check &c) {
                                      onViolated(terms, checks, trace, &c - checks.data());
                                    })
