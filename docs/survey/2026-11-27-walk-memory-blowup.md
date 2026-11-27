@@ -44,8 +44,16 @@ All runs use `-m32 --no-unwinding-assertions --property unreach-call` on SV-COMP
 | `loops/n.c24.i` | 9 | 5.68 s / 653 MB | 1.28 s / 275 MB | SUCCESSFUL |
 | `loops/n.c24.i` | 11 | 10.40 s / 1,017 MB | 4.72 s / 791 MB | SUCCESSFUL |
 
+## Wide performance check
+
+Side-by-side comparison against `main` (`672fa26f`) to verify the new folding bounds (`entails` 512-node budget / 64K cache cap, `concat` ITE join depth/budget 64, `copyArray` threshold 64 for separated/owned arrays) did not regress other tasks:
+
+- `tests/bench.py` over `vereda` + `esbmc-cstd` (845 tests): 0 regressions.
+- `tests/bench.py` over `esbmc` (3,598 tests): 0 tests changed, 0 regressions.
+- 75 SV-COMP tasks across 8 categories (`loops`, `loop-lit`, `array-examples`, `array-memsafety`, `memsafety`, `heap-data`, `bitvector`, `list-properties`, `-m32 --unwind 12 --no-unwinding-assertions --property unreach-call`): 0 verdict changes, 0 time regressions (>0.25 s and >25%), 0 memory regressions (>15 MB and >20%).
+
 ## Remaining work
 
 At higher unwind bounds, `ddv-machzwd` still grows with the number of `havoc_provenance#` ITEs built across ~200+ exposed objects in `Memory::havocCall`, and `loops/n.c24` still creates $O(M^2)$ `copy#` lambda instantiations across $M$ conditional overlapping `memmove` calls.
 
-Follow-up issues: #381
+Follow-up issues: #381, #401
