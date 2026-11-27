@@ -514,7 +514,8 @@ int main(int argc, char **argv) {
   // The library models sit next to the binary.
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
-      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry, !noDivByZeroCheck,
+      vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
+                       !noDivByZeroCheck && property == Property::All,
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
