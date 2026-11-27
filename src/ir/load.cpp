@@ -183,7 +183,8 @@ static bool castFromDeclaration(const Value *p) {
 static bool compiledByClang(const Module &m) {
   if (const NamedMDNode *ident = m.getNamedMetadata("llvm.ident"))
     for (const MDNode *n : ident->operands())
-      if (auto *s = dyn_cast<MDString>(n->getOperand(0)); s && s->getString().contains("clang"))
+      if (auto *s = n->getNumOperands() ? dyn_cast_or_null<MDString>(n->getOperand(0)) : nullptr;
+          s && s->getString().contains("clang"))
         return true;
   return false;
 }
@@ -247,7 +248,8 @@ static void checkAlignments(Module &m, bool fromClang) {
               dl.getTypeAllocSize(t) != length->getZExtValue())
             continue;
           Align need = std::min(dl.getABITypeAlign(t), otherAlign.valueOrOne());
-          if (need > sideAlign.valueOrOne() && castFromDeclaration(side))
+          if (need > sideAlign.valueOrOne() && side->getType()->getPointerAddressSpace() == 0 &&
+              castFromDeclaration(side))
             accesses.emplace_back(&i, side, need.value());
         }
       }
