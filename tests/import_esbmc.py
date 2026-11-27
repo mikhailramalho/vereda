@@ -739,28 +739,12 @@ SKIPPED_TESTS = {
 
 # Imported tests kept with local edits (such as smaller bounds) so a rerun
 # skips them without overwriting or deleting the checked-in copy.
-LOOP_PAST_LARGEST_BOUND = ("has a loop of 100 or more iterations, past incremental BMC's "
-                           "largest bound, so it runs with --no-incremental-bmc")
+LOOP_PAST_LARGEST_BOUND = ("its unsummarized run has a 100,000-iteration loop, past "
+                           "incremental BMC's largest bound, so it runs with --no-incremental-bmc")
 PRESERVED_TESTS = {
     "cstd/scanf-false-3": "uses --max-k-step 3 locally so it does not spend ~45 s reaching bound 50",
-    "cstd/isspace": LOOP_PAST_LARGEST_BOUND,
-    "cstd/isspace_bug": LOOP_PAST_LARGEST_BOUND,
-    "cstd/isxdigit": LOOP_PAST_LARGEST_BOUND,
-    "cstd/isxdigit_bug": LOOP_PAST_LARGEST_BOUND,
-    "floats/Float-overflow1": LOOP_PAST_LARGEST_BOUND,
-    "floats/Float-overflow2": LOOP_PAST_LARGEST_BOUND,
-    "incremental-smt/incremental-08": LOOP_PAST_LARGEST_BOUND,
-    "incremental-smt/incremental-16": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/07_crc": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/08_crc_new": LOOP_PAST_LARGEST_BOUND,
     "esbmc/array_loop_summary_decrement": LOOP_PAST_LARGEST_BOUND,
     "esbmc/array_loop_summary_decrement_fail": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/array_loop_summary_no_slice": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/github_1344": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/github_1591": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/github_1630_2": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/overflow_05_crc": LOOP_PAST_LARGEST_BOUND,
-    "esbmc/overflow_17_crc_new": LOOP_PAST_LARGEST_BOUND,
     "z3/github_9222_formula": "checks Vereda's own SMT dump of the overflow checks, "
                               "which the dump-only rule would drop",
 }

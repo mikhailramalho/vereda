@@ -1,4 +1,4 @@
-// RUN: --no-incremental-bmc
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <string.h>
 extern unsigned __VERIFIER_nondet_uint(void);

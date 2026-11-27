@@ -10,5 +10,5 @@ int main(void)
   assert(hex == 20);
 }
 // Imported from ESBMC regression/cstd/isxdigit_bug
-// RUN: --no-incremental-bmc
+// RUN:
 // EXPECT: ^VERIFICATION FAILED$

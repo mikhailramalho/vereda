@@ -47,7 +47,7 @@ The binary (`build/vereda`) takes only `.bc`/`.ll`; its flags are `cl::opt`s in
 `src/driver/main.cpp`. Useful for debugging: `--dump-ir-only`, `--dump-smt-only`,
 `--dump-dir <dir>`, `--keep-ir` (front end). Exit codes: 0 SUCCESSFUL, 1 FAILED, 2 UNKNOWN,
 6 error (as ESBMC). Without `--unwind` the binary checks bounds 1, 2, ... (incremental
-BMC, up to `--max-k-step`, 100); `--no-incremental-bmc` unrolls each loop until its next
+BMC, up to `--max-k-step`, 384); `--no-incremental-bmc` unrolls each loop until its next
 iteration is unreachable instead.
 
 ## Regression tests

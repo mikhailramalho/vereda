@@ -1,5 +1,5 @@
 // A symbolic element interrupts the pattern even when every byte was written.
-// RUN: --no-summarize-array-loops --no-incremental-bmc
+// RUN: --no-summarize-array-loops
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern unsigned __VERIFIER_nondet_uint(void);
 extern void __VERIFIER_assume(int);

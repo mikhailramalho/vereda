@@ -103,8 +103,9 @@ static cl::opt<bool> incrementalBMC(
 static cl::opt<bool> noIncrementalBMC(
     "no-incremental-bmc",
     cl::desc("Check one bound: unroll until the next iteration is unreachable, or to --unwind"));
-static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for incremental BMC"),
-                                  cl::init(100));
+static cl::opt<unsigned> maxKStep("max-k-step",
+                                  cl::desc("Largest bound for incremental BMC (default 384)"),
+                                  cl::init(384));
 static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
                                      cl::desc("No largest bound for incremental BMC: raise it "
                                               "until a verdict or the time limit; "

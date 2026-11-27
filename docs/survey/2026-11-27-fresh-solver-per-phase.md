@@ -157,7 +157,7 @@ kept instance, by what the previous bound's solve cost, is the follow-up
 (#387) that would make the fresh instance worth turning on by default.
 
 In the same change incremental BMC became the default: without `--unwind`,
-Vereda checks bounds 1, 2, ... up to `--max-k-step`, now 100 instead of 50,
+Vereda checks bounds 1, 2, ... up to `--max-k-step`, now 384 instead of 50,
 as `--incremental-bmc` did, and `--no-incremental-bmc` gives the old default,
 unrolling each loop until its next iteration is unreachable. `--unwind N`
 alone is plain BMC at bound N; an explicit `--incremental-bmc` with it is
@@ -192,6 +192,23 @@ array. The test was re-marked; the expected SUCCESSFUL still fails.
 Vereda's own tests about the old mode's output (per-iteration progress lines,
 tables and loops of 100 or more iterations, `formula.smt2`) keep the flag;
 none of them passes without it at bound 100.
+
+The default largest bound was first 100, then raised to 384, so that loops
+over a byte's 256 values or a 256-entry table, and the other loops above,
+finish within it. At 384 the 16 imported tests above, all but the two
+below, give their verdicts without `--no-incremental-bmc` and left
+`PRESERVED_TESTS`; the unsummarized runs of array_loop_summary_decrement and its _fail variant, a
+100,000-iteration loop, keep it. Of Vereda's own tests, ten that got the flag
+for long loops now pass without it (struct_fields and its copy and pointer
+copy, mem_affine_mismatch, _symbolic, _update and _incomplete_false,
+mem_table_periodic, _piecewise and _symbolic), and so does count_zeros.py's
+loop stopped by an assumption. Kept: loop_const, summary_off and
+float_fold_arith (they check per-iteration progress lines), dump_dir
+(`formula.smt2`), mem_affine_bytes, mem_table_quadratic and its _false
+variant (1,024 and 2,048 iterations) and mem_store_chain_reads (270,000),
+which give UNKNOWN at bound 384, out_of_memory.py (100,000 iterations), and
+the tests of the flag itself. `property_unlimited_bound` loops 400 times, past
+the new default.
 
 Left open: choosing per bound between a renewed and a kept instance (knuth,
 geo3); skip-const for `--incremental-solver`; renew for Z3 and cvc5 in camada,

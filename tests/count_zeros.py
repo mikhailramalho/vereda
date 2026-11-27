@@ -189,7 +189,7 @@ int main(void) {
  reach_error();
 }
 ''')
-    check(command + [str(source), flag, "--no-incremental-bmc"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), flag], 0, "VERIFICATION SUCCESSFUL")
 
     # Division consumes poison even when its result is subsequently masked.
     ir.write_text('''declare i32 @llvm.ctlz.i32(i32, i1 immarg)

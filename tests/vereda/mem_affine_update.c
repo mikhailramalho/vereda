@@ -1,5 +1,5 @@
 // A later write overrides the compact table, including values wrapping at 64 bits.
-// RUN: --no-summarize-array-loops --no-incremental-bmc
+// RUN: --no-summarize-array-loops
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdint.h>
 extern unsigned __VERIFIER_nondet_uint(void);

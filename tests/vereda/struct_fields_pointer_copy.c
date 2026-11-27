@@ -1,4 +1,4 @@
-// RUN: --no-summarize-array-loops --no-incremental-bmc
+// RUN: --no-summarize-array-loops
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdint.h>
 #include <string.h>

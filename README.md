@@ -13,7 +13,7 @@ recursion and encodes each instruction as SMT terms through
 finds a counterexample or proves that none exists within the bound. Without
 `--unwind`, Vereda checks bounds 1, 2, ... in turn (incremental BMC), resuming
 the walk where the last bound stopped, until the verdict no longer depends on
-the bound or bound 100 passes; `--no-incremental-bmc` instead unrolls each loop
+the bound or bound 384 passes; `--no-incremental-bmc` instead unrolls each loop
 until its next iteration is unreachable.
 
 Supported today:
@@ -129,7 +129,7 @@ The main verifier flags:
 | `--unwind N` | Check one bound: loop iterations and recursion depth N (without it, Vereda checks bounds incrementally) |
 | `--no-unwinding-assertions` | Assume loops and recursion end within the bound instead of checking it (unsound: a violation past the bound is missed, so SUCCESSFUL no longer means the program is safe); incremental BMC still uses the unwinding assertions to pick the bound, as ESBMC does |
 | `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
-| `--incremental-bmc`, `--max-k-step N`, `--k-step N`, `--unlimited-k-steps` | Try bounds 1, 2, ... (by the step, up to 100 or N) until the verdict does not depend on the bound; the default without `--unwind` |
+| `--incremental-bmc`, `--max-k-step N`, `--k-step N`, `--unlimited-k-steps` | Try bounds 1, 2, ... (by the step, up to 384 or N) until the verdict does not depend on the bound; the default without `--unwind` |
 | `--no-incremental-bmc` | Check one bound: unroll until the next iteration is unreachable, or to `--unwind` |
 | `--show-library-states` | Show Rust standard-library states in counterexamples |
 | `--multi-property` | Check every property instead of stopping at the first violation |
