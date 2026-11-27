@@ -43,3 +43,5 @@ access and by its real base otherwise.
 
 Known gap, unchanged: clang lowers some misaligned accesses to `memcpy` with
 `align 1` (ESBMC's github_10891), which the check never sees.
+
+Follow-up issues: #337
