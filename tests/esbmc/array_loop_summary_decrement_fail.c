@@ -1,6 +1,6 @@
 // A counter decremented before the write reads it, wrapping below zero.
 // RUN:
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 #define N 100000
 unsigned a[N];
 unsigned __VERIFIER_nondet_uint(void);

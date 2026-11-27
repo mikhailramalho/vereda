@@ -157,17 +157,41 @@ kept instance, by what the previous bound's solve cost, is the follow-up
 (#387) that would make the fresh instance worth turning on by default.
 
 In the same change incremental BMC became the default: without `--unwind`,
-Vereda checks bounds 1, 2, ... up to `--max-k-step` (50) as `--incremental-bmc`
-did, and `--no-incremental-bmc` gives the old default, unrolling each loop
-until its next iteration is unreachable. `--no-unwinding-assertions` and
-`--dump-smt-only` without `--unwind` keep the old default too, since
-incremental BMC cannot pick a bound without checking it or solving; with an
-explicit `--incremental-bmc` they are still errors. The k-step flags ask for
-incremental BMC and are errors under `--no-incremental-bmc` or `--unwind`.
-ESBMC's default checks one bound, so `tests/import_esbmc.py` adds
-`--no-incremental-bmc` to an imported test whose ESBMC flags give neither
-`--unwind` nor an incremental mode (`--incremental-bmc`, `--k-induction`,
-`--falsification`, `--termination`, ...).
+Vereda checks bounds 1, 2, ... up to `--max-k-step`, now 100 instead of 50,
+as `--incremental-bmc` did, and `--no-incremental-bmc` gives the old default,
+unrolling each loop until its next iteration is unreachable. `--unwind N`
+alone is plain BMC at bound N; an explicit `--incremental-bmc` with it is
+still an error. The k-step flags ask for incremental BMC and are errors under
+`--no-incremental-bmc` or `--unwind`. `--no-unwinding-assertions` follows
+ESBMC 8.8: its incremental BMC runs each bound's base case with the loops cut
+by an assumption and checks whether the bound is enough with the unwinding
+assertions back on, so the flag does not change when it stops. Vereda's
+incremental BMC never reports a failed unwinding assertion anyway, so under it
+the flag changes nothing, and with `--unwind` it keeps its plain, unsound
+meaning. `--dump-smt-only` no longer needs `--unwind`: under incremental BMC
+it prints each bound's formula after a `; bound k` line (one
+`formula-k<k>.smt2` per bound under `--dump-dir`, as `--dump-smt-too` already
+wrote) without solving, and goes on until the walk finishes every loop,
+leaving no unwinding check open, or to the largest bound; it skips the bounds
+the open loops' known trip counts rule out, as a solved run does.
+
+The imported ESBMC tests run under the new default like any other test. Of
+about 6,500, 18 changed outcome, each giving UNKNOWN at bound 100 because a
+loop needs 100 or more iterations (the cstd isspace and isxdigit tests and
+their _bug variants loop over 256 characters, the crc tests over a 256-entry
+table, Float-overflow1/2 127 and 128 times, incremental-16 copies 101 bytes,
+and incremental-08, array_loop_summary_no_slice, github_1344, github_1591,
+github_1630_2 and the unsummarized run of array_loop_summary_decrement and its
+_fail variant loop 100 times or more). Each got `--no-incremental-bmc`, and
+the importer keeps them (`PRESERVED_TESTS`). One FUTURE test,
+sprintf_objsize_s_no_overflow, which already gave `--incremental-bmc`, now
+reaches bound 96 within the larger default and reports an overflow (FAILED)
+where it stopped at bound 50 with UNKNOWN: Vereda's sprintf lets the length
+of a `%s` argument in a 16-byte array pass 100, which ESBMC bounds by the
+array. The test was re-marked; the expected SUCCESSFUL still fails.
+Vereda's own tests about the old mode's output (per-iteration progress lines,
+tables and loops of 100 or more iterations, `formula.smt2`) keep the flag;
+none of them passes without it at bound 100.
 
 Left open: choosing per bound between a renewed and a kept instance (knuth,
 geo3); skip-const for `--incremental-solver`; renew for Z3 and cvc5 in camada,

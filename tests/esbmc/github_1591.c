@@ -18,4 +18,5 @@ int main()
   printf("%d\n", n);
 }
 // Imported from ESBMC regression/esbmc/github_1591
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

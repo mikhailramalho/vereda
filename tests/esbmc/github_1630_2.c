@@ -31,4 +31,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_1630_2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
