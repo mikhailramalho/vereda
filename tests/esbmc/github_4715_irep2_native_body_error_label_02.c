@@ -12,8 +12,5 @@ int main(void)
 ERR:;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_native_body_error_label_02
-// Needs: --error-label ERR
 // RUN: --error-label ERR --no-assertions
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

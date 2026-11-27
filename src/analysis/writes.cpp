@@ -21,8 +21,9 @@ bool writesNothing(StringRef name, unsigned args) {
   return (name.starts_with("__VERIFIER_nondet_") && name != "__VERIFIER_nondet_memory") ||
          name == "__VERIFIER_assume" || name == "__VERIFIER_assert" ||
          (name == "assert" && args == 1) || name == "reach_error" ||
-         name == "__VERIFIER_error" || isAssertFail(name, args) || name == "abort" ||
-         name == "exit" || name == "_Exit" || name == "malloc" || name == "calloc" ||
+         name == "__VERIFIER_error" || name == "__vereda_error_label" || isAssertFail(name, args) ||
+         name == "abort" || name == "exit" || name == "_Exit" || name == "malloc" ||
+         name == "calloc" ||
          name == "free" || name.starts_with("__vereda_check_") ||
          name == "__vereda_uninitialised" || name == "__vereda_object_size" ||
          name == "__ubsan_handle_divrem_overflow_abort" ||

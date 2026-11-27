@@ -11,8 +11,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/error_label_loop_head
-// Needs: --error-label ERROR
 // RUN: --error-label ERROR
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
