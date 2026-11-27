@@ -1246,25 +1246,57 @@ static void fixIrreducible(Module &m) {
   }
 }
 
+// Destination argument index of a C library call that InstCombine's
+// LibCallSimplifier may lower into a write, or -1 otherwise. Only destination
+// arguments are unconstanted so source and format string literals stay constant
+// for InstCombine's normal simplifications (e.g. stpcpy, sprintf).
+static int libCallWriteArg(const Function *f) {
+  if (!f || !f->isDeclaration())
+    return -1;
+  StringRef name = f->getName();
+  if (name == "bcopy")
+    return 1;
+  if (name == "strcpy" || name == "strncpy" || name == "stpcpy" || name == "stpncpy" ||
+      name == "strcat" || name == "strncat" || name == "sprintf" || name == "snprintf" ||
+      name == "vsprintf" || name == "vsnprintf" || name == "bzero" || name == "memccpy" ||
+      name == "mempcpy" || name == "strlcpy" || name == "strlcat" || name == "wcscpy" ||
+      name == "wcsncpy" || name == "wcscat" || name == "wcsncat" || name == "gets" ||
+      name == "fgets" || name == "fread" || name == "memcpy" || name == "memmove" ||
+      name == "memset" || name == "memset_pattern16" || name == "__strcpy_chk" ||
+      name == "__strncpy_chk" || name == "__stpcpy_chk" || name == "__stpncpy_chk" ||
+      name == "__strcat_chk" || name == "__strncat_chk" || name == "__sprintf_chk" ||
+      name == "__snprintf_chk" || name == "__memcpy_chk" || name == "__memmove_chk" ||
+      name == "__memset_chk" || name == "__mempcpy_chk")
+    return 0;
+  return -1;
+}
+
 // InstCombine deletes a write into a constant global as undefined
 // behaviour, which the walker checks (a write into a string literal or an
-// object defined const). This makes the constant globals a store, memset,
-// memcpy or memmove may write writable, and returns them for the caller to
-// make constant again once InstCombine has run. A library call it turns
-// into such a copy (strcpy from a constant string) is still deleted.
+// object defined const). This makes the constant globals a store, memory
+// intrinsic, or writing library call may write writable, and returns them for
+// the caller to make constant again once InstCombine has run.
 static SmallVector<GlobalVariable *, 4> unconstantWritten(Module &m) {
   SmallSetVector<GlobalVariable *, 4> written;
+  auto mark = [&](const Value *ptr) {
+    SmallVector<const Value *, 4> objects;
+    getUnderlyingObjects(ptr, objects, nullptr, 0);
+    for (const Value *o : objects)
+      if (auto *g = dyn_cast<GlobalVariable>(o); g && g->isConstant())
+        written.insert(const_cast<GlobalVariable *>(g));
+  };
   for (Function &f : m)
     for (Instruction &i : instructions(f)) {
-      auto *s = dyn_cast<StoreInst>(&i);
-      auto *mi = dyn_cast<MemIntrinsic>(&i);
-      if (!s && !mi)
-        continue;
-      SmallVector<const Value *, 4> objects;
-      getUnderlyingObjects(s ? s->getPointerOperand() : mi->getRawDest(), objects, nullptr, 0);
-      for (const Value *o : objects)
-        if (auto *g = dyn_cast<GlobalVariable>(o); g && g->isConstant())
-          written.insert(const_cast<GlobalVariable *>(g));
+      if (auto *s = dyn_cast<StoreInst>(&i)) {
+        mark(s->getPointerOperand());
+      } else if (auto *mi = dyn_cast<MemIntrinsic>(&i)) {
+        mark(mi->getRawDest());
+      } else if (auto *cb = dyn_cast<CallBase>(&i)) {
+        int dst = libCallWriteArg(cb->getCalledFunction());
+        if (dst >= 0 && static_cast<unsigned>(dst) < cb->arg_size() &&
+            cb->getArgOperand(dst)->getType()->isPointerTy())
+          mark(cb->getArgOperand(dst));
+      }
     }
   for (GlobalVariable *g : written)
     g->setConstant(false);
