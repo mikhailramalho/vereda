@@ -1,7 +1,6 @@
 #include "ir/load.h"
 #include "util/assert.h"
 
-#include <algorithm>
 #include <llvm/ADT/DepthFirstIterator.h>
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
@@ -389,31 +388,31 @@ static Instruction *guardedOperation(CallBase &call) {
 
 // The sanitizers, as -fsanitize= names them, that the branch from pred
 // into trap, a call to llvm.ubsantrap, checks.
-static void trapSanitizers(const CallBase &trap, BasicBlock *pred, std::set<std::string> &names) {
+static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
+                           std::set<std::string> &names) {
   auto *code = cast<ConstantInt>(trap.getArgOperand(0));
   switch (code->getZExtValue()) {
   case 20: // ShiftOutOfBounds
     names.insert("shift");
     break;
-  case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
-    {
-      auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
-      SmallVector<Value *, 4> conditions;
-      if (br)
-        conditions.push_back(br->getCondition());
-      while (!conditions.empty()) {
-        auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
-        if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
-          if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
-            names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
-        } else if (cond && cond->getType()->isIntegerTy(1) &&
-                   (cond->getOpcode() == Instruction::And ||
-                    cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
-          conditions.append(cond->op_begin(), cond->op_end());
-        }
+  case 3: { // DivremOverflow: a divisor of zero, or INT_MIN / -1
+    auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+    SmallVector<Value *, 4> conditions;
+    if (br)
+      conditions.push_back(br->getCondition());
+    while (!conditions.empty()) {
+      auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+      if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+        if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+          names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+      } else if (cond && cond->getType()->isIntegerTy(1) &&
+                 (cond->getOpcode() == Instruction::And ||
+                  cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
+        conditions.append(cond->op_begin(), cond->op_end());
       }
     }
     break;
+  }
   case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
     for (Instruction &p : *pred)
       if (auto *ii = dyn_cast<IntrinsicInst>(&p))
