@@ -1338,7 +1338,7 @@ private:
       Term anyCase = t.boolean(false);
       MapVector<BasicBlock *, Term> taken; // in case order, for a stable formula
       for (const auto &c : sw->cases()) {
-        Term eq = t.eq(cond, enc.value(c.getCaseValue()));
+        Term eq = enc.assuming(t.eq(cond, enc.value(c.getCaseValue())));
         anyCase = t.lor(anyCase, eq);
         Term &to = taken[c.getCaseSuccessor()];
         to = to ? t.lor(to, eq) : eq;
@@ -1437,7 +1437,7 @@ private:
         throw Unsupported("integer division sanitizer with an unknown type descriptor");
       if (width > mem.pointerBits())
         divisor = mem.load(st, mem.fromAddress(divisor), IntegerType::get(c.getContext(), width));
-      Term zero = t.eq(divisor, t.bv(0, divisor.width()));
+      Term zero = enc.assuming(t.eq(divisor, t.bv(0, divisor.width())));
       if (counts(false) && !t.isFalse(zero))
         assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
                   checks::Property::DivisionByZero);
@@ -2173,7 +2173,8 @@ private:
       } else {
         checkInitRead(p, l->getType());
       }
-      enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
+      // What the path's facts settle in the value read, as an icmp's.
+      enc.bind(l, enc.fromBits(enc.assuming(mem.load(st, p, l->getType())), l->getType()));
       return true;
     }
     if (auto *w = dyn_cast<StoreInst>(&inst)) {
