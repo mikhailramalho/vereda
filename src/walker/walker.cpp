@@ -1418,7 +1418,10 @@ private:
                      symbol.starts_with("std::");
       StringRef entry = symbol.split("::h").first.split("::<").first;
       bool exits = entry == "std::process::exit" || entry == "std::process::abort" ||
-                   entry == "core::intrinsics::abort";
+                   entry == "core::intrinsics::abort" ||
+                   // Rust's default allocation error handler aborts (not
+                   // entry: "::h" splits its name).
+                   symbol.starts_with("alloc::alloc::handle_alloc_error");
       bool stops = c.doesNotReturn() || isa_and_nonnull<UnreachableInst>(c.getNextNode());
       if (exits)
         return t.boolean(false);
