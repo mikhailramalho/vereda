@@ -1625,6 +1625,13 @@ private:
         assertion(c, guard, "longjmp to a jmp_buf whose setjmp is not active", "");
       return t.boolean(false);
     }
+    // From models/stdio.c: pclose of a stream popen did not open, which
+    // POSIX leaves undefined.
+    if (name == "__vereda_pclose_not_popen") {
+      if (counts(false))
+        assertion(c, guard, "pclose of a stream popen did not open", "");
+      return t.boolean(false);
+    }
     if (name == "__vereda_longjmp_unsupported")
       throw Unsupported("longjmp back past a value its setjmp needs in " +
                         llvm::demangle(c.getFunction()->getName().str()));

@@ -17,6 +17,11 @@ char __VERIFIER_nondet_char(void);
 // Gives the whole object p points into nondet contents (the walker does).
 void __vereda_havoc(void *p);
 
+// The bytes from p to the end of its object; the walker computes it.
+size_t __vereda_object_size(const void *p);
+// A failed check: pclose of a stream popen did not open.
+void __vereda_pclose_not_popen(void);
+
 // The standard streams are declared, not defined, so their contents are
 // unknown: zeroed ones would put their bytes in memory as stores that a
 // read of a stream pointer has to walk past.
@@ -28,7 +33,12 @@ static FILE *stream(void) { return __VERIFIER_nondet_int() ? malloc(sizeof(FILE)
 FILE *fopen(const char *path, const char *mode) { return stream(); }
 FILE *fdopen(int fd, const char *mode) { return stream(); }
 FILE *tmpfile(void) { return stream(); }
-FILE *popen(const char *command, const char *mode) { return stream(); }
+// A popen stream is one byte larger than the others, which tells pclose
+// apart from them: a stream's contents change at every bodyless call that
+// gets it, its size does not.
+FILE *popen(const char *command, const char *mode) {
+  return __VERIFIER_nondet_int() ? malloc(sizeof(FILE) + 1) : NULL;
+}
 FILE *freopen(const char *path, const char *mode, FILE *s) {
   return __VERIFIER_nondet_int() ? s : NULL;
 }
@@ -147,8 +157,10 @@ int fclose(FILE *s) {
 // POSIX pclose closes a popen stream and returns its command's exit status,
 // or -1. A popen stream is an allocation as fopen's is, so fclose frees it
 // too (POSIX leaves that unspecified), and closing it twice, by either, is a
-// double free.
+// double free. pclose of any other stream is undefined, and reported.
 int pclose(FILE *s) {
+  if (__vereda_object_size(s) != sizeof(FILE) + 1)
+    __vereda_pclose_not_popen();
   free(s);
   return __VERIFIER_nondet_int();
 }
