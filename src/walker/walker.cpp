@@ -139,6 +139,25 @@ struct VarArgs {
   unsigned gp, fp;  // x86-64: the register save area offsets past the named arguments
 };
 
+// What enter() restores when a callee returns, including recursive bindings.
+struct CallState {
+  CallBase *call = nullptr;
+  memory::State mem;
+  encode::Encoder::Facts facts;
+  SmallVector<std::pair<const Value *, Term>, 0> bindings;
+  const CallBase *reachError = nullptr;
+};
+
+struct Caller {
+  Frame frame;
+  CallState state;
+};
+
+struct ActiveCall {
+  Frame *frame;
+  const CallState *state;
+};
+
 class Walk {
 public:
   Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
@@ -211,24 +230,96 @@ public:
     }
     if (saved.bindings)
       enc.restoreBindings(std::move(*saved.bindings));
-    stack.push_back(&f);
-    FunctionInfo &fi = info(f);
-    loop(saved.frame, fi, saved.loop, saved.iteration);
-    for (Loop *l = saved.loop; !stopped || !stopped->immediate;) {
-      Loop *parent = l->getParentLoop();
-      region(saved.frame, fi, parent, l->getHeader());
-      if (!parent || (stopped && stopped->immediate))
-        break;
-      unsigned next = saved.frame.iteration.lookup(parent) + 1;
-      saved.frame.iteration.erase(parent);
-      loop(saved.frame, fi, parent, next);
-      l = parent;
+    stack = std::move(saved.stack);
+    if (stack.empty())
+      stack.push_back(&f);
+    varArgs = std::move(saved.varArgs);
+    reachError = saved.reachError;
+    for (Caller &caller : saved.callers)
+      calls.push_back({&caller.frame, &caller.state});
+    Frame frame = std::move(saved.frame);
+    FunctionInfo &fi = info(*stack.back());
+    if (saved.loop) {
+      loop(frame, fi, saved.loop, saved.iteration);
+      finishRegion(frame, fi, saved.loop->getParentLoop(), saved.loop->getHeader());
+    } else {
+      enc.facts = saved.facts;
+      mem.setContext(saved.guard);
+      Term guard = enter(frame, *saved.call, *saved.call->getCalledFunction(),
+                         saved.guard, saved.mem);
+      finishBlock(frame, *saved.call, guard, saved.mem);
+    }
+    while (!saved.callers.empty()) {
+      stack.pop_back();
+      calls.pop_back();
+      Caller caller = std::move(saved.callers.back());
+      saved.callers.pop_back();
+      Term guard = leave(frame, caller.state, caller.state.mem);
+      frame = std::move(caller.frame);
+      finishBlock(frame, *caller.state.call, guard, caller.state.mem);
     }
     stack.pop_back();
     finalizeStopped();
   }
 
 private:
+  bool canCheckpoint(Term guard) const {
+    return incremental && !summary && !stopped && !truncatedInner && !t.isFalse(guard);
+  }
+
+  void checkpoint(const Frame &frame, Loop *l, unsigned iteration,
+                  CallBase *call = nullptr, Term guard = {}, const memory::State &st = {}) {
+    Stopped cp;
+    cp.frame = frame;
+    cp.loop = l;
+    cp.iteration = iteration;
+    cp.call = call;
+    cp.guard = guard;
+    cp.mem = st;
+    cp.facts = enc.facts;
+    cp.checks = checks.size();
+    cp.trace = trace.size();
+    cp.violated.reserve(checks.size());
+    for (const checks::Check &check : checks)
+      cp.violated.push_back(check.violated);
+    cp.claims = claims;
+    cp.assertionNumber = assertionNumber;
+    cp.assertionsIn = assertionsIn;
+    cp.recursionNumber = recursionNumber;
+    cp.recursionsIn = recursionsIn;
+    cp.summarised = summarised;
+    cp.bindings = enc.saveBindings();
+    cp.stack = stack;
+    cp.varArgs = varArgs;
+    cp.reachError = reachError;
+    for (const ActiveCall &caller : calls)
+      cp.callers.push_back({*caller.frame, *caller.state});
+    cp.epoch = t.constraintsEpoch();
+    cp.objects = mem.objectCount();
+    stopped = std::move(cp);
+  }
+
+  // Finish a suspended block/loop region, then each enclosing iteration.
+  void finishRegion(Frame &frame, FunctionInfo &fi, Loop *l, BasicBlock *after) {
+    while (!stopped || !stopped->immediate) {
+      region(frame, fi, l, after);
+      if (!l || (stopped && stopped->immediate))
+        break;
+      unsigned next = frame.iteration.lookup(l) + 1;
+      frame.iteration.erase(l);
+      loop(frame, fi, l, next);
+      after = l->getHeader();
+      l = l->getParentLoop();
+    }
+  }
+
+  void finishBlock(Frame &frame, CallBase &call, Term guard, memory::State &st) {
+    if (!t.isFalse(guard))
+      walkInstructions(frame, std::next(call.getIterator()), guard, st);
+    FunctionInfo &fi = info(*call.getFunction());
+    finishRegion(frame, fi, fi.li.getLoopFor(call.getParent()), call.getParent());
+  }
+
   // LLVM's default capture-tracking cap (100 uses) is too small for an array
   // written by an unrolled loop, where every store is a use of the alloca.
   static constexpr unsigned MaxCaptureUses = 16384;
@@ -754,37 +845,16 @@ private:
         Term reached = anyGuard(it->second);
         if (opts.unwind && i >= opts.unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
-          bool canCheckpoint = incremental && stack.size() == 1 && !summary &&
-                               !stopped && !truncatedInner && !t.isFalse(reached);
-          bool immediateCheckpoint = canCheckpoint && frame.arrivals.size() == 1 &&
+          bool checkpointable = canCheckpoint(reached);
+          bool immediateCheckpoint = checkpointable && stack.size() == 1 &&
+                                     frame.arrivals.size() == 1 &&
                                      frame.returns.empty() && t.isTrue(reached);
           // Snapshot before unwound() when the suffix still needs to run (symbolic
           // exits, early returns, or sibling arrivals): the next bound rolls back
           // the suffix and extends this loop from iteration i.
-          if (canCheckpoint && !immediateCheckpoint) {
-            Stopped cp;
-            cp.frame = frame;
-            cp.loop = l;
-            cp.iteration = i;
-            cp.checks = beforeChecks;
-            cp.trace = beforeTrace;
-            cp.violated.reserve(beforeChecks);
-            for (size_t j = 0; j < beforeChecks; ++j)
-              cp.violated.push_back(checks[j].violated);
-            cp.claims = claims;
-            cp.assertionNumber = assertionNumber;
-            cp.assertionsIn = assertionsIn;
-            cp.recursionNumber = recursionNumber;
-            cp.recursionsIn = recursionsIn;
-            cp.summarised = summarised;
-            // Later outer iterations rebind values still needed by this one.
-            if (l->getParentLoop())
-              cp.bindings = enc.saveBindings();
-            cp.epoch = t.constraintsEpoch();
-            cp.objects = mem.objectCount();
-            cp.immediate = false;
-            stopped = std::move(cp);
-          } else if (!canCheckpoint && !stopped && !t.isFalse(reached)) {
+          if (checkpointable && !immediateCheckpoint) {
+            checkpoint(frame, l, i);
+          } else if (!checkpointable && !stopped && !t.isFalse(reached)) {
             truncatedInner = true;
           }
           unwound(Unwound::Loop, number, loopLocation(l), reached, l);
@@ -1121,8 +1191,12 @@ private:
       ++p;
     }
 
+    walkInstructions(frame, bb.begin(), guard, st);
+  }
+
+  void walkInstructions(Frame &frame, BasicBlock::iterator from, Term guard, memory::State &st) {
     mem.setContext(guard);
-    for (Instruction &inst : bb) {
+    for (Instruction &inst : make_range(from, from->getParent()->end())) {
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
@@ -1132,7 +1206,7 @@ private:
       if (inst.isTerminator())
         terminator(frame, inst, guard, st);
       else if (auto *c = dyn_cast<CallBase>(&inst)) {
-        guard = call(*c, guard, st);
+        guard = call(frame, *c, guard, st);
         if (t.isFalse(guard))
           break;
         mem.setContext(guard); // the callee's blocks set their own
@@ -1247,7 +1321,7 @@ private:
 
   // Returns the path condition after the call: unchanged, strengthened by an
   // assume, or false when the callee does not return.
-  Term call(CallBase &c, Term guard, memory::State &st) {
+  Term call(Frame &frame, CallBase &c, Term guard, memory::State &st) {
     // Inline asm that ir did not turn into IR. As GCC's contract for asm
     // has it, it writes its outputs and no other memory, unless it clobbers
     // "memory". Its register outputs get nondet values; one that may write
@@ -1371,7 +1445,7 @@ private:
         stringFunction(c, name == "memchr", guard, st))
       return guard;
     if (!callee->isDeclaration())
-      return enter(c, *callee, guard, st);
+      return enter(frame, c, *callee, guard, st);
     // A bodyless setjmp would return a nondet value and longjmp would return
     // normally, which neither under- nor over-approximates the jump (#10).
     // Only a reached call refuses, so dead code does not cost the verdict.
@@ -1656,7 +1730,7 @@ private:
   }
 
   // Walks a defined callee in a new frame.
-  Term enter(CallBase &c, Function &callee, Term guard, memory::State &st) {
+  Term enter(Frame &caller, CallBase &c, Function &callee, Term guard, memory::State &st) {
     unsigned depth = std::count(stack.begin(), stack.end(), &callee);
     if (depth > 0) {
       bool cut = false;
@@ -1664,7 +1738,9 @@ private:
         unsigned &number = recursionNumber[&c];
         if (!number)
           number = ++recursionsIn[c.getFunction()];
-        if (!stopped && !t.isFalse(guard))
+        if (canCheckpoint(guard))
+          checkpoint(caller, nullptr, 0, &c, guard, st);
+        else if (!stopped && !t.isFalse(guard))
           truncatedInner = true;
         unwound(Unwound::Recursion, number, ir::location(c), guard, &c);
         cut = true;
@@ -1682,38 +1758,50 @@ private:
     for (Value *arg : c.args())
       actuals.push_back(enc.value(arg));
     // A recursive call rebinds the caller's own values; keep them.
-    SmallVector<std::pair<const Value *, Term>, 0> saved;
+    CallState context;
+    context.call = &c;
+    context.reachError = reachError;
     if (depth > 0) {
       for (Argument &arg : callee.args())
         if (Term term = enc.bound(&arg))
-          saved.push_back({&arg, term});
+          context.bindings.push_back({&arg, term});
       for (Instruction &inst : instructions(callee))
         if (Term term = enc.bound(&inst))
-          saved.push_back({&inst, term});
+          context.bindings.push_back({&inst, term});
     }
     for (Argument &arg : callee.args())
       enc.bind(&arg, actuals[arg.getArgNo()]);
 
-    const CallBase *outerReachError = reachError;
     if (callee.getName() == "reach_error")
       reachError = &c;
     if (callee.isVarArg())
       varArgs.push_back(passVarArgs(c, callee, guard, st));
-    encode::Encoder::Facts outer = enc.facts; // the callee's blocks set their own
+    context.facts = enc.facts; // the callee's blocks set their own
+    if (incremental) {
+      context.mem = st;
+      calls.push_back({&caller, &context});
+    }
     Frame frame = function(callee, guard, st);
-    enc.facts = frame.returns.empty() ? std::move(outer) : common(frame.returns);
-    if (callee.isVarArg())
+    if (incremental)
+      calls.pop_back();
+    return leave(frame, context, st);
+  }
+
+  Term leave(const Frame &frame, const CallState &context, memory::State &st) {
+    CallBase &c = *context.call;
+    enc.facts = frame.returns.empty() ? context.facts : common(frame.returns);
+    if (c.getCalledFunction()->isVarArg())
       varArgs.pop_back();
-    reachError = outerReachError;
+    reachError = context.reachError;
 
     Term after = t.boolean(false), result;
     for (unsigned i = 0; i < frame.returns.size(); ++i) {
-      Return &r = frame.returns[i];
+      const Return &r = frame.returns[i];
       after = frame.returns.size() == 1 ? r.guard : t.lor(after, r.guard);
       result = result ? t.ite(r.guard, r.value, result) : r.value;
       st = i ? mem.ite(r.guard, r.mem, st) : r.mem;
     }
-    for (auto &[v, term] : saved)
+    for (const auto &[v, term] : context.bindings)
       enc.bind(v, term);
     if (!c.getType()->isVoidTy())
       enc.bind(&c, result ? result : enc.fresh(c.getType(), "noreturn"));
@@ -2232,6 +2320,14 @@ private:
     Frame frame;
     Loop *loop = nullptr;
     unsigned iteration = 0;
+    CallBase *call = nullptr;
+    Term guard;
+    memory::State mem;
+    encode::Encoder::Facts facts;
+    SmallVector<Caller, 4> callers;
+    SmallVector<Function *, 8> stack;
+    SmallVector<VarArgs, 2> varArgs;
+    const CallBase *reachError = nullptr;
     size_t checks = 0, trace = 0;
     SmallVector<encode::Term, 16> violated;
     DenseMap<ClaimKey, unsigned> claims;
@@ -2246,13 +2342,14 @@ private:
     bool immediate = false;
   };
   std::optional<Stopped> stopped;
+  SmallVector<ActiveCall, 4> calls;
   bool truncatedInner = false;
   bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
   DenseMap<const Value *, bool> exposes;  // exposed, per alloca, global and function
   DenseMap<const Value *, std::optional<std::pair<std::string, const DIType *>>> namedObjects;
-  SmallVector<const Function *, 8> stack;
+  SmallVector<Function *, 8> stack;
   SmallVector<VarArgs, 2> varArgs; // of the variadic frames on the stack, innermost last
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.
