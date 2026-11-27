@@ -104,6 +104,56 @@ with tempfile.TemporaryDirectory() as directory:
                         str(source), "-o", str(ir)], check=True)
         assert re.search(r"preds = %\w+, %\w+\n.*@llvm\.ubsantrap", ir.read_text()), "no shared trap"
         check([binary, str(ir)], 1, "[INFO] Checks: " + defaults + ", " + families + "\n")
+    # On IR the binary leaves out the traps of a kind whose flag is =false,
+    # the later of its own flag and --overflow-check deciding, and checks
+    # every trap without a flag. vereda.py forwards the flags on IR input,
+    # where it refuses to turn a check on, as it cannot compile it in.
+    # Two paths: a shift out of range and an add that overflows.
+    traps = tmp / "traps.c"
+    traps.write_text("int main(int argc, char **argv) {\n  if (argc > 100)\n"
+                     "    return argc << argc;\n  return argc + 2147483600;\n}\n")
+    check(command + [str(traps), "--ub-shift-check", "--overflow-check", "--keep-ir"], 1,
+          "VERIFICATION FAILED")
+    kept_traps = tmp / "traps.c.ll"
+    shift, add = "undefined behavior on shift operation", "arithmetic overflow on add"
+    for flags, status, families, reported in (
+            ([], 1, ", shift, signed-overflow", (shift, add)),
+            (["--ub-shift-check=false"], 1, ", signed-overflow", (add,)),
+            (["--ub-signed-overflow-check=false"], 1, ", shift", (shift,)),
+            (["--overflow-check=false"], 1, ", shift", (shift,)),
+            (["--unsigned-overflow-check=false"], 1, ", shift, signed-overflow", (shift, add)),
+            (["--ub-shift-check=false", "--overflow-check=false"], 0, "", ()),
+            (["--ub-shift-check=false", "--overflow-check=false", "--ub-signed-overflow-check"],
+             1, ", signed-overflow", (add,)),
+            (["--ub-shift-check=false", "--ub-signed-overflow-check", "--overflow-check=false"],
+             0, "", ()),
+            (["--ub-shift-check=false", "--ub-shift-check", "--overflow-check=false"],
+             1, ", shift", (shift,))):
+        frontend = all(f.endswith("=false") for f in flags)
+        for prefix in [[binary]] + [command] * frontend:
+            output = check(prefix + [str(kept_traps), "--multi-property"] + flags, status,
+                           "[INFO] Checks: " + defaults + families + "\n")
+            for comment in (shift, add):
+                assert (comment in output) == (comment in reported), output
+    check(command + [str(kept_traps), "--ub-shift-check"], 6, "need C inputs")
+    # C input: vereda.py compiles in only the checks turned on, as before.
+    output = check(command + [str(traps), "--overflow-check", "--ub-shift-check=false",
+                              "--multi-property"], 1,
+                   "[INFO] Checks: " + defaults + ", signed-overflow, unsigned-overflow\n")
+    assert shift not in output and add in output, output
+    # A trap that clang -O2 shares between a signed and an unsigned check
+    # keeps the branches of the kind still on.
+    source.write_text("int g;\nunsigned u;\nint main(int argc, char **argv) {"
+                      " g = argc + 7; u = (unsigned)argc + 3u; return argc + 9; }\n")
+    both = "-fsanitize=signed-integer-overflow,unsigned-integer-overflow"
+    subprocess.run([clang, "-S", "-emit-llvm", "-O2", both,
+                    both.replace("-fsanitize=", "-fsanitize-trap="), str(source), "-o", str(ir)],
+                   check=True)
+    for flags, status, families in (
+            (["--unsigned-overflow-check=false"], 1, ", signed-overflow"),
+            (["--ub-signed-overflow-check=false"], 1, ", unsigned-overflow"),
+            (["--overflow-check=false"], 0, "")):
+        check([binary, str(ir)] + flags, status, "[INFO] Checks: " + defaults + families + "\n")
     # A division trap checks a divisor of zero or INT_MIN / -1, by what its
     # branch compares; div-by-zero, also the binary's own check, is listed once.
     source.write_text("int main(int argc, char **argv) { return 100 / argc; }\n")
