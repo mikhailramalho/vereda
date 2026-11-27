@@ -315,6 +315,18 @@ Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
   return ty->isX86_FP80Ty() ? ieee79ToFP80(b) : b;
 }
 
+camada::SMTExprRef Encoder::bvFloat(Term x, Type *ty) {
+  Term b = toBits(x, ty);
+  if (ty->isX86_FP80Ty())
+    b = fp80ToIEEE79(b);
+  return s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty, camada::FPEncoding::BV));
+}
+
+Term Encoder::fromBVFloat(const camada::SMTExprRef &f, Type *ty) {
+  Term b = t.fromSolver(s.mkIEEEFPToBV(f));
+  return fromBits(ty->isX86_FP80Ty() ? ieee79ToFP80(b) : b, ty);
+}
+
 Term Encoder::toBits(Term v, Type *ty) {
   if (!useNative(ty) || !ieee(ty))
     return v;
@@ -519,18 +531,9 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       // Converting between a native FP format and a BV-encoded one (x86_fp80 /
       // bfloat): do the conversion in camada's BV FP encoding so both sides
       // share one encoding.
-      Term srcBits = toBits(a, src);
-      if (src->isX86_FP80Ty())
-        srcBits = fp80ToIEEE79(srcBits);
-      camada::SMTExprRef from =
-          s.mkBVToIEEEFP(t.solverTerm(srcBits), fpSort(src, camada::FPEncoding::BV));
-      camada::SMTExprRef conv =
-          s.mkFPToFP(from, fpSort(dst, camada::FPEncoding::BV),
-                     s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV));
-      Term dstBits = t.fromSolver(s.mkIEEEFPToBV(conv));
-      if (dst->isX86_FP80Ty())
-        dstBits = ieee79ToFP80(dstBits);
-      return fromBits(dstBits, dst);
+      return fromBVFloat(s.mkFPToFP(bvFloat(a, src), fpSort(dst, camada::FPEncoding::BV),
+                                    s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV)),
+                         dst);
     }
     return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN, dst)), dst);
   default:
@@ -628,7 +631,13 @@ Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
       // is nonzero and its sign is not x's: fmod's is then the remainder
       // moved by |y| towards x's sign, an exact sum as fmod's result is
       // representable.
-      camada::SMTExprRef r = s.mkFPRem(a, b), absY = s.mkFPAbs(b);
+      // Natively, Bitwuzla's fp.rem is slow on unconstrained operands (#445),
+      // so it is computed in camada's bit-vector encoding, as ESBMC does.
+      camada::SMTExprRef r =
+          useNative(ty) ? t.solverTerm(fromBVFloat(
+                              s.mkFPRem(bvFloat(value(lhs), ty), bvFloat(value(rhs), ty)), ty))
+                        : s.mkFPRem(a, b);
+      camada::SMTExprRef absY = s.mkFPAbs(b);
       camada::SMTExprRef zero = fp(ConstantFP::getZero(ty));
       camada::SMTExprRef xNeg = s.mkFPLt(a, zero);
       camada::SMTExprRef fix =
