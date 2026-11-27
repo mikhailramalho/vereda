@@ -316,20 +316,19 @@ Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
   }
 }
 
-Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty) {
+Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty, bool nsz) {
   bool min = id == Intrinsic::minnum || id == Intrinsic::minimum || id == Intrinsic::minimumnum;
   camada::SMTExprRef x = fp(a, ty), y = fp(b, ty);
   Term first = t.fromSolver(min ? s.mkFPLe(x, y) : s.mkFPGe(x, y));
   Term nanA = t.fromSolver(s.mkFPIsNaN(x)), nanB = t.fromSolver(s.mkFPIsNaN(y));
-  if (id == Intrinsic::minnum || id == Intrinsic::maxnum)
-    return t.ite(nanA, b, t.ite(t.lor(nanB, first), a, b));
-  // Of two zeros, minimum takes a when a is -0, maximum when a is +0.
+  // Of two zeros, min takes a when a is -0, max when a is +0; under nsz either.
   Term zeros = t.land(t.fromSolver(s.mkFPIsZero(x)), t.fromSolver(s.mkFPIsZero(y)));
   Term negA = signBit(a, ty);
-  Term takeA = t.ite(zeros, min ? negA : t.lnot(negA), first);
-  // maximum/minimum give the NaN operand, maximumnum/minimumnum the other.
-  bool num = id == Intrinsic::maximumnum || id == Intrinsic::minimumnum;
-  return t.ite(nanA, num ? b : a, t.ite(nanB, num ? a : b, t.ite(takeA, a, b)));
+  Term zeroA = nsz ? fresh(Type::getInt1Ty(ty->getContext()), "nsz") : min ? negA : t.lnot(negA);
+  Term takeA = t.ite(zeros, zeroA, first);
+  // minimum/maximum give the NaN operand, the others the other operand.
+  bool nanOut = id == Intrinsic::maximum || id == Intrinsic::minimum;
+  return t.ite(nanA, nanOut ? a : b, t.ite(nanB, nanOut ? b : a, t.ite(takeA, a, b)));
 }
 
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
@@ -871,15 +870,15 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::nearbyint:
   case Intrinsic::roundeven: r = integral(camada::RM::ROUND_TO_EVEN); break;
   case Intrinsic::minnum:
-  case Intrinsic::maxnum: { // a NaN operand gives the other; a signed zero either
-    if (auto x = constFloat(arg(0)), y = constFloat(arg(1)); x && y) {
-      APFloat::cmpResult cmp = x->compare(*y);
-      bool first = cmp == APFloat::cmpEqual ||
-                   cmp == (id == Intrinsic::minnum ? APFloat::cmpLessThan : APFloat::cmpGreaterThan);
-      r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
+  case Intrinsic::maxnum: { // a NaN operand gives the other; -0 below +0, or either under nsz
+    bool nsz = c.hasNoSignedZeros();
+    if (auto x = constFloat(arg(0)), y = constFloat(arg(1));
+        x && y && !(nsz && x->isZero() && y->isZero() && x->isNegative() != y->isNegative())) {
+      APFloat m = id == Intrinsic::minnum ? minnum(*x, *y) : maxnum(*x, *y);
+      r = value(arg(m.bitwiseIsEqual(*x) ? 0 : 1));
       break;
     }
-    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType(), nsz);
     break;
   }
   case Intrinsic::minimum:

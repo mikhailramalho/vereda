@@ -889,8 +889,12 @@ static void libmToIntrinsics(Module &m) {
         continue;
       for (User *u : make_early_inc_range(f->users()))
         if (auto *c = dyn_cast<CallInst>(u);
-            c && c->getCalledOperand() == f && c->getFunctionType() == f->getFunctionType())
+            c && c->getCalledOperand() == f && c->getFunctionType() == f->getFunctionType()) {
           c->setCalledFunction(intrinsic);
+          // C's fmin and fmax may give either of two zeros (C17 F.10.9.2).
+          if (id == Intrinsic::minnum || id == Intrinsic::maxnum)
+            c->setHasNoSignedZeros(true);
+        }
     }
   // fmod has no intrinsic; it is the frem instruction.
   for (const char *name : {"fmod", "fmodf", "fmodl"}) {
