@@ -132,3 +132,5 @@ known to call nothing.
 - Mixing the two ways: a loop SCEV bounds could be summarised or skipped by
   the walk, so that only the loops it cannot count need unwinding.
 - Non-termination (`FALSE_TERMINATION`), #39.
+
+Follow-up issues: #360, #361, #362, #363.
