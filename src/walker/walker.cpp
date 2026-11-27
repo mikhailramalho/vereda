@@ -1420,8 +1420,17 @@ private:
           for (unsigned i = 0; i < 2; ++i)
             if (site->taken[i] && !t.isFalse(taken[i]))
               trace.add(Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false");
-      arrive(frame, bb, br->getSuccessor(0), taken[0], st, c);
-      arrive(frame, bb, br->getSuccessor(1), taken[1], st, t.lnot(c));
+      // Under --multi-property a path goes on past a failed sanitizer check,
+      // as past a failed assertion, with the value the instruction computes.
+      Term edge[2] = {c, t.lnot(c)};
+      if (opts.multiProperty)
+        for (unsigned i = 0; i < 2; ++i)
+          if (failsCheck(*br->getSuccessor(i))) {
+            taken[1 - i] = guard;
+            edge[1 - i] = Term();
+          }
+      arrive(frame, bb, br->getSuccessor(0), taken[0], st, edge[0]);
+      arrive(frame, bb, br->getSuccessor(1), taken[1], st, edge[1]);
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       Term cond = enc.value(sw->getCondition());
       if (const APInt *v = t.constant(cond)) {
@@ -1726,6 +1735,8 @@ private:
       assertion(c, t.land(guard, t.lnot(holds)),
                 "dereference failure: Incorrect alignment when accessing data object", "",
                 nullptr, checks::Property::Alignment);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -1748,6 +1759,8 @@ private:
                 isDiv ? checks::Property::DivisionByZero
                       : isCount ? checks::Property::CountZero
                                 : checks::Property::FloatCastOverflow);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -2144,6 +2157,28 @@ private:
     mem.store(st, mem.advance(ap, t.bv(4, bits)), t.bv(va.fp, 32), i32);
     mem.store(st, mem.advance(ap, t.bv(8, bits)), va.stack, ptr);
     mem.store(st, mem.advance(ap, t.bv(16, bits)), va.regs, ptr);
+  }
+
+  // Whether every path from bb fails a sanitizer check that counts and ends
+  // there: clang's trap or handler block, or the branch nameSanitizerChecks
+  // puts before the two halves of a shl's check. __builtin_assume(false)
+  // shares the builtin handler, so that one is left out.
+  bool failsCheck(const BasicBlock &bb) const {
+    auto trap = [&](const BasicBlock &b) {
+      const Instruction *end = b.getTerminator();
+      auto *c = isa<UnreachableInst>(end) ? dyn_cast_or_null<CallBase>(end->getPrevNode())
+                                          : nullptr;
+      Function *f = c ? c->getCalledFunction() : nullptr;
+      if (!f)
+        return false;
+      if (f->getName() == "llvm.ubsantrap")
+        return counts(true);
+      return (f->getName() == "__ubsan_handle_float_cast_overflow_abort" ||
+              f->getName() == "__ubsan_handle_divrem_overflow_abort") &&
+             counts(false);
+    };
+    auto *br = dyn_cast<CondBrInst>(bb.getTerminator());
+    return br ? trap(*br->getSuccessor(0)) && trap(*br->getSuccessor(1)) : trap(bb);
   }
 
   // Whether a failed assertion, or sanitizer check, violates the property

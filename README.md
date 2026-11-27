@@ -102,7 +102,9 @@ alignment and uninitialised reads (not unsigned overflow, which is defined, nor
 data races, which are not implemented). It stands for those six flags in its
 place, so `--ub-checks --ub-shift-check=false` leaves shifts out, an earlier
 `--ub-shift-check=false` is overridden, and `--ub-checks=false` turns all six
-off. Like the sanitizer flags, it needs C input. Unsigned
+off. Like the sanitizer flags, it needs C input to turn a check on; on IR input
+vereda.py forwards the four sanitizer flags to the binary, which leaves out the
+traps of a kind turned off. Unsigned
 arithmetic wraps by definition (C11 6.2.5p9), so its check has no `ub-`
 prefix. Unlike ESBMC's `--overflow-check`, which checks signed overflow,
 shifts and floating-point to integer conversions, Vereda's checks signed and
@@ -140,6 +142,7 @@ The main verifier flags:
 | `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
 | `--ub-alignment-check` | Check alignment of typed memory accesses (opt-in) |
 | `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in) |
+| `--ub-signed-overflow-check`, `--unsigned-overflow-check`, `--ub-shift-check`, `--overflow-check` | On IR input, `=false` leaves out the sanitizer traps of that kind compiled into the IR, and a branch that also checks a kind still on keeps its trap; `--overflow-check` stands for both overflow flags, and the later flag decides. With none of them every trap is checked |
 | `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
 | `--ub-data-race-check` | Request data-race checking; currently errors because it is not implemented |
 | `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
