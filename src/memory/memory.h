@@ -368,8 +368,8 @@ private:
   camada::SMTSolver &s;
   const llvm::DataLayout &dl;
   unsigned ptrBits;
-  std::vector<Object> objects;
-  llvm::DenseMap<const void *, uint64_t> baseToObj; // index = object id; 0 is null
+  std::vector<Object> objects; // index = object id; 0 is null
+  llvm::DenseMap<const void *, uint64_t> baseToObj; // base symbol -> object id
   encode::Term bases;    // object id -> base address, created lazily on symbolic base()
   encode::Term sizes;    // object id -> size in bytes, created lazily on symbolic size()
   encode::Term end;      // first address after the last object
