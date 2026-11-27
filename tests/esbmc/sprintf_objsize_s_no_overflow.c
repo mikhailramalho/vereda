@@ -18,6 +18,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/sprintf_objsize_s_no_overflow
 // RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

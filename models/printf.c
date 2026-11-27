@@ -19,6 +19,7 @@ void *malloc(size_t);
 char __VERIFIER_nondet_char(void);
 unsigned __VERIFIER_nondet_uint(void);
 void __VERIFIER_assume(int);
+size_t __vereda_object_size(const void *p);
 
 // Byte len of the text goes to s[len] if len < cap. These are macros so
 // that len stays a value, not memory.
@@ -40,8 +41,11 @@ void __VERIFIER_assume(int);
 static size_t string(char *s, size_t cap, size_t len, const void *p, int wide, int prec,
                      int width, int left) {
 #define AT(i) (wide ? (char)((const wchar_t *)p)[i] : ((const char *)p)[i])
+  // A string with no NUL in its object ends at the object's end, as in
+  // ESBMC's model: its length never passes what is left of the object.
+  size_t room = __vereda_object_size(p) / (wide ? sizeof(wchar_t) : 1);
   int n = 0;
-  while ((prec < 0 || n < prec) && AT(n))
+  while ((prec < 0 || n < prec) && (size_t)n < room && AT(n))
     ++n;
   if (!left)
     PAD(' ', width - n);
