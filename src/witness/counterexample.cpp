@@ -25,7 +25,7 @@ struct LastValue {
   const void *termId = nullptr;
   bool isUnsigned = false;
   uint64_t val = 0;
-  std::string wide; // > 64-bit binary string, only when kind is Wide (binary) or Float (hexadecimal)
+  std::string wide; // the bits, only when kind is Wide (binary) or Float (hex)
 };
 } // namespace
 
@@ -68,7 +68,8 @@ static void writeFloat(raw_ostream &os, const APInt &v) {
   std::snprintf(buf, sizeof buf, "%.6Le", ld);
   auto [digits, exponent] = StringRef(buf).split('e');
   int e = std::atoi(exponent.data());
-  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e) << (w == 32 ? "f" : w == 80 ? "L" : "");
+  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e)
+     << (w == 32 ? "f" : w == 80 ? "L" : "");
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,

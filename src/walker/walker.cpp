@@ -1339,8 +1339,7 @@ private:
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
             trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned, 0, nullptr, {},
-                      a->value->getType()->isFloatTy() || a->value->getType()->isDoubleTy() ||
-                      a->value->getType()->isX86_FP80Ty());
+                      a->value->getType()->isFloatingPointTy());
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
