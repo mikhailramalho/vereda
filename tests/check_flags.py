@@ -153,6 +153,44 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--ub-shift-check=false"], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--overflow-check"], 0, "VERIFICATION SUCCESSFUL")
 
+    # --ub-checks finds one violation of each opt-in family, and stands for
+    # the six flags in its place: the last flag naming a check decides it.
+    source.write_text("extern int __VERIFIER_nondet_int(void);\n"
+                      "extern double __VERIFIER_nondet_double(void);\n"
+                      "int main(void) {\n"
+                      "  int n = __VERIFIER_nondet_int(), r = 0;\n"
+                      "  r += n + 1;\n"
+                      "  r += 1 << n;\n"
+                      "  r += (int)__VERIFIER_nondet_double();\n"
+                      "  r += __builtin_ctz(n);\n"
+                      "  long b[2] = {0, 0};\n"
+                      "  r += *(int *)((char *)b + n % 4);\n"
+                      "  int u;\n"
+                      "  r += u;\n"
+                      "  return r;\n"
+                      "}\n")
+    families = {"--ub-signed-overflow-check": "arithmetic overflow on add",
+                "--ub-shift-check": "undefined behavior on shift operation",
+                "--ub-float-cast-overflow-check": "floating-point conversion out of range",
+                "--ub-count-zero-check": "__builtin_clz/ctz of zero is undefined",
+                "--ub-alignment-check": "Incorrect alignment when accessing data object",
+                "--ub-uninit-check": "use of uninitialized variable: u"}
+    run = command + [str(source), "--multi-property"]
+    check(run, 0, "VERIFICATION SUCCESSFUL")
+    output = check(run + ["--ub-checks"], 1, "VERIFICATION FAILED")
+    assert all(message in output for message in families.values()), output
+    for flag, message in families.items():
+        output = check(run + ["--ub-checks", flag + "=false"], 1, "VERIFICATION FAILED")
+        assert message not in output, output
+        assert all(m in output for f, m in families.items() if f != flag), output
+        check(run + [flag + "=false", "--ub-checks"], 1, message)
+    check(run + ["--ub-shift-check", "--ub-checks=false"], 0, "VERIFICATION SUCCESSFUL")
+    check(run + ["--ub-checks=maybe"], 6, "--ub-checks takes true or false")
+    # Unsigned overflow is defined, so --ub-checks leaves it out.
+    source.write_text("int main(int n, char **p) { unsigned u = n; return u + 4294967295u > 0; }\n")
+    check(command + [str(source), "--ub-checks"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--unsigned-overflow-check"], 1, "VERIFICATION FAILED")
+
     source.write_text("extern void reach_error(void);\n"
                       "int main(int n, char **argv) { int x = 7 / n; reach_error(); return x; }\n")
     prop = tmp / "unreach.prp"
