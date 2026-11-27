@@ -23,6 +23,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_9368_success
 // RUN: -m64 --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

@@ -24,6 +24,3 @@ int main()
 // Imported from ESBMC regression/esbmc/aligned-alloc-2
 // RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED
