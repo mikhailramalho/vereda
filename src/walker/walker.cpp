@@ -1547,7 +1547,8 @@ private:
     }
     if (name == "__vereda_check_alignment") {
       uint64_t align = cast<ConstantInt>(c.getArgOperand(1))->getZExtValue();
-      if (align <= 1)
+      // As below: an uncounted check must not prune the paths violating it.
+      if (align <= 1 || !counts(false))
         return guard;
       Term p = enc.value(c.getArgOperand(0));
       Term mask = t.bv(align - 1, mem.pointerBits());
@@ -1563,29 +1564,31 @@ private:
       Term holds = t.eq(t.bvand(addr, mask), zero);
       if (t.isTrue(holds))
         return guard;
-      if (counts(false))
-        assertion(c, t.land(guard, t.lnot(holds)),
-                  "dereference failure: Incorrect alignment when accessing data object", "",
-                  nullptr, checks::Property::Alignment);
+      assertion(c, t.land(guard, t.lnot(holds)),
+                "dereference failure: Incorrect alignment when accessing data object", "",
+                nullptr, checks::Property::Alignment);
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
     if (name == "__vereda_check_divisor" || name == "__vereda_check_count_zero" ||
         name == "__vereda_check_float_cast_overflow") {
+      // An uncounted check is no assumption either: it would prune the
+      // paths that violate it, hiding the property behind them.
+      if (!counts(false))
+        return guard;
       Term holds = enc.isTrue(c.getArgOperand(0));
       if (t.isTrue(holds))
         return guard;
       bool isDiv = name == "__vereda_check_divisor";
       bool isCount = name == "__vereda_check_count_zero";
-      if (counts(false))
-        assertion(c, t.land(guard, t.lnot(holds)),
-                  isDiv ? "division by zero"
-                        : isCount ? "__builtin_clz/ctz of zero is undefined"
-                                  : "float cast overflow",
-                  "", nullptr,
-                  isDiv ? checks::Property::DivisionByZero
-                        : isCount ? checks::Property::CountZero
-                                  : checks::Property::FloatCastOverflow);
+      assertion(c, t.land(guard, t.lnot(holds)),
+                isDiv ? "division by zero"
+                      : isCount ? "__builtin_clz/ctz of zero is undefined"
+                                : "float cast overflow",
+                "", nullptr,
+                isDiv ? checks::Property::DivisionByZero
+                      : isCount ? checks::Property::CountZero
+                                : checks::Property::FloatCastOverflow);
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
