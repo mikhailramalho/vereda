@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10853_partial_unwind
 // Needs: __ESBMC_loop_invariant
-// Needs: --loop-invariant-check --witness-output-yaml -
+// Needs: --loop-invariant-check --witness-output-yaml
 // RUN: --loop-invariant-check --unwind 2 --no-unwinding-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

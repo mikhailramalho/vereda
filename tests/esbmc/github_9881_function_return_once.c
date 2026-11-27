@@ -17,7 +17,7 @@ int main(void)
   __VERIFIER_assert(!(t && g == 3 && u == 7)); // u is 7
 }
 // Imported from ESBMC regression/esbmc/github_9881_function_return_once
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

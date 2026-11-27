@@ -12,7 +12,7 @@ int main(void)
   __VERIFIER_assert(x != 7 || y != 5); // x is 7 and y is 5
 }
 // Imported from ESBMC regression/esbmc/github_9881_function_return_rparen
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

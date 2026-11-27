@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
   return x == 3;
 }
 // Imported from ESBMC regression/esbmc/github_9650_argv_witness
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

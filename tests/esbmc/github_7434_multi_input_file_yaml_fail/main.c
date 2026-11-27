@@ -7,7 +7,7 @@ int main(void)
   return check();
 }
 // Imported from ESBMC regression/esbmc/github_7434_multi_input_file_yaml_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: first.c --witness-output-yaml -
 // FILES: first.c
 // MODE: FUTURE

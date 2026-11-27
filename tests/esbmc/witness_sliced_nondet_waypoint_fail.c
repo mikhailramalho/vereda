@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/witness_sliced_nondet_waypoint_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --unwind 4 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

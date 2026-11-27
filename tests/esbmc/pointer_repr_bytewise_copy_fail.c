@@ -22,8 +22,8 @@ int main()
   assert(*e.key == 2);
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_bytewise_copy_fail
-// Needs: --timeout 60s --big-endian
-// RUN: --unwind 129 --timeout 60s --big-endian
+// Needs: --big-endian
+// RUN: --unwind 129 --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

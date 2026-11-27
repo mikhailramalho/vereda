@@ -256,3 +256,22 @@ for args, run in (
     lines = import_esbmc.header("suite/raw_flags", "CORE", args, [], ".", [])
     assert "// RUN: " + run in lines, lines
     assert "// Needs: --k-induction" in lines, lines
+
+# Output-only and scheduling flags are dropped, --i386-macos is -m32, and a bare
+# "-" (stdin or stdout) goes with the flag before it, never into a Needs line.
+assert import_esbmc.translate("--smt-model --memstats --interactive-ileaves --schedule "
+                              "--i386-macos --unwind 3", ".") == (["-m32", "--unwind", "3"], [], [])
+assert import_esbmc.translate("--claim-fingerprint-dump - --multi-property", ".") == (
+    ["--multi-property"], [], [])
+for args, needs, run in (
+        ("--witness-output-yaml - --k-induction", "--witness-output-yaml --k-induction",
+         "--witness-output-yaml - --k-induction"),
+        ("--claim-fingerprint-dump - --k-induction", "--k-induction", "--k-induction"),
+        ("--schedule --k-induction --i386-macos", "--k-induction", "--k-induction -m32")):
+    lines = import_esbmc.header("suite/dash", "CORE", args, [], ".", [])
+    assert "// Needs: " + needs in lines and "// RUN: " + run in lines, lines
+# --timeout and its value go: run.py sets the time limit.
+assert import_esbmc.translate("--timeout 60s --unwind 2", ".") == (["--unwind", "2"], [], [])
+assert import_esbmc.translate("--timeout=30 --k-induction", ".") == ([], [], ["--k-induction"])
+lines = import_esbmc.header("suite/timeout", "CORE", "--timeout 60s --k-induction", [], ".", [])
+assert "// Needs: --k-induction" in lines and "// RUN: --k-induction" in lines, lines

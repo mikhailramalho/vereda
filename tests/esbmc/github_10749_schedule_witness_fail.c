@@ -23,7 +23,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10749_schedule_witness_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --error-label ERROR --unwind 4 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
