@@ -39,7 +39,8 @@ CLANG_FLAGS = [
 
 # ESBMC's flags for the checks clang's sanitizers insert. They trap into
 # llvm.ubsantrap, which the binary takes as a failed check. As in ESBMC,
-# either overflow check also checks shifts, and --overflow-check also
+# either overflow check also checks shifts, --unsigned-overflow-check also
+# signed overflow (goto_checkt::overflow_check), and --overflow-check also
 # float-to-integer conversions (--ub-float-cast-overflow-check), unless
 # --no-fp-conversion-check.
 SANITIZERS = {
@@ -255,7 +256,7 @@ def main():
             fail("vereda.py: --std selects a C language standard and does not apply to Rust")
         if args.m32:
             fail("vereda.py: Rust source currently supports the host 64-bit target only")
-        if args.sanitize or args.property_file or args.I or args.D:
+        if args.sanitize or args.no_fp_conversion_check or args.property_file or args.I or args.D:
             fail("vereda.py: Rust source does not support C sanitizer, property-file, -I or -D flags")
         args.rustc = args.rustc or find_rustc(binary)
         version = subprocess.run([args.rustc, "--version"], capture_output=True, text=True,

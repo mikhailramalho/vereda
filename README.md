@@ -92,8 +92,9 @@ flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and ESBMC's `--overflow-check`,
 `--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
 sanitizer checks, and `--no-fp-conversion-check`), and forwards everything else
-to the binary. As in ESBMC, either overflow check also checks shifts, and
-`--overflow-check` also floating-point to integer conversions unless
+to the binary. As in ESBMC, either overflow check also checks shifts,
+`--unsigned-overflow-check` also signed overflow, and `--overflow-check` also
+floating-point to integer conversions unless
 `--no-fp-conversion-check` is given.
 `vereda.py -h` lists both sets.
 

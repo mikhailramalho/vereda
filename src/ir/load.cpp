@@ -333,28 +333,35 @@ static void nameSanitizerChecks(Module &m) {
     Instruction *op = guardedOperation(*c);
     if (!op)
       continue;
-    unsigned code = isa<ConstantInt>(c->getArgOperand(0))
-                        ? cast<ConstantInt>(c->getArgOperand(0))->getZExtValue() : 0;
-    bool trap = c->getCalledFunction()->getName() == "llvm.ubsantrap";
+    StringRef callee = c->getCalledFunction()->getName();
+    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
     switch (op->getOpcode()) {
     case Instruction::SDiv:
     case Instruction::SRem:
-      if (!trap || code == 3) // DivremOverflow
+      if (callee == "__ubsan_handle_divrem_overflow_abort" ||
+          (code && code->equalsInt(3))) // DivremOverflow
         nameCheck(*c, std::string("arithmetic overflow on ") +
                           (op->getOpcode() == Instruction::SDiv ? "div" : "modulus"));
       break;
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr: {
-      if (!trap || code != 20) // ShiftOutOfBounds
+      if (!code || !code->equalsInt(20)) // ShiftOutOfBounds
         break;
       nameCheck(*c, Twine("undefined behavior on shift operation ") + op->getOpcodeName());
+      // Split only clang's signed shl shape: the predecessor branches on
+      // exponent-ok and a phi of the base check, straight into the shl's
+      // block. The base, defined above that block, then dominates the
+      // predecessor and so the check's block.
       BasicBlock *check = c->getParent();
-      auto *br = cast<CondBrInst>(check->getSinglePredecessor()->getTerminator());
+      BasicBlock *pred = check->getSinglePredecessor();
+      auto *br = cast<CondBrInst>(pred->getTerminator());
       auto *both = dyn_cast<BinaryOperator>(br->getCondition());
       Value *base = op->getOperand(0);
       auto *baseInst = dyn_cast<Instruction>(base);
       if (op->getOpcode() != Instruction::Shl || !both || both->getOpcode() != Instruction::And ||
+          isa<PHINode>(both->getOperand(0)) == isa<PHINode>(both->getOperand(1)) ||
+          op->getParent()->getSinglePredecessor() != pred ||
           (baseInst && baseInst->getParent() == op->getParent()) || c != &check->front())
         break;
       Value *exponentOk = isa<PHINode>(both->getOperand(0)) ? both->getOperand(1)
@@ -382,7 +389,7 @@ static void nameSanitizerChecks(Module &m) {
     }
     case Instruction::FPToSI:
     case Instruction::FPToUI:
-      if (!trap)
+      if (callee == "__ubsan_handle_float_cast_overflow_abort")
         nameCheck(*c, floatCastComment(*op));
       break;
     }

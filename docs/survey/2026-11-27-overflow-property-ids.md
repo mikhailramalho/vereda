@@ -77,7 +77,12 @@ float-cast check names the destination as ESBMC does, `signedbv` or
 
 The flags follow ESBMC's too. `--overflow-check` and
 `--unsigned-overflow-check` now also check shifts, as ESBMC's
-`goto_checkt::shift_check` does under either, and `--overflow-check` also
+`goto_checkt::shift_check` does under either. `--unsigned-overflow-check`
+also checks signed overflow, as ESBMC's `goto_checkt::overflow_check` does:
+it checks a signed operation under any of the three flags and an unsigned
+one only under `--unsigned-overflow-check` (an unsigned run of ESBMC on
+`int a; a + (x >> s)` reports `arithmetic overflow on add` for the signed
+add). `--overflow-check` also
 checks float-to-integer conversions (`fp_to_int_range_check`) unless
 `--no-fp-conversion-check`, a new front-end flag, is given. The binary takes
 ESBMC's `--clz-zero-check` and `--uninitialised-vars-check` as aliases of
