@@ -2360,9 +2360,7 @@ private:
       if (cx->isWeak()) // may fail even when equal
         ok = t.land(ok, enc.fresh(Type::getInt1Ty(inst.getContext()), "cmpxchg_weak"));
       writes(inst, t.land(guard, ok), p);
-      mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()),
-                                   isBool ? old : enc.fromBits(old, ty)),
-                ty);
+      mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()), old), ty);
       // {old, success}: a packed struct holds field 0 in the low bits.
       enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), isBool ? oldBV : old));
       return true;
@@ -2402,7 +2400,8 @@ private:
     Type *ty = rmw.getType();
     AtomicRMWInst::BinOp op = rmw.getOperation();
     bool isFloat = ty->isFloatingPointTy(), isBool = ty->isIntegerTy(1);
-    if (isFloat ? op != AtomicRMWInst::Xchg && op != AtomicRMWInst::FAdd && op != AtomicRMWInst::FSub
+    if (isFloat ? op != AtomicRMWInst::Xchg && op != AtomicRMWInst::FAdd &&
+                      op != AtomicRMWInst::FSub
                 : !ty->isIntegerTy() && !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
       throw Unsupported("instruction " + encode::describe(&rmw));
     Term p = enc.value(rmw.getPointerOperand());
