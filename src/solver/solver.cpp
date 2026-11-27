@@ -81,7 +81,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all,
       // Clear any constant-false checks after idx in this phase so !all
       // reports the exact same checked prefix as sequential solving.
       for (size_t j = idx + 1; j < checks.size(); ++j)
-        if ((checks[j].property != checks::Property::Assertion) == unwinding)
+        if (checks[j].isUnwinding() == unwinding)
           v.status[j] = Status::NotChecked;
       violated(checks[idx]);
     };
@@ -270,13 +270,20 @@ Verdict decideNonIncremental(
       pending.push_back(i);
     }
 
-    while (!pending.empty()) {
-      if (!ensureFresh()) {
+    // A violation already found stands; an unknown answer only leaves the
+    // remaining checks unchecked, as in decide().
+    auto unknown = [&](size_t idx, std::string detail) {
+      if (!v.check) {
         v.kind = Verdict::Unknown;
-        v.check = &checks[pending[0]];
-        v.detail = "failed to create fresh solver";
-        return v;
+        v.check = &checks[idx];
+        v.detail = std::move(detail);
       }
+      return v;
+    };
+
+    while (!pending.empty()) {
+      if (!ensureFresh())
+        return unknown(pending[0], "failed to create fresh solver");
       camada::SMTSolver &s = curT->solver();
       std::vector<Group> groups;
       DenseMap<const void *, size_t> byId;
@@ -288,11 +295,22 @@ Verdict decideNonIncremental(
         else
           groups[it->second].indices.push_back(idx);
       }
-      std::vector<camada::SMTExprRef> exprs;
-      exprs.reserve(groups.size());
-      for (const Group &g : groups)
-        exprs.push_back(g.expr);
-      s.addConstraint(disjunction(s, exprs));
+      auto exprs = [](ArrayRef<Group> gs) {
+        std::vector<camada::SMTExprRef> es;
+        for (const Group &g : gs)
+          es.push_back(g.expr);
+        return es;
+      };
+      auto violatedInModel = [&](const Group &g) {
+        auto b = s.getBool(g.expr);
+        return b && b.value();
+      };
+      // The first of gs, whose disjunction was satisfied, the model violates;
+      // a lone one needs no evaluating.
+      auto firstViolated = [&](ArrayRef<Group> gs) {
+        return gs.size() == 1 ? gs.begin() : llvm::find_if(gs, violatedInModel);
+      };
+      s.addConstraint(disjunction(s, exprs(groups)));
       currentDirty = true;
       if (curT == &t)
         solverUsed = true;
@@ -304,27 +322,44 @@ Verdict decideNonIncremental(
         pending.clear();
         break;
       case camada::CheckResult::SAT: {
-        std::vector<size_t> failed, next;
-        if (groups.size() == 1) {
-          failed.assign(groups[0].indices.begin(), groups[0].indices.end());
-        } else {
-          for (const Group &g : groups) {
-            if (auto b = s.getBool(g.expr); b && b.value())
-              failed.insert(failed.end(), g.indices.begin(), g.indices.end());
-            else
-              next.insert(next.end(), g.indices.begin(), g.indices.end());
-          }
-          if (failed.empty()) {
-            // Defensive fallback if the solver did not evaluate any disjunct.
-            failed.push_back(pending[0]);
-            next.assign(pending.begin() + 1, pending.end());
-          }
-        }
-        std::sort(failed.begin(), failed.end());
         if (!all) {
-          reportFirst(failed[0], /*callViolated=*/true);
+          ArrayRef<Group> phase(groups);
+          const Group *first = firstViolated(phase);
+          if (first == phase.end())
+            return unknown(pending[0], "the solver's model violates no check");
+          // Report the lowest failing check, as decide() does. Groups are
+          // in index order, so while one before first may fail too, ask for
+          // one of those: their disjunction implies the one asserted, so it
+          // only narrows the query. Where none can (or the solver cannot
+          // tell), drop that scope and ask again for a model violating first.
+          while (first != phase.begin()) {
+            ArrayRef<Group> lower = phase.take_front(first - phase.begin());
+            s.push();
+            s.addConstraint(disjunction(s, exprs(lower)));
+            if (s.check() != camada::CheckResult::SAT) {
+              s.pop();
+              s.addConstraint(first->expr);
+              if (s.check() != camada::CheckResult::SAT)
+                return unknown(first->indices[0],
+                               "solver answered unknown: " + s.reasonUnknownDetail());
+              break;
+            }
+            const Group *earlier = firstViolated(lower);
+            if (earlier == lower.end())
+              return unknown(pending[0], "the solver's model violates no check");
+            first = earlier;
+          }
+          reportFirst(first->indices[0], /*callViolated=*/true);
           return v;
         }
+        std::vector<size_t> failed, next;
+        for (const Group &g : groups) {
+          std::vector<size_t> &to = groups.size() == 1 || violatedInModel(g) ? failed : next;
+          to.insert(to.end(), g.indices.begin(), g.indices.end());
+        }
+        if (failed.empty())
+          return unknown(pending[0], "the solver's model violates no check");
+        std::sort(failed.begin(), failed.end());
         for (size_t idx : failed) {
           v.status[idx] = Status::Fails;
           if (!v.check) {
@@ -337,10 +372,7 @@ Verdict decideNonIncremental(
         break;
       }
       case camada::CheckResult::UNKNOWN:
-        v.kind = Verdict::Unknown;
-        v.check = &checks[pending[0]];
-        v.detail = "solver answered unknown: " + s.reasonUnknownDetail();
-        return v;
+        return unknown(pending[0], "solver answered unknown: " + s.reasonUnknownDetail());
       }
     }
   }
