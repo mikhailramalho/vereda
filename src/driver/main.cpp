@@ -1,4 +1,5 @@
 // Stage driver: parses options, runs the stages, prints the verdict.
+#include "analysis/termination.h"
 #include "checks/checks.h"
 #include "encode/encoder.h"
 #include "ir/load.h"
@@ -109,7 +110,10 @@ static cl::opt<Property> property(
     cl::values(clEnumValN(Property::All, "all", "every check (default)"),
                clEnumValN(Property::UnreachCall, "unreach-call",
                           "a call to reach_error, whose body is not walked"),
-               clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check")),
+               clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check"),
+               clEnumValN(Property::Termination, "termination",
+                          "every run ends: TRUE when SCEV bounds every loop and nothing "
+                          "recurses, or when the bound unwinds every loop; never FALSE")),
     cl::init(Property::All));
 static cl::opt<camada::SolverKind> solverKind(
     "solver", cl::desc("SMT solver"),
@@ -464,8 +468,9 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   if (verdict.check) {
     WithColor(outs(), raw_ostream::RED, /*Bold=*/true) << "VERIFICATION FAILED";
     outs() << "\n";
-    // A failed unwinding assertion is no violation of the property.
-    svcomp(!bug                                  ? "UNKNOWN"
+    // A failed unwinding assertion is no violation of the property, nor any
+    // failure of termination, which shows no non-termination.
+    svcomp(!bug || property == Property::Termination ? "UNKNOWN"
            : property == Property::UnreachCall ? "FALSE_REACH"
                                                : "FALSE_OVERFLOW");
     return finish(1);
@@ -496,6 +501,10 @@ int main(int argc, char **argv) {
       errs() << "vereda: " << flag << " is not implemented\n";
       return ErrorExit;
     }
+  }
+  if (noUnwindingAssertions && property == Property::Termination) {
+    errs() << "vereda: --no-unwinding-assertions conflicts with --property termination\n";
+    return ErrorExit;
   }
   if (noAssertions && property == Property::UnreachCall) {
     errs() << "vereda: --no-assertions conflicts with --property unreach-call\n";
@@ -538,6 +547,22 @@ int main(int argc, char **argv) {
   if (!fn || fn->isDeclaration()) {
     errs() << argv[0] << ": no function " << entry << "\n";
     return ErrorExit;
+  }
+
+  if (property == Property::Termination) {
+    auto [unbounded, unseen] = vereda::analysis::termination(*fn);
+    if (!unseen.empty())
+      return finish(unknown(unseen));
+    if (unbounded.empty()) {
+      results();
+      outs() << "\nSCEV bounds every loop and no function recurses\n\n";
+      WithColor(outs(), raw_ostream::GREEN, /*Bold=*/true) << "VERIFICATION SUCCESSFUL";
+      outs() << "\n";
+      svcomp("TRUE");
+      return finish(0);
+    }
+    // The walk may still unwind every loop within its bound.
+    info() << "Termination not shown without a walk: " << unbounded << "\n";
   }
 
   std::optional<vereda::witness::WitnessModuleInfo> witnessInfo;

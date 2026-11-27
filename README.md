@@ -17,7 +17,9 @@ Supported today:
 - Properties: reachability of `reach_error`/`__VERIFIER_error`/`__assert_fail`,
   `__VERIFIER_assert`, plus unwinding and recursion assertions that check the
   bound was enough. With `--property-file`, one SV-COMP property: unreach-call,
-  or no-overflow through clang's signed-overflow sanitizer.
+  no-overflow through clang's signed-overflow sanitizer, or termination, shown
+  when SCEV bounds every loop and nothing recurses, or when the bound unwinds
+  every loop and recursion (never FALSE).
 - SV-COMP's `__VERIFIER_nondet_*` and `__VERIFIER_assume`, and `abort`/`exit`.
 - Stack allocations and VLAs above the target's `PTRDIFF_MAX` are reported as
   `alloca: size exceeds PTRDIFF_MAX`; exactly the limit remains valid.
@@ -115,7 +117,7 @@ The main verifier flags:
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
 | `--entry F` | Entry function (default `main`) |
-| `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
+| `--property unreach-call\|no-overflow\|termination` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
 | `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
@@ -141,7 +143,7 @@ and shift checks are opt-in through the frontend flags above; existing Rust
 overflow and bounds panics remain program failures. Leak, race and deadlock flags
 are disabled by default and the binary rejects an enabled request with error
 exit code 6, before loading the input. `--no-assertions` conflicts with an
-unreach-call property request. A selected property reports only its own failures.
+unreach-call property request, `--no-unwinding-assertions` with termination. A selected property reports only its own failures.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
