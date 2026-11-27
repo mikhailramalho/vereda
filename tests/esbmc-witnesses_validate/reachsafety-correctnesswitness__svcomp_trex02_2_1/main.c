@@ -31,7 +31,7 @@ int main() {
 
 
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/svcomp_trex02_2_1
-// Needs: --force-realloc-success --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
+// Needs: --force-realloc-success --interval-analysis --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
 // RUN: -m32 --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

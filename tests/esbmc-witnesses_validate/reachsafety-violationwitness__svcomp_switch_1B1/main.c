@@ -39,7 +39,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/svcomp_switch_1B1
-// Needs: --force-realloc-success --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
+// Needs: --force-realloc-success --interval-analysis --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
 // RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -809,7 +809,7 @@ int store_buffering_4_assertions(headerT* g_history){
 #endif
 
 // Imported from ESBMC regression/esbmc-unix/github_2513_1
-// Needs: --force-realloc-success --interval-analysis --error-label ERROR
+// Needs: --force-realloc-success --interval-analysis
 // RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --interval-analysis --error-label ERROR --unwind 15
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
