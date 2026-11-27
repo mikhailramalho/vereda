@@ -1376,6 +1376,21 @@ static void lowerRustMain(Module &m) {
     }
 }
 
+// rustc mangles the allocator shims (__rust_alloc and the rest) as
+// __rustc::__rust_alloc with a hash that depends on the compiler build;
+// give them their plain names so models/rust.c defines them.
+static void renameRustShims(Module &m) {
+  for (Function &f : m) {
+    if (!f.isDeclaration() || !f.getName().starts_with("_R"))
+      continue;
+    char *raw = llvm::rustDemangle(f.getName());
+    StringRef name = raw ? StringRef(raw) : "";
+    if (name.consume_front("__rustc::") && name.starts_with("__rust_"))
+      f.setName(name);
+    std::free(raw);
+  }
+}
+
 // Drops functions, globals, aliases and ifuncs not reachable from entry
 // (plus the module's constructor, destructor and used lists) before the
 // passes and model linking run.
@@ -1560,6 +1575,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
   lowerRustMain(*module);
+  renameRustShims(*module);
   if (alignmentCheck)
     checkAlignments(*module);
   nondetLocals(*module, uninitCheck);
