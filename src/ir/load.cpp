@@ -1792,7 +1792,7 @@ static bool promoteEntryGlobals(Module &m, StringRef entry) {
       return l->getFunction() == f && l->isSimple() && l->getType() == ty;
     if (auto *s = dyn_cast<StoreInst>(u))
       return s->getFunction() == f && s->isSimple() && s->getPointerOperand() == &g &&
-             s->getValueOperand()->getType() == ty;
+             s->getValueOperand() != &g && s->getValueOperand()->getType() == ty;
     return false;
   };
   SmallVector<GlobalVariable *, 4> promoted;
