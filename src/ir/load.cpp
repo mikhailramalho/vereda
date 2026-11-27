@@ -1,6 +1,7 @@
 #include "ir/load.h"
 #include "util/assert.h"
 
+#include <algorithm>
 #include <llvm/ADT/DepthFirstIterator.h>
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
@@ -386,6 +387,84 @@ static Instruction *guardedOperation(CallBase &call) {
   return nullptr;
 }
 
+// The sanitizers, as -fsanitize= names them, that the branch from pred
+// into trap, a call to llvm.ubsantrap, checks.
+static void trapSanitizers(const CallBase &trap, BasicBlock *pred, std::set<std::string> &names) {
+  auto *code = cast<ConstantInt>(trap.getArgOperand(0));
+  switch (code->getZExtValue()) {
+  case 20: // ShiftOutOfBounds
+    names.insert("shift");
+    break;
+  case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+    {
+      auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+      SmallVector<Value *, 4> conditions;
+      if (br)
+        conditions.push_back(br->getCondition());
+      while (!conditions.empty()) {
+        auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+        if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+          if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+            names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+        } else if (cond && cond->getType()->isIntegerTy(1) &&
+                   (cond->getOpcode() == Instruction::And ||
+                    cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
+          conditions.append(cond->op_begin(), cond->op_end());
+        }
+      }
+    }
+    break;
+  case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
+    for (Instruction &p : *pred)
+      if (auto *ii = dyn_cast<IntrinsicInst>(&p))
+        switch (ii->getIntrinsicID()) {
+        case Intrinsic::sadd_with_overflow:
+        case Intrinsic::ssub_with_overflow:
+        case Intrinsic::smul_with_overflow:
+          names.insert("signed-integer-overflow");
+          break;
+        case Intrinsic::uadd_with_overflow:
+        case Intrinsic::usub_with_overflow:
+        case Intrinsic::umul_with_overflow:
+          names.insert("unsigned-integer-overflow");
+          break;
+        default:
+          break;
+        }
+    break;
+  }
+}
+
+// Leaves out the sanitizer checks of the kinds in off: a branch into a
+// trap that checks only those kinds goes straight to its other successor.
+// One that also checks a kind still on keeps the trap.
+static void dropSanitizerChecks(Module &m, const std::set<std::string> &off) {
+  if (off.empty())
+    return;
+  SmallVector<std::pair<BasicBlock *, BasicBlock *>, 8> drop; // {pred, trap block}
+  for (Function &f : m)
+    for (Instruction &i : instructions(f)) {
+      auto *c = dyn_cast<CallBase>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if (!callee || callee->getName() != "llvm.ubsantrap")
+        continue;
+      for (BasicBlock *pred : predecessors(c->getParent())) {
+        std::set<std::string> names;
+        trapSanitizers(*c, pred, names);
+        if (isa<CondBrInst>(pred->getTerminator()) && !names.empty() &&
+            all_of(names, [&](const std::string &n) { return off.count(n); }))
+          drop.push_back({pred, c->getParent()});
+      }
+    }
+  for (auto [pred, trap] : drop) {
+    auto *br = cast<CondBrInst>(pred->getTerminator());
+    BasicBlock *other = br->getSuccessor(br->getSuccessor(0) == trap ? 1 : 0);
+    trap->removePredecessor(pred);
+    UncondBrInst::Create(other, br->getIterator())->setDebugLoc(br->getDebugLoc());
+    br->eraseFromParent();
+  }
+}
+
 // Records the clang sanitizers whose traps the module holds, as -fsanitize=
 // names them, in the named metadata vereda.sanitized, for the driver's
 // [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
@@ -401,48 +480,10 @@ static void recordSanitizers(Module &m) {
       Function *callee = c ? c->getCalledFunction() : nullptr;
       if (!callee || callee->getName() != "llvm.ubsantrap")
         continue;
-      switch (cast<ConstantInt>(c->getArgOperand(0))->getZExtValue()) {
-      case 20: // ShiftOutOfBounds
-        names.insert("shift");
-        break;
-      case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
-        for (BasicBlock *pred : predecessors(c->getParent())) {
-          auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
-          SmallVector<Value *, 4> conditions;
-          if (br)
-            conditions.push_back(br->getCondition());
-          while (!conditions.empty()) {
-            auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
-            if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
-              if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
-                names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
-            } else if (cond && cond->getType()->isIntegerTy(1) &&
-                       (cond->getOpcode() == Instruction::And ||
-                        cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
-              conditions.append(cond->op_begin(), cond->op_end());
-            }
-          }
-        }
-        break;
-      case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
-        for (BasicBlock *pred : predecessors(c->getParent()))
-          for (Instruction &p : *pred)
-            if (auto *ii = dyn_cast<IntrinsicInst>(&p))
-              switch (ii->getIntrinsicID()) {
-              case Intrinsic::sadd_with_overflow:
-              case Intrinsic::ssub_with_overflow:
-              case Intrinsic::smul_with_overflow:
-                names.insert("signed-integer-overflow");
-                break;
-              case Intrinsic::uadd_with_overflow:
-              case Intrinsic::usub_with_overflow:
-              case Intrinsic::umul_with_overflow:
-                names.insert("unsigned-integer-overflow");
-                break;
-              default:
-                break;
-              }
-        break;
+      for (BasicBlock *pred : predecessors(c->getParent())) {
+        std::set<std::string> predNames;
+        trapSanitizers(*c, pred, predNames);
+        names.merge(predNames);
       }
     }
   if (names.empty())
@@ -1927,7 +1968,8 @@ static bool promoteEntryGlobals(Module &m, StringRef entry) {
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
-                                       bool uninitCheck, StringRef errorLabel) {
+                                       bool uninitCheck, StringRef errorLabel,
+                                       const std::set<std::string> &uncheckedSanitizers) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1942,6 +1984,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  dropSanitizerChecks(*module, uncheckedSanitizers);
   recordSanitizers(*module);
   nameSanitizerChecks(*module);
   lowerRustMain(*module);

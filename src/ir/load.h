@@ -3,6 +3,8 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Support/Error.h>
 #include <memory>
+#include <set>
+#include <string>
 
 namespace vereda::ir {
 
@@ -20,6 +22,7 @@ namespace vereda::ir {
 // With alignmentCheck, preserves typed memory alignment checks before InstCombine.
 // With uninitCheck, keeps uninitialised locals in memory for read checking.
 // With errorLabel, reaching a C label of that name fails a check.
+// The clang sanitizer traps of the kinds in uncheckedSanitizers (as -fsanitize= names them) are left out.
 llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::LLVMContext &ctx,
                                                    llvm::StringRef models = "",
                                                    llvm::StringRef entry = "",
@@ -28,7 +31,8 @@ llvm::Expected<std::unique_ptr<llvm::Module>> load(llvm::StringRef path, llvm::L
                                                    bool floatCastOverflowCheck = false,
                                                    bool alignmentCheck = false,
                                                    bool uninitCheck = false,
-                                                   llvm::StringRef errorLabel = "");
+                                                   llvm::StringRef errorLabel = "",
+                                                   const std::set<std::string> &uncheckedSanitizers = {});
 
 // Whether the loader runs code g names, outside the entry's calls: a
 // constructor or destructor list, a global placed in one of their sections,
