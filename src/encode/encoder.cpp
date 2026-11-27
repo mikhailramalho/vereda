@@ -316,6 +316,20 @@ Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
   }
 }
 
+Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty) {
+  bool min = id == Intrinsic::minnum || id == Intrinsic::minimum;
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty);
+  Term first = t.fromSolver(min ? s.mkFPLe(x, y) : s.mkFPGe(x, y));
+  Term nanA = t.fromSolver(s.mkFPIsNaN(x)), nanB = t.fromSolver(s.mkFPIsNaN(y));
+  if (id == Intrinsic::minnum || id == Intrinsic::maxnum)
+    return t.ite(nanA, b, t.ite(t.lor(nanB, first), a, b));
+  // Of two zeros, minimum takes a when a is -0, maximum when a is +0.
+  Term zeros = t.land(t.fromSolver(s.mkFPIsZero(x)), t.fromSolver(s.mkFPIsZero(y)));
+  Term negA = signBit(a, ty);
+  Term takeA = t.ite(zeros, min ? negA : t.lnot(negA), first);
+  return t.ite(nanA, a, t.ite(nanB, b, t.ite(takeA, a, b)));
+}
+
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
   if (useNative(ty))
     return t.fromSolver(f);
@@ -379,8 +393,10 @@ Term Encoder::folded(const APFloat &r, Type *ty) {
   return r.isNaN() ? Term() : floatValue(r, ty);
 }
 
-Term Encoder::signBit(const Value *v) {
-  Term b = toBits(value(v), v->getType());
+Term Encoder::signBit(const Value *v) { return signBit(value(v), v->getType()); }
+
+Term Encoder::signBit(Term x, Type *ty) {
+  Term b = toBits(x, ty);
   unsigned w = b.width();
   return t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
 }
@@ -834,10 +850,7 @@ bool Encoder::fpIntrinsic(CallBase &c) {
       r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
       break;
     }
-    camada::SMTExprRef a = fp(arg(0)), b = fp(arg(1));
-    Term first = t.fromSolver(id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b));
-    r = t.ite(t.fromSolver(s.mkFPIsNaN(a)), value(arg(1)),
-              t.ite(t.lor(t.fromSolver(s.mkFPIsNaN(b)), first), value(arg(0)), value(arg(1))));
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
     break;
   }
   case Intrinsic::is_fpclass:

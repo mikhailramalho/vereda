@@ -2395,13 +2395,15 @@ private:
 
   // Loads the old value, stores the operation's result and binds the old
   // value, as one thread sees an atomic read-modify-write. Supports floats
-  // (xchg, fadd, fsub) and i1 (every integer operation, converted to BV1).
+  // (xchg, fadd, fsub, fmax, fmin, fmaximum, fminimum) and i1 (every integer operation, converted to BV1).
   void atomicRMW(AtomicRMWInst &rmw, memory::State &st) {
     Type *ty = rmw.getType();
     AtomicRMWInst::BinOp op = rmw.getOperation();
     bool isFloat = ty->isFloatingPointTy(), isBool = ty->isIntegerTy(1);
     if (isFloat ? op != AtomicRMWInst::Xchg && op != AtomicRMWInst::FAdd &&
-                      op != AtomicRMWInst::FSub
+                      op != AtomicRMWInst::FSub && op != AtomicRMWInst::FMax &&
+                      op != AtomicRMWInst::FMin && op != AtomicRMWInst::FMaximum &&
+                      op != AtomicRMWInst::FMinimum
                 : !ty->isIntegerTy() && !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
       throw Unsupported("instruction " + encode::describe(&rmw));
     Term p = enc.value(rmw.getPointerOperand());
@@ -2433,6 +2435,10 @@ private:
     case AtomicRMWInst::USubSat: r = t.ite(t.uge(old, v), t.sub(old, v), t.bv(0, w)); break;
     case AtomicRMWInst::FAdd: r = enc.fpBinary(Instruction::FAdd, old, v, ty); break;
     case AtomicRMWInst::FSub: r = enc.fpBinary(Instruction::FSub, old, v, ty); break;
+    case AtomicRMWInst::FMax: r = enc.fpMinMax(Intrinsic::maxnum, old, v, ty); break;
+    case AtomicRMWInst::FMin: r = enc.fpMinMax(Intrinsic::minnum, old, v, ty); break;
+    case AtomicRMWInst::FMaximum: r = enc.fpMinMax(Intrinsic::maximum, old, v, ty); break;
+    case AtomicRMWInst::FMinimum: r = enc.fpMinMax(Intrinsic::minimum, old, v, ty); break;
     default: throw Unsupported("instruction " + encode::describe(&rmw));
     }
     if (isBool) {
