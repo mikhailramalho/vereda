@@ -2395,7 +2395,8 @@ private:
 
   // Loads the old value, stores the operation's result and binds the old
   // value, as one thread sees an atomic read-modify-write. Supports floats
-  // (xchg, fadd, fsub, fmax, fmin, fmaximum, fminimum) and i1 (every integer operation, converted to BV1).
+  // (xchg, fadd, fsub, fmax, fmin, fmaximum, fminimum) and i1 (every integer
+  // operation, converted to BV1).
   void atomicRMW(AtomicRMWInst &rmw, memory::State &st) {
     Type *ty = rmw.getType();
     AtomicRMWInst::BinOp op = rmw.getOperation();
