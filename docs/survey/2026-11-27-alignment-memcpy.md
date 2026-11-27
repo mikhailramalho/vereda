@@ -104,3 +104,5 @@ memcpy carries its source type, and the user's memcpy and clang's struct
 copy have the same debug location shape. Inserting checks from clang's AST
 (`-ast-dump=json`) would need a second compile and a source-location map
 onto the IR.
+
+Follow-up issues: #352, #353.
