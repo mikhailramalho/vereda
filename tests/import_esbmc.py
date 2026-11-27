@@ -81,7 +81,9 @@ UNSUPPORTED_ALIASES = {"--data-races-check": "--data-race-check",
 RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
-# pipeline switches and numeric selectors in both normal and fallback commands.
+# pipeline switches and numeric selectors in both normal and fallback commands,
+# and its frontend switches (--old-frontend, the irep2 migration's), which change
+# how ESBMC converts C, not what the program means.
 PROGRAM_OUTPUT_FLAGS = {"--" + name + "-" + suffix
                         for name in ("goto-program", "goto-functions", "program")
                         for suffix in ("only", "too")}
@@ -103,7 +105,8 @@ IGNORED_FLAGS |= {
     "--array-flattener", "--mathsat", "--no-irep2-native-body", "--show-vcc",
     "--tuple-node-flattener", "--no-goto-merge", "--show-goto-value-sets",
     "--ts-push-pop", "--show-symex-value-sets", "--all-runs",
-    "--ts-check", "--ts-no-fallback",
+    "--ts-check", "--ts-no-fallback", "--old-frontend", "--clang-c-irep2-adjust",
+    "--clang-c-irep2-adjust-writeback-all",
 }
 IGNORED_WITH_VALUE = {
     "--verbosity",
@@ -161,7 +164,6 @@ OUTPUT_MODES = PROGRAM_OUTPUT_FLAGS | {"--smt-formula-only", "--smt-formula-too"
                                       "--ssa-guards", "--ssa-no-location", "--ssa-smt-trace",
                                       "--ssa-symbol-table", "--symex-ssa-trace",
                                       "--dump-smt-only", "--symbol-table-only",
-                                      "--clang-c-irep2-adjust-only", "--irep2-bodies",
                                       "--show-vcc", "--show-goto-value-sets",
                                       "--show-symex-value-sets", "--goto2lean"}
 
@@ -232,10 +234,11 @@ def header(origin, mode, args, expected, test_dir, builtins):
 
 
 # Output only ESBMC prints, which no Vereda run can match: its formula
-# statistics, its summary with a passed count, and its wording for a failed
+# statistics, its summary with a passed or unknown count (Vereda has no
+# unknown verdict for a property), and its wording for a failed
 # assert(), 'assertion <condition>' (Vereda names the check function, as in
 # __assert_fail; 'unwinding assertion loop N' is common to both).
-ESBMC_OUTPUT = re.compile(r"VCC\\?\(s\\?\)|properties failed, .*passed"
+ESBMC_OUTPUT = re.compile(r"VCC\\?\(s\\?\)|properties failed.*, .*(?:passed|unknown)"
                           r"|(?<!unwinding)(?<!unwinding )(?<!unwinding\\s)(?<!unwinding\\s\+)"
                           r"\bassertion(?: |\\s)(?!loop)")
 
@@ -280,9 +283,15 @@ def as_vereda(regex):
     regex = regex.replace(r"\*\* Results:", r"\[RESULTS\]")
     regex = regex.replace(r"\*\* ", "")
     count = r"(?:[0-9]+|\\d\+|\[0-9\]\+)"
-    regex = re.sub("(" + count + ") of (" + count + ") properties failed",
-                   lambda m: "Properties: " + m[2] + r" checked, \d+ passed, " + m[1]
-                   + r" failed, \d+ not checked", regex)
+    def summary(m):
+        failed, total, unchecked = m[1], m[2], m[3]
+        if unchecked:  # ESBMC's total counts them, Vereda's checked count does not
+            total = str(int(total) - int(unchecked)) \
+                if total.isdigit() and unchecked.isdigit() else r"\d+"
+        return ("Properties: " + total + r" checked, \d+ passed, " + failed
+                + r" failed, " + (unchecked or r"\d+") + " not checked")
+    regex = re.sub("(" + count + ") of (" + count + ") properties failed"
+                   "(?:, (" + count + ") not checked)?", summary, regex)
     if regex.startswith("^Unwinding loop"):
         regex = regex.replace("^Unwinding loop", r"^\[PROGRESS\] Unwinding loop", 1)
     value = r"( = (?:\\.|[^\s\\])+)"
@@ -656,8 +665,6 @@ def rename_builtins(path):
 # any of them, or with both a flag and a builtin when both is set, is not
 # imported.
 ESBMC_ONLY = [
-    ("ESBMC frontend internals",
-     re.compile(r"--(?:clang-c-irep2-adjust(?:-only|-writeback-all)?|irep2-bodies|no-irep2-native-body|old-frontend)\b"), None, False),
     ("Lean exporter", re.compile(r"--goto2lean\b"), None, False),
     ("transition-system engine", re.compile(r"--ts-(?:bmc|pdr|check|no-fallback|push-pop|dump|fresh-solver)\b"), None, False),
     ("experimental solver wrappers",
@@ -693,6 +700,8 @@ SKIPPED_TESTS = {
 # skips them without overwriting or deleting the checked-in copy.
 PRESERVED_TESTS = {
     "cstd/scanf-false-3": "uses --max-k-step 3 locally so it does not spend ~45 s reaching bound 50",
+    "z3/github_9222_formula": "checks Vereda's own SMT dump of the overflow checks, "
+                              "which the dump-only rule would drop",
 }
 
 
@@ -705,7 +714,6 @@ KNOWN_BUGS = {
     "esbmc/array_loop_summary_store_fail": "out of memory, over 16 GB",
     "esbmc/array_loop_summary_stride": "over 300 s",
     "esbmc/array_loop_summary_stride_fail": "over 300 s",
-    "esbmc/github_9785_int_base_stores": "out of memory, needs 9.5 GB",
     "esbmc/github_123": "over 300 s in CI",
     "esbmc/github_2602_1": "over 300 s in CI",
     "esbmc/github_9356": "over 300 s in CI",
