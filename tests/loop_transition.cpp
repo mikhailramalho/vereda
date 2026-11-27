@@ -319,6 +319,36 @@ exit:
 )",
               "loop");
   assert(pointer.error.find("pointer phi") != std::string::npos);
+  // An array made in each iteration of an earlier loop: the term bound to it
+  // is that loop's last object, not one the analysis can name from here.
+  Run earlier(R"(
+define i32 @main() {
+entry:
+  br label %first
+first:
+  %k = phi i64 [ 0, %entry ], [ %k1, %first ]
+  %buf = alloca [4 x i32]
+  %k1 = add i64 %k, 1
+  %more = icmp ult i64 %k1, 2
+  br i1 %more, label %first, label %between
+between:
+  %b = phi ptr [ %buf, %first ]
+  br label %loop
+loop:
+  %i = phi i64 [ 0, %between ], [ %i1, %body ]
+  %c = icmp ult i64 %i, 4
+  br i1 %c, label %body, label %exit
+body:
+  %p = getelementptr inbounds i32, ptr %b, i64 %i
+  store i32 0, ptr %p
+  %i1 = add i64 %i, 1
+  br label %loop
+exit:
+  ret i32 0
+}
+)",
+              "loop");
+  assert(earlier.error.find("made in another loop") != std::string::npos);
 }
 
 } // namespace

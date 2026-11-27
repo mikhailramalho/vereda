@@ -139,4 +139,4 @@ The exits' guard as a term of its own, a relation over memory as a formula
 pointer phis, heap objects and objects holding pointers, and anything that
 uses the relation: k-induction, recurrent states, ranking functions.
 
-Follow-up issues: drafted in the pull request description, not yet filed.
+Follow-up issues: #376, #377, #378.

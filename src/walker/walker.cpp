@@ -1081,8 +1081,10 @@ private:
     auto in = frame.arrivals.find(header);
     if (in == frame.arrivals.end() || in->second.empty())
       return;
-    if (iterating) // through recursion
-      throw Unsupported("a loop transition inside its own iteration");
+    // Reached again through recursion, or in a summarised iteration, whose
+    // index k the pre-state would capture.
+    if (iterating || summary)
+      throw Unsupported("a loop transition inside its own iteration or a summarised loop");
     SmallVector<Arrival, 2> arrivals = std::move(in->second);
     frame.arrivals.erase(in);
     Term guard = anyGuard(arrivals);
@@ -1092,7 +1094,9 @@ private:
     for (const Value *o : analysis::writtenObjects(*l)) {
       SmallPtrSet<const Value *, 8> visiting;
       auto *a = dyn_cast<AllocaInst>(o);
-      if (!holdsNoPointers(o, visiting) || (a && !current(fi.li, a, l)))
+      if (a && !current(fi.li, a, l))
+        throw Unsupported("a loop transition writing an alloca made in another loop");
+      if (!holdsNoPointers(o, visiting))
         throw Unsupported("a loop transition writing an object that may hold pointers");
       Term p = a ? enc.bound(a) : enc.value(o);
       // havoc marks the object initialised, as an unknown call may write it
