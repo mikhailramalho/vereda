@@ -133,6 +133,7 @@ The main verifier flags:
 | `--property unreach-call\|no-overflow\|valid-free\|termination` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW`, `FALSE_FREE` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets unreach-call, no-overflow and termination |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
+| `--error-label L` | Report reaching the C label `L` as a failed assertion, `error label`, as ESBMC's `--error-label` (off with `--no-assertions`) |
 | `--ub-pointer-check` | Check writes into string literals and const objects, and invalid frees (default on; `=false` disables) |
 | `--ub-div-by-zero-check` | Check integer division/remainder by zero (default on for C and IR inputs unless `--property` is given; `=false` disables) |
 | `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
@@ -164,7 +165,8 @@ each after the flag that controls it: `assertions`, `unwinding-assertions`,
 `pointer`, `div-by-zero` and `vla-size` by default, then the opt-in ones given
 (`signed-overflow`, `unsigned-overflow`, `shift`, `float-cast-overflow`,
 `count-zero`, `alignment`, `uninit`); under `--property`, `reach-error` or
-`valid-free` and the property's own checks.
+`valid-free` and the property's own checks. Run on IR directly, the binary
+also lists the sanitizer checks whose traps the IR holds.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or

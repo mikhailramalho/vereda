@@ -1730,8 +1730,5 @@ int ssl3_send_server_certificate(SSL *s )
 }
 }
 // Imported from ESBMC regression/nonz3/33_s3_srvr_blast_04
-// Needs: --error-label ERROR
 // RUN: --unwind 1 --ub-pointer-check=false --ub-div-by-zero-check=false --error-label ERROR
-// MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

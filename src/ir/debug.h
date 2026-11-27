@@ -95,6 +95,9 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
   const llvm::Value *v = dvr->getVariableLocationOp(0);
   if (!v)
     return std::nullopt;
+  // A value a pass removed is poison: no assignment.
+  if (llvm::isa<llvm::UndefValue>(v))
+    return std::nullopt;
   // A parameter receiving its own argument is the call, not an assignment;
   // ESBMC shows none. Another value, another parameter's included, is one.
   if (auto *arg = llvm::dyn_cast<llvm::Argument>(v);

@@ -57,7 +57,7 @@ int main()
 	return 1;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/nondet_assignment_return_brs1f
-// Needs: --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
+// Needs: --interval-analysis --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
 // RUN: --ub-div-by-zero-check=false --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-violation-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

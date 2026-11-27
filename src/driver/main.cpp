@@ -24,6 +24,7 @@
 #include <new>
 #include <cerrno>
 #include <numeric>
+#include <set>
 
 #ifdef VEREDA_MIMALLOC
 #include <mimalloc.h>
@@ -67,6 +68,8 @@ static cl::opt<bool> ubPointerCheck(
              "=false disables)"),
     cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
+static cl::opt<std::string> errorLabel("error-label", cl::value_desc("label"),
+                                       cl::desc("Check that the C label <label> is never reached"));
 static cl::opt<bool> ubDivByZeroCheck(
     "ub-div-by-zero-check",
     cl::desc("Check integer division and remainder by zero (default on; =false disables)"),
@@ -120,7 +123,7 @@ static cl::opt<std::string> witnessFile(
 static cl::list<std::string> sanitized(
     "sanitized", cl::Hidden, cl::CommaSeparated,
     cl::desc("The clang sanitizer checks vereda.py compiled in, as -fsanitize= names them, "
-             "for the [INFO] Checks line"));
+             "for the [INFO] Checks line, which also lists those whose traps the IR holds"));
 
 using vereda::walker::Property;
 static cl::opt<Property> property(
@@ -220,14 +223,21 @@ static const int BoundTooSmall = -1;
 
 // The checks this run counts, each named after the flag that controls it,
 // for an [INFO] line that gives the verdict its scope. A property counts
-// only its own checks and the unwinding assertions (walker::counts).
-static std::string checkFamilies() {
+// only its own checks and the unwinding assertions (walker::counts). The
+// sanitizers are those vereda.py compiled in (--sanitized) and those whose
+// traps the IR holds.
+static std::string checkFamilies(const Module &m) {
   bool all = property == Property::All;
   SmallVector<StringRef, 12> on;
   if (all && !noAssertions)
     on.push_back("assertions");
   if (property == Property::UnreachCall)
     on.push_back("reach-error");
+  // As the walker counts an error label: as an assertion, or the error
+  // location under unreach-call.
+  std::string label = "error-label " + errorLabel;
+  if (!errorLabel.empty() && ((all && !noAssertions) || property == Property::UnreachCall))
+    on.push_back(label);
   if (!noUnwindingAssertions)
     on.push_back("unwinding-assertions");
   if (all && ubPointerCheck)
@@ -238,12 +248,20 @@ static std::string checkFamilies() {
     on.push_back("div-by-zero");
   if (all && vlaSizeCheck)
     on.push_back("vla-size");
+  std::set<std::string> sanitizers(sanitized.begin(), sanitized.end());
+  if (const NamedMDNode *md = m.getNamedMetadata("vereda.sanitized"))
+    for (const MDNode *n : md->operands())
+      sanitizers.insert(cast<MDString>(n->getOperand(0))->getString().str());
   if (all || property == Property::NoOverflow)
-    for (const std::string &s : sanitized)
-      on.push_back(StringSwitch<StringRef>(s)
-                       .Case("signed-integer-overflow", "signed-overflow")
-                       .Case("unsigned-integer-overflow", "unsigned-overflow")
-                       .Default(s));
+    for (const std::string &s : sanitizers) {
+      StringRef name = StringSwitch<StringRef>(s)
+                           .Case("signed-integer-overflow", "signed-overflow")
+                           .Case("unsigned-integer-overflow", "unsigned-overflow")
+                           .Case("integer-divide-by-zero", "div-by-zero")
+                           .Default(s);
+      if (!is_contained(on, name))
+        on.push_back(name);
+    }
   if (all && ubFloatCastOverflowCheck)
     on.push_back("float-cast-overflow");
   if (all && ubCountZeroCheck)
@@ -610,7 +628,7 @@ static int run(int argc, char **argv) {
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
-                       ubUninitCheck && property == Property::All);
+                       ubUninitCheck && property == Property::All, errorLabel);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
@@ -625,7 +643,7 @@ static int run(int argc, char **argv) {
     if (dumpIROnly)
       return 0;
   }
-  info() << "Checks: " << checkFamilies() << "\n";
+  info() << "Checks: " << checkFamilies(**module) << "\n";
   Function *fn = (*module)->getFunction(entry);
   if (!fn || fn->isDeclaration()) {
     errs() << argv[0] << ": no function " << entry << "\n";

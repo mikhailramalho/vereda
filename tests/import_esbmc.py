@@ -64,7 +64,7 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--unlimited-k-steps",
         "--no-summarize-array-loops", "--no-assertions"}
-SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
+SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std", "--error-label"}
 # ESBMC's overflow flags -> Vereda's checks, as ESBMC's goto_checkt turns them
 # on: overflow_check checks signed operations under any of the three and
 # unsigned ones only under --unsigned-overflow-check, shift_check runs under

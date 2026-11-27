@@ -24,7 +24,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/nondet_verifier3
-// Needs: --force-realloc-success --interval-analysis --error-label ERROR
+// Needs: --force-realloc-success --interval-analysis
 // RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --interval-analysis --error-label ERROR --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
