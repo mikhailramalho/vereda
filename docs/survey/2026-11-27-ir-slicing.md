@@ -124,6 +124,8 @@ since SCEV gives its trip count), and branches that guard nothing kept, which
 changes the paths a witness describes. Both are larger designs than #115's,
 to revisit when a benchmark shows walk time spent on values no check reads.
 
-Follow-up ideas, not filed: summarising a loop with no store and no check
-costs more than unrolling it (`loops/heavy-1` above); the walker shows a
-debug record whose value is poison as an assignment of an arbitrary value.
+Follow-up issues: #370 (summarising a loop with no store and no check costs
+more than unrolling it, `loops/heavy-1` above), #371 (the counterexample
+shows a debug record whose value is poison as an assignment of an arbitrary
+value), #372 (dereference checks make every load and store a slicing root),
+#373, #374 and #375 (the walker's dependence on the IR's shape, above).
