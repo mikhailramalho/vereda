@@ -2392,6 +2392,13 @@ private:
   Term free(CallBase &c, Term guard, memory::State &st, bool release) {
     Term p = enc.value(c.getArgOperand(0));
     bool rust = any_of(stack, [](Function *f) { return f->getName().starts_with("__rust_"); });
+    // Unchecked, a Rust free leaves valid-free nothing to decide (#357).
+    if (rust && opts.pointerCheck && !t.isFalse(guard)) {
+      if (opts.property == Property::ValidFree)
+        throw Unsupported("free under Rust's allocator is not checked (#357)");
+      if (opts.property == Property::All && warned.insert(c.getCalledFunction()).second)
+        util::warning("frees under Rust's allocator are not checked (#357)");
+    }
     if (opts.pointerCheck && !rust &&
         (opts.property == Property::All || opts.property == Property::ValidFree)) {
       const Instruction &at = c.getDebugLoc() || !site ? c : *site;
