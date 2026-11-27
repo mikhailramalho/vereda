@@ -116,6 +116,14 @@ follows it, so its stores to globals are havocked in the pre-state. A
 transition reached again inside its own iteration (through recursion) or
 inside an array loop summary's iteration throws `Unsupported`.
 
+## Decisions
+
+Two choices were settled on review. The walk goes on after the target loop
+from the havocked iteration's exits rather than stopping there, as the step
+case of k-induction needs the rest of the program walked from them. And the
+relation stays a library call: the driver gets no path to it and no debug
+flag until k-induction (#34) uses it.
+
 ## Not in this entry
 
 The exits' guard as a term of its own, a relation over memory as a formula
