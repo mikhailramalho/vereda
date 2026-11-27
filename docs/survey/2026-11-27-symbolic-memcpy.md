@@ -55,7 +55,10 @@ So these edges now name their destination objects (`ProvEdge::toObject`).
 Without that, a call without a body that follows pointers did not see the
 copied ones: `vereda/mem_memcpy_symbolic_pointers{,_own}_fail` gave a wrong
 SUCCESSFUL. From a source with arrays indexed by offset, `pointers()`
-would also have dereferenced an empty destination.
+would also have dereferenced an empty destination. Through a chain of such
+copies (table to p to q, `vereda/mem_memcpy_symbolic_pointers_chain_fail`),
+following q's bytes into p's must keep q as the destination. An edge into
+another object than the one whose bytes are followed is skipped.
 Initialisation tracking (`--ub-uninit-check`) uses the lambdas
 `writeInitRange` and `copyInitBytes` already built past `MaxBytes`, now
 taking a term as the length. The read-only write check holds where
@@ -74,15 +77,18 @@ case and the constant-object one, and leaves the constant paths alone.
 
 ## Tests
 
-Fifteen imported FUTURE tests now give ESBMC's verdict with every
+Seventeen imported FUTURE tests now give ESBMC's verdict with every
 expectation met and are now CORE: `array_member_memset_walk_fail`,
 `const_object_write_memcpy_symbolic_fail`,
 `string_literal_write_memcpy_symbolic_fail`, `github_10991`,
 `github_10991_fail`, `github_10991_fallback`, `github_11005`,
 `github_11005_fail`, `mem_intrinsics_multibyte_array`,
 `mem_intrinsics_multibyte_array_fail`, `mem_intrinsics_invalid_pointer`,
-`memcpy_symbolic_length_unwind_invariant`, `realloc14`, `realloc15` and
-`realloc16`. Four went from UNKNOWN to a SUCCESSFUL that ESBMC's checks
+`memcpy_symbolic_length_unwind_invariant`, `realloc14`, `realloc15`,
+`realloc16`, `github_2312` and `github_2312_1` (the last two reach
+strncpy's model, whose memset has a symbolic size). `github_1091` now
+gives ESBMC's FAILED, but not the array bounds violation it also expects,
+and stays FUTURE. Four went from UNKNOWN to a SUCCESSFUL that ESBMC's checks
 would refute, and are re-marked FUTURE with that verdict. Vereda has none of
 those checks yet: `github_10991_bounds_fail` and
 `memcpy_symbolic_length_oob_fail` want a length past the object reported,
@@ -126,3 +132,5 @@ were UNKNOWN in under 1.5 s before. Without `--incremental-bmc`, `-1` takes
 25.3 s and 1.26 GB. Every other task gave the same verdict in the same time
 within 0.3 s. The timeouts (heap-data, `cdaudio`, `parport.i.cil-2` and
 some list tasks) time out on both.
+
+Follow-up issues: #364, #365, #366.
