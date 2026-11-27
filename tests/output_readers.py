@@ -122,6 +122,8 @@ for args in ("--std c11", "--std=c11"):
     assert import_esbmc.translate(args + " --z3", ".") == (
         ["--std", "c11", "--solver", "z3"], [], [])
 lines = import_esbmc.header("suite/c_standard", "CORE", "--std=c23", [], ".", [])
+assert import_esbmc.translate("--error-label ERROR --unwind 1", ".") == (
+    ["--error-label", "ERROR", "--unwind", "1"], [], [])
 assert "// RUN: --std c23" in lines, lines
 assert not any(s.startswith(("// Needs:", "// MODE:")) for s in lines), lines
 

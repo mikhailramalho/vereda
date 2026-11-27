@@ -35,6 +35,7 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/FixIrreducible.h>
 #include <llvm/Transforms/Utils/LowerSwitch.h>
+#include <llvm/IR/DebugProgramInstruction.h>
 
 using namespace llvm;
 
@@ -1764,6 +1765,25 @@ static void threadBoolPhis(Module &m) {
       }
     }
   }
+}
+
+// --error-label: a call to the bodyless __vereda_error_label, a failed
+// check for the walker, at each debug label record named label, as ESBMC's
+// assert(false) at the C label. It goes before the instruction the record
+// is attached to, at the label's location.
+static void markErrorLabels(Module &m, StringRef label) {
+  SmallVector<std::pair<Instruction *, DebugLoc>, 1> at;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f))
+      for (DbgRecord &r : i.getDbgRecordRange())
+        if (auto *l = dyn_cast<DbgLabelRecord>(&r); l && l->getLabel()->getName() == label)
+          at.push_back({&i, l->getDebugLoc()});
+  if (at.empty())
+    return;
+  FunctionCallee error =
+      m.getOrInsertFunction("__vereda_error_label", Type::getVoidTy(m.getContext()));
+  for (auto &[i, loc] : at)
+    CallInst::Create(error, "", i->getIterator())->setDebugLoc(loc);
 }
 
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,

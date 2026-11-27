@@ -39,7 +39,7 @@ static bool isErrorCall(const Instruction *inst) {
   const Function *f = callee(inst);
   StringRef name = f ? f->getName() : "";
   const auto *call = dyn_cast_or_null<CallBase>(inst);
-  return name == "reach_error" || name == "__VERIFIER_error" ||
+  return name == "reach_error" || name == "__VERIFIER_error" || name == "__vereda_error_label" ||
          (call && isAssertFail(name, call->arg_size()));
 }
 
