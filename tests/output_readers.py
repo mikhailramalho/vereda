@@ -22,7 +22,7 @@ assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-ass
     ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions'],
     [], ['--no-standard-checks'])
 for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
-             '--bitwuzllob', '--clang-c-irep2-adjust-only',
+             '--bitwuzllob',
              '--smtlib --smtlib-oneshot-prog fake-solver.sh',
              '--smtlib-oneshot-model-prog="z3 -in"'):
     with tempfile.TemporaryDirectory() as directory:
@@ -33,6 +33,16 @@ for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
         dest = Path(directory) / 'copy'
         assert not import_esbmc.import_test(str(src), str(dest), 'suite/internal', None).endswith('.c')
         assert not dest.with_suffix('.c').exists()
+# ESBMC's frontend switches do not change what the C program means.
+with tempfile.TemporaryDirectory() as directory:
+    src = Path(directory) / 'source'
+    src.mkdir()
+    (src / 'main.c').write_text('int main(void) { return 0; }\n')
+    (src / 'test.desc').write_text('CORE\nmain.c\n--old-frontend --irep2-bodies '
+                                   '--clang-c-irep2-adjust-only --no-irep2-native-body\n'
+                                   '^VERIFICATION SUCCESSFUL$\n')
+    copy = import_esbmc.import_test(str(src), str(Path(directory) / 'copy'), 'suite/fe', None)
+    assert '// RUN' not in Path(copy).read_text()
 
 assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
     ["--no-assertions", "--no-div-by-zero-check"], [], [])
@@ -139,6 +149,8 @@ cases = [
     (r"^\*\* Results:$", "[RESULTS]"),
     (r"^\*\* 1 of 2 properties failed$",
      "Properties: 2 checked, 1 passed, 1 failed, 0 not checked"),
+    (r"^\*\* 1 of 2 properties failed, 1 not checked$",
+     "Properties: 1 checked, 0 passed, 1 failed, 1 not checked"),
     (r"^Unwinding loop 0", "[PROGRESS] Unwinding loop 0 iteration 1"),
     (r"^  x = 7 \(00000111\)$", "  x = 7; // 00000111"),
     (r"\(10000000 00000000\)", "  // 10000000 00000000"),
@@ -148,6 +160,9 @@ cases = [
 for original, output in cases:
     translated = import_esbmc.as_vereda(original)
     assert re.search(translated, output, re.MULTILINE), (original, translated, output)
+for original in (r"^\*\* 0 of 1 properties failed, 1 unknown$",
+                 r"^\*\* \x1b\[31m1 of 3 properties failed\x1b\[0m, \x1b\[32m1 passed\x1b\[0m$"):
+    assert import_esbmc.esbmc_output(original, set()), original
 
 for name in ("ptr_rel_huge_object_alloca", "ptr_rel_huge_object_vla"):
     lines = import_esbmc.header("esbmc/" + name, "CORE", "", [], ".", [])
