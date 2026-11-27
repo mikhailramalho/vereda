@@ -178,12 +178,12 @@ with tempfile.TemporaryDirectory() as directory:
     run = command + [str(source), "--multi-property"]
     check(run, 0, "VERIFICATION SUCCESSFUL")
     output = check(run + ["--ub-checks"], 1, "VERIFICATION FAILED")
-    assert all(message in output for message in families.values()), output
-    for flag, message in families.items():
+    assert all(text in output for text in families.values()), output
+    for flag, text in families.items():
         output = check(run + ["--ub-checks", flag + "=false"], 1, "VERIFICATION FAILED")
-        assert message not in output, output
-        assert all(m in output for f, m in families.items() if f != flag), output
-        check(run + [flag + "=false", "--ub-checks"], 1, message)
+        assert text not in output, output
+        assert all(t in output for f, t in families.items() if f != flag), output
+        check(run + [flag + "=false", "--ub-checks"], 1, text)
     check(run + ["--ub-shift-check", "--ub-checks=false"], 0, "VERIFICATION SUCCESSFUL")
     check(run + ["--ub-checks=maybe"], 6, "--ub-checks takes true or false")
     # Unsigned overflow is defined, so --ub-checks leaves it out.
