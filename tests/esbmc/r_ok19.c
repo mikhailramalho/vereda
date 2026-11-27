@@ -20,6 +20,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/r_ok19
 // Needs: __ESBMC_r_ok
-// RUN: --no-pointer-check
+// RUN: --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

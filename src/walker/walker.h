@@ -37,9 +37,9 @@ struct Options {
   // call nondet are unrolled.
   bool witness = false;
   // A write into a string literal or an object defined const is a
-  // violation, as ESBMC's pointer check has it (off with --no-pointer-check).
+  // violation, as ESBMC's pointer check has it (off with --ub-pointer-check=false).
   bool pointerCheck = true;
-  // Report stack objects above PTRDIFF_MAX, unless --no-vla-size-check.
+  // Report stack objects above PTRDIFF_MAX, unless --vla-size-check=false.
   bool vlaSizeCheck = true;
   bool assertions = true; // user assertions, independent of unwinding and pointer checks
   bool multiProperty = false; // keep exploring after predicate assertion failures

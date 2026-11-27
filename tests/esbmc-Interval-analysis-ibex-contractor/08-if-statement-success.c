@@ -22,7 +22,7 @@ int main() {
 }
 // Imported from ESBMC regression/Interval-analysis-ibex-contractor/08-if-statement-success
 // Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction
-// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
+// RUN: --interval-analysis --ub-pointer-check=false --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

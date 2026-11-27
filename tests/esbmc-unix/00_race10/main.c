@@ -31,8 +31,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_race10
-// Needs: --data-race-check --context-bound 5
-// RUN: --data-race-check --context-bound 5
+// Needs: --ub-data-race-check --context-bound 5
+// RUN: --ub-data-race-check --context-bound 5
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

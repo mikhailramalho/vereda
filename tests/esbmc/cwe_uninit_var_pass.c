@@ -10,5 +10,5 @@ int main(void)
   return x;
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_var_pass
-// RUN: --uninitialised-vars-check --incremental-bmc
+// RUN: --ub-uninit-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

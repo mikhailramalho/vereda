@@ -48,7 +48,7 @@ int main()
 }
 // Imported from ESBMC regression/incremental-smt/github_2102
 // Needs: --context-bound 3
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unwind 3 --context-bound 3 --z3
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unwind 3 --context-bound 3 --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

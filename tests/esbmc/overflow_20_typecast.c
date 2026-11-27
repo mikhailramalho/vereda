@@ -19,5 +19,5 @@ int main()
   
 }
 // Imported from ESBMC regression/esbmc/overflow_20_typecast
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

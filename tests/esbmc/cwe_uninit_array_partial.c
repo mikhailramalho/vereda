@@ -5,7 +5,7 @@ int main(void)
   return a[1];
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_array_partial
-// RUN: --uninitialised-vars-check --incremental-bmc
+// RUN: --ub-uninit-check --incremental-bmc
 // Vereda: unmet EXPECT: ^  CWE: CWE-457$ (Vereda prints no CWE line)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

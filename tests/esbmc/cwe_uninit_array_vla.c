@@ -10,5 +10,5 @@ int main(int argc, char **argv)
   return a[0];
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_array_vla
-// RUN: --uninitialised-vars-check --incremental-bmc
+// RUN: --ub-uninit-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc-unix/github_2220
 // Needs: --memory-leak-check
-// RUN: --overflow-check --memory-leak-check --unwind 1 --no-unwinding-assertions
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --memory-leak-check --unwind 1 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

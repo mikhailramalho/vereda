@@ -31,7 +31,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc-unix/github_2928_escape_rc
 // Needs: --sv-comp --force-realloc-success --data-races-check-only
-// RUN: -m32 --sv-comp --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-pointer-check --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
+// RUN: -m32 --sv-comp --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --ub-pointer-check=false --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race.*$
 // MODE: FUTURE

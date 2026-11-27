@@ -5,6 +5,6 @@ int main(void)
   return c;
 }
 // Imported from ESBMC regression/esbmc/github_9436_fail
-// RUN: --ub-shift-check
+// RUN: --ub-signed-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: undefined behavior on shift operation shl$

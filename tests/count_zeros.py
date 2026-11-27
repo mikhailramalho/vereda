@@ -156,7 +156,7 @@ int main(void) {
  if (x == 0) { int n = 2147483647; n += 1; }
 }
 ''')
-    check(command + [str(source), flag, "--property", "no-overflow", "--overflow-check"],
+    check(command + [str(source), flag, "--property", "no-overflow", "--ub-signed-overflow-check"],
           1, "VERIFICATION FAILED")
     ir.write_text('''declare i32 @llvm.cttz.i32(i32, i1 immarg)
 declare void @reach_error()

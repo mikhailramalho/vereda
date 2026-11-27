@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval_analysis_overflow_claim
 // Needs: --interval-analysis
-// RUN: --overflow-check --interval-analysis
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

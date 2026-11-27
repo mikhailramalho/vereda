@@ -14,8 +14,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_race_array
-// Needs: --partial-order --data-race-check
-// RUN: --partial-order --data-race-check
+// Needs: --partial-order --ub-data-race-check
+// RUN: --partial-order --ub-data-race-check
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support checking data races on a global array yet, at file .*partial_order_reject_race_array\.c line +13 column 3 function main$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

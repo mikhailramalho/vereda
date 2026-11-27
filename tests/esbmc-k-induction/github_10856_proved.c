@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_10856_proved
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 10 --no-pointer-check
+// RUN: --k-induction --max-k-step 10 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^Solution found by the inductive step \(k = 2\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,5 +12,5 @@ int main(void)
   return a[j];
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_array_symbolic_pass
-// RUN: --uninitialised-vars-check --incremental-bmc
+// RUN: --ub-uninit-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

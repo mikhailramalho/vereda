@@ -1304,7 +1304,7 @@ static void _ZN6Thread5startEv(struct l_class_OC_Thread *this) {
 /**********************VarMap.dat (Variable Name) Content************************/
 /******************************************************************************/
 // Imported from ESBMC regression/esbmc/10_bicycle_01
-// RUN: --unwind 1 --no-pointer-check
+// RUN: --unwind 1 --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

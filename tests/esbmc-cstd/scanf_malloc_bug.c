@@ -37,7 +37,7 @@ int main() {
 }  
 // Imported from ESBMC regression/cstd/scanf_malloc_bug
 // Needs: --k-induction
-// RUN: --overflow-check --k-induction
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

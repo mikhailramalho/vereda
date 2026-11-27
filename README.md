@@ -89,13 +89,15 @@ short commit hash; builds without Git metadata report `commit unknown`.
 
 `vereda.py` takes C (`.c`, `.i`), Rust (`.rs`) or IR (`.ll`, `.bc`) inputs and its own
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
-`--property-file`, `-v`, and ESBMC's `--overflow-check`,
-`--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
-sanitizer checks, and `--no-fp-conversion-check`), and forwards everything else
-to the binary. As in ESBMC, either overflow check also checks shifts,
-`--unsigned-overflow-check` also signed overflow, and `--overflow-check` also
-floating-point to integer conversions unless
-`--no-fp-conversion-check` is given.
+`--property-file`, `-v`, and the checks it compiles in with clang's
+sanitizers: `--ub-signed-overflow-check`, `--unsigned-overflow-check`,
+`--ub-shift-check`, and `--overflow-check` for both overflow checks), and
+forwards everything else to the binary. Each check flag checks one thing and
+takes `=true` or `=false`; the last one naming a check wins. Unsigned
+arithmetic wraps by definition (C11 6.2.5p9), so its check has no `ub-`
+prefix. Unlike ESBMC's `--overflow-check`, which checks signed overflow,
+shifts and floating-point to integer conversions, Vereda's checks signed and
+unsigned overflow only; `tests/import_esbmc.py` translates ESBMC's flags.
 `vereda.py -h` lists both sets.
 
 Rust source is compiled with edition 2024, debug info, no optimisation,
@@ -122,16 +124,16 @@ The main verifier flags:
 | `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
-| `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
-| `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs unless `--property` is given |
-| `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in; ESBMC's `--clz-zero-check` is an alias) |
+| `--ub-pointer-check` | Check writes into string literals and const objects (default on; `=false` disables) |
+| `--ub-div-by-zero-check` | Check integer division/remainder by zero (default on for C and IR inputs unless `--property` is given; `=false` disables) |
+| `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
 | `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
 | `--ub-alignment-check` | Check alignment of typed memory accesses (opt-in) |
-| `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in; ESBMC's `--uninitialised-vars-check`, which checks locals only, is an alias) |
+| `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in) |
 | `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
-| `--data-race-check` | Request data-race checking; currently errors because it is not implemented (`--data-races-check` is an alias) |
+| `--ub-data-race-check` | Request data-race checking; currently errors because it is not implemented |
 | `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
-| `--no-vla-size-check` | Do not report stack allocations above `PTRDIFF_MAX`; their paths still end at the allocation |
+| `--vla-size-check` | Report stack allocations above `PTRDIFF_MAX`, an implementation limit rather than undefined behaviour (default on; `=false` disables; their paths still end at the allocation) |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--incremental-solver` | Keep one incremental solver across checks (with `bv-cnf-scope=permanent` on Bitwuzla) instead of fresh non-incremental solves |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |

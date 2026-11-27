@@ -9,6 +9,6 @@ int main()
   return (int)(b != b) + j;
 }
 // Imported from ESBMC regression/esbmc/github_10173_fp_overflow_off_fail
-// RUN: --overflow-check --no-fp-conversion-check --no-pointer-check --no-assertions
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-pointer-check=false --no-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on add

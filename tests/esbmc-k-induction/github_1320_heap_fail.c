@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/github_1320_heap_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 10 --no-pointer-check --no-bounds-check --force-malloc-success
+// RUN: --k-induction --max-k-step 10 --ub-pointer-check=false --no-bounds-check --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

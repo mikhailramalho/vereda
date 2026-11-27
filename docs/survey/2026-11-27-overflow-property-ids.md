@@ -28,8 +28,9 @@ class.
 
 ## Table
 
-Each probe ran with `--multi-property` on ESBMC 8.8.0 and Vereda, with
-ESBMC's flags (Vereda before this change needed its own flag where noted).
+Each probe ran with `--multi-property` on ESBMC 8.8.0 with the flag shown,
+and on Vereda with the flags `tests/import_esbmc.py` translates it to (see
+Flags below; Vereda before this change needed its own flag where noted).
 One entry per row, `id message`.
 
 | Program | Flag | Vereda before | Vereda after | ESBMC 8.8 |
@@ -75,21 +76,69 @@ reports it first, as ESBMC does. A
 float-cast check names the destination as ESBMC does, `signedbv` or
 `unsignedbv`.
 
-The flags follow ESBMC's too. `--overflow-check` and
-`--unsigned-overflow-check` now also check shifts, as ESBMC's
-`goto_checkt::shift_check` does under either. `--unsigned-overflow-check`
-also checks signed overflow, as ESBMC's `goto_checkt::overflow_check` does:
-it checks a signed operation under any of the three flags and an unsigned
-one only under `--unsigned-overflow-check` (an unsigned run of ESBMC on
+## Flags
+
+Vereda names its checks its own way, and ESBMC compatibility lives only in
+the importer's tables. Every undefined-behaviour check has a `--ub-*` flag
+that checks one thing; a check on by default is turned off with `=false`
+(LLVM's `cl::opt<bool>` parses it, and `vereda.py` parses its own flags the
+same way, the last one naming a check winning), not with a `--no-*` flag.
+A check that is not undefined behaviour has no `ub-` prefix.
+
+| Flag | Checks | Default |
+|---|---|---|
+| `--ub-signed-overflow-check` | signed integer overflow (C11 6.5p5), clang's `signed-integer-overflow` (front end) | off |
+| `--unsigned-overflow-check` | unsigned wrap-around, clang's `unsigned-integer-overflow` (front end); not UB, since unsigned arithmetic wraps (C11 6.2.5p9) | off |
+| `--overflow-check` | shorthand for both of the above (front end) | off |
+| `--ub-shift-check` | shifts, clang's `shift` (front end) | off |
+| `--ub-float-cast-overflow-check` | out-of-range floating-point to integer conversions | off |
+| `--ub-div-by-zero-check` | integer division and remainder by zero | on |
+| `--ub-count-zero-check` | zero arguments to `clz`/`ctz` | off |
+| `--ub-alignment-check` | alignment of typed accesses | off |
+| `--ub-uninit-check` | reads of uninitialised locals and memory | off |
+| `--ub-pointer-check` | writes into string literals and const objects | on |
+| `--vla-size-check` | stack allocations above `PTRDIFF_MAX`, an implementation limit rather than UB (only a VLA size of zero or less is, C11 6.7.6.2p5) | on |
+| `--ub-data-race-check` | data races (C11 5.1.2.4p25); not implemented, errors | off |
+| `--memory-leak-check` | leaks, not UB; not implemented, errors | off |
+
+These replace `--no-div-by-zero-check`, `--no-pointer-check`,
+`--no-vla-size-check` and `--data-race-check` (whose `--data-races-check`
+alias is gone too). The binary has no ESBMC aliases: `--clz-zero-check` and
+`--uninitialised-vars-check` are not accepted, and the front end has no
+`--no-fp-conversion-check`.
+
+Vereda's `--overflow-check` differs from ESBMC's. ESBMC's `goto_checkt`
+checks a signed operation under any of `--overflow-check`,
+`--unsigned-overflow-check` and `--ub-shift-check` and an unsigned one only
+under `--unsigned-overflow-check` (`overflow_check`), checks shifts under
+any of the three (`shift_check`), and checks floating-point to integer
+conversions under `--overflow-check` unless `--no-fp-conversion-check` is
+given (`fp_to_int_range_check`); an unsigned run of ESBMC on
 `int a; a + (x >> s)` reports `arithmetic overflow on add` for the signed
-add). `--overflow-check` also
-checks float-to-integer conversions (`fp_to_int_range_check`) unless
-`--no-fp-conversion-check`, a new front-end flag, is given. The binary takes
-ESBMC's `--clz-zero-check` and `--uninitialised-vars-check` as aliases of
-`--ub-count-zero-check` and `--ub-uninit-check`. `tests/import_esbmc.py`
-passes those two and `--no-fp-conversion-check` through, and drops
-`--no-fp-overflow-check` (Vereda has no floating-point arithmetic overflow
-check to turn off).
+add. Vereda's flags each check one of these, so `tests/import_esbmc.py`
+translates ESBMC's:
+
+| ESBMC | Vereda |
+|---|---|
+| `--overflow-check` (or `--overflow`) | `--ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check` |
+| `--overflow-check --no-fp-conversion-check` | `--ub-signed-overflow-check --ub-shift-check` |
+| `--unsigned-overflow-check` | `--ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check` |
+| `--ub-shift-check` | `--ub-signed-overflow-check --ub-shift-check` |
+| `--clz-zero-check` | `--ub-count-zero-check` |
+| `--uninitialised-vars-check` | `--ub-uninit-check` |
+| `--no-div-by-zero-check` | `--ub-div-by-zero-check=false` |
+| `--no-pointer-check` | `--ub-pointer-check=false` |
+| `--no-vla-size-check` | `--vla-size-check=false` |
+| `--data-races-check` | `--ub-data-race-check` (unsupported, so the test stays FUTURE) |
+| `--no-fp-overflow-check` | dropped: Vereda has no floating-point arithmetic overflow check |
+
+Combined flags give the union, each Vereda flag once. The imported tests'
+RUN lines were rewritten with these tables in place, keeping their modes
+and recorded verdicts, rather than re-imported: the ESBMC checkout has moved
+on since the last import (274 imported tests have no test.desc there now).
+
+The SV-COMP no-overflow property still turns on the signed check only, and
+Rust keeps rustc's own overflow checks.
 
 ## Kept as Vereda's, and why
 
@@ -103,14 +152,6 @@ those keep the message "read of uninitialised memory" under the
 `uninitialised-variable` class. A read of a named local or array names it as
 ESBMC does. ESBMC also skips arrays above 4096 elements, which Vereda checks
 (`esbmc/cwe_uninit_array_oversize` stays FUTURE).
-
-`--ub-float-cast-overflow-check` stays as the binary's flag, since raw IR has
-no `--overflow-check` front end; ESBMC has no separate flag.
-
-ESBMC's `--ub-shift-check` alone also turns on its signed add, sub and mul
-checks (its `overflow_check` returns early only when none of the three flags
-is given). Vereda's checks shifts only: matching that would make a shift
-flag check additions.
 
 ## What still differs
 
@@ -142,13 +183,26 @@ and the UB check scripts (`count_zeros.py`, `float_cast_overflow.py`,
 `output_readers.py`) expect the new ids and messages. Of the imported tests,
 the 726 that use an overflow, shift, count-zero, alignment, uninit or
 fp-conversion flag, `--multi-property`, or expect a property id or one of
-these messages all pass. Seventeen tests whose Needs line named the newly
-accepted flags now run: nine of the fourteen uninit tests,
+these messages all pass. Seventeen tests whose Needs line named ESBMC
+flags the importer now translates run: nine of the fourteen uninit tests,
 `github_10173_fp_overflow_off` and its `_fail`, and `github_7572_nocheck`
 became CORE; five uninit tests stay FUTURE for ESBMC's `CWE:` line or its
 array cap. The new shift and float-cast checks promoted `github_2789`,
 `github_578_fail4`, `github_578_fail5`, `github_7572_fail`,
 `github_7572_trunc_fail`, `github_9223_fail` and `github_9436_fail` to CORE;
 `github_381` now gives ESBMC's verdict but stays FUTURE for the column.
+
+With Vereda's own flags, `check_flags.py` checks that each overflow flag
+checks only its own operations, that `--overflow-check` is both and
+`=false` turns one back off, and that a bad value is an error;
+`output_readers.py` checks the importer's translations, and
+`frontend_options.py` that Rust input rejects the C check flags. The RUN
+lines of 879 imported tests changed (788 for the check flags, 91 for
+`--ub-data-race-check`). The 1185 imported tests that changed or use an
+overflow, shift, count-zero, alignment, uninit, float-cast or other `--ub-*`
+flag or `--multi-property`, or expect one of these ids or messages, all pass
+(319 run, 866 FUTURE or KNOWNBUG with their recorded verdicts); no verdict
+changed, including the 13 ESBMC `--ub-shift-check` tests that now also check
+signed overflow.
 
 Follow-up issues: #349, #350, #351.

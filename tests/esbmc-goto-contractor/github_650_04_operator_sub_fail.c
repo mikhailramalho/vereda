@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-contractor/github_650_04_operator_sub_fail
 // Needs: --interval-analysis --goto-contractor --incremental
-// RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental --unlimited-k-steps
+// RUN: --interval-analysis --ub-pointer-check=false --goto-contractor --incremental --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

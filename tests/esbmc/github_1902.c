@@ -54,7 +54,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_1902
 // Needs: --k-induction --memory-leak-check
-// RUN: --k-induction --overflow --memory-leak-check --max-k-step 5 --multi-property
+// RUN: --k-induction --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --memory-leak-check --max-k-step 5 --multi-property
 // MODE: FUTURE
 // EXPECT: ^Solution found by the forward condition; all states are reachable \(k = 2\)$
 // EXPECT: ^VERIFICATION FAILED$

@@ -28,5 +28,5 @@ int main(void)
   return sum;
 }
 // Imported from ESBMC regression/esbmc/vsnprintf_const_format
-// RUN: --overflow-check --incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

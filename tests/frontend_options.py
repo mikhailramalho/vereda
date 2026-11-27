@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory() as directory:
     rust.write_text("fn main() {}\n")
     check(["--std=c11", "--rustc", str(tmp / "missing-rustc"), str(rust)],
           6, "does not apply to Rust")
-    for flag in ("--overflow-check", "--no-fp-conversion-check"):
+    for flag in ("--overflow-check", "--ub-shift-check=false"):
         check([flag, "--rustc", str(tmp / "missing-rustc"), str(rust)],
               6, "Rust source does not support C sanitizer")
 

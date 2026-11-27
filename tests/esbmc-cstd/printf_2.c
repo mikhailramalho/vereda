@@ -15,7 +15,7 @@ int main()
 
 }
 // Imported from ESBMC regression/cstd/printf_2
-// RUN: --overflow-check -m32
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

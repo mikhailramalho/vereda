@@ -14,9 +14,9 @@ for flag in import_esbmc.IGNORED_WITH_VALUE:
                                     argument + ' --k-induction --32', [], '.', [])
         assert '// RUN: --k-induction -m32' in lines, lines
 assert import_esbmc.translate('--32 --64 --data-races-check', '.') == (
-    ['-m32', '-m64'], [], ['--data-race-check'])
+    ['-m32', '-m64'], [], ['--ub-data-race-check'])
 assert import_esbmc.translate('--data-races-check=false', '.') == (
-    [], [], ['--data-race-check=false'])
+    [], [], ['--ub-data-race-check=false'])
 assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-assertion '
                              '--no-standard-check', '.') == (
     ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions'],
@@ -45,9 +45,23 @@ with tempfile.TemporaryDirectory() as directory:
     assert '// RUN' not in Path(copy).read_text()
 
 assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
-    ["--no-assertions", "--no-div-by-zero-check"], [], [])
-assert import_esbmc.translate("--clz-zero-check", ".") == (
-    ["--clz-zero-check"], [], [])
+    ["--no-assertions", "--ub-div-by-zero-check=false"], [], [])
+for esbmc, vereda in (
+        ("--clz-zero-check", ["--ub-count-zero-check"]),
+        ("--uninitialised-vars-check", ["--ub-uninit-check"]),
+        ("--no-pointer-check --no-vla-size-check",
+         ["--ub-pointer-check=false", "--vla-size-check=false"]),
+        ("--overflow-check", ["--ub-signed-overflow-check", "--ub-shift-check",
+                              "--ub-float-cast-overflow-check"]),
+        ("--no-fp-conversion-check --overflow-check --no-fp-overflow-check",
+         ["--ub-signed-overflow-check", "--ub-shift-check"]),
+        ("--unsigned-overflow-check", ["--ub-signed-overflow-check", "--unsigned-overflow-check",
+                                       "--ub-shift-check"]),
+        ("--ub-shift-check", ["--ub-signed-overflow-check", "--ub-shift-check"]),
+        ("--overflow-check --unsigned-overflow-check",
+         ["--ub-signed-overflow-check", "--ub-shift-check", "--ub-float-cast-overflow-check",
+          "--unsigned-overflow-check"])):
+    assert import_esbmc.translate(esbmc, ".") == (vereda, [], []), esbmc
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 
@@ -166,7 +180,7 @@ for original in (r"^\*\* 0 of 1 properties failed, 1 unknown$",
 
 for name in ("ptr_rel_huge_object_alloca", "ptr_rel_huge_object_vla"):
     lines = import_esbmc.header("esbmc/" + name, "CORE", "", [], ".", [])
-    assert "// RUN: --no-vla-size-check" in lines, lines
+    assert "// RUN: --vla-size-check=false" in lines, lines
 
 for args, requirement, resolved in (("--32", "arch32", True), ("--64", "arch64", True),
                                     ("--64", "arch32", False), ("", "arch32", False),
@@ -223,7 +237,8 @@ assert import_esbmc.translate('--cvc5 -D__builtin_unreachable()', '.') == (
     ['--solver', 'cvc5', '-D__builtin_unreachable()'], [], [])
 for args, expected in (('--gcse --z3', '--solver z3'),
                        ('--array-flattener --overflow --bitwuzla',
-                        '--overflow-check --solver bitwuzla')):
+                        '--ub-signed-overflow-check --ub-shift-check '
+                        '--ub-float-cast-overflow-check --solver bitwuzla')):
     lines = import_esbmc.header('suite/last_blocker', 'CORE', args, [], '.', [])
     assert '// RUN: ' + expected in lines, lines
     assert not any(line.startswith('// Needs:') for line in lines), lines

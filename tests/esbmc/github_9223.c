@@ -7,5 +7,5 @@ int main(void)
   return a << (b & 15);
 }
 // Imported from ESBMC regression/esbmc/github_9223
-// RUN: --overflow-check --solver z3 --std c11
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --solver z3 --std c11
 // EXPECT: ^VERIFICATION SUCCESSFUL$

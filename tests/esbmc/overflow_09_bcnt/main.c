@@ -84,5 +84,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_09_bcnt
-// RUN: --unwind 17 --overflow-check
+// RUN: --unwind 17 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

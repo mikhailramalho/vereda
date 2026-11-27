@@ -53,15 +53,17 @@ static cl::opt<bool> noSummarizeArrayLoops(
              "replacing them by their effect"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
-static cl::opt<bool> noPointerCheck(
-    "no-pointer-check", cl::desc("Do not check writes into string literals and const objects"));
+static cl::opt<bool> ubPointerCheck(
+    "ub-pointer-check",
+    cl::desc("Check writes into string literals and const objects (default on; =false disables)"),
+    cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
-static cl::opt<bool> noDivByZeroCheck(
-    "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
+static cl::opt<bool> ubDivByZeroCheck(
+    "ub-div-by-zero-check",
+    cl::desc("Check integer division and remainder by zero (default on; =false disables)"),
+    cl::init(true));
 static cl::opt<bool> ubCountZeroCheck(
     "ub-count-zero-check", cl::desc("Check undefined zero arguments to count-leading/trailing-zeros"));
-static cl::alias clzZeroCheck("clz-zero-check", cl::desc("ESBMC's name for --ub-count-zero-check"),
-                              cl::aliasopt(ubCountZeroCheck));
 static cl::opt<bool> ubFloatCastOverflowCheck(
     "ub-float-cast-overflow-check",
     cl::desc("Check out-of-range floating-point to integer conversions"));
@@ -69,19 +71,16 @@ static cl::opt<bool> ubAlignmentCheck(
     "ub-alignment-check", cl::desc("Check alignment of typed memory accesses"));
 static cl::opt<bool> ubUninitCheck(
     "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
-static cl::alias uninitialisedVarsCheck(
-    "uninitialised-vars-check",
-    cl::desc("ESBMC's name for --ub-uninit-check, which checks locals only"),
-    cl::aliasopt(ubUninitCheck));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
-static cl::opt<bool> dataRaceCheck(
-    "data-race-check", cl::desc("Check for data races (not implemented)"));
-static cl::alias dataRacesCheck("data-races-check", cl::aliasopt(dataRaceCheck));
+static cl::opt<bool> ubDataRaceCheck(
+    "ub-data-race-check", cl::desc("Check for data races (not implemented)"));
 static cl::opt<bool> deadlockCheck(
     "deadlock-check", cl::desc("Check for deadlocks (not implemented)"));
-static cl::opt<bool> noVLASizeCheck(
-    "no-vla-size-check", cl::desc("Do not report stack allocations above PTRDIFF_MAX"));
+static cl::opt<bool> vlaSizeCheck(
+    "vla-size-check",
+    cl::desc("Check stack allocations above PTRDIFF_MAX (default on; =false disables)"),
+    cl::init(true));
 static cl::opt<bool> incrementalBMC(
     "incremental-bmc",
     cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
@@ -264,8 +263,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !incrementalBMC,
                                      !noSummarizeArrayLoops,
                                      !witnessFile.empty(),
-                                     !noPointerCheck,
-                                     !noVLASizeCheck,
+                                     ubPointerCheck,
+                                     vlaSizeCheck,
                                      !noAssertions,
                                      multiProperty,
                                      checkUninit,
@@ -403,8 +402,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      /*showIterations=*/false,
                                                      !noSummarizeArrayLoops,
                                                      !witnessFile.empty(),
-                                                     !noPointerCheck,
-                                                     !noVLASizeCheck,
+                                                     ubPointerCheck,
+                                                     vlaSizeCheck,
                                                      !noAssertions,
                                                      multiProperty,
                                                      checkUninit,
@@ -503,7 +502,7 @@ int main(int argc, char **argv) {
   if (!cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n", &errs()))
     return ErrorExit;
   for (auto [enabled, flag] : {std::pair{bool(memoryLeakCheck), "--memory-leak-check"},
-                              {bool(dataRaceCheck), "--data-race-check"},
+                              {bool(ubDataRaceCheck), "--ub-data-race-check"},
                               {bool(deadlockCheck), "--deadlock-check"}}) {
     if (enabled) {
       errs() << "vereda: " << flag << " is not implemented\n";
@@ -528,7 +527,7 @@ int main(int argc, char **argv) {
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
-                       !noDivByZeroCheck && property == Property::All,
+                       ubDivByZeroCheck && property == Property::All,
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,

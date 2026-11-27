@@ -2971,7 +2971,7 @@ FYI: the random generator makes assumptions about the integer size. See platform
 
 // Imported from ESBMC regression/csmith/csmith04
 // Needs: --memstats --interactive-ileaves --schedule --i386-macos
-// RUN: --no-unwinding-assertions --unwind 15 --no-div-by-zero-check --no-slice --memstats --interactive-ileaves --schedule --i386-macos
+// RUN: --no-unwinding-assertions --unwind 15 --ub-div-by-zero-check=false --no-slice --memstats --interactive-ileaves --schedule --i386-macos
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none
