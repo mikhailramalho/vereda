@@ -24,8 +24,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1517_fail
-// Needs: --data-race-check --context-bound 2
-// RUN: --unwind 2 --no-unwinding-assertions --data-race-check --context-bound 2
+// Needs: --ub-data-race-check --context-bound 2
+// RUN: --unwind 2 --no-unwinding-assertions --ub-data-race-check --context-bound 2
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

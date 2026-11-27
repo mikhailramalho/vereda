@@ -33,5 +33,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_748_01
-// RUN: --no-pointer-check --unwind 1
+// RUN: --ub-pointer-check=false --unwind 1
 // EXPECT: ^VERIFICATION SUCCESSFUL$

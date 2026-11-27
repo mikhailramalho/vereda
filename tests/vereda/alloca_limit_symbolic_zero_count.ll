@@ -1,5 +1,5 @@
 ; Only a zero count survives when an element exceeds the pointer width.
-; RUN: --no-vla-size-check
+; RUN: --vla-size-check=false
 ; EXPECT: ^VERIFICATION SUCCESSFUL$
 target datalayout = "e-p:32:32"
 define i32 @main() {

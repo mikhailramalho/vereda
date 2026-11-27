@@ -313,5 +313,5 @@ void main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/overflow_16_fir_new
-// RUN: --unwind 34 --overflow-check
+// RUN: --unwind 34 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

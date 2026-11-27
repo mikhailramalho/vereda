@@ -20,5 +20,5 @@ int main(void)
   return t;
 }
 // Imported from ESBMC regression/esbmc/asprintf_const_format_exact
-// RUN: --overflow-check --incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

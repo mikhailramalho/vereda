@@ -11,5 +11,5 @@ int main(void) {
   c += (l < t);
 }
 // Imported from ESBMC regression/esbmc/.
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

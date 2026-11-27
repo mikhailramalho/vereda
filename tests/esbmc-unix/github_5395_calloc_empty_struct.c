@@ -27,5 +27,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_5395_calloc_empty_struct
-// RUN: --force-malloc-success --no-pointer-check --incremental-bmc
+// RUN: --force-malloc-success --ub-pointer-check=false --incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

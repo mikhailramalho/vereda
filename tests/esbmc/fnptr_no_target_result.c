@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/fnptr_no_target_result
 // Needs: --closed-world-fnptr
-// RUN: --no-pointer-check --closed-world-fnptr
+// RUN: --ub-pointer-check=false --closed-world-fnptr
 // MODE: FUTURE
 // EXPECT: ^No target candidate for function call \*ext_cb; assuming unreachable \(--closed-world-fnptr\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

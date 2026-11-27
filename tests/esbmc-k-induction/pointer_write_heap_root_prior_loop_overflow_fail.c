@@ -23,7 +23,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/pointer_write_heap_root_prior_loop_overflow_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success --overflow-check --no-assertions
+// RUN: --k-induction --max-k-step 12 --ub-pointer-check=false --no-bounds-check --force-malloc-success --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -15,7 +15,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/kinduction_overflow_check_late
 // Needs: --k-induction
-// RUN: --overflow-check --k-induction --max-k-step 15
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction --max-k-step 15
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 12

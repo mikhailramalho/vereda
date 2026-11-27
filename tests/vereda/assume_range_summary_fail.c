@@ -1,8 +1,8 @@
 // RUN: --multi-property
 // EXPECT: ^\[INFO\] Summarised 2 array loop\(s\)$
 // EXPECT: ^\[INFO\] Walk time: .*\(3 checks,
-// EXPECT: ^  SUCCESS +\[main\.assertion\.2\] +line 25
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 27
+// EXPECT: ^  SUCCESS +\[main\.assertion\.1\] +line 25
+// EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 27
 // EXPECT: ^  FAILED +\[main\.assertion\.3\] +line 30
 // A summarised loop's iteration at index k has k < n, so with n <= 90 the
 // test of k > 90 folds and its reach_error goes; the loop may run fewer

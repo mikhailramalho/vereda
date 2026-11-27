@@ -9,5 +9,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ub_01_shift_left_negative_op2
-// RUN: --ub-shift-check
+// RUN: --ub-signed-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$

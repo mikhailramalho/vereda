@@ -1,10 +1,12 @@
-// Stage ir: decodes clang sanitizer trap codes and integer operand descriptors.
+// Stage ir: decodes clang sanitizer trap codes, integer operand descriptors
+// and the comments load() gives the checks.
 // Trap codes are SanitizerHandler indices (clang/lib/CodeGen/SanitizerHandler.h)
 // as of LLVM 23; recheck the codes and descriptor ABI when upgrading LLVM.
 #pragma once
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Metadata.h>
 #include <llvm/Support/Endian.h>
 #include <string>
 
@@ -50,7 +52,7 @@ inline std::string sanitizerCheck(unsigned code) {
       "arithmetic overflow on add",         // AddOverflow
       "__builtin_unreachable",              // BuiltinUnreachable
       "control-flow integrity",             // CFICheckFail
-      "division by zero or overflow",       // DivremOverflow
+      "arithmetic overflow on division",    // DivremOverflow
       "dynamic type mismatch",              // DynamicTypeCacheMiss
       "float-to-integer conversion overflow", // FloatCastOverflow
       "function type mismatch",             // FunctionTypeMismatch
@@ -67,7 +69,7 @@ inline std::string sanitizerCheck(unsigned code) {
       "null returned as nonnull",           // NonnullReturn
       "array bounds violated",              // OutOfBounds
       "pointer arithmetic overflow",        // PointerOverflow
-      "shift out of bounds",                // ShiftOutOfBounds
+      "undefined behavior on shift operation", // ShiftOutOfBounds
       "arithmetic overflow on sub",         // SubOverflow
       "type mismatch",                      // TypeMismatch
       "alignment assumption violated",      // AlignmentAssumption
@@ -77,6 +79,14 @@ inline std::string sanitizerCheck(unsigned code) {
   if (code < sizeof(names) / sizeof(names[0]))
     return names[code];
   return "sanitizer check " + std::to_string(code);
+}
+
+// ESBMC's comment for a sanitizer check, which load() attaches as vereda.check
+// metadata where it finds the operation the check guards, else fallback.
+inline std::string checkComment(const llvm::Instruction &check, std::string fallback) {
+  if (auto *md = check.getMetadata("vereda.check"))
+    return llvm::cast<llvm::MDString>(md->getOperand(0))->getString().str();
+  return fallback;
 }
 
 } // namespace vereda::ir

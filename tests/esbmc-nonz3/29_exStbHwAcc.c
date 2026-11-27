@@ -4653,5 +4653,5 @@ for(counter=0; counter<argc; counter++)
     return 0;
 }
 // Imported from ESBMC regression/nonz3/29_exStbHwAcc
-// RUN: --overflow-check --unwind 3 -m32
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unwind 3 -m32
 // EXPECT: ^VERIFICATION FAILED$
