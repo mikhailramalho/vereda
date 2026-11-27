@@ -824,6 +824,8 @@ State::Cell Memory::storeOwn(uint64_t object, const State::Cell &own, Term at,
 void Memory::summarise(State &st, Term first, uint64_t stride, Type *ty, Term count,
                        Iteration iteration) {
   Term mapped = fieldPointer(first, storeBits(dl, ty) / 8);
+  if (mapped == first && fieldStorage.count(t.constant(object(first))->getZExtValue()))
+    throw Unsupported("field array loop summary with an unresolved offset");
   if (mapped != first) {
     uint64_t root = t.constant(object(first))->getZExtValue();
     uint64_t child = t.constant(object(mapped))->getZExtValue();
@@ -1082,8 +1084,11 @@ void Memory::writeByte(State &st, Term at, const State::Cell &c) {
   if (!k) {
     // The shared arrays take every write that may miss the separate
     // objects; reads of a separate object never look there.
+    // A field array's own arrays are not what its fields read.
     Term objTerm = object(at);
     if (const APInt *obj = t.constant(objTerm)) {
+      if (fieldStorage.count(obj->getZExtValue()))
+        throw Unsupported("field array write with an unresolved offset");
       storeArrays(st, obj->getZExtValue(), at, c);
       return;
     }
@@ -1097,6 +1102,8 @@ void Memory::writeByte(State &st, Term at, const State::Cell &c) {
       Term is = t.eq(objTerm, t.bv(o, ObjBits));
       if (t.isFalse(is))
         continue;
+      if (fieldStorage.count(o))
+        throw Unsupported("field array write with an unresolved offset");
       State::Cell stored = storeOwn(o, *own, at, c);
       st.separate.set({o, 0}, {t.ite(is, stored.data, own->data),
                                t.ite(is, stored.prov, own->prov)});

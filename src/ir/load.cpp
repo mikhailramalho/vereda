@@ -7,6 +7,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Analysis/CycleAnalysis.h>
 #include <llvm/Analysis/SimplifyQuery.h>
+#include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
@@ -1405,6 +1406,14 @@ static void pruneUnreachable(Module &m, StringRef entry) {
        {"llvm.global_ctors", "llvm.global_dtors", "llvm.used", "llvm.compiler.used"})
     if (GlobalVariable *g = m.getNamedGlobal(special))
       mark(mark, g);
+  // A C library model linked later may call a library function the program
+  // defines, as realloc calls malloc; the program's definition must stay, or
+  // the model's or the walker's would replace it.
+  TargetLibraryInfoImpl tlii(m.getTargetTriple());
+  LibFunc lf;
+  for (Function &f : m)
+    if (!f.isDeclaration() && !f.hasLocalLinkage() && tlii.getLibFunc(f.getName(), lf))
+      mark(mark, &f);
 
   while (!work.empty()) {
     const GlobalValue *gv = work.pop_back_val();

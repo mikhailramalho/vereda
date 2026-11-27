@@ -18,8 +18,8 @@ struct Check {
   std::string expr;    // the asserted expression's source text, if any
   unsigned index;      // assertions per function from 1; loops by number
   encode::Term violated;
-  // An unwinding assertion every path fails, of a loop whose trip count
-  // SCEV knows: the smallest bound that unwinds it; 0 otherwise.
+  // An unwinding assertion of a loop whose maximum trip count SCEV knows:
+  // the smallest bound that unwinds it; 0 otherwise.
   unsigned unwindsAt = 0;
 
   bool isUnwinding() const {

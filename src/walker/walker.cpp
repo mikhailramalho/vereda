@@ -880,6 +880,10 @@ private:
             stopped = std::move(cp);
             return;
           }
+          // No checkpoint was saved: the loop's unwinding claim already existed,
+          // so a deeper bound cannot resume here and must walk afresh.
+          if (immediateCheckpoint)
+            truncatedInner = true;
           it->second.clear();
           return;
         }
