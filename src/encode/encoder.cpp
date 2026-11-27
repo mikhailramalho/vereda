@@ -297,15 +297,23 @@ SMTSortRef Encoder::fpSort(Type *ty, camada::FPEncoding encoding) {
   return s.mkFPSort(expBits, precision - 1, encoding);
 }
 
-camada::SMTExprRef Encoder::fp(const Value *v) {
-  Type *ty = v->getType();
-  SMTSortRef sort = fpSort(ty);
-  Term x = value(v);
+camada::SMTExprRef Encoder::fp(const Value *v) { return fp(value(v), v->getType()); }
+
+camada::SMTExprRef Encoder::fp(Term x, Type *ty) {
   if (useNative(ty))
     return t.solverTerm(x);
   if (ty->isX86_FP80Ty())
     x = fp80ToIEEE79(x);
-  return s.mkBVToIEEEFP(t.solverTerm(x), sort);
+  return s.mkBVToIEEEFP(t.solverTerm(x), fpSort(ty));
+}
+
+Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty), even = rm(camada::RM::ROUND_TO_EVEN, ty);
+  switch (opcode) {
+  case Instruction::FAdd: return bits(s.mkFPAdd(x, y, even), ty);
+  case Instruction::FSub: return bits(s.mkFPSub(x, y, even), ty);
+  default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
+  }
 }
 
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {

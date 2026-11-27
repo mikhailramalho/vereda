@@ -91,6 +91,9 @@ public:
   // except for floats in the solver's theory.
   Term toBits(Term v, llvm::Type *ty);
   Term fromBits(Term bits, llvm::Type *ty);
+  // a + b (opcode FAdd) or a - b (FSub) on two values of the floating-point
+  // type ty, rounded to nearest even as the instructions round.
+  Term fpBinary(unsigned opcode, Term a, Term b, llvm::Type *ty);
   // A fresh unconstrained term of v's type, named after its origin (nondet
   // calls, arguments); for a pointer, a fresh address converted to one.
   Term fresh(llvm::Type *ty, const std::string &name);
@@ -120,6 +123,7 @@ private:
   camada::SMTSortRef fpSort(llvm::Type *ty, camada::FPEncoding encoding);
   // v as a float of the theory or encoding, for camada's operations on floats.
   camada::SMTExprRef fp(const llvm::Value *v);
+  camada::SMTExprRef fp(Term x, llvm::Type *ty); // as above, for a value's term
   Term bits(const camada::SMTExprRef &fp, llvm::Type *ty); // an operation's result as a value
   Term fp80ToIEEE79(Term bv80);
   Term ieee79ToFP80(Term bv79);
