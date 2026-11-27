@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_732-1-2
 // Needs: --k-induction
-// RUN: --no-simplify --k-induction
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

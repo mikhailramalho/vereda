@@ -6741,7 +6741,7 @@ void kfree(void const *p) {
 }
 // Imported from ESBMC regression/incremental-smt/incremental-28
 // Needs: --k-induction --max-inductive-step 3 --add-symex-value-set
-// RUN: --ub-pointer-check=false --no-bounds-check --ub-div-by-zero-check=false --k-induction --k-step 2 --unlimited-k-steps --max-inductive-step 3 --add-symex-value-set
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --k-induction --k-step 2 --unlimited-k-steps --max-inductive-step 3 --add-symex-value-set
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

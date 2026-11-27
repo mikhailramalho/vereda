@@ -573,7 +573,7 @@ void version()
 }
 // Imported from ESBMC regression/esbmc/30_compress
 // Needs: --no-library
-// RUN: --unwind 4 --no-unwinding-assertions --no-library -Wno-error=implicit-int
+// RUN: --unwind 4 --no-unwinding-assertions --no-library
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

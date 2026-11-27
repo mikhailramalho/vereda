@@ -62,7 +62,7 @@ int main()
 }
 // Imported from ESBMC regression/floats-regression/nextafterf-spec
 // Needs: --interval-analysis
-// RUN: --interval-analysis -Wno-error=implicit-function-declaration
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

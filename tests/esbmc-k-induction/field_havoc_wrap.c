@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/field_havoc_wrap
 // Needs: --k-induction
-// RUN: --k-induction --k-step 4 --max-k-step 5 --ub-pointer-check=false --no-bounds-check
+// RUN: --k-induction --k-step 4 --max-k-step 5 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

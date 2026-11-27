@@ -18,7 +18,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_330_6
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check -Wno-error=implicit-function-declaration
+// RUN: --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

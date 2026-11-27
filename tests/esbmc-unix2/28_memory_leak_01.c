@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/28_memory_leak_01
 // Needs: --memory-leak-check --show-stacktrace
-// RUN: --no-slice --memory-leak-check --show-stacktrace
+// RUN: --memory-leak-check --show-stacktrace
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -14,7 +14,7 @@ int main () {
 }
 // Imported from ESBMC regression/esbmc-unix/00_race28
 // Needs: --context-bound 1 --ub-data-race-check
-// RUN: --context-bound 1 --no-slice --ub-data-race-check
+// RUN: --context-bound 1 --ub-data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

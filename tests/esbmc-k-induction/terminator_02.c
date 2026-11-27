@@ -27,7 +27,7 @@ main()
 
 // Imported from ESBMC regression/k-induction/terminator_02
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-int
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -371,7 +371,7 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc-unix/github_595
 // Needs: --context-bound 2
-// RUN: --unwind 1 --no-slice --context-bound 2
+// RUN: --unwind 1 --context-bound 2
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -25,7 +25,7 @@ void really ( void )
 }
 // Imported from ESBMC regression/esbmc/00_memory_leak_10
 // Needs: --memory-leak-check
-// RUN: --no-slice --memory-leak-check --no-unwinding-assertions --unwind 2
+// RUN: --memory-leak-check --no-unwinding-assertions --unwind 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

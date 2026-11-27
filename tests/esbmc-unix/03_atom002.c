@@ -182,7 +182,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/03_atom002
 // Needs: --context-bound 2
-// RUN: --unwind 2 --context-bound 2 -Wno-error=implicit-function-declaration
+// RUN: --unwind 2 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

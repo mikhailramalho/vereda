@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/00_memory_leak_02
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --memory-leak-check -Wno-error=implicit-function-declaration --no-reachable-memory-leak --no-abnormal-memory-leak
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

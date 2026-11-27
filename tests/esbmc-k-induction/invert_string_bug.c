@@ -27,7 +27,7 @@ int main() {
 }
 // Imported from ESBMC regression/k-induction/invert_string_bug
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

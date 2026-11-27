@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/recurrent_state_null_deref
 // Needs: --termination --max-inductive-step 3
-// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --ub-pointer-check=false --no-bounds-check --no-assertions
+// RUN: --termination --k-step 2 --max-k-step 6 --max-inductive-step 3 --ub-pointer-check=false --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

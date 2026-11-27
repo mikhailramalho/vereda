@@ -106,7 +106,7 @@ int *create_fresh_int_array(int size) {
 }
 // Imported from ESBMC regression/esbmc/github_1259_unroll-2-v1-success
 // Needs: --memory-leak-check --no-abnormal-memory-leak
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check '-D__builtin_unreachable()' --vla-size-check=false -m32 --memory-leak-check --no-assertions --no-abnormal-memory-leak --unwind 1
+// RUN: --ub-div-by-zero-check=false --force-malloc-success '-D__builtin_unreachable()' --vla-size-check=false -m32 --memory-leak-check --no-assertions --no-abnormal-memory-leak --unwind 1
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

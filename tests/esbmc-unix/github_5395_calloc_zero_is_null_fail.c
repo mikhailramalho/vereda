@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_5395_calloc_zero_is_null_fail
 // Needs: --malloc-zero-is-null
-// RUN: --force-malloc-success --malloc-zero-is-null --ub-pointer-check=false --no-bounds-check --incremental-bmc
+// RUN: --force-malloc-success --malloc-zero-is-null --ub-pointer-check=false --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

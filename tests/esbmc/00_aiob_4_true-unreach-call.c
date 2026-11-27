@@ -183,7 +183,7 @@ return ;
 }
 // Imported from ESBMC regression/esbmc/00_aiob_4_true-unreach-call
 // Needs: --error-label ERROR
-// RUN: --z3 --ub-pointer-check=false --no-bounds-check --error-label ERROR --unwind 48
+// RUN: --z3 --ub-pointer-check=false --error-label ERROR --unwind 48
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

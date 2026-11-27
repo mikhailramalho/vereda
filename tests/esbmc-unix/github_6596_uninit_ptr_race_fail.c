@@ -31,7 +31,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6596_uninit_ptr_race_fail
 // Needs: --data-races-check-only
-// RUN: -m32 --ub-pointer-check=false --no-bounds-check --data-races-check-only --no-assertions
+// RUN: -m32 --ub-pointer-check=false --data-races-check-only --no-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: R/W data race on
 // MODE: FUTURE

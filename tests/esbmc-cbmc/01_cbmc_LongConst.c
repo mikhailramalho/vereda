@@ -4,7 +4,7 @@ int main() {
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_LongConst
 // Needs: --16
-// RUN: --16  -Wno-error=implicit-function-declaration
+// RUN: --16
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

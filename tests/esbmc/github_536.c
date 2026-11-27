@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_536
 // Needs: --smt-model
-// RUN: --smt-model -Wno-error=implicit-function-declaration
+// RUN: --smt-model
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

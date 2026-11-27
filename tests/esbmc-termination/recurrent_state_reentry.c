@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/recurrent_state_reentry
 // Needs: --termination --max-inductive-step 3 --interval-analysis
-// RUN: --ub-div-by-zero-check=false --no-align-check --k-step 2 --vla-size-check=false --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// RUN: --ub-div-by-zero-check=false --k-step 2 --vla-size-check=false --ub-pointer-check=false --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

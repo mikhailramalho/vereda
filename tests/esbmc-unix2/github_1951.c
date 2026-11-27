@@ -26,7 +26,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/github_1951
 // Needs: --no-por --context-bound 2 --ub-data-race-check
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --no-por --context-bound 2 --ub-pointer-check=false --no-bounds-check --no-assertions --incremental-bmc --ub-data-race-check
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --no-por --context-bound 2 --ub-pointer-check=false --no-assertions --incremental-bmc --ub-data-race-check
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none
