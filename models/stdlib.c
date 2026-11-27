@@ -9,13 +9,17 @@ void free(void *);
 void *memcpy(void *, const void *, size_t);
 // The bytes from p to the end of its object; the walker computes it.
 size_t __vereda_object_size(const void *p);
+// The walker's checks of free(p), without the free.
+void __vereda_check_free(void *p);
 
 // A new object with the old contents up to the smaller size, as glibc
 // does; realloc(p, 0) frees p and returns null, as glibc does. On failure
-// the old object stays.
+// the old object stays. A p that free could not take is undefined even
+// where the allocation fails (C17 7.22.3.5p3), so it is checked first.
 void *realloc(void *p, size_t n) {
   if (!p)
     return malloc(n);
+  __vereda_check_free(p);
   if (!n) {
     free(p);
     return NULL;

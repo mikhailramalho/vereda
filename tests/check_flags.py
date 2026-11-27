@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as directory:
     source = tmp / "main.c"
     ir = tmp / "main.ll"
     ir.write_text("define i32 @main() { ret i32 0 }\n")
-    for flag in ("--memory-leak-check", "--data-race-check", "--data-races-check", "--deadlock-check"):
+    for flag in ("--memory-leak-check", "--ub-data-race-check", "--deadlock-check"):
         for prefix in ([binary], command):
             output = check(prefix + [str(ir), flag], 6, "is not implemented")
             assert "VERIFICATION" not in output, output
@@ -39,15 +39,15 @@ with tempfile.TemporaryDirectory() as directory:
     # Disabling assertions keeps pointer checks, and vice versa.
     source.write_text('int main(void) { volatile char *p = "x"; *p = 1; }\n')
     check(command + [str(source), "--no-assertions"], 1, "write access to string constant")
-    check(command + [str(source), "--no-pointer-check"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--ub-pointer-check=false"], 0, "VERIFICATION SUCCESSFUL")
     source.write_text("#include <assert.h>\nint main(void) { assert(0); }\n")
-    check(command + [str(source), "--no-pointer-check"], 1, "__assert_fail")
+    check(command + [str(source), "--ub-pointer-check=false"], 1, "__assert_fail")
 
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
         check(command + [str(source)] + flags, 1, "division by zero")
-    check(command + [str(source), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--ub-div-by-zero-check=false"], 0, "VERIFICATION SUCCESSFUL")
 
     # Safe compiler checks leave neither a handler nor diagnostic address constraints.
     source.write_text("extern void __VERIFIER_assert(int);\n"
@@ -59,9 +59,9 @@ with tempfile.TemporaryDirectory() as directory:
     assert "base#" not in output, output
 
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
-    check(command + [str(source), "--no-div-by-zero-check=false"], 1, "division by zero")
-    for flags, status in ((["--no-div-by-zero-check", "--no-div-by-zero-check=false"], 1),
-                          (["--no-div-by-zero-check=false", "--no-div-by-zero-check"], 0)):
+    check(command + [str(source), "--ub-div-by-zero-check=true"], 1, "division by zero")
+    for flags, status in ((["--ub-div-by-zero-check=false", "--ub-div-by-zero-check"], 1),
+                          (["--ub-div-by-zero-check", "--ub-div-by-zero-check=false"], 0)):
         check(command + [str(source)] + flags, status, "VERIFICATION")
         source_ir = tmp / "order.ll"
         source_ir.write_text("define i32 @main(i32 %n) {\n %unused = sdiv i32 7, %n\n ret i32 0\n}\n")
@@ -80,12 +80,12 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text("int main(void) { int unused = 1 / 0; return 0; }\n")
     output = check(command + [str(source)], 1, "[main.division-by-zero.1]")
     assert "main.assertion." not in output, output
-    check(command + [str(source), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--ub-div-by-zero-check=false"], 0, "VERIFICATION SUCCESSFUL")
 
     for operation in ("sdiv", "udiv", "srem", "urem"):
         ir.write_text(f"define i32 @main(i32 %n) {{\n %unused = {operation} i32 7, %n\n ret i32 0\n}}\n")
         check([binary, str(ir)], 1, "division by zero")
-        check([binary, str(ir), "--no-div-by-zero-check"], 0, "VERIFICATION SUCCESSFUL")
+        check([binary, str(ir), "--ub-div-by-zero-check=false"], 0, "VERIFICATION SUCCESSFUL")
     ir.write_text("define i32 @main() {\n"
                   " %unused = udiv <2 x i32> <i32 4, i32 8>, <i32 2, i32 0>\n ret i32 0\n}\n")
     check([binary, str(ir)], 1, "division by zero")
@@ -126,8 +126,13 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text("#include <limits.h>\nint main(int n, char **argv) {\n"
                       " if (n == INT_MAX) return n + 1; return 0; }\n")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
-    check(command + [str(source), "--overflow-check", "--no-assertions"],
+    check(command + [str(source), "--ub-signed-overflow-check", "--no-assertions"],
           1, "arithmetic overflow on add")
+    check(command + [str(source), "--unsigned-overflow-check"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--overflow-check"], 1, "arithmetic overflow on add")
+    check(command + [str(source), "--overflow-check", "--ub-signed-overflow-check=false"],
+          0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--ub-signed-overflow-check=maybe"], 6, "takes true or false")
     source.write_text("#include <limits.h>\n"
                       "int main(void) { return INT_MIN / -1; }\n")
     output = check(command + [str(source), "--overflow-check"], 1, "VERIFICATION FAILED")
@@ -140,9 +145,13 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text("int main(int n, char **argv) { return (unsigned)n + 1u; }\n")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--unsigned-overflow-check"], 1, "arithmetic overflow on add")
+    check(command + [str(source), "--overflow-check"], 1, "arithmetic overflow on add")
+    check(command + [str(source), "--ub-signed-overflow-check"], 0, "VERIFICATION SUCCESSFUL")
     source.write_text("int main(int n, char **argv) { return 1 << n; }\n")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
-    check(command + [str(source), "--ub-shift-check"], 1, "shift out of bounds")
+    check(command + [str(source), "--ub-shift-check"], 1, "undefined behavior on shift operation shl")
+    check(command + [str(source), "--ub-shift-check=false"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--overflow-check"], 0, "VERIFICATION SUCCESSFUL")
 
     source.write_text("extern void reach_error(void);\n"
                       "int main(int n, char **argv) { int x = 7 / n; reach_error(); return x; }\n")
@@ -152,6 +161,8 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--property-file", str(prop), "--no-assertions"], 6, "conflicts")
     ir.write_text("define i32 @main() { ret i32 0 }\n")
     check([binary, str(ir), "--property=unreach-call", "--no-assertions"], 6, "conflicts")
+    check([binary, str(ir), "--property=valid-free", "--ub-pointer-check=false"], 6, "conflicts")
+    check([binary, str(ir), "--property=termination", "--no-unwinding-assertions"], 6, "conflicts")
 
     # A divisor that becomes constant after mem2reg must not block summaries.
     source.write_text("unsigned a[1024];\nint main(void) { unsigned d = 2;\n"

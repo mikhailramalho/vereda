@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_9786_fnptr_with_target
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 6 --no-pointer-check
+// RUN: --k-induction --max-k-step 6 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^WARNING: k-induction does not support function pointer calls yet\. Disabling inductive step$
 // EXPECT: ^VERIFICATION UNKNOWN$

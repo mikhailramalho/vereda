@@ -35,7 +35,7 @@ int main() {
 // - contributed by Ondra Lengal
 // Imported from ESBMC regression/esbmc/github_775
 // Needs: --memory-leak-check
-// RUN: --no-div-by-zero-check --force-malloc-success --k-step 2 --unlimited-k-steps -m32 --memory-leak-check
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps -m32 --memory-leak-check
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

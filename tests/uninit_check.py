@@ -29,8 +29,8 @@ int main(void) {
   return x;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
-    check(command + [str(source), flag, "--no-assertions"], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
+    check(command + [str(source), flag, "--no-assertions"], 1, "main.uninitialised-variable.1")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), flag, flag + "=false"], 0, "VERIFICATION SUCCESSFUL")
 
@@ -56,7 +56,7 @@ int main(void) {
   return x;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
 
     # 3. Partial struct write + bytewise memcpy preserving padding without false positive.
     source.write_text('''
@@ -85,7 +85,7 @@ int main(void) {
   return b.y;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
 
     # 4. Heap: malloc is uninitialised, calloc is initialised, realloc preserves prefix only.
     source.write_text('''
@@ -97,7 +97,7 @@ int main(void) {
   return v;
 }
 ''')
-    check(command + [str(source), flag, "--force-malloc-success"], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag, "--force-malloc-success"], 1, "main.uninitialised-variable.1")
 
     source.write_text('''
 #include <stdlib.h>
@@ -122,7 +122,7 @@ int main(void) {
   return v;
 }
 ''')
-    check(command + [str(source), flag, "--force-malloc-success"], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag, "--force-malloc-success"], 1, "main.uninitialised-variable.1")
 
     # 5. Genuinely nondet inputs and globals remain valid.
     source.write_text('''
@@ -158,7 +158,7 @@ int main(void) {
   return atomic_fetch_add(&x, 1);
 }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
 
     source.write_text('''
 #include <stdatomic.h>
@@ -168,7 +168,7 @@ int main(void) {
   return atomic_compare_exchange_strong(&x, &expected, 1);
 }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
 
     # 8. Whole-object memset after a symbolic store must overwrite stale uninit flags in st.init.
     source.write_text('''
@@ -203,7 +203,7 @@ struct S { int a; int b; };
 __attribute__((noinline)) int f(struct S s) { return s.b; }
 int main(void) { struct S s; s.a = 1; return f(s); }
 ''')
-    check(command + [str(source), flag], 1, "f.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "f.uninitialised-variable.1")
     source.write_text('''
 struct S { int a; int b; };
 struct S mk(void) { struct S s; s.a = 1; return s; }
@@ -215,7 +215,7 @@ struct S { int a; int b; };
 struct S mk(void) { struct S s; s.a = 1; return s; }
 int main(void) { struct S r = mk(); return r.b; }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
     source.write_text('''
 struct S { char c; int i; };
 int main(void) { struct S a, b; a.c = 1; a.i = 2; b = a; return b.i; }
@@ -225,7 +225,7 @@ int main(void) { struct S a, b; a.c = 1; a.i = 2; b = a; return b.i; }
 struct S { char c; int i; };
 int main(void) { struct S a, b; a.c = 1; b = a; return b.i; }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")
     source.write_text('''
 struct S { int a; int b; };
 int f(struct S s, int n) { if (n) return f(s, n - 1); return s.a; }
@@ -237,11 +237,11 @@ struct S { int a; int b; };
 int f(struct S s, int n) { if (n) return f(s, n - 1); return s.b; }
 int main(void) { struct S s; s.a = 1; return f(s, 3); }
 ''')
-    check(command + [str(source), flag], 1, "f.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "f.uninitialised-variable.1")
 
     # A scalar passed to a function that uses it is still read at the call.
     source.write_text('''
 __attribute__((noinline)) int f(int v) { return v + 1; }
 int main(void) { int x; return f(x); }
 ''')
-    check(command + [str(source), flag], 1, "main.uninitialised-read.1")
+    check(command + [str(source), flag], 1, "main.uninitialised-variable.1")

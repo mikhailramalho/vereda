@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9657_nonterm_witness
 // Needs: --termination --max-inductive-step 3 --witness-output-yaml -
-// RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --no-pointer-check --no-bounds-check --witness-output-yaml -
+// RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --ub-pointer-check=false --no-bounds-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*action: "cycle")[\s\S]*\Z

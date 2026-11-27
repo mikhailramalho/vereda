@@ -31,7 +31,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/pointer_write_heap_root_looped_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 12 --no-pointer-check --no-bounds-check --force-malloc-success
+// RUN: --k-induction --max-k-step 12 --ub-pointer-check=false --no-bounds-check --force-malloc-success
 // MODE: FUTURE
 // EXPECT: Disabling inductive step
 // EXPECT: ^VERIFICATION FAILED$

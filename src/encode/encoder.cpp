@@ -119,44 +119,82 @@ Term Encoder::fresh(Type *ty, const std::string &name) {
   return t.symbol(id, sort(ty));
 }
 
-// The bounds facts gives x, if any.
-static std::optional<Terms::Bounds> boundsOf(const Encoder::Facts &facts, const Term &x) {
-  const Encoder::Fact *f = facts.find(Encoder::key(x));
+Term Encoder::root(const Facts &facts, Term x) {
+  for (const Fact *f; (f = facts.find(key(x))) && f->equal;)
+    x = f->equal;
+  return x;
+}
+
+std::optional<Terms::Bounds> Encoder::known(const Facts &facts, const Term &x) {
+  const Fact *f = facts.find(key(x));
+  for (const Fact *g; f && f->equal && (g = facts.find(key(f->equal)));)
+    f = g;
   return f ? f->bounds : std::nullopt;
 }
 
+Term Encoder::assuming(Term e) {
+  if (!facts.size() || t.constant(e))
+    return e;
+  return t.assuming(e, [&](const Term &x) { return known(facts, x); });
+}
+
 void Encoder::learn(const Term &cond, Facts &into) {
-  t.equalities(cond, true, [&](const Term &x, const Term &c) {
-    const APInt &v = *t.constant(c);
-    std::optional<Terms::Bounds> b;
-    if (v.getBitWidth() <= 64)
-      b = Terms::Bounds{v.getZExtValue(), v.getZExtValue(), v.getSExtValue(), v.getSExtValue()};
-    into.set(key(x), {c, b});
+  // A term's facts go to the end of its chain, which stands for it.
+  t.equalities(cond, true, [&](const Term &x, const Term &y) {
+    Term rx = root(into, x), ry = root(into, y);
+    if (t.constant(rx))
+      std::swap(rx, ry);
+    if (rx == ry || t.constant(rx)) // two constants: no execution takes the path
+      return;
+    if (const APInt *c = t.constant(ry)) {
+      std::optional<Terms::Bounds> b;
+      if (c->getBitWidth() <= 64)
+        b = Terms::Bounds{c->getZExtValue(), c->getZExtValue(), c->getSExtValue(),
+                          c->getSExtValue()};
+      into.set(key(rx), {ry, b});
+      return;
+    }
+    // Two terms: the one that is a leaf stands for both, with the bounds
+    // both have; when neither is, only the bounds meet (narrow, below).
+    if (!t.leaf(ry))
+      std::swap(rx, ry);
+    if (!t.leaf(ry))
+      return;
+    std::optional<Terms::Bounds> a = known(into, rx), b = known(into, ry);
+    if (!b) {
+      b = a;
+    } else if (a) {
+      Terms::Bounds both{std::max(a->ulo, b->ulo), std::min(a->uhi, b->uhi),
+                         std::max(a->slo, b->slo), std::min(a->shi, b->shi)};
+      if (both.ulo <= both.uhi && both.slo <= both.shi)
+        b = both;
+    }
+    into.set(key(rx), {ry, std::nullopt});
+    if (b)
+      into.set(key(ry), {Term(), b});
   });
-  t.narrow(cond, true, [&](const Term &x) { return boundsOf(into, x); },
+  t.narrow(cond, true, [&](const Term &x) { return known(into, x); },
            [&](const Term &x, const Terms::Bounds &b) {
-             const Fact *f = into.find(key(x));
-             into.set(key(x), {f ? f->constant : Term(), b});
+             if (Term r = root(into, x); !t.constant(r))
+               into.set(key(r), {Term(), b});
            });
 }
 
 std::optional<Encoder::Fact> Encoder::join(const Fact &a, const Fact &b) {
-  Fact r{a.constant == b.constant ? a.constant : Term(), std::nullopt};
+  Fact r{a.equal == b.equal ? a.equal : Term(), std::nullopt};
   if (a.bounds && b.bounds)
     r.bounds = Terms::Bounds{std::min(a.bounds->ulo, b.bounds->ulo),
                              std::max(a.bounds->uhi, b.bounds->uhi),
                              std::min(a.bounds->slo, b.bounds->slo),
                              std::max(a.bounds->shi, b.bounds->shi)};
-  if (!r.constant && !r.bounds)
+  if (!r.equal && !r.bounds)
     return std::nullopt;
   return r;
 }
 
 Term Encoder::value(const Value *v) {
-  if (auto it = env.find(v); it != env.end()) {
-    const Fact *f = facts.find(key(it->second));
-    return f && f->constant ? f->constant : it->second;
-  }
+  if (auto it = env.find(v); it != env.end())
+    return root(facts, it->second);
   if (auto *ci = dyn_cast<ConstantInt>(v))
     return ci->getBitWidth() == 1 ? t.boolean(ci->isOne()) : t.bv(ci->getValue());
   if (isa<UndefValue>(v)) // also poison
@@ -666,9 +704,7 @@ void Encoder::encode(Instruction &inst) {
     }
     // The path's bounds settle it here; the term itself stays as it is
     // for other paths.
-    if (facts.size() && !t.constant(r))
-      if (int d = t.decide(r, [&](const Term &x) { return boundsOf(facts, x); }); d >= 0)
-        r = t.boolean(d);
+    r = assuming(r);
   } else if (auto *sel = dyn_cast<SelectInst>(&inst)) {
     r = t.ite(value(sel->getCondition()), value(sel->getTrueValue()),
                 value(sel->getFalseValue()));
@@ -965,7 +1001,7 @@ bool Encoder::intrinsic(CallBase &c) {
   }
   Term a = value(c.getArgOperand(0)), b = value(c.getArgOperand(1));
   // {result, overflow bit}: the overflow bit packs above the result.
-  bind(&c, t.concat(fromBool((t.*overflow)(a, b), 1), (t.*op)(a, b)));
+  bind(&c, t.concat(fromBool(assuming((t.*overflow)(a, b)), 1), (t.*op)(a, b)));
   return true;
 }
 

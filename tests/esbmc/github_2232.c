@@ -96,7 +96,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_2232
 // Needs: --memory-leak-check
-// RUN: --overflow-check --memory-leak-check --unwind 1 --no-unwinding-assertions
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --memory-leak-check --unwind 1 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on sub

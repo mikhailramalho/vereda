@@ -1124,5 +1124,5 @@ int intmask (char *s)
 }
 
 // Imported from ESBMC regression/esbmc/overflow_22_wordplay
-// RUN: --unwind 1 --overflow-check
+// RUN: --unwind 1 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

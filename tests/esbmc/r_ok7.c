@@ -8,6 +8,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/r_ok7
 // Needs: __ESBMC_r_ok
-// RUN: --force-malloc-success --no-pointer-check
+// RUN: --force-malloc-success --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

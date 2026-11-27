@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_9786_fnptr_no_target_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 6 --no-pointer-check
+// RUN: --k-induction --max-k-step 6 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^Bug found \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$

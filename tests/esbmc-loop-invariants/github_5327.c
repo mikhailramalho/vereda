@@ -23,7 +23,7 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/github_5327
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --overflow-check --loop-invariant-check --unwind 5
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --loop-invariant-check --unwind 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)\A(?!.*WARNING: Vacuous discharge)

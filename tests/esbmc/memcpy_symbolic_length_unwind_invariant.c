@@ -19,6 +19,3 @@ int main()
 // Imported from ESBMC regression/esbmc/memcpy_symbolic_length_unwind_invariant
 // RUN: --unwind 80
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

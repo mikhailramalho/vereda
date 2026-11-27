@@ -9,5 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009-strtol-no-ovfl
-// RUN: --overflow-check -m32
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

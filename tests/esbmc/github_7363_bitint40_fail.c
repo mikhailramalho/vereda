@@ -10,6 +10,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7363_bitint40_fail
 // Needs: REQUIRES bitint
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*arithmetic overflow on add$

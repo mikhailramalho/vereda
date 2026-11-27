@@ -142,7 +142,7 @@ void print_topology_map() {
     printf("------------------------------------\n");
 }
 // Imported from ESBMC regression/esbmc/github_1068
-// RUN: --overflow-check --unwind 1
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unwind 1
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bunwinding assertion loop\b

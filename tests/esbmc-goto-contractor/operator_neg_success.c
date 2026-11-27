@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-contractor/operator_neg_success
 // Needs: --interval-analysis --goto-contractor
-// RUN: --interval-analysis --no-pointer-check --goto-contractor --incremental-bmc --unlimited-k-steps --k-step 100
+// RUN: --interval-analysis --ub-pointer-check=false --goto-contractor --incremental-bmc --unlimited-k-steps --k-step 100
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

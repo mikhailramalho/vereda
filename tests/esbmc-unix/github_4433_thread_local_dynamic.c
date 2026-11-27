@@ -35,7 +35,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4433_thread_local_dynamic
-// RUN: --no-pointer-check --no-div-by-zero-check --force-malloc-success --unwind 3
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --force-malloc-success --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

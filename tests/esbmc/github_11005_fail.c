@@ -32,6 +32,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_11005_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN

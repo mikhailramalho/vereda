@@ -88,6 +88,10 @@ struct State {
   Trie<encode::Term> knownInit;
   Trie<encode::Term> objInit;
   Trie<bool> initFlushed;
+  // Object id -> whether the path freed the object, a constant array of
+  // false at first (issue #30). An object is live where it exists and is
+  // not dead.
+  encode::Term dead;
 };
 
 class Memory {
@@ -111,11 +115,14 @@ public:
   // PTRDIFF_MAX, as glibc's malloc. It depends on the size alone, so the
   // solver cannot make a small allocation fail by placing earlier objects.
   encode::Term fits(encode::Term size);
+  // Where an object lives, which says whether free may end its life.
+  enum class Kind : uint8_t { Static, Stack, Heap };
   // A new object of size bytes (pointer-width term) that exists when exists
   // holds; its layout constraints bind only then. Returns its start. An
   // address converted to a pointer may land in it only if exposed.
   encode::Term allocate(encode::Term size, uint64_t align,
-                              encode::Term exists, bool exposed = true);
+                              encode::Term exists, bool exposed = true,
+                              Kind kind = Kind::Stack);
   // Allocates every global of m, and every function whose address is taken,
   // exposed as the predicate says; the globals' initialisers go in with
   // initialise().
@@ -174,6 +181,21 @@ public:
   // as one constant array: calloc with a size that is not constant.
   void fill(State &st, encode::Term p, encode::Term byte);
   void copy(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  // set and copy of len bytes, a pointer-width term with several values
+  // (issue #292): the bytes below len change, the others keep theirs.
+  // bound, if any, is a constant len does not exceed on the path. Below
+  // MinSeparate, each byte up to it is an ite on len. Otherwise each array
+  // that holds bytes of an object dst may point into becomes a lambda, as
+  // for a partial fill or copy: an index is in the range where it is in
+  // dst's object at a distance from dst below len. A copy reads its source
+  // from the arrays as they were before, so the ranges may overlap. Where
+  // one of those objects has elements or fields, the bytes go one at a time
+  // again up to a bound of at most MaxBytes, and without one it is
+  // unsupported.
+  void set(State &st, encode::Term p, encode::Term byte, encode::Term len,
+           std::optional<uint64_t> bound);
+  void copy(State &st, encode::Term dst, encode::Term src, encode::Term len,
+            std::optional<uint64_t> bound);
   // Gives the object of p, a pointer to a new object, arrays of its own
   // indexed by offset, before anything is written to it; with bits 16, 32
   // or 64, arrays of elements of that many bits.
@@ -219,6 +241,16 @@ public:
   // into and to any object reached.
   void havocCall(State &st, llvm::ArrayRef<encode::Term> written,
                  llvm::ArrayRef<encode::Term> read, bool reach);
+  // Where free(p) is undefined in st (C17 7.22.3.3p2), by ESBMC's reasons:
+  // p made from an integer, into an object not from the heap, not at the
+  // start of its heap object, or into one the path already freed. All are
+  // false where p is null or starts a live heap object.
+  struct InvalidFree {
+    encode::Term integer, nonHeap, offset, dead;
+  };
+  InvalidFree invalidFree(const State &st, encode::Term p);
+  // Ends the life of the object p points into, as free(p) does.
+  void free(State &st, encode::Term p);
   // A pointer into the memory outside the program, for havoc.
   encode::Term outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
@@ -307,6 +339,11 @@ private:
       setBytes(st, p, byte, n);
   }
   void writeByte(State &st, encode::Term at, const State::Cell &c);
+  // The n bytes from p, and writing bytes there: with len, only those below
+  // it, the others keeping their value.
+  std::vector<State::Cell> readBytes(State &st, encode::Term p, uint64_t n);
+  void writeBytes(State &st, encode::Term p, std::vector<State::Cell> bytes,
+                  encode::Term len = {});
   void storeBytes(State &st, encode::Term p, encode::Term bits,
                   encode::Term prov);
   void storeConstant(State &st, encode::Term p, const llvm::Constant *c,
@@ -317,6 +354,7 @@ private:
     uint64_t align;
     bool exposed;
     bool laidOut;
+    Kind kind = Kind::Static;
     // The constant global or the function the object is, if either, which
     // the program may not write.
     const llvm::GlobalValue *constant = nullptr;
@@ -349,15 +387,24 @@ private:
   // Provenance array source for a lambda provenance array: when fromObject is
   // set, only bytes belonging to *fromObject are read from array (indexed by
   // offset if byOffset, else by whole pointer); otherwise array is the same
-  // object's own array below.
+  // object's own array below. With toObject, the pointers read are held by
+  // that object, not by the objects of the indices they were stored at.
   struct ProvEdge {
     encode::Term array;
     std::optional<uint64_t> fromObject;
     bool byOffset;
+    std::optional<uint64_t> toObject = std::nullopt;
   };
   // A lambda's provenance array (kept alive) -> the arrays it reads from,
   // which together hold every pointer it may hold.
   llvm::DenseMap<const void *, std::pair<encode::Term, llvm::SmallVector<ProvEdge, 2>>> provBelow;
+  // The lambdas of set and copy with a symbolic len, byte d of the range
+  // getting value(d, provenance too), whose pointers come from the arrays
+  // from. Null when done, else why it cannot be, having changed nothing: dst
+  // points into no known object, or into one of elements or fields.
+  const char *writeRange(State &st, encode::Term dst, encode::Term len, const char *name,
+                         const std::function<State::Cell(const encode::Term &, bool)> &value,
+                         llvm::ArrayRef<ProvEdge> from);
   // The objects of the pointers fromAddress made, kept alive.
   llvm::DenseMap<const void *, encode::Term> fromInteger;
   // Pointers whose null comparison simplifies without expanding fromAddress()
@@ -375,6 +422,10 @@ private:
   void writeInitBytes(State &st, encode::Term p, uint64_t n, encode::Term val);
   void writeInitRange(State &st, encode::Term p, uint64_t n, encode::Term val);
   void copyInitBytes(State &st, encode::Term dst, encode::Term src, uint64_t n);
+  // The lambdas writeInitRange and copyInitBytes build past MaxBytes, for
+  // len bytes, a pointer-width term.
+  void initRange(State &st, encode::Term p, encode::Term len, encode::Term val);
+  void copyInitRange(State &st, encode::Term dst, encode::Term src, encode::Term len);
   void markInitialisedObject(State &st, uint64_t o);
   void mergeInit(encode::Term c, const State &a0, const State &b0, State &out);
 };

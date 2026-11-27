@@ -8,6 +8,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_10972_fail
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: free\(\) of non-dynamic memory
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

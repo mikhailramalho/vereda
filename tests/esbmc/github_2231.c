@@ -97,7 +97,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_2231
 // Needs: --memory-leak-check
-// RUN: --overflow-check --unwind 1 --memory-leak-check --no-unwinding-assertions
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unwind 1 --memory-leak-check --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: dereference failure: NULL pointer
 // EXPECT: ^VERIFICATION FAILED$
