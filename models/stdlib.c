@@ -71,9 +71,13 @@ int posix_memalign(void **p, size_t align, size_t n) {
   return 0;
 }
 
-// The obsolete memalign and valloc (glibc's <malloc.h>), as aligned_alloc;
-// valloc aligns to the page, 4096 bytes.
-void *memalign(size_t align, size_t n) { return aligned_alloc(align, n); }
+// The obsolete memalign (glibc's <malloc.h>) does not fail on an alignment
+// that is not a power of two: glibc takes 0 to 16 as malloc does and rounds
+// a larger one up. Such an alignment is plain malloc here, which promises
+// less alignment than glibc gives. valloc aligns to the page, 4096 bytes.
+void *memalign(size_t align, size_t n) {
+  return !align || (align & (align - 1)) ? malloc(n) : aligned_alloc(align, n);
+}
 void *valloc(size_t n) { return aligned_alloc(4096, n); }
 
 // Quotient and remainder, truncated toward zero (C17 7.22.6.2); imaxdiv is
