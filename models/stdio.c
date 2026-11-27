@@ -28,6 +28,7 @@ static FILE *stream(void) { return __VERIFIER_nondet_int() ? malloc(sizeof(FILE)
 FILE *fopen(const char *path, const char *mode) { return stream(); }
 FILE *fdopen(int fd, const char *mode) { return stream(); }
 FILE *tmpfile(void) { return stream(); }
+FILE *popen(const char *command, const char *mode) { return stream(); }
 FILE *freopen(const char *path, const char *mode, FILE *s) {
   return __VERIFIER_nondet_int() ? s : NULL;
 }
@@ -136,6 +137,12 @@ FILE *open_memstream(char **ptr, size_t *size) {
 // C17 7.21.5.1: fclose flushes the stream and closes it whether or not that
 // succeeds, so the object of an opened stream is freed and a second fclose
 // is a double free. The standard streams are no allocation and stay.
+// pclose frees a popen stream, so an fclose after it is a double free,
+// here only when c is 'q'.
+int pclose(FILE *s) {
+  free(s);
+  return __VERIFIER_nondet_int();
+}
 int fclose(FILE *s) {
   fflush(s);
   if (s != &__vereda_stdin && s != &__vereda_stdout && s != &__vereda_stderr)
