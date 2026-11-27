@@ -1207,18 +1207,35 @@ private:
     return unsat;
   }
 
-  Term anyGuard(const SmallVectorImpl<Arrival> &arrivals) {
-    Term g = arrivals[0].guard;
-    for (unsigned i = 1; i < arrivals.size(); ++i)
-      g = t.lor(g, arrivals[i].guard);
-    return g;
+  // The disjunction of the arrivals' guards, as a balanced tree.
+  Term anyGuard(ArrayRef<Arrival> arrivals) {
+    if (arrivals.size() == 1)
+      return arrivals[0].guard;
+    size_t mid = arrivals.size() / 2;
+    Term low = anyGuard(arrivals.take_front(mid));
+    return t.lor(low, anyGuard(arrivals.drop_front(mid)));
   }
 
-  memory::State merged(const SmallVectorImpl<Arrival> &arrivals) {
-    memory::State st = arrivals[0].mem;
-    for (unsigned i = 1; i < arrivals.size(); ++i)
-      st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
-    return st;
+  // The value(a) of the last arrival a whose guard holds, else of the first,
+  // as the chain ite(guard n, value n, ... ite(guard 2, value 2, value 1))
+  // gives, but as a balanced tree: log n deep, not n. Bitwuzla's rewriter
+  // gives up past 4096 nested rewrites and may then answer sat wrongly, and
+  // pushing an extract down a chain of one link per arrival reached that
+  // (docs/survey/2026-11-27-ps3-duplets-wrong-false.md).
+  template <typename T, typename Value, typename Ite>
+  T join(ArrayRef<Arrival> arrivals, Value value, Ite ite) {
+    if (arrivals.size() == 1)
+      return value(arrivals[0]);
+    size_t mid = arrivals.size() / 2;
+    T low = join<T>(arrivals.take_front(mid), value, ite);
+    T high = join<T>(arrivals.drop_front(mid), value, ite);
+    return ite(anyGuard(arrivals.drop_front(mid)), high, low);
+  }
+
+  memory::State merged(ArrayRef<Arrival> arrivals) {
+    return join<memory::State>(
+        arrivals, [](const Arrival &a) { return a.mem; },
+        [&](Term c, const memory::State &a, const memory::State &b) { return mem.ite(c, a, b); });
   }
 
   void block(Frame &frame, BasicBlock &bb) {
@@ -1233,10 +1250,9 @@ private:
 
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
-      Term r = arrivals[0].phiValues[p];
-      for (unsigned i = 1; i < arrivals.size(); ++i)
-        r = t.ite(arrivals[i].guard, arrivals[i].phiValues[p], r);
-      enc.bind(&phi, r);
+      enc.bind(&phi, join<Term>(
+                         arrivals, [&](const Arrival &a) { return a.phiValues[p]; },
+                         [&](Term c, Term a, Term b) { return t.ite(c, a, b); }));
       ++p;
     }
 
