@@ -566,21 +566,20 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }
-  // While every path runs a loop of known trip count past bound k, the
-  // bounds below the one that unwinds it only add iterations of that loop,
-  // and a bug one of them finds, every larger bound finds too. Those bounds
-  // are skipped, but the bound at most doubles, so that a bug in an early
-  // iteration of a long loop does not wait for a walk of all of it. The
-  // largest bound is never skipped.
+  // When bound k cuts a loop whose maximum trip count SCEV knows, the bounds
+  // below the one that unwinds it only add iterations of that loop, and a bug
+  // one of them finds, every larger bound finds too. Those bounds are skipped,
+  // but the bound at most doubles, so that a bug in an early iteration of a
+  // long loop does not wait for a walk of all of it. The largest bound is
+  // never skipped.
   unsigned unwindsAt = 0, walked = 0;
   std::unique_ptr<BMCState> retained;
   for (unsigned k = 1; unlimitedKSteps || k <= maxKStep; k += kStep) {
     if ((unlimitedKSteps || k + kStep <= maxKStep) && k < std::min(unwindsAt, 2 * walked))
       continue;
     walked = k;
-    // Extend a prefix stopped in an unconditional outer loop. Otherwise
-    // start afresh: extending a loop changes the state at its merged exits
-    // and everything walked after them.
+    // Extend the prefix stopped at the cut loop or recursive call when the walk
+    // kept one (see walker::Incremental); otherwise start afresh.
     progress("Checking bound k = " + std::to_string(k));
     if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt, &retained); r != BoundTooSmall)
       return r;
