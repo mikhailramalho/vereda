@@ -18,6 +18,7 @@ enum class Property {
   All,
   UnreachCall, // a call to reach_error, whose body is not walked
   NoOverflow,  // a clang sanitizer check
+  ValidFree,   // a free of a pointer no allocator returned, or already freed
 };
 
 struct Options {
@@ -37,8 +38,9 @@ struct Options {
   // which a summarised iteration gives for one index only, so loops that
   // call nondet are unrolled.
   bool witness = false;
-  // A write into a string literal or an object defined const is a
-  // violation, as ESBMC's pointer check has it (off with --ub-pointer-check=false).
+  // A write into a string literal or an object defined const, and an
+  // invalid free, are violations, as ESBMC's pointer check has them (off
+  // with --ub-pointer-check=false).
   bool pointerCheck = true;
   // Report stack objects above PTRDIFF_MAX, unless --vla-size-check=false.
   bool vlaSizeCheck = true;

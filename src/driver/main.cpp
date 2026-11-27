@@ -55,7 +55,8 @@ static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> ubPointerCheck(
     "ub-pointer-check",
-    cl::desc("Check writes into string literals and const objects (default on; =false disables)"),
+    cl::desc("Check writes into string literals and const objects, and frees (default on; "
+             "=false disables)"),
     cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
 static cl::opt<bool> ubDivByZeroCheck(
@@ -115,7 +116,9 @@ static cl::opt<Property> property(
     cl::values(clEnumValN(Property::All, "all", "every check (default)"),
                clEnumValN(Property::UnreachCall, "unreach-call",
                           "a call to reach_error, whose body is not walked"),
-               clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check")),
+               clEnumValN(Property::NoOverflow, "no-overflow", "a clang sanitizer check"),
+               clEnumValN(Property::ValidFree, "valid-free",
+                          "a free of a pointer no allocator returned, or already freed")),
     cl::init(Property::All));
 static cl::opt<camada::SolverKind> solverKind(
     "solver", cl::desc("SMT solver"),
@@ -479,6 +482,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     // A failed unwinding assertion is no violation of the property.
     svcomp(!bug                                  ? "UNKNOWN"
            : property == Property::UnreachCall ? "FALSE_REACH"
+           : property == Property::ValidFree   ? "FALSE_FREE"
                                                : "FALSE_OVERFLOW");
     return finish(1);
   }
@@ -511,6 +515,10 @@ int main(int argc, char **argv) {
   }
   if (noAssertions && property == Property::UnreachCall) {
     errs() << "vereda: --no-assertions conflicts with --property unreach-call\n";
+    return ErrorExit;
+  }
+  if (!ubPointerCheck && property == Property::ValidFree) {
+    errs() << "vereda: --ub-pointer-check=false conflicts with --property valid-free\n";
     return ErrorExit;
   }
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {

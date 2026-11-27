@@ -121,7 +121,7 @@ Term Memory::fits(Term size) {
                                     t.bv(1, ptrBits)));
 }
 
-Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
+Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed, Kind kind) {
   unsigned id = objects.size();
   Term b = t.symbol("base#" + std::to_string(id), s.mkBVSort(ptrBits));
   Term e = t.add(b, size);
@@ -160,7 +160,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
     // object's base address is first observed. Because all deferred objects
     // fit within a quarter of the address space, laying out any subset in any
     // order remains satisfiable and non-overlapping.
-    objects.push_back({b, size, exists, align, exposed, false});
+    objects.push_back({b, size, exists, align, exposed, false, kind});
     return ptr(obj, t.bv(0, ptrBits));
   }
   Term layout = t.land(t.ugt(b, end), t.lnot(t.uaddo(b, size)));
@@ -170,7 +170,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   t.addConstraint(unconditional ? layout : t.implies(exists, layout));
   if (bases && exposed)
     t.addConstraint(t.eq(t.select(bases, obj), b));
-  objects.push_back({b, size, exists, align, exposed, true});
+  objects.push_back({b, size, exists, align, exposed, true, kind});
   end = unconditional ? e : t.ite(exists, e, end); // an object not allocated takes no space
   return ptr(obj, t.bv(0, ptrBits));
 }
@@ -180,7 +180,7 @@ void Memory::allocateGlobals(const Module &m,
   for (const GlobalVariable &g : m.globals()) {
     uint64_t size = dl.getTypeAllocSize(g.getValueType());
     globals[&g] = allocate(t.bv(size, ptrBits), g.getPointerAlignment(dl).value(),
-                           t.boolean(true), exposed(&g));
+                           t.boolean(true), exposed(&g), Kind::Static);
     if (g.isConstant())
       objects.back().constant = &g;
   }
@@ -188,7 +188,7 @@ void Memory::allocateGlobals(const Module &m,
   // pointer to it is an ordinary pointer: stored, compared and called.
   for (const Function &f : m)
     if (f.hasAddressTaken(nullptr, false, true, false, false, /*IgnoreCastedDirectCall=*/true)) {
-      globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f));
+      globals[&f] = allocate(t.bv(1, ptrBits), 1, t.boolean(true), exposed(&f), Kind::Static);
       objects.back().constant = &f;
     }
 }
@@ -328,7 +328,41 @@ State Memory::initial() {
            t.constArray(index, t.bv(IntProvenance, ObjBits))};
   if (trackInit)
     st.init = t.constArray(index, t.boolean(true));
+  st.dead = t.constArray(s.mkBVSort(ObjBits), t.boolean(false));
   return st;
+}
+
+Memory::InvalidFree Memory::invalidFree(const State &st, Term p) {
+  Term no = t.boolean(false);
+  InvalidFree r{no, no, no, no};
+  Term obj = object(p), atStart = t.eq(offset(p), t.bv(0, ptrBits));
+  Term heap = no;
+  for (uint64_t o : candidates(p)) {
+    Term in = t.eq(obj, t.bv(o, ObjBits));
+    if (o >= objects.size())
+      r.integer = t.lor(r.integer, in);
+    else if (o == 0) // null is valid; any other address in object 0 is outside
+      r.integer = t.lor(r.integer, t.land(in, t.lnot(atStart)));
+    else if (objects[o].kind != Kind::Heap)
+      r.nonHeap = t.lor(r.nonHeap, in);
+    else
+      heap = t.lor(heap, in);
+  }
+  // A pointer into an object exists where the object does, so dead alone
+  // tells a freed one; one read of it serves every candidate.
+  r.dead = t.land(heap, t.select(st.dead, obj));
+  // Checked for every object, as ESBMC does: one not from the heap fails
+  // nonHeap too.
+  r.offset = t.land(t.lnot(t.eq(obj, t.bv(0, ObjBits))), t.lnot(atStart));
+  return r;
+}
+
+void Memory::free(State &st, Term p) {
+  // free(NULL) does nothing; object 0 stays live, the array constant.
+  Term obj = object(p);
+  if (const APInt *id = t.constant(obj); id && id->isZero())
+    return;
+  st.dead = t.store(st.dead, obj, t.boolean(true));
 }
 
 void Memory::markInitialisedObject(State &st, uint64_t o) {
@@ -1163,6 +1197,7 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
     State r{t.ite(c, a0.data, b0.data), t.ite(c, a0.prov, b0.prov), a0.known,
             mergeSeparate(c, a0, b0)};
     mergeInit(c, a0, b0, r);
+    r.dead = t.ite(c, a0.dead, b0.dead);
     return r;
   }
   // An object whose bytes would become a choice between two values that
@@ -1204,6 +1239,7 @@ State Memory::ite(Term c, const State &a0, const State &b0) {
   State r{t.ite(c, a.data, b.data), t.ite(c, a.prov, b.prov), std::move(known),
           mergeSeparate(c, a, b)};
   mergeInit(c, a, b, r);
+  r.dead = t.ite(c, a.dead, b.dead);
   if (r.known.size() > MaxKnown)
     flush(r);
   return r;

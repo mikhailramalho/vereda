@@ -12,7 +12,8 @@
 
 namespace vereda::checks {
 
-enum class Property { Assertion, ArithmeticOverflow, Shift, DivisionByZero, CountZero, FloatCastOverflow, Alignment, UninitialisedRead, ArrayBounds, Unwinding, Recursion };
+enum class Property { Assertion, ArithmeticOverflow, Shift, DivisionByZero, CountZero, FloatCastOverflow, Alignment, UninitialisedRead, ArrayBounds,
+                      InvalidFree, FreeNonDynamic, FreeOffset, DoubleFree, Unwinding, Recursion };
 
 struct Check {
   Property property;
@@ -39,6 +40,10 @@ struct Check {
     case Property::DivisionByZero: return "division-by-zero";
     case Property::UninitialisedRead: return "uninitialised-variable";
     case Property::ArrayBounds: return "array-bounds-violated";
+    case Property::InvalidFree: return "invalid-pointer-freed";
+    case Property::FreeNonDynamic: return "free-non-dynamic-memory";
+    case Property::FreeOffset: return "free-non-zero-offset";
+    case Property::DoubleFree: return "invalidated-dynamic-object-freed";
     case Property::Unwinding: return "unwind";
     case Property::Recursion: return "recursion";
     default: return "assertion";

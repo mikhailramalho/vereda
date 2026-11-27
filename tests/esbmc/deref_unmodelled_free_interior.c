@@ -20,6 +20,3 @@ int main(void)
 // Imported from ESBMC regression/esbmc/deref_unmodelled_free_interior
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: invalid pointer freed$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

@@ -161,6 +161,7 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--property-file", str(prop), "--no-assertions"], 6, "conflicts")
     ir.write_text("define i32 @main() { ret i32 0 }\n")
     check([binary, str(ir), "--property=unreach-call", "--no-assertions"], 6, "conflicts")
+    check([binary, str(ir), "--property=valid-free", "--ub-pointer-check=false"], 6, "conflicts")
 
     # A divisor that becomes constant after mem2reg must not block summaries.
     source.write_text("unsigned a[1024];\nint main(void) { unsigned d = 2;\n"

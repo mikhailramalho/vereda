@@ -8,6 +8,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_10301_discard_fail
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED.*invalid-pointer-freed.*line 6.*dereference failure: invalid pointer freed$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
