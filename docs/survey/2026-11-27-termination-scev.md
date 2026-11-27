@@ -22,9 +22,15 @@ FALSE (non-termination is #39). Two ways lead to `TRUE`:
 
 Some code runs out of the walk's sight: a function whose address is taken and
 that a bodyless function may call (`atexit`, `qsort`, `signal`,
-`pthread_create`), a constructor or destructor (also one listed by hand in
-`.init_array` or `.fini_array`), an indirect call or inline
-assembly that ir did not lower. When any of these is reachable, the answer is
+`pthread_create`), or an indirect call ir could not match to one
+(`__vereda_unknown_target`); a constructor, destructor or ifunc resolver
+(also one listed by hand in `.init_array` or `.fini_array`, which ir now
+keeps although main does not reach it); module-level assembly; an indirect
+call or inline assembly that ir did not lower; an `invoke` or a call with a
+mismatched signature, which the walker refuses; a non-local jump the CFG
+does not show (a setjmp or longjmp ir did not lower, one it gave up on as
+`__vereda_longjmp_unsupported`, `__builtin_setjmp`/`__builtin_longjmp`, the
+coroutine intrinsics). When any of these is reachable, the answer is
 `UNKNOWN` at once, without a walk.
 
 ## Why it is sound
@@ -55,8 +61,9 @@ For the static proof:
   dominate the latch (`computeExitLimit` gives up on the others), each
   evaluated when the loop is entered; any SCEV is a finite number, so each
   entry of the loop runs finitely many iterations. An earlier exit, a call
-  that ends the run (`exit`, `abort`, `longjmp`, which ir lowers to a
-  dispatch loop SCEV does not count) or one that blocks only shortens the run.
+  that ends the run (`exit`, `abort`) or one that blocks only shortens the
+  run. A `longjmp` ir lowers becomes a dispatch loop SCEV does not count; one
+  it does not lower answers `UNKNOWN`, as above.
   `while (1)` with a nondet `break` has no computable exit and is `UNKNOWN`.
 - Every cycle of a function is a natural loop: ir runs FixIrreducible, and the
   analysis checks `containsIrreducibleCFG` again. Every call goes to a

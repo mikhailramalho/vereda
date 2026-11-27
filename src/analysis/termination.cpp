@@ -1,6 +1,7 @@
 #include "analysis/termination.h"
 #include "analysis/loops.h"
 #include "ir/debug.h"
+#include "ir/load.h"
 
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/Analysis/CFG.h>
@@ -31,14 +32,29 @@ struct Prover {
 };
 } // namespace
 
-// Bodyless functions that call no function of the program: Vereda's and the
-// verifier builtins, the C library's ends of a run and the allocator, which
-// the walker models.
+// Bodyless functions that call no function of the program: the verifier
+// builtins, Vereda's checks and helpers, the C library's ends of a run and
+// the allocator, which the walker models. Not __vereda_unknown_target, the
+// target of an indirect call ir could not match, which may be a function of
+// the program.
 static bool callsNothing(StringRef name) {
-  return name.starts_with("__VERIFIER_") || name.starts_with("__vereda_") ||
-         name.starts_with("__ubsan_handle_") ||
-         is_contained<StringRef>({"abort", "exit", "_Exit", "__assert_fail", "reach_error",
-                                  "malloc", "calloc", "realloc", "free"},
+  return name.starts_with("__VERIFIER_") || name.starts_with("__ubsan_handle_") ||
+         is_contained<StringRef>({"__vereda_check_alignment", "__vereda_check_count_zero",
+                                  "__vereda_check_divisor", "__vereda_check_float_cast_overflow",
+                                  "__vereda_havoc", "__vereda_object_size",
+                                  "__vereda_uninitialised", "__vereda_longjmp_unmatched", "abort",
+                                  "exit", "_Exit", "__assert_fail", "reach_error", "malloc",
+                                  "calloc", "realloc", "free"},
+                                 name);
+}
+
+// A jump the CFG does not show: a setjmp or longjmp ir did not lower, one it
+// gave up on, or the builtin and coroutine intrinsics.
+static bool jumps(StringRef name) {
+  return name.starts_with("llvm.eh.") || name.starts_with("llvm.coro.") ||
+         is_contained<StringRef>({"setjmp", "_setjmp", "__sigsetjmp", "sigsetjmp", "longjmp",
+                                  "_longjmp", "siglongjmp", "__longjmp_chk",
+                                  "__vereda_longjmp_unsupported"},
                                  name);
 }
 
@@ -48,6 +64,11 @@ void Prover::call(CallBase &c) {
   // ir lowers indirect calls to direct ones and the inline assembly it knows.
   if (!callee)
     return note(result.unseen, "indirect call or inline assembly" + at);
+  // The walker refuses both, so it cannot vouch for them either.
+  if (isa<InvokeInst>(c) || (!c.getCalledFunction() && !callee->isDeclaration()))
+    return note(result.unseen, "invoke or call with a mismatched signature" + at);
+  if (jumps(callee->getName()))
+    return note(result.unseen, "non-local jump" + at);
   // SCEV would take the condition as known, which C leaves undefined when false.
   if (callee->getIntrinsicID() == Intrinsic::assume)
     return note(result.unbounded, "__builtin_assume" + at);
@@ -89,15 +110,9 @@ Termination termination(Function &entry) {
   Module &m = *entry.getParent();
   Prover p{TargetLibraryInfoImpl(m.getTargetTriple()),
            any_of(m, [](Function &f) { return !f.isDeclaration() && f.hasAddressTaken(); })};
-  // They run outside the entry's calls, as do the functions listed in a
-  // section the loader runs.
-  if (any_of(m.globals(), [](GlobalVariable &g) {
-        StringRef s = g.getSection();
-        return g.getName() == "llvm.global_ctors" || g.getName() == "llvm.global_dtors" ||
-               s.contains("init_array") || s.contains("fini_array") || s.contains("ctors") ||
-               s.contains("dtors");
-      }))
-    Prover::note(p.result.unseen, "constructors or destructors");
+  // ir keeps them all, used or not.
+  if (any_of(m.global_values(), [](GlobalValue &g) { return ir::runsAtLoad(g); }))
+    Prover::note(p.result.unseen, "constructors, destructors or ifuncs");
   // Module-level assembly can list functions in those sections too
   // (.pushsection .init_array), where no global shows them.
   if (!m.getModuleInlineAsm().empty())

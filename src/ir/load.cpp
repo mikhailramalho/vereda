@@ -1392,9 +1392,16 @@ static void renameRustShims(Module &m) {
   }
 }
 
+bool runsAtLoad(const GlobalValue &g) {
+  StringRef s = isa<GlobalObject>(g) ? cast<GlobalObject>(g).getSection() : "";
+  return isa<GlobalIFunc>(g) || g.getName() == "llvm.global_ctors" ||
+         g.getName() == "llvm.global_dtors" || s.contains("init_array") ||
+         s.contains("fini_array") || s.contains("ctors") || s.contains("dtors");
+}
+
 // Drops functions, globals, aliases and ifuncs not reachable from entry
-// (plus the module's constructor, destructor and used lists) before the
-// passes and model linking run.
+// (plus the module's used lists and what the loader runs) before the passes
+// and model linking run.
 static void pruneUnreachable(Module &m, StringRef entry) {
   if (entry.empty())
     return;
@@ -1417,10 +1424,12 @@ static void pruneUnreachable(Module &m, StringRef entry) {
   };
 
   mark(mark, root);
-  for (StringRef special :
-       {"llvm.global_ctors", "llvm.global_dtors", "llvm.used", "llvm.compiler.used"})
+  for (StringRef special : {"llvm.used", "llvm.compiler.used"})
     if (GlobalVariable *g = m.getNamedGlobal(special))
       mark(mark, g);
+  for (GlobalValue &g : m.global_values())
+    if (runsAtLoad(g))
+      mark(mark, &g);
   // A C library model linked later may call a library function the program
   // defines, as realloc calls malloc; the program's definition must stay, or
   // the model's or the walker's would replace it.
