@@ -96,7 +96,6 @@ public:
 
   unsigned pointerBits() const { return ptrBits; }
   size_t objectCount() const { return objects.size(); }
-  uint64_t objectAlign(uint64_t id) const { return id < objects.size() ? objects[id].align : 1; }
   const llvm::DataLayout &layout() const { return dl; }
   camada::SMTSortRef pointerSort();
   encode::Term null();
@@ -131,6 +130,12 @@ public:
   // The size in bytes of the object with id obj, a pointer-width term.
   encode::Term size(encode::Term obj);
   encode::Term address(encode::Term p);   // ptrtoint
+  // Whether p is a multiple of align (a power of two). Each object a choice
+  // of pointers may point to is decided on its own: by the offset alone when
+  // the object's alignment already is one, so no base address is needed; a
+  // symbolic object's base would come from the bases array, which knows only
+  // exposed objects.
+  encode::Term aligned(encode::Term p, uint64_t align);
   // p == q: object and offset equal, or, when one is outside the program,
   // the addresses: it may hold the address of an object allocated since it
   // was converted.
@@ -156,6 +161,10 @@ public:
   void markUninitialised(State &st, encode::Term p);
   void markInitialised(State &st, encode::Term p);
   encode::Term isInitialised(State &st, encode::Term p, uint64_t n);
+  // Whether each of the n bytes at p is initialised, and setting that: a
+  // value only copied takes them from where it is loaded to where it is stored.
+  std::vector<encode::Term> initBytes(State &st, encode::Term p, uint64_t n);
+  void setInitBytes(State &st, encode::Term p, llvm::ArrayRef<encode::Term> init);
   // Writes byte to the n bytes at p. A fill of a whole object of at least
   // MinSeparate bytes is one constant array; a partial fill of at least
   // MinSeparate bytes in a known object is a lambda over the arrays below;
@@ -223,6 +232,8 @@ private:
   encode::Term base(encode::Term obj);
   encode::Term isNull(encode::Term p);
   encode::Term isNullMemo(encode::Term p, llvm::DenseMap<const void *, encode::Term> &memo);
+  encode::Term alignedMemo(encode::Term p, uint64_t align,
+                           llvm::DenseMap<const void *, encode::Term> &memo);
   bool hasPadding(llvm::Type *ty) const;
   using Key = std::pair<uint64_t, uint64_t>;
   std::optional<Key> key(encode::Term p) const;

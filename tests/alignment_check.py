@@ -155,3 +155,33 @@ define i32 @main() {
 }
 ''')
     check([binary, str(ir), flag], 1, "main.alignment.1")
+
+    # A pointer chosen among objects in nested choices (malloc may also give
+    # null) is checked object by object: each object's own alignment decides,
+    # not an unconstrained base address. One misaligned choice still fails.
+    source.write_text('''
+#include <stdlib.h>
+extern int __VERIFIER_nondet_int(void);
+long g;
+int main(void) {
+  long *h = malloc(4 * sizeof(long));
+  if (!h) return 0;
+  long *r = __VERIFIER_nondet_int() ? h + (__VERIFIER_nondet_int() & 3) : &g;
+  *r = 1;
+  return (int)*r;
+}
+''')
+    check(command + [str(source), flag], 0, "VERIFICATION SUCCESSFUL")
+    source.write_text('''
+#include <stdlib.h>
+extern int __VERIFIER_nondet_int(void);
+long g;
+int main(void) {
+  _Alignas(8) char buf[16] = {0};
+  long *h = malloc(4 * sizeof(long));
+  if (!h) return 0;
+  long *r = __VERIFIER_nondet_int() ? h : __VERIFIER_nondet_int() ? &g : (long *)(buf + 1);
+  return (int)*r;
+}
+''')
+    check(command + [str(source), flag], 1, "main.alignment.1")

@@ -201,6 +201,27 @@ Term Memory::global(const GlobalValue *g) const {
 
 Term Memory::address(Term p) { return t.add(base(object(p)), offset(p)); }
 
+Term Memory::alignedMemo(Term p, uint64_t align, DenseMap<const void *, Term> &memo) {
+  if (auto it = memo.find(p.id()); it != memo.end())
+    return it->second;
+  Term c, x, y, r;
+  if (t.choice(p, c, x, y)) {
+    r = t.ite(c, alignedMemo(x, align, memo), alignedMemo(y, align, memo));
+  } else {
+    const APInt *id = t.constant(object(p));
+    bool own = id && !id->isZero() && id->ult(objects.size()) &&
+               objects[id->getZExtValue()].align >= align;
+    r = t.eq(t.bvand(own ? offset(p) : address(p), t.bv(align - 1, ptrBits)), t.bv(0, ptrBits));
+  }
+  memo[p.id()] = r;
+  return r;
+}
+
+Term Memory::aligned(Term p, uint64_t align) {
+  DenseMap<const void *, Term> memo;
+  return alignedMemo(p, align, memo);
+}
+
 Term Memory::isNullMemo(Term p, DenseMap<const void *, Term> &memo) {
   if (auto it = nullEq.find(p.id()); it != nullEq.end())
     return it->second.second;
@@ -422,19 +443,7 @@ void Memory::copyInitBytes(State &st, Term dst, Term src, uint64_t n) {
   if (!trackInit || !n || dst == src)
     return;
   if (n <= MaxBytes) {
-    std::vector<Term> vals;
-    vals.reserve(n);
-    for (uint64_t i = 0; i < n; ++i)
-      vals.push_back(readInitByte(st, bytePtr(src, i)));
-    if (std::optional<Key> dk = key(dst)) {
-      uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
-      for (uint64_t i = 0; i < n; ++i)
-        st.knownInit.set({dk->first, (dk->second + i) & mask}, vals[i]);
-    } else {
-      flushInitFor(st, dst);
-      for (uint64_t i = 0; i < n; ++i)
-        st.init = t.store(st.init, bytePtr(dst, i), vals[i]);
-    }
+    setInitBytes(st, dst, initBytes(st, src, n));
     return;
   }
   flushInitFor(st, src);
@@ -447,6 +456,28 @@ void Memory::copyInitBytes(State &st, Term dst, Term src, uint64_t n) {
                        Term in = t.land(t.eq(object(j), dObj), t.ult(d, len));
                        return t.ite(in, t.select(prev, advance(src, d)), t.select(prev, j));
                      });
+}
+
+std::vector<Term> Memory::initBytes(State &st, Term p, uint64_t n) {
+  std::vector<Term> vals;
+  vals.reserve(n);
+  for (uint64_t i = 0; i < n; ++i)
+    vals.push_back(readInitByte(st, bytePtr(p, i)));
+  return vals;
+}
+
+void Memory::setInitBytes(State &st, Term p, ArrayRef<Term> init) {
+  if (!trackInit)
+    return;
+  if (std::optional<Key> k = key(p)) {
+    uint64_t mask = ptrBits >= 64 ? ~uint64_t(0) : (uint64_t(1) << ptrBits) - 1;
+    for (uint64_t i = 0; i < init.size(); ++i)
+      st.knownInit.set({k->first, (k->second + i) & mask}, init[i]);
+    return;
+  }
+  flushInitFor(st, p);
+  for (uint64_t i = 0; i < init.size(); ++i)
+    st.init = t.store(st.init, bytePtr(p, i), init[i]);
 }
 
 Term Memory::isInitialised(State &st, Term p, uint64_t n) {
