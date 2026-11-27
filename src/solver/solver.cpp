@@ -336,7 +336,14 @@ Verdict decideNonIncremental(
             ArrayRef<Group> lower = phase.take_front(first - phase.begin());
             s.push();
             s.addConstraint(disjunction(s, exprs(lower)));
-            if (s.check() != camada::CheckResult::SAT) {
+            camada::CheckResult earlierResult = s.check();
+            if (earlierResult != camada::CheckResult::SAT) {
+              // Unsatisfiable: the disjunction already asserted covers lower,
+              // so none of those groups can fail anywhere; unknown says nothing.
+              if (earlierResult == camada::CheckResult::UNSAT)
+                for (const Group &g : lower)
+                  for (size_t idx : g.indices)
+                    v.status[idx] = Status::Holds;
               s.pop();
               s.addConstraint(first->expr);
               if (s.check() != camada::CheckResult::SAT)

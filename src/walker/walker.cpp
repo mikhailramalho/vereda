@@ -234,9 +234,12 @@ public:
       recursionsIn = std::move(saved.recursionsIn);
       summarised = std::move(saved.summarised);
     }
+    // An immediate checkpoint saves neither the bindings nor the shadows:
+    // nothing ran after it, so the live ones are still the prefix's.
     if (saved.bindings)
       enc.restoreBindings(std::move(*saved.bindings));
-    shadows = std::move(saved.shadows);
+    if (!saved.immediate)
+      shadows = std::move(saved.shadows);
     stack = std::move(saved.stack);
     if (stack.empty())
       stack.push_back(&f);
