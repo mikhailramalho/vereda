@@ -2394,13 +2394,25 @@ private:
                 name == "memcpy" || name == "memmove";
     if (copy || name.starts_with("llvm.memset") || name == "memset") {
       Term dst = enc.value(c.getArgOperand(0)), v = enc.value(c.getArgOperand(1));
-      uint64_t n = constantSize(c.getArgOperand(2), guard, name);
-      if (n)
-        writes(c, guard, dst);
-      if (copy)
-        mem.copy(st, dst, v, n);
-      else
-        mem.set(st, dst, enc.resize(v, 8, false), n);
+      Term len = enc.value(c.getArgOperand(2));
+      if (std::optional<uint64_t> n = single(len, guard)) {
+        if (*n)
+          writes(c, guard, dst);
+        if (copy)
+          mem.copy(st, dst, v, *n);
+        else
+          mem.set(st, dst, enc.resize(v, 8, false), *n);
+      } else {
+        // Several sizes: the bytes below len change, at most as many as
+        // dst's object has left where the solver shows len stays within it.
+        len = enc.resize(len, mem.pointerBits(), false);
+        writes(c, t.land(guard, t.lnot(t.eq(len, t.bv(0, len.width())))), dst);
+        std::optional<uint64_t> bound = rangeBound(len, guard, {dst});
+        if (copy)
+          mem.copy(st, dst, v, len, bound);
+        else
+          mem.set(st, dst, enc.resize(v, 8, false), len, bound);
+      }
     } else if (name == "free" || name.starts_with("llvm.stackrestore")) {
       // Free changes nothing until memory safety tracks liveness.
     } else if (name.starts_with("llvm.stacksave")) {

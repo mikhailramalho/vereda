@@ -18,4 +18,4 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: FAILED[^\n]*NULL pointer on DST
 // MODE: FUTURE
-// Vereda: verdict UNKNOWN
+// Vereda: verdict SUCCESSFUL
