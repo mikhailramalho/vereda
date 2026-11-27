@@ -98,6 +98,17 @@ int main(void) {
 ''')
     check(command + [str(source), flag], 0, "VERIFICATION SUCCESSFUL")
 
+    # Read straight through the cast, clang gives the load the alignment it
+    # proves from buf, 1; the check takes the int's.
+    source.write_text('''
+int main(void) {
+  _Alignas(8) char buf[16] = {0};
+  return *(int *)(buf + 1);
+}
+''')
+    check(command + [str(source), flag], 1, "main.assertion.1")
+    check(command + [str(source), flag, "-m32"], 1, "main.assertion.1")
+
     # 1-byte aligned local cast to int* can be misaligned.
     source.write_text('''
 int main(void) {

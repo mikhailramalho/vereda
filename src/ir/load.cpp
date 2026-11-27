@@ -14,6 +14,7 @@
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
@@ -144,14 +145,61 @@ static void checkCountZeros(Module &m) {
   }
 }
 
+// The type a pointer to an alloca, a global or a GEP points to, else null.
+static Type *pointee(const Value *p) {
+  if (auto *a = dyn_cast<AllocaInst>(p))
+    return a->getAllocatedType();
+  if (auto *g = dyn_cast<GlobalVariable>(p))
+    return g->getValueType();
+  if (auto *g = dyn_cast<GEPOperator>(p))
+    return g->getResultElementType();
+  return nullptr;
+}
+
+// Clang gives an access through a cast of a declared object's address the
+// alignment it proves from the declaration and offsets, not the type's
+// (EmitPointerWithAlignment in its CGExpr.cpp): *(int *)(buf + 1) loads with
+// align 1, and *(struct S *)(buf + o) copies with a memcpy of align 1, which
+// -fsanitize=alignment misses too. In clang's unoptimised IR such a pointer
+// is a chain of array or pointer-arithmetic GEPs from an alloca or a global.
+// Clang's own accesses below the type's alignment are left out: a GEP into a
+// struct field (packed members, argument coercions), a byte offset from a
+// struct (bitfields of a packed struct) and a GEP to a struct (a member of a
+// packed union, which has no field GEP).
+static bool castFromDeclaration(const Value *p) {
+  auto *outer = dyn_cast<GEPOperator>(p);
+  if (!outer || isa<StructType>(outer->getResultElementType()) ||
+      isa_and_present<StructType>(pointee(outer->getPointerOperand())))
+    return false;
+  while (auto *g = dyn_cast<GEPOperator>(p)) {
+    for (gep_type_iterator i = gep_type_begin(g), e = gep_type_end(g); i != e; ++i)
+      if (i.isStruct())
+        return false;
+    p = g->getPointerOperand();
+  }
+  return isa<AllocaInst>(p) || isa<GlobalVariable>(p);
+}
+
+static bool compiledByClang(const Module &m) {
+  if (const NamedMDNode *ident = m.getNamedMetadata("llvm.ident"))
+    for (const MDNode *n : ident->operands())
+      if (auto *s = n->getNumOperands() ? dyn_cast_or_null<MDString>(n->getOperand(0)) : nullptr;
+          s && s->getString().contains("clang"))
+        return true;
+  return false;
+}
+
 // Instrument typed memory accesses (load, store, atomicrmw, cmpxchg) with their
 // source-level alignment before SROA/InstCombine can eliminate misaligned
 // accesses through pointers to packed members or raise alignment from UB
 // assumptions. Direct accesses to allocas whose own alignment already satisfies
 // the access alignment are skipped so mem2reg still promotes aligned locals;
 // parameter 0 is marked non-capturing so it does not expose objects or block
-// array ownership.
-static void checkAlignments(Module &m) {
+// array ownership. fromClang: the module is clang's unoptimised IR, where a
+// load, store or aggregate copy through castFromDeclaration needs the
+// alignment clang dropped.
+static void checkAlignments(Module &m, bool fromClang) {
+  const DataLayout &dl = m.getDataLayout();
   Function *check = nullptr;
   auto getCheck = [&]() -> Function * {
     if (!check) {
@@ -186,7 +234,27 @@ static void checkAlignments(Module &m) {
       } else if (auto *c = dyn_cast<AtomicCmpXchgInst>(&i)) {
         ptr = c->getPointerOperand();
         align = c->getAlign().value();
+      } else if (auto *c = dyn_cast<MemTransferInst>(&i); c && fromClang) {
+        // Only clang's aggregate copies are intrinsics: the front end makes a
+        // user's memcpy a library call. Such a copy needs the aggregate's
+        // alignment, as the other side has it: its type's, unless clang gave
+        // it less (a packed aggregate whose layout is natural keeps its type's).
+        auto *length = dyn_cast<ConstantInt>(c->getLength());
+        for (auto [side, sideAlign, other, otherAlign] :
+             {std::tuple(c->getRawDest(), c->getDestAlign(), c->getRawSource(), c->getSourceAlign()),
+              std::tuple(c->getRawSource(), c->getSourceAlign(), c->getRawDest(), c->getDestAlign())}) {
+          Type *t = pointee(other);
+          if (!length || !t || !t->isAggregateType() || !t->isSized() ||
+              dl.getTypeAllocSize(t) != length->getZExtValue())
+            continue;
+          Align need = std::min(dl.getABITypeAlign(t), otherAlign.valueOrOne());
+          if (need > sideAlign.valueOrOne() && side->getType()->getPointerAddressSpace() == 0 &&
+              castFromDeclaration(side))
+            accesses.emplace_back(&i, side, need.value());
+        }
       }
+      if (fromClang && (isa<LoadInst>(i) || isa<StoreInst>(i)) && castFromDeclaration(ptr))
+        align = std::max(align, dl.getABITypeAlign(getLoadStoreType(&i)).value());
       if (!ptr || align <= 1 || ptr->getType()->getPointerAddressSpace() != 0)
         continue;
       // Direct access to an alloca whose own alignment already satisfies align.
@@ -1470,7 +1538,7 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool coun
   if (floatCastOverflowCheck)
     checkFloatCasts(*models);
   if (alignmentCheck)
-    checkAlignments(*models);
+    checkAlignments(*models, false);
   if (Linker::linkModules(m, std::move(models), Linker::Flags::LinkOnlyNeeded))
     return createStringError(inconvertibleErrorCode(), "cannot link " + path);
   lowerCalls(m);
@@ -1711,7 +1779,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   lowerRustMain(*module);
   renameRustShims(*module);
   if (alignmentCheck)
-    checkAlignments(*module);
+    checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);
   lowerLongjmp(*module);
   if (divByZeroCheck)
