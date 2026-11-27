@@ -43,7 +43,7 @@ static bool callsNothing(StringRef name) {
                                   "__vereda_check_divisor", "__vereda_check_float_cast_overflow",
                                   "__vereda_havoc", "__vereda_object_size",
                                   "__vereda_uninitialised", "__vereda_longjmp_unmatched",
-                                  "__vereda_error_label", "abort",
+                                  "__vereda_error_label", "__vereda_pclose_not_popen", "abort",
                                   "exit", "_Exit", "__assert_fail", "reach_error", "malloc",
                                   "calloc", "realloc", "free"},
                                  name);
