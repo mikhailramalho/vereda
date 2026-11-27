@@ -1,7 +1,8 @@
 // Float and double values in the counterexample, as ESBMC prints them but
 // as C constants: %.6e's digits with the exponent unpadded, an f suffix for
 // a float, +INFINITY or -INFINITY, +NAN or -NAN by the sign bit, and the
-// bits in the comment. g is a global, so its assignment is a store.
+// bits in the comment. g is a global, so its assignment is a store; tiny
+// is a subnormal float.
 // RUN:
 // RUN: --fp2bv
 // EXPECT: ^  d = 2\.500000e\+0; // 01000000 00000100 00000000 00000000 00000000 00000000 00000000 00000000$
@@ -26,6 +27,6 @@ int main(void) {
   double nan = inf - inf;
   float tiny = f * 1e-40f;
   g = d / 4;
-  __VERIFIER_assert(nan == nan);
+  __VERIFIER_assert(nan == nan || tiny == 0.0f);
   return 0;
 }

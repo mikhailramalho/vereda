@@ -1,9 +1,8 @@
 #include "witness/counterexample.h"
 
+#include <cstdint>
 #include <cstdio>
-#include <cmath>
 #include <cstdlib>
-#include <string>
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/StringMap.h>
@@ -40,55 +39,21 @@ static void writeGroupedBits(raw_ostream &os, const APInt &v) {
   WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << StringRef(buf, len);
 }
 
-// Format IEEE bits as %.6e with an unpadded exponent, plus 'f' for float.
-static void writeFloatValue(raw_ostream &os, const APInt &v, bool isFloat32) {
-  unsigned bits = v.getBitWidth();
-  uint64_t raw = v.getZExtValue();
-  bool sign = raw & (1ULL << (bits - 1));
-  unsigned expBits = isFloat32 ? 8 : 11;
-  unsigned fracBits = bits - 1 - expBits;
-  uint64_t expMask = (1ULL << expBits) - 1;
-  uint64_t fracMask = (1ULL << fracBits) - 1;
-  unsigned exp = static_cast<unsigned>((raw >> fracBits) & expMask);
-  uint64_t frac = raw & fracMask;
-  if (exp == expMask) {
-    if (frac == 0)
-      os << (sign ? "-INFINITY" : "+INFINITY");
-    else
-      os << (sign ? "-NAN" : "+NAN");
-    if (isFloat32)
-      os << 'f';
-  } else if (exp == 0 && frac == 0) {
-    os << (sign ? "-0.000000e+0" : "0.000000e+0");
-    if (isFloat32)
-      os << 'f';
-  } else {
-    // Normal number; subnormals don't appear in this test.
-    int realExp = static_cast<int>(exp) - (isFloat32 ? 127 : 1023);
-    double mantissa = 1.0 + (double)frac / (double)(1ULL << fracBits);
-    if (sign) mantissa = -mantissa;
-    double d = mantissa * pow(2.0, realExp);
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%.6e", d);
-    StringRef s(buf);
-    size_t e = s.find('e');
-    if (e != StringRef::npos) {
-      size_t sgn = e + 1;
-      size_t end = s.find_first_not_of("0123456789", sgn + 1);
-      int expVal = std::stoi(std::string(s.substr(sgn + 1, end - sgn - 1)));
-      SmallString<64> r;
-      r += s.substr(0, e);
-      r += 'e';
-      r += s[sgn];
-      r += std::to_string(std::abs(expVal));
-      r += s.substr(end);
-      os << r;
-    } else {
-      os << s;
-    }
-    if (isFloat32)
-      os << 'f';
+// A float or double as ESBMC prints it, as a C constant: %.6e with the
+// exponent unpadded, an f suffix for a float, +INFINITY, -NAN and so on.
+static void writeFloat(raw_ostream &os, const APInt &v) {
+  bool single = v.getBitWidth() == 32;
+  APFloat f(single ? APFloat::IEEEsingle() : APFloat::IEEEdouble(), v);
+  const char *sign = f.isNegative() ? "-" : "+";
+  if (f.isInfinity() || f.isNaN()) {
+    os << sign << (f.isNaN() ? "NAN" : "INFINITY");
+    return;
   }
+  char buf[32];
+  std::snprintf(buf, sizeof buf, "%.6e", single ? f.convertToFloat() : f.convertToDouble());
+  auto [digits, exponent] = StringRef(buf).split('e');
+  int e = std::atoi(exponent.data());
+  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e) << (single ? "f" : "");
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
@@ -220,7 +185,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       break;
     case LastValue::Float:
       os << text << " = ";
-      writeFloatValue(os, *v, v->getBitWidth() == 32);
+      writeFloat(os, *v);
       os << ";";
       writeGroupedBits(os, *v);
       break;

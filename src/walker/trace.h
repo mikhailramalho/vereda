@@ -42,8 +42,8 @@ public:
   void add(Step::Kind kind, encode::Term guard, const ir::SourceLoc &loc, llvm::StringRef text,
            encode::Term value = {}, bool isUnsigned = false, unsigned check = 0,
            const llvm::DIType *type = nullptr, encode::Term offset = {}, bool isFloat = false) {
-    steps.push_back({kind, isUnsigned, isFloat, internLoc(loc), internText(text), check, guard, value,
-                     type, offset});
+    steps.push_back({kind, isUnsigned, isFloat, internLoc(loc), internText(text), check, guard,
+                     value, type, offset});
   }
 
   const ir::SourceLoc &loc(const Step &s) const { return locs[s.loc]; }
