@@ -21,6 +21,3 @@ void main(void)
 // Imported from ESBMC regression/bitwuzla/union-bad
 // RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

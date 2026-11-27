@@ -152,6 +152,7 @@ struct CallState {
   SmallVector<std::pair<const Value *, Term>, 0> bindings;
   SmallVector<std::pair<const Value *, Shadow>, 0> shadows;
   const CallBase *reachError = nullptr;
+  const CallBase *site = nullptr;
 };
 
 struct Caller {
@@ -242,6 +243,7 @@ public:
       stack.push_back(&f);
     varArgs = std::move(saved.varArgs);
     reachError = saved.reachError;
+    site = saved.site;
     for (Caller &caller : saved.callers)
       calls.push_back({&caller.frame, &caller.state});
     Frame frame = std::move(saved.frame);
@@ -300,6 +302,7 @@ private:
     cp.stack = stack;
     cp.varArgs = varArgs;
     cp.reachError = reachError;
+    cp.site = site;
     for (const ActiveCall &caller : calls)
       cp.callers.push_back({*caller.frame, *caller.state});
     cp.epoch = t.constraintsEpoch();
@@ -1533,6 +1536,8 @@ private:
       allocateHeap(c, name, guard, st);
       return guard;
     }
+    if (name == "free" || name == "__vereda_check_free")
+      return free(c, guard, st, name == "free");
     if (memoryFunction(c, name, guard, st))
       return guard;
 
@@ -1805,6 +1810,9 @@ private:
     CallState context;
     context.call = &c;
     context.reachError = reachError;
+    context.site = site;
+    if (c.getDebugLoc())
+      site = &c;
     if (depth > 0) {
       for (Argument &arg : callee.args())
         if (Term term = enc.bound(&arg))
@@ -1870,6 +1878,7 @@ private:
     if (c.getCalledFunction()->isVarArg())
       varArgs.pop_back();
     reachError = context.reachError;
+    site = context.site;
 
     Term after = t.boolean(false), result;
     for (unsigned i = 0; i < frame.returns.size(); ++i) {
@@ -2283,7 +2292,7 @@ private:
     enc.bind(&rmw, old);
   }
 
-  // memcpy, memmove and memset, as intrinsics or library calls, and free.
+  // memcpy, memmove and memset, as intrinsics or library calls.
   // Returns false for any other function.
   bool memoryFunction(CallBase &c, StringRef name, Term guard, memory::State &st) {
     bool copy = name.starts_with("llvm.memcpy") || name.starts_with("llvm.memmove") ||
@@ -2297,8 +2306,8 @@ private:
         mem.copy(st, dst, v, n);
       else
         mem.set(st, dst, enc.resize(v, 8, false), n);
-    } else if (name == "free" || name.starts_with("llvm.stackrestore")) {
-      // Free changes nothing until memory safety tracks liveness.
+    } else if (name.starts_with("llvm.stackrestore")) {
+      // Changes nothing until stack objects expire (#29).
     } else if (name.starts_with("llvm.stacksave")) {
       enc.bind(&c, enc.fresh(c.getType(), "stacksave"));
       return true;
@@ -2371,6 +2380,47 @@ private:
     return bound;
   }
 
+  // free(p), or with release false only its checks: realloc's model checks
+  // p first, as an invalid p is undefined even where the new allocation
+  // fails (C17 7.22.3.5p3). The checks are ESBMC's pointer checks on free,
+  // off with --no-pointer-check. The path goes on only where the free is
+  // valid, so a later free does not report the same object again; a free
+  // whose checks do not count still releases, but prunes nothing. Neither
+  // is checked under Rust's allocator shims: the standard library functions
+  // without a body that Rust programs call havoc the memory holding their
+  // pointers, and safe Rust frees each allocation once.
+  Term free(CallBase &c, Term guard, memory::State &st, bool release) {
+    Term p = enc.value(c.getArgOperand(0));
+    bool rust = any_of(stack, [](Function *f) { return f->getName().starts_with("__rust_"); });
+    if (opts.pointerCheck && !rust &&
+        (opts.property == Property::All || opts.property == Property::ValidFree)) {
+      const Instruction &at = c.getDebugLoc() || !site ? c : *site;
+      memory::Memory::InvalidFree bad = mem.invalidFree(st, p);
+      std::tuple<Term, const char *, checks::Property> reasons[] = {
+          {bad.integer, "dereference failure: invalid pointer freed",
+           checks::Property::InvalidFree},
+          {bad.nonHeap, "dereference failure: free() of non-dynamic memory",
+           checks::Property::FreeNonDynamic},
+          {bad.offset, "Operand of free must have zero pointer offset",
+           checks::Property::FreeOffset},
+          {bad.dead, "dereference failure: invalidated dynamic object freed",
+           checks::Property::DoubleFree}};
+      Term valid = t.boolean(true);
+      for (auto &[why, comment, kind] : reasons) {
+        Term violated = t.land(guard, why);
+        if (t.isFalse(violated))
+          continue;
+        assertion(at, violated, comment, "", comment, kind);
+        valid = t.land(valid, t.lnot(why));
+      }
+      enc.learn(valid, enc.facts);
+      guard = t.land(guard, valid);
+    }
+    if (release)
+      mem.free(st, p);
+    return guard;
+  }
+
   // malloc and calloc return null when the object does not fit in the
   // address space, or calloc's size overflows (C23 7.24.3.2). Like ESBMC by
   // default, malloc may also fail anyway unless --force-malloc-success.
@@ -2388,7 +2438,7 @@ private:
     ok = t.land(ok, mem.fits(size));
     if (!opts.forceMallocSuccess)
       ok = t.land(ok, enc.fresh(Type::getInt1Ty(c.getContext()), "malloc_succeeds"));
-    Term p = mem.allocate(size, 16, t.land(guard, ok));
+    Term p = mem.allocate(size, 16, t.land(guard, ok), true, memory::Memory::Kind::Heap);
     if (isCalloc) {
       // A size that is not constant gets a constant array of zeros, whatever
       // it is on the path. A product beyond the largest object makes ok
@@ -2425,6 +2475,7 @@ private:
     SmallVector<Function *, 8> stack;
     SmallVector<VarArgs, 2> varArgs;
     const CallBase *reachError = nullptr;
+    const CallBase *site = nullptr;
     size_t checks = 0, trace = 0;
     SmallVector<encode::Term, 16> violated;
     DenseMap<ClaimKey, unsigned> claims;
@@ -2454,6 +2505,9 @@ private:
   // The call to the reach_error being walked, if any: the witness puts a
   // violation inside it at the call, the violation unreach-call names.
   const CallBase *reachError = nullptr;
+  // The innermost call on the stack with a debug location: a check in a
+  // library model, which has none, is reported there.
+  const CallBase *site = nullptr;
   DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
   DenseMap<ClaimKey, unsigned> assertionNumber;
   const char literals = 0; // what the checks of writes into string literals check

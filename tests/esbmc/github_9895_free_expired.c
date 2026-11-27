@@ -15,6 +15,3 @@ int main()
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: free\(\) of non-dynamic memory
 // EXPECT: \A(?![\s\S]*accessed expired variable pointer)[\s\S]*\Z
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

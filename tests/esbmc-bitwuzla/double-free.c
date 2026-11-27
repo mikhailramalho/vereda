@@ -16,6 +16,3 @@ int main()
 // Imported from ESBMC regression/bitwuzla/double-free
 // RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

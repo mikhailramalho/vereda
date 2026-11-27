@@ -88,6 +88,10 @@ struct State {
   Trie<encode::Term> knownInit;
   Trie<encode::Term> objInit;
   Trie<bool> initFlushed;
+  // Object id -> whether the path freed the object, a constant array of
+  // false at first (issue #30). An object is live where it exists and is
+  // not dead.
+  encode::Term dead;
 };
 
 class Memory {
@@ -111,11 +115,14 @@ public:
   // PTRDIFF_MAX, as glibc's malloc. It depends on the size alone, so the
   // solver cannot make a small allocation fail by placing earlier objects.
   encode::Term fits(encode::Term size);
+  // Where an object lives, which says whether free may end its life.
+  enum class Kind : uint8_t { Static, Stack, Heap };
   // A new object of size bytes (pointer-width term) that exists when exists
   // holds; its layout constraints bind only then. Returns its start. An
   // address converted to a pointer may land in it only if exposed.
   encode::Term allocate(encode::Term size, uint64_t align,
-                              encode::Term exists, bool exposed = true);
+                              encode::Term exists, bool exposed = true,
+                              Kind kind = Kind::Stack);
   // Allocates every global of m, and every function whose address is taken,
   // exposed as the predicate says; the globals' initialisers go in with
   // initialise().
@@ -219,6 +226,16 @@ public:
   // into and to any object reached.
   void havocCall(State &st, llvm::ArrayRef<encode::Term> written,
                  llvm::ArrayRef<encode::Term> read, bool reach);
+  // Where free(p) is undefined in st (C17 7.22.3.3p2), by ESBMC's reasons:
+  // p made from an integer, into an object not from the heap, not at the
+  // start of its heap object, or into one the path already freed. All are
+  // false where p is null or starts a live heap object.
+  struct InvalidFree {
+    encode::Term integer, nonHeap, offset, dead;
+  };
+  InvalidFree invalidFree(const State &st, encode::Term p);
+  // Ends the life of the object p points into, as free(p) does.
+  void free(State &st, encode::Term p);
   // A pointer into the memory outside the program, for havoc.
   encode::Term outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
@@ -317,6 +334,7 @@ private:
     uint64_t align;
     bool exposed;
     bool laidOut;
+    Kind kind = Kind::Static;
     // The constant global or the function the object is, if either, which
     // the program may not write.
     const llvm::GlobalValue *constant = nullptr;

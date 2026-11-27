@@ -9,7 +9,8 @@
 
 namespace vereda::checks {
 
-enum class Property { Assertion, ArithmeticOverflow, DivisionByZero, CountZero, FloatCastOverflow, Alignment, UninitialisedRead, ArrayBounds, Unwinding, Recursion };
+enum class Property { Assertion, ArithmeticOverflow, DivisionByZero, CountZero, FloatCastOverflow, Alignment, UninitialisedRead, ArrayBounds,
+                      InvalidFree, FreeNonDynamic, FreeOffset, DoubleFree, Unwinding, Recursion };
 
 struct Check {
   Property property;
@@ -36,6 +37,10 @@ struct Check {
                        : property == Property::Alignment ? "alignment"
                        : property == Property::UninitialisedRead ? "uninitialised-read"
                        : property == Property::ArrayBounds ? "array-bounds-violated"
+                       : property == Property::InvalidFree ? "invalid-pointer-freed"
+                       : property == Property::FreeNonDynamic ? "free-non-dynamic-memory"
+                       : property == Property::FreeOffset ? "free-non-zero-offset"
+                       : property == Property::DoubleFree ? "invalidated-dynamic-object-freed"
                        : property == Property::Unwinding ? "unwind"
                                                           : "recursion";
     return loc.function + "." + kind + "." + std::to_string(index);

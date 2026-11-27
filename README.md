@@ -115,10 +115,10 @@ The main verifier flags:
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
 | `--entry F` | Entry function (default `main`) |
-| `--property unreach-call\|no-overflow` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets it |
+| `--property unreach-call\|no-overflow\|valid-free` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW`, `FALSE_FREE` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets the first two |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
-| `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
+| `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects, and invalid frees |
 | `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs unless `--property` is given |
 | `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
 | `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
@@ -135,13 +135,15 @@ The main verifier flags:
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |
 
 Assertions, the current pointer checks, integer division/remainder-by-zero checks,
-and unwinding checks are enabled by default. General pointer bounds, lifetime and
-valid-free checks are not implemented yet. Signed overflow, unsigned overflow
+and unwinding checks are enabled by default. The pointer checks include ESBMC's
+checks on `free` and `realloc`: a pointer made from an integer, one into a
+non-heap object or into the middle of a heap object, and a second free. General
+pointer bounds and lifetime checks are not implemented yet. Signed overflow, unsigned overflow
 and shift checks are opt-in through the frontend flags above; existing Rust
 overflow and bounds panics remain program failures. Leak, race and deadlock flags
 are disabled by default and the binary rejects an enabled request with error
 exit code 6, before loading the input. `--no-assertions` conflicts with an
-unreach-call property request. A selected property reports only its own failures.
+unreach-call property request, `--no-pointer-check` with valid-free. A selected property reports only its own failures.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
