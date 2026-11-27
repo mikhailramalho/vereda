@@ -98,6 +98,10 @@ Termination termination(Function &entry) {
                s.contains("dtors");
       }))
     Prover::note(p.result.unseen, "constructors or destructors");
+  // Module-level assembly can list functions in those sections too
+  // (.pushsection .init_array), where no global shows them.
+  if (!m.getModuleInlineAsm().empty())
+    Prover::note(p.result.unseen, "module-level assembly");
   p.visit(entry);
   Prover::note(p.result.unbounded, p.result.unseen);
   return p.result;
