@@ -20,7 +20,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <cerrno>
 #include <numeric>
+
+#ifdef VEREDA_MIMALLOC
+#include <mimalloc.h>
+#endif
 
 using namespace llvm;
 using vereda::util::progress;
@@ -172,6 +177,12 @@ static void svcomp(StringRef verdict) {
 // a dump that cannot be written or no memory left. ESBMC uses 6 too, so 1
 // means VERIFICATION FAILED only.
 static const int ErrorExit = 6;
+
+[[noreturn]] static void outOfMemory() {
+  outs().flush();
+  std::fputs("vereda: out of memory\n", stderr);
+  std::_Exit(ErrorExit);
+}
 
 static int unknown(const Twine &reason) {
   results();
@@ -497,15 +508,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   return finish(0);
 }
 
-int main(int argc, char **argv) {
-  // Out of memory ends the run. A std::bad_alloc thrown in the solver would
-  // not: camada turns it into an unknown answer, and the next query runs on a
-  // solver left half updated and crashes.
-  std::set_new_handler([] {
-    outs().flush();
-    std::fputs("vereda: out of memory\n", stderr);
-    std::_Exit(ErrorExit);
-  });
+static int run(int argc, char **argv) {
   cl::SetVersionPrinter(printVersion);
   // With an error stream, a bad option returns false instead of exiting with 1.
   if (!cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n", &errs()))
@@ -631,4 +634,25 @@ int main(int argc, char **argv) {
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
+}
+
+int main(int argc, char **argv) {
+  // Out of memory ends the run wherever an allocation fails. A std::bad_alloc
+  // thrown in the solver would not: camada turns it into an unknown answer,
+  // and the next query runs on a solver left half updated and crashes.
+  // operator new calls the new-handler, but Bitwuzla allocates its nodes with
+  // calloc and throws std::bad_alloc itself (#384); mimalloc's error hook sees
+  // that failure first, and the catch covers a build with glibc's malloc.
+  std::set_new_handler(outOfMemory);
+#ifdef VEREDA_MIMALLOC
+  mi_register_error([](int err, void *) {
+    if (err == ENOMEM)
+      outOfMemory();
+  }, nullptr);
+#endif
+  try {
+    return run(argc, argv);
+  } catch (const std::bad_alloc &) {
+    outOfMemory();
+  }
 }
