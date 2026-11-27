@@ -216,10 +216,12 @@ def header(origin, mode, args, expected, test_dir, builtins):
     if missing or builtins:
         mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     if missing:
-        # Keep unsupported options visible without restoring ignored flags.
+        # Keep unsupported options visible, leaving out the flags translate()
+        # drops.
         lexer = shlex.shlex(args, posix=True)
         lexer.whitespace_split, lexer.commenters = True, ""
         raw_args, start, skip_value = [], 0, False
+        no_fp_conversion = "--no-fp-conversion-check" in shlex.split(args)
         for token in lexer:
             end = lexer.instream.tell()
             name, eq, value = token.partition("=")
@@ -230,11 +232,13 @@ def header(origin, mode, args, expected, test_dir, builtins):
             elif name in UNSUPPORTED_ALIASES:
                 raw_args.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else "") + " ")
             elif name in RENAMED or name in OVERFLOW:
-                renamed = shlex.join(RENAMED.get(name) or OVERFLOW[name])
-                raw_args.append(renamed + " ")
+                renamed = [f for f in RENAMED.get(name) or OVERFLOW[name]
+                           if not (no_fp_conversion and f == FLOAT_CAST)]
+                raw_args.append(shlex.join(renamed) + " ")
             elif name in RENAMED_WITH_VALUE:
                 raw_args.append(RENAMED_WITH_VALUE[name] + ("=" + value if eq else " "))
-            elif name not in IGNORED_FLAGS:
+            elif name not in DROPPED and name != "--no-fp-conversion-check" \
+                    and not name.startswith("-Wno-"):
                 raw_args.append(args[start:end])
             start = end
         lines += ["// Needs: " + " ".join(missing), ("// RUN: " + "".join(raw_args).strip()).rstrip()]

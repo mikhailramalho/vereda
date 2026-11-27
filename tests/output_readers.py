@@ -242,3 +242,15 @@ for args, expected in (('--gcse --z3', '--solver z3'),
     lines = import_esbmc.header('suite/last_blocker', 'CORE', args, [], '.', [])
     assert '// RUN: ' + expected in lines, lines
     assert not any(line.startswith('// Needs:') for line in lines), lines
+
+# A FUTURE test's RUN line keeps its flags, but not those translate() drops.
+for args, run in (
+        ("--overflow-check --no-fp-conversion-check --no-bounds-check -Wno-error --k-induction",
+         "--ub-signed-overflow-check --ub-shift-check --k-induction"),
+        ("--k-induction --no-fp-conversion-check --overflow-check --no-slice",
+         "--k-induction --ub-signed-overflow-check --ub-shift-check"),
+        ("--overflow-check --k-induction",
+         "--ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction")):
+    lines = import_esbmc.header("suite/raw_flags", "CORE", args, [], ".", [])
+    assert "// RUN: " + run in lines, lines
+    assert "// Needs: --k-induction" in lines, lines
