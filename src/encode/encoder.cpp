@@ -38,16 +38,14 @@ static const fltSemantics *ieee(Type *ty) {
   return &ty->getFltSemantics();
 }
 
-// The element width of a vector of integers (not i1) or IEEE floats; 0 for
-// anything else.
-static unsigned vectorElementWidth(Type *ty) {
+// The element width of a vector of integers (i1 as one bit), pointers or
+// IEEE floats; 0 for anything else.
+unsigned Encoder::vectorElementWidth(Type *ty) {
   auto *vt = dyn_cast<FixedVectorType>(ty);
   if (!vt)
     return 0;
   Type *e = vt->getElementType();
-  if ((e->isIntegerTy() && !e->isIntegerTy(1)) || ieee(e))
-    return e->getPrimitiveSizeInBits();
-  return 0;
+  return e->isIntegerTy() || e->isPointerTy() || ieee(e) ? packedWidth(e) : 0;
 }
 
 // The width of ty's bits as a field of a packed struct: an integer (i1 as
@@ -536,6 +534,16 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
   default:
     break;
   }
+  // A bitcast to or from a vector keeps the bits, lane 0 lowest, as memory
+  // lays them out on a little-endian target.
+  if (opcode == Instruction::BitCast && (src->isVectorTy() || dst->isVectorTy())) {
+    unsigned width = packedWidth(src);
+    if (!width || width != packedWidth(dst))
+      throw Unsupported("cast bitcast from " + describe(op));
+    Term bits = src->isVectorTy() ? a : toField(a, src);
+    return dst->isVectorTy() ? bits : fromField(bits, dst);
+  }
+
   // A bitcast between a float and an integer, or another float, of the same
   // width keeps the bits.
   if (opcode == Instruction::BitCast && !src->isPointerTy() &&
@@ -726,9 +734,9 @@ void Encoder::encode(Instruction &inst) {
     Term v = value(vec);
     Type *elem = cast<FixedVectorType>(vec->getType())->getElementType();
     if (isa<ExtractElementInst>(inst)) {
-      r = fromBits(t.extract(v, low + w - 1, low), elem);
+      r = fromField(t.extract(v, low + w - 1, low), elem);
     } else {
-      r = replaceBits(v, low, toBits(value(inst.getOperand(1)), elem));
+      r = replaceBits(v, low, toField(value(inst.getOperand(1)), elem));
     }
   } else if (isa<ExtractValueInst>(inst) || isa<InsertValueInst>(inst)) {
     // The field's bits within the packed struct, at its indices.
