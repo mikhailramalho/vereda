@@ -10,6 +10,12 @@
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/Support/WithColor.h>
 
+// glibc before 2.41 declares its *f128 functions for GCC only (clang counts
+// as GCC 4.2); the function is there all the same.
+#if !__HAVE_FLOAT128
+extern "C" int strfromf128(char *, size_t, const char *, __float128);
+#endif
+
 using namespace llvm;
 
 namespace vereda::witness {
@@ -62,7 +68,7 @@ static void writeFloat(raw_ostream &os, const APInt &v) {
   bool lost;
   f.convert(APFloat::IEEEquad(), APFloat::rmNearestTiesToEven, &lost);
   APInt bits = f.bitcastToAPInt();
-  _Float128 q;
+  __float128 q;
   std::memcpy(&q, bits.getRawData(), sizeof q);
   char buf[48];
   strfromf128(buf, sizeof buf, "%.6e", q);
