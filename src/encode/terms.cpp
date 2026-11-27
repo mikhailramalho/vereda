@@ -1159,38 +1159,54 @@ signedOp(char op, std::pair<int64_t, int64_t> a, std::pair<int64_t, int64_t> b, 
   return std::make_pair(int64_t(lo), int64_t(hi));
 }
 
-std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known known,
-                                                         unsigned depth) {
+std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known known) {
   if (!e.isBV() || e.width() > 64)
     return std::nullopt;
   auto &cache = known ? sscratch : sranges;
-  if (auto it = cache.find(e.id()); it != cache.end())
-    return it->second;
-  unsigned w = e.width();
-  int64_t lo = smin(w), hi = smax(w);
-  auto meet = [&](int64_t l, int64_t h) {
-    lo = std::max(lo, l);
-    hi = std::min(hi, h);
-  };
-  if (std::optional<Range> r = range(e, known, depth); r && oneSide(r->lo, r->hi, w))
-    meet(toSigned(r->lo, w), toSigned(r->hi, w));
-  if (std::optional<Bounds> f = known ? known(e) : std::nullopt)
-    meet(f->slo, f->shi);
-  const Node *n = node(e);
-  if (n && n->op == Op::SExt && depth <= 32)
-    if (auto a = srange(n->a, known, depth + 1))
-      meet(a->first, a->second);
-  // Signed arithmetic that cannot wrap.
-  if (n && (n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul) && depth <= 32)
-    if (auto a = srange(n->a, known, depth + 1))
-      if (auto b = srange(n->b, known, depth + 1))
-        if (auto r = signedOp(n->op == Op::Add ? '+' : n->op == Op::Sub ? '-' : '*', *a, *b, w))
-          meet(r->first, r->second);
-  std::optional<std::pair<int64_t, int64_t>> r;
-  if (lo <= hi)
-    r = std::make_pair(lo, hi);
-  cache.try_emplace(e.id(), r);
-  return r;
+  // Iterative, as a sum can be deeper than the stack: each term after the
+  // operands its sign extension or signed arithmetic reads.
+  llvm::SmallVector<Ref, 32> stack{e};
+  while (!stack.empty()) {
+    Ref x = stack.back();
+    if (cache.count(x.id())) {
+      stack.pop_back();
+      continue;
+    }
+    const Node *n = node(x);
+    bool arith = n && (n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul);
+    bool ext = n && n->op == Op::SExt;
+    size_t before = stack.size();
+    for (const Ref &k : {arith || ext ? n->a : Ref(), arith ? n->b : Ref()})
+      if (k && k.isBV() && k.width() <= 64 && !cache.count(k.id()))
+        stack.push_back(k);
+    if (stack.size() != before)
+      continue;
+    stack.pop_back();
+    unsigned w = x.width();
+    int64_t lo = smin(w), hi = smax(w);
+    auto meet = [&](int64_t l, int64_t h) {
+      lo = std::max(lo, l);
+      hi = std::min(hi, h);
+    };
+    if (std::optional<Range> r = range(x, known, 0); r && oneSide(r->lo, r->hi, w))
+      meet(toSigned(r->lo, w), toSigned(r->hi, w));
+    if (std::optional<Bounds> f = known ? known(x) : std::nullopt)
+      meet(f->slo, f->shi);
+    if (ext)
+      if (auto a = cache.lookup(n->a.id()))
+        meet(a->first, a->second);
+    // Signed arithmetic that cannot wrap.
+    if (arith)
+      if (auto a = cache.lookup(n->a.id()))
+        if (auto b = cache.lookup(n->b.id()))
+          if (auto r = signedOp(n->op == Op::Add ? '+' : n->op == Op::Sub ? '-' : '*', *a, *b, w))
+            meet(r->first, r->second);
+    std::optional<std::pair<int64_t, int64_t>> r;
+    if (lo <= hi)
+      r = std::make_pair(lo, hi);
+    cache.try_emplace(x.id(), r);
+  }
+  return cache.lookup(e.id());
 }
 
 int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known) {
@@ -1202,7 +1218,7 @@ int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known know
     return -1;
   };
   if (sign) {
-    auto x = srange(a, known, 0), y = x ? srange(b, known, 0) : std::nullopt;
+    auto x = srange(a, known), y = x ? srange(b, known) : std::nullopt;
     return x && y ? settle(x->first, x->second, y->first, y->second) : -1;
   }
   std::optional<Range> x = range(a, known, 0), y = x ? range(b, known, 0) : std::nullopt;
@@ -1235,7 +1251,7 @@ int Terms::decided(const Ref &cmp, Known known) {
       return 0;
     if (x && y && x->lo == x->hi && y->lo == y->hi) // one value each, the same
       return 1;
-    auto sx = srange(n->a, known, 0), sy = srange(n->b, known, 0);
+    auto sx = srange(n->a, known), sy = srange(n->b, known);
     if (sx && sy && (sx->second < sy->first || sy->second < sx->first))
       return 0;
     return -1;
@@ -1255,7 +1271,7 @@ int Terms::decided(const Ref &cmp, Known known) {
   case Op::SAddO:
   case Op::SSubO:
   case Op::SMulO: {
-    auto x = srange(n->a, known, 0), y = x ? srange(n->b, known, 0) : std::nullopt;
+    auto x = srange(n->a, known), y = x ? srange(n->b, known) : std::nullopt;
     char op = n->op == Op::SAddO ? '+' : n->op == Op::SSubO ? '-' : '*';
     return x && y && signedOp(op, *x, *y, n->a.width()) ? 0 : -1;
   }
@@ -1273,7 +1289,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
     clearScratch(); // set may have moved a bound since the last query
     if (std::optional<Range> r = range(e, known, 0))
       b.ulo = r->lo, b.uhi = r->hi;
-    if (auto s = srange(e, known, 0))
+    if (auto s = srange(e, known))
       b.slo = s->first, b.shi = s->second;
     return b;
   };

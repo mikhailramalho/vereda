@@ -398,7 +398,7 @@ private:
   // when that does not cross the sign bit, the bounds known gives it, and
   // the operand it sign-extends; null when there are none (a path no
   // execution takes) or e is wider than 64 bits.
-  std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known, unsigned depth);
+  std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known);
   // The range of n, a term of width bits, from its operands' (range's work).
   std::optional<Range> shape(const Node &n, unsigned width, Known known, unsigned depth);
   // range's results for one query under known, cleared per query (a
