@@ -2396,8 +2396,10 @@ private:
     if (rust && opts.pointerCheck && !t.isFalse(guard)) {
       if (opts.property == Property::ValidFree)
         throw Unsupported("free under Rust's allocator is not checked (#357)");
-      if (opts.property == Property::All && warned.insert(c.getCalledFunction()).second)
+      if (opts.property == Property::All && !warnedRustFree) {
+        warnedRustFree = true;
         util::warning("frees under Rust's allocator are not checked (#357)");
+      }
     }
     if (opts.pointerCheck && !rust &&
         (opts.property == Property::All || opts.property == Property::ValidFree)) {
@@ -2522,6 +2524,7 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
+  bool warnedRustFree = false; // once per run: realloc's model checks, then frees
   DenseSet<const void *> unsatGuards;
   DenseSet<const void *> satGuards;
   uint64_t satEpoch = 0;

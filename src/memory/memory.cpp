@@ -358,7 +358,11 @@ Memory::InvalidFree Memory::invalidFree(const State &st, Term p) {
 }
 
 void Memory::free(State &st, Term p) {
-  st.dead = t.store(st.dead, object(p), t.boolean(true));
+  // free(NULL) does nothing; object 0 stays live, the array constant.
+  Term obj = object(p);
+  if (const APInt *id = t.constant(obj); id && id->isZero())
+    return;
+  st.dead = t.store(st.dead, obj, t.boolean(true));
 }
 
 void Memory::markInitialisedObject(State &st, uint64_t o) {
