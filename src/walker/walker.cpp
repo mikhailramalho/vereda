@@ -955,9 +955,14 @@ private:
           it->second.clear();
           return;
         }
-        if (opts.showIterations)
-          util::progress(Twine("Unwinding loop ") + Twine(number) + " iteration " + Twine(i) +
-                         "   " + locDisplay);
+        if (opts.showIterations) {
+          unsigned &shown = shownIterations[l];
+          if (i > shown && (i <= 1024 || isPowerOf2_32(i))) {
+            util::progress(Twine("Unwinding loop ") + Twine(number) + " iteration " + Twine(i) +
+                           "   " + locDisplay);
+            shown = i;
+          }
+        }
       }
       frame.iteration[l] = i;
       region(frame, fi, l);
@@ -2623,6 +2628,8 @@ private:
   std::optional<Stopped> stopped;
   SmallVector<ActiveCall, 4> calls;
   bool truncatedInner = false;
+  // The deepest iteration printed per loop (Options::showIterations).
+  DenseMap<const Loop *, unsigned> shownIterations;
   bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
