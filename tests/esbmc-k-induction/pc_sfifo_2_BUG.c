@@ -463,7 +463,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/pc_sfifo_2_BUG
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -73,7 +73,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/01_cond_08
 // Needs: --context-bound 1 --lock-order-check
-// RUN: --unwind 4 --context-bound 1 --lock-order-check -Wno-error=implicit-function-declaration
+// RUN: --unwind 4 --context-bound 1 --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

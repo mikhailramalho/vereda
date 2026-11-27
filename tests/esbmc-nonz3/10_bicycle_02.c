@@ -1305,7 +1305,7 @@ static void _ZN6Thread5startEv(struct l_class_OC_Thread *this) {
 /******************************************************************************/
 // Imported from ESBMC regression/nonz3/10_bicycle_02
 // Needs: --context-bound 3 --schedule
-// RUN: --unwind 1 --ub-pointer-check=false --no-unwinding-assertions --context-bound 3 --no-slice --schedule
+// RUN: --unwind 1 --ub-pointer-check=false --no-unwinding-assertions --context-bound 3 --schedule
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

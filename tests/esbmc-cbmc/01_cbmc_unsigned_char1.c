@@ -13,7 +13,7 @@ int main ()
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_unsigned_char1
 // Needs: -funsigned-char
-// RUN: -funsigned-char -Wno-error=implicit-function-declaration
+// RUN: -funsigned-char
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

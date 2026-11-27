@@ -36,7 +36,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_28_successful
 // Needs: --context-bound 2 --k-induction --max-inductive-step 3
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --context-bound 2 -m64 --k-induction --max-inductive-step 3 --ub-pointer-check=false --no-bounds-check -Wno-error=implicit-function-declaration
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --context-bound 2 -m64 --k-induction --max-inductive-step 3 --ub-pointer-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

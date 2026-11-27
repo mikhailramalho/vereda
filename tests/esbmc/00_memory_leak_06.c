@@ -40,7 +40,7 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc/00_memory_leak_06
 // Needs: --memory-leak-check
-// RUN: --no-slice --memory-leak-check --unwind 10 --no-unwinding-assertions
+// RUN: --memory-leak-check --unwind 10 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

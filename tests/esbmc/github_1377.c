@@ -260,7 +260,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1377
 // Needs: --k-induction --max-inductive-step 1
-// RUN: --unwind 1 --no-unwinding-assertions --k-induction --max-inductive-step 1 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --z3 -Wno-error=implicit-function-declaration
+// RUN: --unwind 1 --no-unwinding-assertions --k-induction --max-inductive-step 1 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

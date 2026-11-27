@@ -26,7 +26,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-large
 // Needs: --all-witnesses --max-witnesses 2
-// RUN: --all-witnesses --max-witnesses 2 --unwind 51 --no-slice
+// RUN: --all-witnesses --max-witnesses 2 --unwind 51
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 2 witnesses\]

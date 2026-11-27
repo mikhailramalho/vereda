@@ -18,7 +18,7 @@ int main() {
 }
 // Imported from ESBMC regression/k-induction/dirkex_unsafe
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

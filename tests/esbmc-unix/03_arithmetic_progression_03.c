@@ -83,7 +83,7 @@ int main()
 
 // Imported from ESBMC regression/esbmc-unix/03_arithmetic_progression_03
 // Needs: --context-bound 2
-// RUN: --unwind 4 --context-bound 2 --no-unwinding-assertions -Wno-error=implicit-function-declaration
+// RUN: --unwind 4 --context-bound 2 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

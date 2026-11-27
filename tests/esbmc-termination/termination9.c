@@ -34,7 +34,7 @@ int main() {
 }
 // Imported from ESBMC regression/termination/termination9
 // Needs: --termination --max-inductive-step 3
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

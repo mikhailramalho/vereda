@@ -81,7 +81,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_07
 // Needs: --context-bound 3
-// RUN: --unwind 3 --context-bound 3 -Wno-error=implicit-function-declaration
+// RUN: --unwind 3 --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

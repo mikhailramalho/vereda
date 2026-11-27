@@ -80,7 +80,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/github_2928_qw2004_2
 // Needs: --sv-comp --force-realloc-success --data-races-check-only
-// RUN: -m32 --sv-comp --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --ub-pointer-check=false --no-bounds-check --data-races-check-only --no-assertions --incremental-bmc
+// RUN: -m32 --sv-comp --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --ub-pointer-check=false --data-races-check-only --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race.*$
 // MODE: FUTURE

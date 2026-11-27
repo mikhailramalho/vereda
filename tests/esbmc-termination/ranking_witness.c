@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/termination/ranking_witness
 // Needs: --termination --max-inductive-step 3 --witness-output-yaml witness.yml
-// RUN: --termination --k-step 2 --max-inductive-step 3 --no-assertions --ub-pointer-check=false --no-bounds-check --witness-output-yaml witness.yml
+// RUN: --termination --k-step 2 --max-inductive-step 3 --no-assertions --ub-pointer-check=false --witness-output-yaml witness.yml
 // MODE: FUTURE
 // EXPECT: ^Ranking function shows all executions terminate$
 // EXPECT: ^Generating Correctness Yaml Witness for: .*ranking_witness\.c$

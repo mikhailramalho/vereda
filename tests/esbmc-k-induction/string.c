@@ -53,7 +53,7 @@ main()
 
 // Imported from ESBMC regression/k-induction/string
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration -Wno-error=implicit-int
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

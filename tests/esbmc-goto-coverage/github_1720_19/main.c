@@ -5,7 +5,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1720_19
 // Needs: --condition-coverage --no-cov-asserts -I . --include-file
-// RUN: --condition-coverage --no-cov-asserts -I . --include-file lib.c -Wno-error=implicit-function-declaration
+// RUN: --condition-coverage --no-cov-asserts -I . --include-file lib.c
 // FILES: lib.c
 // MODE: FUTURE
 // EXPECT: ^Reached Conditions:  6

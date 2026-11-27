@@ -41,7 +41,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/github_5230_pointer_write_resolved
 // Needs: --k-induction --max-inductive-step 5
-// RUN: --k-induction --max-inductive-step 5 --no-bounds-check
+// RUN: --k-induction --max-inductive-step 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: Solution found by the inductive step

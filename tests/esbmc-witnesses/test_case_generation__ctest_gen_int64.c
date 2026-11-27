@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_int64
 // Needs: --condition-coverage --generate-ctest-testcase
-// RUN: --condition-coverage --generate-ctest-testcase --unwind 1 --no-unwinding-assertions --no-bounds-check --force-malloc-success
+// RUN: --condition-coverage --generate-ctest-testcase --unwind 1 --no-unwinding-assertions --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^Generated 4 CTest test case\(s\) with CMakeLists\.txt
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

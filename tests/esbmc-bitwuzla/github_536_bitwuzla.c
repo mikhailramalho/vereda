@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_536_bitwuzla
 // Needs: --smt-model
-// RUN: --smt-model --bitwuzla -Wno-error=implicit-function-declaration
+// RUN: --smt-model --bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

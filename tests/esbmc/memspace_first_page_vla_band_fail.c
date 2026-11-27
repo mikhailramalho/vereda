@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/memspace_first_page_vla_band_fail
 // Needs: --reserve-first-page
-// RUN: --vla-size-check=false --no-bounds-check --reserve-first-page
+// RUN: --vla-size-check=false --reserve-first-page
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none
