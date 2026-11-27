@@ -12,6 +12,9 @@ bits, object and offset, so a pointer taken out of the vector is the one
 put in. Pointer vectors raise no provenance question here: the scalarizer
 splits their loads and stores into element ones, which memory tracks as
 any pointer store. A bitcast to or from a vector keeps the bits, lane 0
-lowest, as storing and loading would on a little-endian target. Vector
-global initialisers of i1 still stay unsupported: memory packs their bits,
-which the element pointers do not read.
+lowest, as storing and loading would on a little-endian target. A vector
+of i1 in memory, which the scalarizer leaves whole, is its bits packed,
+element i in bit i, zero-extended to its store size: a load or store of
+one is one of an integer of that size, and a global initialiser of one
+packs its elements so. That is how clang reads a bool ext_vector (a byte
+load, then a bitcast), and InstCombine folds the two into a vector load.
