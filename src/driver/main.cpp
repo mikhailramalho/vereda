@@ -230,6 +230,11 @@ static std::string checkFamilies() {
     on.push_back("assertions");
   if (property == Property::UnreachCall)
     on.push_back("reach-error");
+  // As the walker counts an error label: as an assertion, or the error
+  // location under unreach-call.
+  std::string label = "error-label " + errorLabel;
+  if (!errorLabel.empty() && ((all && !noAssertions) || property == Property::UnreachCall))
+    on.push_back(label);
   if (!noUnwindingAssertions)
     on.push_back("unwinding-assertions");
   if (all && ubPointerCheck)

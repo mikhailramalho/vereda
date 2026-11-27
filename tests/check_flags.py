@@ -58,7 +58,15 @@ with tempfile.TemporaryDirectory() as directory:
             (["--property", "unreach-call", "--ub-shift-check"], "reach-error, unwinding-assertions"),
             (["--property", "valid-free"], "unwinding-assertions, valid-free"),
             (["--property-file", str(overflow)], "unwinding-assertions, signed-overflow"),
-            (["--property", "termination"], "unwinding-assertions")):
+            (["--property", "termination"], "unwinding-assertions"),
+            # An error label counts where the walker counts it.
+            (["--error-label", "ERROR"],
+             "assertions, error-label ERROR, unwinding-assertions, pointer, div-by-zero, vla-size"),
+            (["--error-label", "ERROR", "--property", "unreach-call"],
+             "reach-error, error-label ERROR, unwinding-assertions"),
+            (["--error-label", "ERROR", "--no-assertions"],
+             "unwinding-assertions, pointer, div-by-zero, vla-size"),
+            (["--error-label", "ERROR", "--property", "termination"], "unwinding-assertions")):
         check(command + [str(source)] + flags, 0, "[INFO] Checks: " + families + "\n")
     ir.write_text("define i32 @main() { ret i32 0 }\n")
     check([binary, str(ir), "--no-assertions", "--no-unwinding-assertions",
