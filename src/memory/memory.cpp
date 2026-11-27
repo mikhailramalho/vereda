@@ -127,12 +127,14 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
   Term e = t.add(b, size);
   // Ordered with a gap, aligned, not wrapping: objects never overlap, and a
   // one-past-the-end address belongs to its own object only. A constant-size
-  // object that fits within a quarter of the address space alongside earlier
-  // reserved objects gets its layout unconditionally so path guards stay out
-  // of the global solver context; objects.back().exists still records exists
-  // so fromAddress() never maps an address into an unallocated object.
-  // Symbolic or huge allocations bind layout only where exists holds, or a
-  // size on one path would remove inputs from every path.
+  // object allocated on every path that fits within a quarter of the address
+  // space alongside earlier objects may have its layout deferred until its
+  // base is observed. Every other object binds layout only where exists
+  // holds: a conditional object placed on every path would take space on
+  // paths without it, and another path whose own objects fill the rest of
+  // the address space (malloc takes sizes up to PTRDIFF_MAX) would vanish.
+  // Conditional objects still count towards reserved, so reserved stays an
+  // upper bound on end.
   bool unconditional = t.isTrue(exists);
   bool defer = false;
   if (!t.isFalse(exists)) {
@@ -142,8 +144,7 @@ Term Memory::allocate(Term size, uint64_t align, Term exists, bool exposed) {
       U need = U(sz->getZExtValue()) + std::max<uint64_t>(align, 1);
       if (endBounded && U(reserved) + need <= limit) {
         reserved += static_cast<uint64_t>(need);
-        unconditional = true;
-        defer = true;
+        defer = unconditional;
       } else {
         endBounded = false;
       }

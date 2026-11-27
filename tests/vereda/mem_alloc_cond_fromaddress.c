@@ -1,6 +1,5 @@
-// Conditional constant-size allocations get their layout unconditionally,
-// while still checking exists in fromAddress() and keeping null conversions
-// exact on untaken branches.
+// A conditional constant-size allocation: fromAddress() still checks exists
+// and null conversions stay exact on untaken branches.
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdint.h>
 #include <stdlib.h>
