@@ -39,7 +39,7 @@ struct Run {
   const llvm::BasicBlock *header = nullptr;
   std::string error;
 
-  Run(const std::string &ir, llvm::StringRef loop, unsigned unwind = 0) {
+  Run(const std::string &ir, llvm::StringRef loop, unsigned unwind = 0, bool uninit = false) {
     llvm::SmallString<64> path;
     int fd;
     assert(!llvm::sys::fs::createTemporaryFile("loop_transition", "ll", fd, path));
@@ -55,7 +55,7 @@ struct Run {
     assert(created);
     s = std::move(*created);
     t = std::make_unique<encode::Terms>(*s);
-    mem = std::make_unique<memory::Memory>(*t, m->getDataLayout());
+    mem = std::make_unique<memory::Memory>(*t, m->getDataLayout(), uninit);
     enc = std::make_unique<encode::Encoder>(*t, *mem);
     llvm::Function &main = *m->getFunction("main");
     for (const llvm::BasicBlock &bb : main)
@@ -65,6 +65,7 @@ struct Run {
     walker::Options opts;
     opts.unwind = unwind;
     opts.showIterations = false;
+    opts.uninitCheck = uninit;
     if (llvm::Error e = walker::transitions(main, *header, opts, *enc, *mem, checks, trace, out))
       error = llvm::toString(std::move(e));
   }
@@ -322,10 +323,47 @@ exit:
 
 } // namespace
 
+// Under --ub-uninit-check the loop writes a[0] only, so a[1] keeps its
+// state from before the loop: the read of it may be uninitialised in any
+// iteration, and the transition must keep that check violable.
+void uninit() {
+  Run r(R"(
+declare void @__vereda_uninitialised(ptr captures(none)) memory(argmem: write)
+define i32 @main() {
+entry:
+  %a = alloca [2 x i32], align 4
+  call void @__vereda_uninitialised(ptr %a)
+  %p = getelementptr [2 x i32], ptr %a, i64 0, i64 1
+  br label %loop
+loop:
+  %i = phi i32 [0, %entry], [%next, %body]
+  %c = icmp ult i32 %i, 3
+  br i1 %c, label %body, label %exit
+body:
+  %v = load i32, ptr %p
+  %ok = icmp eq i32 %v, 0
+  %z = zext i1 %ok to i32
+  call void @__VERIFIER_assert(i32 %z)
+  store i32 1, ptr %a
+  %next = add i32 %i, 1
+  br label %loop
+exit:
+  ret i32 0
+}
+)", "loop", 0, true);
+  assert(r.error.empty() && r.out.size() == 1);
+  bool violable = false;
+  for (auto &[idx, violated] : r.out[0].checks)
+    if (r.checks[idx].property == checks::Property::UninitialisedRead && r.sat(violated))
+      violable = true;
+  assert(violable);
+}
+
 int main() {
   scalars();
   array();
   call();
   nested();
   unsupported();
+  uninit();
 }

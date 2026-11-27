@@ -1094,7 +1094,24 @@ private:
       auto *a = dyn_cast<AllocaInst>(o);
       if (!holdsNoPointers(o, visiting) || (a && !current(fi.li, a, l)))
         throw Unsupported("a loop transition writing an object that may hold pointers");
-      mem.havoc(tr.preMem, a ? enc.bound(a) : enc.value(o));
+      Term p = a ? enc.bound(a) : enc.value(o);
+      // havoc marks the object initialised, as an unknown call may write it
+      // all; here a byte is initialised if it was before the loop or an
+      // earlier iteration may have written it, so the bytes the loop never
+      // writes keep their state.
+      std::vector<Term> init;
+      if (opts.uninitCheck) {
+        const APInt *size = t.constant(mem.size(mem.object(p)));
+        if (!size || size->ugt(memory::Memory::MaxBytes))
+          throw Unsupported("a loop transition over a large object under --ub-uninit-check");
+        init = mem.initBytes(tr.preMem, p, size->getZExtValue());
+        Type *flag = Type::getInt1Ty(header->getContext());
+        for (Term &b : init)
+          b = t.lor(b, enc.fresh(flag, "pre.init"));
+      }
+      mem.havoc(tr.preMem, p);
+      if (!init.empty())
+        mem.setInitBytes(tr.preMem, p, init);
     }
     for (PHINode &phi : header->phis()) {
       if (containsPointer(phi.getType()))
