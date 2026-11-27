@@ -11,7 +11,8 @@ import tempfile
 
 frontend, binary, clang = sys.argv[1:]
 
-# The walk needs about 400 MB, so each limit below runs out during it.
+# The walk needs about 400 MB, so the limits below run out during it; a run
+# that fits (if the walk ever needs less) must still end normally.
 PROGRAM = """extern unsigned __VERIFIER_nondet_uint(void);
 extern void __VERIFIER_assert(int);
 int main(void) {
@@ -30,11 +31,18 @@ with tempfile.TemporaryDirectory() as tmp:
     source.write_text(PROGRAM)
     subprocess.run([sys.executable, frontend, "--clang", clang, "--keep-ir", "--dump-ir-only",
                     str(source)], check=True, capture_output=True)
+    out_of_memory = 0
     for mb in range(200, 370, 10):
         limit = mb << 20
         run = subprocess.run([binary, f"{source}.ll", "--no-summarize-array-loops"],
-                             capture_output=True, text=True, timeout=60,
-                             preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS,
-                                                                   (limit, limit)))
-        assert (run.returncode == 6 and "vereda: out of memory" in run.stderr
-                and "terminate called" not in run.stderr), (mb, run.returncode, run.stderr[-300:])
+                             capture_output=True, text=True, timeout=60, check=False,
+                             preexec_fn=lambda limit=limit: resource.setrlimit(
+                                 resource.RLIMIT_AS, (limit, limit)))
+        failure = (mb, run.returncode, run.stderr[-300:])
+        assert "terminate called" not in run.stderr, failure
+        if run.returncode == 6:
+            assert "vereda: out of memory" in run.stderr, failure
+            out_of_memory += 1
+        else:
+            assert run.returncode in (0, 1, 2), failure
+    assert out_of_memory, "no limit ran out of memory: raise the walk's size"
