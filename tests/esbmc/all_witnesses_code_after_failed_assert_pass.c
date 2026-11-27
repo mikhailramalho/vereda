@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/all_witnesses_code_after_failed_assert_pass
 // Needs: --all-witnesses
-// RUN: --all-witnesses --no-incremental-bmc
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.\d+\]\s+line\s+12\s+w$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+8\s+v$

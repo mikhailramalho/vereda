@@ -12,5 +12,4 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_178_add
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

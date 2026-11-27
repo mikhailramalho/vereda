@@ -55,7 +55,7 @@ int main(void)
 }
 // Imported from ESBMC regression/floats-regression/nextafter
 // Needs: --interval-analysis
-// RUN: -m32 --interval-analysis --no-incremental-bmc
+// RUN: -m32 --interval-analysis
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

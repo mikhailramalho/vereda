@@ -27,5 +27,4 @@ int main()
   assert(Y.X.f != 1);
 }
 // Imported from ESBMC regression/nonz3/01_cbmc_Structs1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

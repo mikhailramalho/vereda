@@ -13,5 +13,4 @@ int main()
   assert((f == ff) || (isnan(f) && isnan(ff)));
 }
 // Imported from ESBMC regression/floats/Float-to-double1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

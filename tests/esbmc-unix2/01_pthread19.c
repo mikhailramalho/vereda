@@ -24,7 +24,6 @@ int main()
   assert(a[i]==1 && a[j]==5);
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread19
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

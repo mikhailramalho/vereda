@@ -14,7 +14,6 @@ int main(void)
   assert(n == ((t == 1 || t == 3) ? sizeof(s.a) : sizeof(s)));
 }
 // Imported from ESBMC regression/esbmc/github_10186_object_size_nondet_type
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

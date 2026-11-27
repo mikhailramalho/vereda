@@ -7,5 +7,4 @@ int main() {
   return 0;
 } 
 // Imported from ESBMC regression/clang_builtins/constant_p_0_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

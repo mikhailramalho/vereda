@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10920_summarised_loop
 // Needs: --all-witnesses
-// RUN: --all-witnesses --no-incremental-bmc
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$

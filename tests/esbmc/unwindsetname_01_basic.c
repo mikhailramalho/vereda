@@ -22,7 +22,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_01_basic
-// RUN: --unwindsetname compute_sum:0:11 --no-incremental-bmc
+// RUN: --unwindsetname compute_sum:0:11
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Needs: --unwindsetname compute_sum:0:11
 // MODE: FUTURE

@@ -27,7 +27,6 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1388
-// RUN: --no-incremental-bmc
 // EXPECT: schedules_explored 1[0-9][0-9],
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: schedules_explored 1[0-9][0-9],

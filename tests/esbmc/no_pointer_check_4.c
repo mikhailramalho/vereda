@@ -8,5 +8,4 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/no_pointer_check_4
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

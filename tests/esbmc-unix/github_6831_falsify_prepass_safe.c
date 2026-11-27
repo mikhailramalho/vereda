@@ -30,7 +30,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_falsify_prepass_safe
 // Needs: --context-bound 2 --falsify-context-bound 3
-// RUN: --context-bound 2 --falsify-context-bound 3 --no-incremental-bmc
+// RUN: --context-bound 2 --falsify-context-bound 3
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 3$
 // EXPECT: Falsifying with context bound 1\n(?:(?!VERIFICATION SUCCESSFUL)[\s\S])*Falsifying with context bound 3

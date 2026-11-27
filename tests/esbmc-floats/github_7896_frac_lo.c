@@ -16,5 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_7896_frac_lo
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

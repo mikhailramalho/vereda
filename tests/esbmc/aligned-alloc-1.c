@@ -16,5 +16,4 @@ int main()
 	free(r);
 }
 // Imported from ESBMC regression/esbmc/aligned-alloc-1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

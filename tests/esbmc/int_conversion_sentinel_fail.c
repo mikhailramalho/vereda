@@ -17,5 +17,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/int_conversion_sentinel_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$

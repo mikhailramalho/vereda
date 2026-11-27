@@ -39,5 +39,4 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/llvm/func_pointer
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

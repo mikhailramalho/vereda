@@ -158,5 +158,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/simplifier
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$

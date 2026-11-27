@@ -30,7 +30,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/volatile_pointer_read_pass
 // Needs: --volatile-check
-// RUN: --std c11 --volatile-check --no-incremental-bmc
+// RUN: --std c11 --volatile-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

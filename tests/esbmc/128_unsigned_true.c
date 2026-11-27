@@ -6,5 +6,4 @@ int main() {
     assert(Z > X);
 }
 // Imported from ESBMC regression/esbmc/128_unsigned_true
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

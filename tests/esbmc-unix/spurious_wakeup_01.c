@@ -32,7 +32,6 @@
  }
 
 // Imported from ESBMC regression/esbmc-unix/spurious_wakeup_01
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

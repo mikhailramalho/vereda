@@ -17,6 +17,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/simplifier-sub
 // Needs: __ESBMC_POINTER_OFFSET
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,6 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_178_constant_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

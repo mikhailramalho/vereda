@@ -6,7 +6,7 @@ void *t(void *a) { pthread_mutex_lock(&m); x = x + 1; pthread_mutex_unlock(&m); 
 int main() { pthread_t a,b; pthread_create(&a,0,t,0); pthread_create(&b,0,t,0); pthread_join(a,0); pthread_join(b,0); assert(x == 2); return 0; }
 // Imported from ESBMC regression/esbmc-unix/github_10296_safe
 // Needs: --context-bound 1
-// RUN: --context-bound 1 --no-incremental-bmc
+// RUN: --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

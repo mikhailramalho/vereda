@@ -25,7 +25,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_nested_deref_race
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

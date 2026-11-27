@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_address
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support passing the address of a global to touch yet, at file .*partial_order_reject_address\.c line +7 column 3 function t$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

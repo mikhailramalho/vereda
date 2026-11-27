@@ -29,6 +29,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/builtin-alloca-good
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

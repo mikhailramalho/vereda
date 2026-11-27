@@ -26,5 +26,4 @@ void main()
 	assert( my_page.len == 255 );
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Struct_Bytewise2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

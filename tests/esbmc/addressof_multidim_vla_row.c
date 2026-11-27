@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_vla_row
 // Needs: --no-pointer-arith-check
-// RUN: --no-pointer-arith-check --no-incremental-bmc
+// RUN: --no-pointer-arith-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

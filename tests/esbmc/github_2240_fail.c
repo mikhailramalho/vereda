@@ -17,7 +17,6 @@ int main()
   return code_ptr(&x);
 }
 // Imported from ESBMC regression/esbmc/github_2240_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: Data object accessed with code type$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: Data object accessed with code type$

@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_percent_n_reached
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

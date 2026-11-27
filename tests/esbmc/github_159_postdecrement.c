@@ -11,5 +11,4 @@ int main() {
   (b--)->d.c;
 }
 // Imported from ESBMC regression/esbmc/github_159_postdecrement
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

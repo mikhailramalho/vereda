@@ -39,7 +39,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4431_atomic_ptr_norace
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-incremental-bmc
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

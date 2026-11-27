@@ -26,5 +26,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/fp2bv_quiet_nan
-// RUN: --fp2bv --solver bitwuzla --no-incremental-bmc
+// RUN: --fp2bv --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$

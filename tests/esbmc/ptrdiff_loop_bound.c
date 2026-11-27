@@ -16,5 +16,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptrdiff_loop_bound
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

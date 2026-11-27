@@ -24,6 +24,6 @@ int main()
 // Imported from ESBMC regression/esbmc-unix/partial_order_terminate_fail
 // Needs: __ESBMC_terminate_thread
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

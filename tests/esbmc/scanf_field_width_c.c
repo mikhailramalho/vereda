@@ -10,5 +10,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_field_width_c
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

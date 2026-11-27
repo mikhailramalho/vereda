@@ -12,5 +12,4 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9785_array_flattener
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,7 +11,6 @@ int main()
   return *a[2];
 }
 // Imported from ESBMC regression/esbmc/memset_whole_pointer_array_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

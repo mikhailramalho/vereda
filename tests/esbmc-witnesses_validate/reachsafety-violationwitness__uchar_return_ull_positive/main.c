@@ -6,7 +6,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/uchar_return_ull_positive
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: -m64 --std c11 --validate-violation-witness --witness witness.yml --no-incremental-bmc
+// RUN: -m64 --std c11 --validate-violation-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -9,7 +9,6 @@ int main()
   memset(&v, 0, sizeof(v) + 2);
 }
 // Imported from ESBMC regression/esbmc/github_1458-false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

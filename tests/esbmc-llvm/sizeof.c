@@ -15,5 +15,4 @@ int main(void)
   assert(foo(2) == 8);
 }
 // Imported from ESBMC regression/llvm/sizeof
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

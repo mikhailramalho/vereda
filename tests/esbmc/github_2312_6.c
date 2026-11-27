@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
   }
 }
 // Imported from ESBMC regression/esbmc/github_2312_6
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

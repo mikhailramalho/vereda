@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_cold_fail
 // Needs: --proof-cache proof-store fp.tsv
-// RUN: --multi-property --proof-cache proof-store fp.tsv --no-incremental-bmc
+// RUN: --multi-property --proof-cache proof-store fp.tsv
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

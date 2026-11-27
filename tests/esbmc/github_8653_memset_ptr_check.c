@@ -19,7 +19,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8653_memset_ptr_check
-// RUN: --no-incremental-bmc
 // EXPECT: FAILED +\[memset\.assertion\.1\].*trying to deref a ptr code
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: FAILED +\[memset\.assertion\.1\].*trying to deref a ptr code

@@ -11,7 +11,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_pointer_component_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  arr\[0\] = &x;$
 // EXPECT: ^  arr\[1\] = 0;$
 // EXPECT: ^VERIFICATION FAILED$

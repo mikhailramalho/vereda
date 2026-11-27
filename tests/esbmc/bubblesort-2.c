@@ -37,5 +37,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bubblesort-2
-// RUN: -DMAX=3 --no-incremental-bmc
+// RUN: -DMAX=3
 // EXPECT: ^VERIFICATION SUCCESSFUL$

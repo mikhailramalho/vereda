@@ -11,7 +11,7 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc/github_1363_invalid_interval_expression_fail
 // Needs: --interval-analysis
-// RUN: --interval-analysis --no-incremental-bmc
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

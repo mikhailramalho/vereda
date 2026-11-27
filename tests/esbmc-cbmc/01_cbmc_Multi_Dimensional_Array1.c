@@ -14,5 +14,4 @@ int main()
   assert(a[9][1] == 2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Multi_Dimensional_Array1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

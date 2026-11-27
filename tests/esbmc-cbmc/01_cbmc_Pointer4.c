@@ -10,5 +10,4 @@ int main()
   if(p) *p=1;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer4
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

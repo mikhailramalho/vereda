@@ -17,6 +17,5 @@ int main()
   __VERIFIER_assert(u.s.c != 4); // reachable
 }
 // Imported from ESBMC regression/esbmc/github_9937_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  u\.s\.c != 4$

@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9358
 // Needs: --printf-check
-// RUN: --printf-check --no-incremental-bmc
+// RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  PASSED .* printf %s argument is not NUL-terminated within its object$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

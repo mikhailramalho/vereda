@@ -4,5 +4,5 @@ int main(int argc, char *argv[])
     ;
 }
 // Imported from ESBMC regression/esbmc/github_2639
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -25,7 +25,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_index_through_pointer_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  \S*s->b\[.*\] = .*\.b=2 }$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  \S*s->b\[.*\] = .*\.b=2 }$

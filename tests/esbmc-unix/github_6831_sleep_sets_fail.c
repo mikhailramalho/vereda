@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_sleep_sets_fail
 // Needs: --ub-data-race-check --sleep-sets
-// RUN: --ub-data-race-check --sleep-sets --no-incremental-bmc
+// RUN: --ub-data-race-check --sleep-sets
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor 0, pruned_by_hash 0, pruned_by_sleep [1-9][0-9]*, pruned_by_cs_bound 0$
 // MODE: FUTURE

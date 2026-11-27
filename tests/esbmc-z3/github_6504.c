@@ -20,7 +20,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/z3/github_6504
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: array bounds violated: heap object
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

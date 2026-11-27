@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/llm/llm_loop_invariant_wrong_answer
 // Needs: --llm-invariants --llm-command model.py --llm-max-rounds 1 REQUIRES posix_host
-// RUN: --llm-invariants --llm-command model.py --llm-max-rounds 1 --no-incremental-bmc
+// RUN: --llm-invariants --llm-command model.py --llm-max-rounds 1
 // MODE: FUTURE
 // EXPECT: ^LLM loop invariants: 1 of 2 candidate conjunct\(s\) are inductive$
 // EXPECT: \A(?![\s\S]*VERIFICATION SUCCESSFUL)[\s\S]*\Z

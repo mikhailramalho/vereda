@@ -9,7 +9,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_struct_spanning_oob_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated$

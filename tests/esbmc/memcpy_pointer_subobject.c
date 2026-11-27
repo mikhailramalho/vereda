@@ -59,5 +59,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memcpy_pointer_subobject
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

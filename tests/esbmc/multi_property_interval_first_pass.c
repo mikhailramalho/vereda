@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/multi_property_interval_first_pass
 // Needs: --interval-analysis
-// RUN: --interval-analysis --multi-property --no-incremental-bmc
+// RUN: --interval-analysis --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+13\s+w$
 // Vereda: verdict none

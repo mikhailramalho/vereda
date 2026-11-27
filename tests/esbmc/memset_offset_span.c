@@ -21,5 +21,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memset_offset_span
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

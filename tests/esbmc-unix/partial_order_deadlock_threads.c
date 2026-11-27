@@ -27,7 +27,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_deadlock_threads
 // Needs: --partial-order --deadlock-check
-// RUN: --partial-order --deadlock-check --no-incremental-bmc
+// RUN: --partial-order --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

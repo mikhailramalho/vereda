@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_falsify_prepass_restore
 // Needs: --falsify-context-bound 2
-// RUN: --falsify-context-bound 2 --no-incremental-bmc
+// RUN: --falsify-context-bound 2
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 2$
 // EXPECT: ^VERIFICATION FAILED$

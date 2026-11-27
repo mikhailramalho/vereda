@@ -13,5 +13,4 @@ int main()
   assert(*(a[i])==x);  
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

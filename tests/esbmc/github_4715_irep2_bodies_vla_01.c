@@ -26,5 +26,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_bodies_vla_01
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -13,7 +13,6 @@ int main()
   return a + b;
 }
 // Imported from ESBMC regression/esbmc/github_8006_scope
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict SUCCESSFUL

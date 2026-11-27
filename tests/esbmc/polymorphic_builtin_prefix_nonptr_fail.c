@@ -12,5 +12,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/polymorphic_builtin_prefix_nonptr_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

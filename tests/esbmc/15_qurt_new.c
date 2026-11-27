@@ -163,5 +163,4 @@ int  qurt()
 }
 
 // Imported from ESBMC regression/esbmc/15_qurt_new
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/llm/llm_loop_invariant_no_answer
 // Needs: --llm-invariants --llm-command model.sh --llm-max-rounds 2 REQUIRES posix_host
-// RUN: --llm-invariants --llm-command model.sh --llm-max-rounds 2 --no-incremental-bmc
+// RUN: --llm-invariants --llm-command model.sh --llm-max-rounds 2
 // MODE: FUTURE
 // EXPECT: ^WARNING: LLM loop invariants: no answer: CLI LLM process exited with 1$
 // EXPECT: ^LLM loop invariants: round 2, asking the model$

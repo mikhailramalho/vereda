@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/buf-overflow
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

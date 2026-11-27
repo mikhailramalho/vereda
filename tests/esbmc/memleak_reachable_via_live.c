@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memleak_reachable_via_live
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
+// RUN: --memory-leak-check --no-reachable-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

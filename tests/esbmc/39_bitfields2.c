@@ -29,5 +29,4 @@ main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/39_bitfields2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

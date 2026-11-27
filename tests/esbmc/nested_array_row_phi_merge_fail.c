@@ -19,7 +19,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_row_phi_merge_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^\s+the else arm.s store survives the merge$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the else arm.s store survives the merge$

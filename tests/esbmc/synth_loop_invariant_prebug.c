@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_prebug
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants --no-incremental-bmc
+// RUN: --synthesise-loop-invariants
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
 // EXPECT: ^VERIFICATION FAILED$

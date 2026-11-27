@@ -7,5 +7,4 @@ int main() {
 	assert(i == j);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_ExternFailing_Assert1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

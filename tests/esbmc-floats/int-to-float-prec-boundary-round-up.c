@@ -18,5 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/int-to-float-prec-boundary-round-up
-// RUN: --solver z3 -m32 --no-incremental-bmc
+// RUN: --solver z3 -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

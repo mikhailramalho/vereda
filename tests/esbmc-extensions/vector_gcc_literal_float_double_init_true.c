@@ -14,5 +14,4 @@ int main() {
    return 0; 
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_float_double_init_true
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

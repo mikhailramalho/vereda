@@ -15,5 +15,4 @@ int main() {
 }
 
 // Imported from ESBMC regression/floats/Float28
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

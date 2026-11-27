@@ -6,7 +6,7 @@ void *t(void *a) { x = 5; return 0; }
 int main() { pthread_t a; pthread_create(&a, 0, t, 0); pthread_join(a, 0); assert(x == 5); return 0; }
 // Imported from ESBMC regression/esbmc-unix/partial_order_github_10296_assert_join
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

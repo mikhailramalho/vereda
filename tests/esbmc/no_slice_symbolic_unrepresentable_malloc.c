@@ -14,5 +14,4 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/no_slice_symbolic_unrepresentable_malloc
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_8204_u32
 // Needs: --interval-analysis --interval-analysis-wrapped
-// RUN: --interval-analysis --interval-analysis-wrapped --no-incremental-bmc
+// RUN: --interval-analysis --interval-analysis-wrapped
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -99,7 +99,7 @@ int minus(int a, int b)
 }
 // Imported from ESBMC regression/esbmc-unix2/github_608_success
 // Needs: --context-bound 2 --no-por
-// RUN: --context-bound 2 --no-por --no-incremental-bmc
+// RUN: --context-bound 2 --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -23,7 +23,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_inactive_interleaving
 // Needs: --proof-cache proof-store
-// RUN: --multi-property --proof-cache proof-store --no-incremental-bmc
+// RUN: --multi-property --proof-cache proof-store
 // MODE: FUTURE
 // EXPECT: ^WARNING: Proof cache: inactive \(thread interleavings after the first, where a claim carries a schedule its cone does not name\); every claim will be solved and none stored$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

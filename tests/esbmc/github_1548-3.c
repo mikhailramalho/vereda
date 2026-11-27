@@ -9,6 +9,5 @@ int main(int argc, char **argv)
 	memset(c, 0, 1);
 }
 // Imported from ESBMC regression/esbmc/github_1548-3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: write access to const object `b'

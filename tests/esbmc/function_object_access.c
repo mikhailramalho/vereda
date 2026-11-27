@@ -11,5 +11,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/function_object_access
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -48,5 +48,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/02_eureka22
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

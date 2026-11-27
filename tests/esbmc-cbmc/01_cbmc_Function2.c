@@ -9,5 +9,4 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

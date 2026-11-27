@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/big_endian_union_trace_fail
 // Needs: --big-endian
-// RUN: --big-endian --no-incremental-bmc
+// RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  h = \{ \.i=16909060, \.s=258 \}$

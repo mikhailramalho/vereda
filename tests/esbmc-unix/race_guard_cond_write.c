@@ -25,7 +25,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_guard_cond_write
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

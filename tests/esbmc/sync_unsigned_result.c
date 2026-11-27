@@ -11,5 +11,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/sync_unsigned_result
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

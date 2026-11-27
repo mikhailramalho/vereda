@@ -23,7 +23,6 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_523
-// RUN: --no-incremental-bmc
 // EXPECT: dereference failure: Access to object out of bounds
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: Access to object out of bounds

@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/big_endian_union_short_member_fail
 // Needs: --big-endian
-// RUN: --big-endian --no-incremental-bmc
+// RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

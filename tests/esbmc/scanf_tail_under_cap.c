@@ -10,5 +10,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_tail_under_cap
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

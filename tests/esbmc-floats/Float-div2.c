@@ -22,5 +22,4 @@ int main (void) {
 	return 1;
 }
 // Imported from ESBMC regression/floats/Float-div2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

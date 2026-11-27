@@ -20,5 +20,4 @@ int main()
   assert(g()==1); // second call to g
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Static2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

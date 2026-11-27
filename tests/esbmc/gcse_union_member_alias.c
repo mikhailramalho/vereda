@@ -17,5 +17,4 @@ int main()
   assert(y == 3);
 }
 // Imported from ESBMC regression/esbmc/gcse_union_member_alias
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -29,7 +29,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_usr_passthrough
-// RUN: --unwindsetname c:@F@compute_sum#:0:11,compute_product:0:6 --solver z3 --no-incremental-bmc
+// RUN: --unwindsetname c:@F@compute_sum#:0:11,compute_product:0:6 --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

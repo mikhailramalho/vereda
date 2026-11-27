@@ -22,5 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_fail
-// RUN: --ub-pointer-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$

@@ -53,7 +53,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/irep2_only_struct_literal_padding
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success --no-incremental-bmc
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

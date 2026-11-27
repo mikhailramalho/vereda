@@ -18,6 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_unmodelled_free_interior
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: invalid pointer freed$

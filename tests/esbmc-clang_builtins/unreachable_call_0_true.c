@@ -21,7 +21,6 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/unreachable_call_0_true
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

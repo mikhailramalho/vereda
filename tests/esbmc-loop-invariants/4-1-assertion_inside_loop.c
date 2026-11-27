@@ -19,7 +19,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/4-1-assertion_inside_loop
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
+// RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^WARNING: every violated claim lies downstream of a loop invariant havoc
 // EXPECT: ^VERIFICATION UNKNOWN$

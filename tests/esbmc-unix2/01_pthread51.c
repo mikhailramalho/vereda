@@ -15,5 +15,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread51
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

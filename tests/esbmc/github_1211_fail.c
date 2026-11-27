@@ -12,7 +12,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1211_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^Caching time: .*\(removed 1 assertions\)$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^Caching time: .*\(removed 1 assertions\)$

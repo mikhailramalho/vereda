@@ -22,7 +22,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_deref_component_value_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  p\.in = 7; // 00000000 00000000 00000000 00000111$
 // EXPECT: ^  q->out = 21; // 00000000 00000000 00000000 00010101$
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,5 +9,5 @@ int main()
   __VERIFIER_assert(u.p != arr + 100); // pointer kept
 }
 // Imported from ESBMC regression/esbmc/github_9937_byte_keep_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$

@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/40_total_stack_frames_pop_true
 // Needs: --total-stack-limit 256
-// RUN: --total-stack-limit 256 --no-incremental-bmc
+// RUN: --total-stack-limit 256
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

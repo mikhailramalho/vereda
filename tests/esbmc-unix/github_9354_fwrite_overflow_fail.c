@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_9354_fwrite_overflow_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED +\[fwrite\.array-bounds-violated\.[0-9]+\].*dereference failure: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

@@ -37,5 +37,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/compound_literal_per_evaluation
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

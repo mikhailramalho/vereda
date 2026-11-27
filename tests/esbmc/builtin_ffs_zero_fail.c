@@ -14,5 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_ffs_zero_fail
-// RUN: --ub-count-zero-check --no-incremental-bmc
+// RUN: --ub-count-zero-check
 // EXPECT: ^VERIFICATION FAILED$

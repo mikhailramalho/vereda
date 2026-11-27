@@ -10,6 +10,6 @@ int main()
 }
 // Imported from ESBMC regression/z3/quantifiers-hello-false
 // Needs: __ESBMC_forall
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -34,7 +34,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_pointer_fail
-// RUN: -m64 --force-malloc-success --no-incremental-bmc
+// RUN: -m64 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^  copy = \{ \.next=\( struct node \*\)8 \}$
 // EXPECT: ^  t = \{ \.a=2, \.b=5 \}$

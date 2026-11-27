@@ -12,5 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/github_8097_long_double_32_fail
-// RUN: --solver bitwuzla -m32 --no-incremental-bmc
+// RUN: --solver bitwuzla -m32
 // EXPECT: ^VERIFICATION FAILED$

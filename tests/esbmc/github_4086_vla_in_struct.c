@@ -21,7 +21,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4086_vla_in_struct
-// RUN: --no-incremental-bmc
 // EXPECT: ^.*fields must have a constant size: 'variable length array in structure'
 // EXPECT: ^ERROR: PARSING ERROR$
 // Vereda: unmet EXPECT: ^ERROR: PARSING ERROR$

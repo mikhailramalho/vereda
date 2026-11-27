@@ -22,7 +22,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_sleep_sets_hash
 // Needs: --no-por --sleep-sets
-// RUN: --no-por --sleep-sets --no-incremental-bmc
+// RUN: --no-por --sleep-sets
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor 0, pruned_by_hash [1-9][0-9]*, pruned_by_sleep [1-9][0-9]*, pruned_by_cs_bound 0$

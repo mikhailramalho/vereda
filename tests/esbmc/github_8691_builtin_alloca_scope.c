@@ -17,5 +17,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8691_builtin_alloca_scope
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

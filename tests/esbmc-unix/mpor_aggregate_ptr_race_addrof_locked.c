@@ -40,7 +40,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_race_addrof_locked
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

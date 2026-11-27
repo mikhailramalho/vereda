@@ -6,7 +6,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_664
 // Needs: --file-output out.txt
-// RUN: --file-output out.txt --no-incremental-bmc
+// RUN: --file-output out.txt
 // MODE: FUTURE
 // EXPECT: ^ESBMC version
 // Vereda: verdict none

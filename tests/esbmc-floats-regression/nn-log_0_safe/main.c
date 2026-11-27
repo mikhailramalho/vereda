@@ -23,7 +23,7 @@ int main() /* check_domain */
 }
 // Imported from ESBMC regression/floats-regression/nn-log_0_safe
 // Needs: -I .
-// RUN: -I . --no-incremental-bmc
+// RUN: -I .
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

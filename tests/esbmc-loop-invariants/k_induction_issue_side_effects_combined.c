@@ -36,6 +36,6 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/k_induction_issue_side_effects_combined
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant --no-incremental-bmc
+// RUN: --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,7 +12,6 @@ int main()
   trampo(g);
 }
 // Imported from ESBMC regression/esbmc/function_deref_2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

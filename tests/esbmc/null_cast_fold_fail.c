@@ -11,5 +11,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/null_cast_fold_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

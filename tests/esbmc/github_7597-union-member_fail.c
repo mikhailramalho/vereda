@@ -51,7 +51,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7597-union-member_fail
 // Needs: --no-standard-checks
-// RUN: --no-standard-checks --multi-property --no-incremental-bmc
+// RUN: --no-standard-checks --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

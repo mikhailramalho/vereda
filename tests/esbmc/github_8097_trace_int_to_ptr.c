@@ -17,5 +17,5 @@ int main()
   __VERIFIER_assert(r == &x); // r aliases u.p
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_int_to_ptr
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

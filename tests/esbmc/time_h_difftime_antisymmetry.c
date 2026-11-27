@@ -11,7 +11,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/time_h_difftime_antisymmetry
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

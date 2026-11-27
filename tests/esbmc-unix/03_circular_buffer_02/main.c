@@ -106,7 +106,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix/03_circular_buffer_02
 // Needs: --context-bound 3 --no-por
-// RUN: --context-bound 3 --no-por --no-incremental-bmc
+// RUN: --context-bound 3 --no-por
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

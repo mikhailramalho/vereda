@@ -28,5 +28,5 @@ void foo(void)
   assert(str2_info.field2);
 }
 // Imported from ESBMC regression/esbmc/github_300_failed
-// RUN: --entry foo --no-incremental-bmc
+// RUN: --entry foo
 // EXPECT: ^VERIFICATION FAILED$

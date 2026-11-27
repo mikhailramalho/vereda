@@ -26,7 +26,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/testcomp_gen_nondet_memory_unsupported
 // Needs: --generate-testcase CHECK_FILE testcase.xml contains <testcase coversError="true">\n<input>9</input>\n</testcase>
-// RUN: --generate-testcase --no-incremental-bmc
+// RUN: --generate-testcase
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

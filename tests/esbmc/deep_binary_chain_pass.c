@@ -18,6 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deep_binary_chain_pass
-// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

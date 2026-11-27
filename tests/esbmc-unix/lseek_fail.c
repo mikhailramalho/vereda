@@ -19,5 +19,4 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/lseek_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

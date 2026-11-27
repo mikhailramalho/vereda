@@ -9,7 +9,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval_symex_assert_prune
 // Needs: --interval-symex-assert
-// RUN: --interval-symex-assert --multi-property --no-incremental-bmc
+// RUN: --interval-symex-assert --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

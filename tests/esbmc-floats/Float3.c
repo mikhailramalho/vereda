@@ -23,5 +23,4 @@ int main()
   assert(d == 2.0);
 }
 // Imported from ESBMC regression/floats/Float3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

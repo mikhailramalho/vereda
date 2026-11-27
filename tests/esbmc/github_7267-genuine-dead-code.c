@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7267-genuine-dead-code
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-incremental-bmc
+// RUN: --dead-code-check
 // MODE: FUTURE
 // EXPECT: github_7267\-genuine\-dead\-code\.c:11: dead code: unreachable branch \[guard: x > 10\]$
 // EXPECT: CWE-561

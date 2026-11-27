@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/smtlib/github_7929_rem
 // Needs: --smtlib --smtlib-solver-prog z3 -in REQUIRES z3_binary
-// RUN: --smtlib --smtlib-solver-prog "z3 -in" --no-incremental-bmc
+// RUN: --smtlib --smtlib-solver-prog "z3 -in"
 // MODE: FUTURE
 // EXPECT: ^  r = -54782528; // 11111100 10111100 00010101 11000000$
 // EXPECT: ^VERIFICATION FAILED$

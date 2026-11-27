@@ -27,5 +27,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/atomic_op_fetch
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

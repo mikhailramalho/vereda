@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/unknown_method_call
 // Needs: --unknown-method-args-check
-// RUN: --unknown-method-args-check --no-incremental-bmc
+// RUN: --unknown-method-args-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

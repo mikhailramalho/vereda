@@ -10,5 +10,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assert_description_holds
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

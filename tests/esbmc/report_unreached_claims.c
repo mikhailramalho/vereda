@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/report_unreached_claims
 // Needs: --report-unreached-claims
-// RUN: --report-unreached-claims --no-incremental-bmc
+// RUN: --report-unreached-claims
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

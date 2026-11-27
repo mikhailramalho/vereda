@@ -32,7 +32,6 @@ int main()
   assert(f(0, 0, x, 0)==10);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function-KnR1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

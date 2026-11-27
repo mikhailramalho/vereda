@@ -13,5 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8658
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$

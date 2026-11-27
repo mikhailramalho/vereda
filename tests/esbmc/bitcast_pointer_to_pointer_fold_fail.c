@@ -13,5 +13,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitcast_pointer_to_pointer_fold_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

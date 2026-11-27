@@ -25,6 +25,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/irep2_only_pointer_intrinsics
 // Needs: __ESBMC_POINTER_OBJECT, __ESBMC_same_object
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -263,5 +263,5 @@ int main() {
 
 
 // Imported from ESBMC regression/esbmc/math_log01
-// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false
 // EXPECT: ^VERIFICATION FAILED$

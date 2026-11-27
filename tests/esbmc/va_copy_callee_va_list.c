@@ -37,5 +37,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/va_copy_callee_va_list
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

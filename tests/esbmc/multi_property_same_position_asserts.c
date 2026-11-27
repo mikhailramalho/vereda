@@ -9,7 +9,7 @@ int main()
   return s;
 }
 // Imported from ESBMC regression/esbmc/multi_property_same_position_asserts
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^\s+PASSED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)i < 4\]$
 // EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)j < 4\]$
 // EXPECT: ^VERIFICATION FAILED$

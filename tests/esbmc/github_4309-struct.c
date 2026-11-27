@@ -29,7 +29,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-struct
 // Needs: --all-witnesses
-// RUN: --all-witnesses --no-incremental-bmc
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 5 witnesses\]

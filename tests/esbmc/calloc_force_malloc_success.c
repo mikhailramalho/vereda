@@ -8,5 +8,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/calloc_force_malloc_success
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

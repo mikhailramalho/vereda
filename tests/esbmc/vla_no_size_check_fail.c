@@ -10,6 +10,6 @@ int main(void)
   return a[0][0][0] - 1;
 }
 // Imported from ESBMC regression/esbmc/vla_no_size_check_fail
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: alloca: size exceeds PTRDIFF_MAX

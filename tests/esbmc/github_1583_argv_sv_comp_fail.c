@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc/github_1583_argv_sv_comp_fail
 // Needs: --sv-comp
-// RUN: --sv-comp --no-incremental-bmc
+// RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

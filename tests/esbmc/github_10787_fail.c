@@ -11,7 +11,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10787_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  FAILED +\[main\.pointer-arithmetic-out-of-bounds\.\d+\] +line 10 +pointer arithmetic out of bounds: array upper bound$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  FAILED +\[main\.pointer-arithmetic-out-of-bounds\.\d+\] +line 10 +pointer arithmetic out of bounds: array upper bound$

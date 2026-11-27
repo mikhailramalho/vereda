@@ -11,7 +11,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cstd/memchr_intrinsic_oob
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure on memchr: reading memory segment of size 4 with 8 bytes.*$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

@@ -7,5 +7,5 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/bitvector_03
 // Needs: REQUIRES bitint_wide
-// RUN: --no-incremental-bmc
+// RUN: 
 // EXPECT: ^VERIFICATION FAILED$

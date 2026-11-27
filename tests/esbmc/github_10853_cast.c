@@ -11,7 +11,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10853_cast
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --witness-output-yaml
-// RUN: --loop-invariant-check --witness-output-yaml - --no-incremental-bmc
+// RUN: --loop-invariant-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: value: "\(signed int\)c >= 0 && i <= 3 && \(signed int\)c \+ 1 > 0"$

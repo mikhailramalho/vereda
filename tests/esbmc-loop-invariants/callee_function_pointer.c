@@ -28,6 +28,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/callee_function_pointer
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

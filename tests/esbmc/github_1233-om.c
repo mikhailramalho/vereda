@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1233-om
 // Needs: --show-stacktrace
-// RUN: --show-stacktrace --no-incremental-bmc
+// RUN: --show-stacktrace
 // MODE: FUTURE
 // EXPECT: ^Stack trace:$
 // EXPECT: ^  strcpy at file .*github_1233\-om\.c line 6 column 3 function main$

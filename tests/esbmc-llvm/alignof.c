@@ -11,5 +11,4 @@ int main(void)
             alignof(struct {char c; int n;}));    
 }
 // Imported from ESBMC regression/llvm/alignof
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

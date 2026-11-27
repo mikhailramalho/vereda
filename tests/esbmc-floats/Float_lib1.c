@@ -23,5 +23,4 @@ int main() {
   assert(signbit(1.0)==0);
 }
 // Imported from ESBMC regression/floats/Float_lib1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5142_int_conversion
 // Needs: --sv-comp
-// RUN: --sv-comp --no-incremental-bmc
+// RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

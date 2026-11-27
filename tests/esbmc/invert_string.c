@@ -26,5 +26,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/invert_string
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

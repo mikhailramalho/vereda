@@ -52,7 +52,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_4715_rwset_fail
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-incremental-bmc
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*data race on .*$
 // MODE: FUTURE

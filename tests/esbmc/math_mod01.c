@@ -6,5 +6,5 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc/math_mod01
-// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --ub-signed-overflow-check --ub-shift-check --no-incremental-bmc
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --ub-signed-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

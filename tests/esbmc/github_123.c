@@ -5309,5 +5309,4 @@ signed long int wrap(signed long int kX, signed long int kLowerBound, signed lon
   return kLowerBound + (kX - kLowerBound) % (signed long int)range_size;
 }
 // Imported from ESBMC regression/esbmc/github_123
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

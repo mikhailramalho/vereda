@@ -12,7 +12,6 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/main_prefixed_argc_clobber
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

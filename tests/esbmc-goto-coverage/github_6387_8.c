@@ -9,7 +9,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_6387_8
 // Needs: --assertion-coverage-claims
-// RUN: --multi-property --assertion-coverage-claims --no-incremental-bmc
+// RUN: --multi-property --assertion-coverage-claims
 // MODE: FUTURE
 // EXPECT: ^Total Asserts: 2$
 // EXPECT: ^Unreached Asserts: 1$

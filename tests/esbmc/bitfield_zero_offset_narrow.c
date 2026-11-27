@@ -26,5 +26,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitfield_zero_offset_narrow
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/wchar_uchar_mbstate
 // Needs: REQUIRES uchar_h
-// RUN: --no-incremental-bmc
+// RUN: 
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

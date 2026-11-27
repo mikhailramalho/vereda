@@ -9,7 +9,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10383
-// RUN: --std c2x --no-incremental-bmc
+// RUN: --std c2x
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

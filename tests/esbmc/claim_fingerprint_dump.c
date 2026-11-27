@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/claim_fingerprint_dump
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // MODE: FUTURE
 // EXPECT: ^CLAIM-FP [0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9a-f]{16}\s+[0-9]+\s+UNSAT\s
 // EXPECT: ^VERIFICATION SUCCESSFUL$

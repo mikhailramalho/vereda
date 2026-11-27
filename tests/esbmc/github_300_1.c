@@ -23,5 +23,5 @@ void foo(void) {
     bar(&str2_info);
 }
 // Imported from ESBMC regression/esbmc/github_300_1
-// RUN: --entry foo --no-incremental-bmc
+// RUN: --entry foo
 // EXPECT: ^VERIFICATION SUCCESSFUL$

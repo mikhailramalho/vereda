@@ -18,7 +18,6 @@ int main()
   assert(n == 2);
 }
 // Imported from ESBMC regression/esbmc/sync_lock_release_race_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

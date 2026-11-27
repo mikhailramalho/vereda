@@ -24,5 +24,4 @@ int main()
 
 
 // Imported from ESBMC regression/mathsat/sqrt1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

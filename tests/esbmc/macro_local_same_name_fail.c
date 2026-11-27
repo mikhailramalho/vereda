@@ -3,5 +3,4 @@
 #define TWO { unsigned char s = 200; r1 = s; } { int s = 1000; r2 = s; }
 int main(void) { int r1, r2; TWO; assert(r1 == 200); assert(r2 == 232); return 0; }
 // Imported from ESBMC regression/esbmc/macro_local_same_name_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

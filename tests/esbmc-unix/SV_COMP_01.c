@@ -32,7 +32,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/SV_COMP_01
 // Needs: --ub-data-race-check --context-bound 2
-// RUN: --force-malloc-success --ub-data-race-check --context-bound 2 --no-incremental-bmc
+// RUN: --force-malloc-success --ub-data-race-check --context-bound 2
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

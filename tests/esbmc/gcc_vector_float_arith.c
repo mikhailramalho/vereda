@@ -14,5 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcc_vector_float_arith
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

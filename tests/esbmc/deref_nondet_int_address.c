@@ -7,7 +7,6 @@ int main()
   return *p;
 }
 // Imported from ESBMC regression/esbmc/deref_nondet_int_address
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

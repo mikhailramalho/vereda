@@ -12,5 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8706
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --solver bitwuzla --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$

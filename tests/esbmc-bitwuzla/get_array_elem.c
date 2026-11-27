@@ -14,5 +14,5 @@ void main(void)
   free(ptr);
 }
 // Imported from ESBMC regression/bitwuzla/get_array_elem
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$

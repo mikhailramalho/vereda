@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memcpy_int_to_float_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

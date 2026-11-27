@@ -18,5 +18,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_spanning_nested_read
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

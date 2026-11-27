@@ -34,5 +34,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc19
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -15,5 +15,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer_diff_branch
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

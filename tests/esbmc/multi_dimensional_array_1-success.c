@@ -16,7 +16,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/multi_dimensional_array_1-success
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

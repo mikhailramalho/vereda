@@ -18,7 +18,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_7478_pointer_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
+// RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.3\]\s+line\s+11\s+loop invariant inductive step$
 // EXPECT: ^VERIFICATION FAILED$

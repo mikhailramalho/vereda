@@ -10,7 +10,6 @@ int main()
   assert(i!=100);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_End_thread1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

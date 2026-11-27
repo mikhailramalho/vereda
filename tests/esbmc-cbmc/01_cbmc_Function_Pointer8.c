@@ -42,5 +42,4 @@ int main()
   run_timer();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function_Pointer8
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

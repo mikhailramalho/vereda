@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/z3/github_6100_assume_noninline
 // Needs: __ESBMC_forall
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: cannot model call to .* on a quantified variable inside __ESBMC_forall/__ESBMC_exists
 // Vereda: over 300 s in CI
 // MODE: KNOWNBUG

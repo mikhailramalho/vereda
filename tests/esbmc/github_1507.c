@@ -11,7 +11,6 @@ struct c {
   d.f->b;
 }
 // Imported from ESBMC regression/esbmc/github_1507
-// RUN: --no-incremental-bmc
 // EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+array bounds violated: array upper bound$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+array bounds violated: array upper bound$

@@ -9,5 +9,4 @@ int main()
   assert(b==3 || a==3);
  }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -46,7 +46,7 @@ int main() {
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_4
 // Needs: --branch-coverage --generate-ctest-testcase
-// RUN: --branch-coverage --generate-ctest-testcase --no-incremental-bmc
+// RUN: --branch-coverage --generate-ctest-testcase
 // MODE: FUTURE
 // EXPECT: ^Generated 8 CTest test case\(s\) with CMakeLists\.txt
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

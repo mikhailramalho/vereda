@@ -11,5 +11,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_loop_bound_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

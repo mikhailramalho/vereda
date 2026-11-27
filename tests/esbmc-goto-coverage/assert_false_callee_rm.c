@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/assert_false_callee_rm
 // Needs: --condition-coverage-rm
-// RUN: --condition-coverage-rm --no-incremental-bmc
+// RUN: --condition-coverage-rm
 // MODE: FUTURE
 // EXPECT: ^Reached Conditions:  10
 // EXPECT: ^Total Conditions:  10

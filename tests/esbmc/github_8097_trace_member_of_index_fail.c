@@ -30,7 +30,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_member_of_index_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  s->c\[.*\]\.x = .*\.x=2
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  s->c\[.*\]\.x = .*\.x=2

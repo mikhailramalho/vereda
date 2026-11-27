@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval-analysis-ptr-false
 // Needs: --interval-analysis
-// RUN: --interval-analysis --no-incremental-bmc
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

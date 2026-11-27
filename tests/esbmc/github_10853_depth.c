@@ -15,7 +15,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10853_depth
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --depth 30 --witness-output-yaml
-// RUN: --loop-invariant-check --depth 30 --witness-output-yaml - --no-incremental-bmc
+// RUN: --loop-invariant-check --depth 30 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$

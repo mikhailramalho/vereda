@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_unmodelled_write_null
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*FAILED.*dereference failure: NULL pointer$
 // EXPECT: ^.*FAILED.*dereference failure: invalid pointer$

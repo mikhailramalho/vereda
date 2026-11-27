@@ -23,5 +23,4 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/ferror_unlocked_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

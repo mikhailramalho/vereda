@@ -15,6 +15,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_above_ptrdiff_max
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: alloca: size exceeds PTRDIFF_MAX

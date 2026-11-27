@@ -8,7 +8,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7256
-// RUN: --no-incremental-bmc
 // EXPECT: ^Properties: 1 checked, \d+ passed, 1 failed, 1 not checked$
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?![\s\S]*produced no model)[\s\S]*\Z

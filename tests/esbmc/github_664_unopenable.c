@@ -6,7 +6,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_664_unopenable
 // Needs: --file-output missing-dir/out.txt
-// RUN: --file-output missing-dir/out.txt --no-incremental-bmc
+// RUN: --file-output missing-dir/out.txt
 // MODE: FUTURE
 // EXPECT: ^ERROR: Cannot open missing-dir/out.txt$
 // Vereda: verdict none

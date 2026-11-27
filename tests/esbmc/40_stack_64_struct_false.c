@@ -12,7 +12,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/40_stack_64_struct_false
 // Needs: --stack-limit 63
-// RUN: -m64 --stack-limit 63 --no-incremental-bmc
+// RUN: -m64 --stack-limit 63
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

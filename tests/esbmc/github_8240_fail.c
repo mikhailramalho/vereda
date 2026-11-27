@@ -15,6 +15,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8240_fail
 // Needs: __CPROVER_OBJECT_SIZE, __CPROVER_r_ok
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

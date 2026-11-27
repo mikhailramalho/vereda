@@ -28,5 +28,5 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_151-2
 // Needs: REQUIRES signed_char_host
-// RUN: --no-incremental-bmc
+// RUN: 
 // EXPECT: ^VERIFICATION SUCCESSFUL$

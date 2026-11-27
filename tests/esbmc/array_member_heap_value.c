@@ -13,5 +13,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_member_heap_value
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

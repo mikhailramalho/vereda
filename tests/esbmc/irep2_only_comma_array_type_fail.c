@@ -11,7 +11,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_comma_array_type_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: array bounds violated: array `g' upper bound
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

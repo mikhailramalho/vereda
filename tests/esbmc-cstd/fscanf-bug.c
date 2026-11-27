@@ -7,5 +7,4 @@ int main(int argc, char * argv[])
     assert(n == 42);
 }
 // Imported from ESBMC regression/cstd/fscanf-bug
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

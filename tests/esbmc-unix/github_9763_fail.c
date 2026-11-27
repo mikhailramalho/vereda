@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9763_fail
 // Needs: --printf-check
-// RUN: --printf-check -m32 --no-incremental-bmc
+// RUN: --printf-check -m32
 // EXPECT: ^  FAILED       \[main\.assertion\.[0-9]+\]  line 16  printf has more format specifiers than arguments$
 // EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$

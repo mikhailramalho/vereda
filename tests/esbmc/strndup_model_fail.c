@@ -7,7 +7,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/strndup_model_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

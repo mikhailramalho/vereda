@@ -65,5 +65,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_807_fail
-// RUN: --fp2bv --no-incremental-bmc
+// RUN: --fp2bv
 // EXPECT: ^VERIFICATION FAILED$

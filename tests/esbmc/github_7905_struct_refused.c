@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7905_struct_refused
 // Needs: --big-endian
-// RUN: --big-endian --no-incremental-bmc
+// RUN: --big-endian
 // MODE: FUTURE
 // EXPECT: ^ERROR: Typecast for unexpected type$
 // Vereda: verdict none

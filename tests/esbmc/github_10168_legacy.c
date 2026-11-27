@@ -10,7 +10,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10168_legacy
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

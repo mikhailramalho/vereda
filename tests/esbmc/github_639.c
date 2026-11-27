@@ -37,5 +37,4 @@ int main()
     test_memset(test, byte, test_size);
 }
 // Imported from ESBMC regression/esbmc/github_639
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

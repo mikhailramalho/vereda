@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309_pass
 // Needs: --all-witnesses
-// RUN: --all-witnesses --no-incremental-bmc
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -17,5 +17,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memset_pointer
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

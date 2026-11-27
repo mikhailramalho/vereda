@@ -21,7 +21,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9906_thread
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: longjmp to a jmp_buf whose setjmp is not active
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

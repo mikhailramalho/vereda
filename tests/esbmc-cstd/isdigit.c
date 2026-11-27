@@ -12,5 +12,4 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/isdigit
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -23,7 +23,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_call
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants --no-incremental-bmc
+// RUN: --synthesise-loop-invariants
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants added no invariant: no loop matched the affine counter/accumulator shape, or every match was declined; the run proceeds unchanged$

@@ -39,7 +39,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/nested-1-nested_loop_invariants
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
+// RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+13\s+loop invariant inductive step$
 // EXPECT: ^VERIFICATION FAILED$

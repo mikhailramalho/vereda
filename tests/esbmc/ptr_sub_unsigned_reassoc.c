@@ -25,5 +25,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_sub_unsigned_reassoc
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

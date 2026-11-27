@@ -11,7 +11,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9000_sprintf_width_fail
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^  dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated: heap object$

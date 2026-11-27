@@ -31,5 +31,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function_Pointer6
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

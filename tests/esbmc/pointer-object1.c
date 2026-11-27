@@ -105,6 +105,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/pointer-object1
 // Needs: __ESBMC_POINTER_OBJECT
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

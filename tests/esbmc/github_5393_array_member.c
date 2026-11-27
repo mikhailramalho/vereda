@@ -25,5 +25,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5393_array_member
-// RUN: --force-malloc-success -m64 --no-incremental-bmc
+// RUN: --force-malloc-success -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

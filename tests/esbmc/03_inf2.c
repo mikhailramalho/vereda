@@ -59,7 +59,7 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc/03_inf2
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --no-incremental-bmc
+// RUN: --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*forgotten memory.*$

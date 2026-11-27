@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-cap
 // Needs: --all-witnesses --max-witnesses 1
-// RUN: --all-witnesses --max-witnesses 1 --no-incremental-bmc
+// RUN: --all-witnesses --max-witnesses 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Witness 1 of 1

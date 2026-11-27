@@ -23,7 +23,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10303_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED .* line 19 +dereference failure: invalidated dynamic object$
 // EXPECT: FAILED .* line 20 +dereference failure: invalidated dynamic object$

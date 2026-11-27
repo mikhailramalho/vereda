@@ -9,5 +9,4 @@ int main(void)
   return __builtin_constant_p(h());
 }
 // Imported from ESBMC regression/esbmc/github_9181
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

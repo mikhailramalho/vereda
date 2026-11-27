@@ -19,6 +19,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/7-not_conjunct_invariant
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
+// RUN: --loop-invariant-check --multi-property
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

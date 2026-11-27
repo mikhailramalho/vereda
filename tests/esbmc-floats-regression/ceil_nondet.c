@@ -31,7 +31,7 @@ int main(void)
 
 // Imported from ESBMC regression/floats-regression/ceil_nondet
 // Needs: --interval-analysis
-// RUN: --interval-analysis --no-incremental-bmc
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

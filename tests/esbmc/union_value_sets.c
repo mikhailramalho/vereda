@@ -23,7 +23,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_value_sets
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

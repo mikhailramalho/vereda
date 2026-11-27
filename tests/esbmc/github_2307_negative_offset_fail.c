@@ -7,7 +7,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2307_negative_offset_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated$

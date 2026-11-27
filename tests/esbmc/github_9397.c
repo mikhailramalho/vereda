@@ -23,7 +23,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9397
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

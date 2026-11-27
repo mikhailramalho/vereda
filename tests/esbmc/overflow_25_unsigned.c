@@ -13,5 +13,5 @@ printf("\nDelta %u", delta);
 return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_25_unsigned
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$

@@ -30,6 +30,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_4052
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --multi-property --loop-invariant --max-k-step 2 --no-incremental-bmc
+// RUN: --multi-property --loop-invariant --max-k-step 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

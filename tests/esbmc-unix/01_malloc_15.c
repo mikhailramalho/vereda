@@ -32,7 +32,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_15
 // Needs: --lock-order-check
-// RUN: --lock-order-check --no-incremental-bmc
+// RUN: --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

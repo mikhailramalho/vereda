@@ -11,5 +11,4 @@ int main() {
   (b++)->d.c;
 }
 // Imported from ESBMC regression/esbmc/github_159_postincrement
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

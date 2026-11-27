@@ -22,6 +22,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_10641_weak_model_hides_bug_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

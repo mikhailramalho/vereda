@@ -78,5 +78,4 @@ int main(){
 }
 
 // Imported from ESBMC regression/nonz3/02_eureka02
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

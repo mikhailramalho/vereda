@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 }
 // Imported from ESBMC regression/esbmc-unix/github_1628
 // Needs: --printf-check
-// RUN: --printf-check --no-incremental-bmc
+// RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf format specifier \%s requires pointer argument$
 // Vereda: verdict none

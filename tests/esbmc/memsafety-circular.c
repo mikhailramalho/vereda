@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memsafety-circular
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --force-malloc-success --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
+// RUN: --force-malloc-success --memory-leak-check --no-reachable-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

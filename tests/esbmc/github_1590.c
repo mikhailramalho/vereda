@@ -30,6 +30,5 @@ int main() {
   assert(adj2->a <= 2);
 }
 // Imported from ESBMC regression/esbmc/github_1590
-// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

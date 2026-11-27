@@ -33,5 +33,4 @@ int main() {
   assert(v <= 2); // fails, because buffer is not zero-initialized
 }
 // Imported from ESBMC regression/esbmc/github_1590-local
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -12,5 +12,5 @@ int main(void)
 ERR:;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_native_body_error_label_02
-// RUN: --error-label ERR --no-assertions --no-incremental-bmc
+// RUN: --error-label ERR --no-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$

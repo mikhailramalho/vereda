@@ -10,5 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_ieee_arity_decline_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

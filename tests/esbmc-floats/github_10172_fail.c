@@ -7,5 +7,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/github_10172_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$

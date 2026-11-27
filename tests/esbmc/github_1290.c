@@ -45,7 +45,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_1290
 // Needs: --skip-bmc
-// RUN: --skip-bmc --no-incremental-bmc
+// RUN: --skip-bmc
 // MODE: FUTURE
 // EXPECT: ^Generating GOTO Program$
 // Vereda: verdict none

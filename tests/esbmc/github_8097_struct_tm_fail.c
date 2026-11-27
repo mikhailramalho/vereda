@@ -25,7 +25,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8097_struct_tm_fail
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
+// RUN: --memory-leak-check --no-reachable-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

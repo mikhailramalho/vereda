@@ -37,7 +37,6 @@ int main(void)
   __VERIFIER_assert(isnan(remquo(INFINITY, 1, &quo)));
 }
 // Imported from ESBMC regression/floats-regression/remquo
-// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

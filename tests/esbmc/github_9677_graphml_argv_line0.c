@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc/github_9677_graphml_argv_line0
 // Needs: --witness-output-graphml w.graphml CHECK_FILE w.graphml absent <data key="startline">0</data> CHECK_FILE w.graphml contains <data key="startline">7</data> CHECK_FILE w.graphml contains <data key="startline">3</data>
-// RUN: --witness-output-graphml w.graphml --no-incremental-bmc
+// RUN: --witness-output-graphml w.graphml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

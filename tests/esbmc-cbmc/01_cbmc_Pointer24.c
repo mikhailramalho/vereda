@@ -14,6 +14,5 @@ int main()
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer24
 // Needs: __ESBMC_same_object
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

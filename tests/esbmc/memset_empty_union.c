@@ -16,5 +16,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memset_empty_union
-// RUN: --ub-pointer-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$

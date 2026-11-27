@@ -36,5 +36,5 @@ int main(void) {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/union-dynamic-offset-deref
-// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$

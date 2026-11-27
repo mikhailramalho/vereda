@@ -9,7 +9,7 @@ main() {
 }
 // Imported from ESBMC regression/esbmc/github_387_true
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --z3 --force-malloc-success --no-incremental-bmc
+// RUN: --memory-leak-check --z3 --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -5,5 +5,4 @@ int main()
   assert((a-1)[2]==2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer5
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

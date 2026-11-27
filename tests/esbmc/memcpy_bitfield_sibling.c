@@ -25,5 +25,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memcpy_bitfield_sibling
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

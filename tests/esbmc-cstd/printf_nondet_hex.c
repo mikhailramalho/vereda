@@ -16,5 +16,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_nondet_hex
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$

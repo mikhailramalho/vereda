@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 }
 // Imported from ESBMC regression/esbmc/realloc7
 // Needs: --force-realloc-success --memory-leak-check
-// RUN: --force-realloc-success --force-malloc-success --memory-leak-check --no-incremental-bmc
+// RUN: --force-realloc-success --force-malloc-success --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

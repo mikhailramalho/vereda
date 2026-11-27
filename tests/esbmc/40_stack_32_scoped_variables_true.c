@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/40_stack_32_scoped_variables_true
 // Needs: --stack-limit 128
-// RUN: -m32 --stack-limit 128 --no-incremental-bmc
+// RUN: -m32 --stack-limit 128
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

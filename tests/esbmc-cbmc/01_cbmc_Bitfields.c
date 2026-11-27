@@ -32,5 +32,4 @@ int main(){
   bf.Type=IntelCacheTrace;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Bitfields
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

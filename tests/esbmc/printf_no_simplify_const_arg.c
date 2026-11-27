@@ -16,7 +16,6 @@ int main()
   assert(c == 2);
 }
 // Imported from ESBMC regression/esbmc/printf_no_simplify_const_arg
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

@@ -13,5 +13,4 @@ int main()
   assert(b == a);
 }
 // Imported from ESBMC regression/esbmc/gcse_nested_deref_read_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

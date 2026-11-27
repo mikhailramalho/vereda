@@ -21,7 +21,6 @@ int main(void)
 
 
 // Imported from ESBMC regression/esbmc-unix2/01_pthread45
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

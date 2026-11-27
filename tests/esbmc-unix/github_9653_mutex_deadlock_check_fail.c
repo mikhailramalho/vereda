@@ -26,7 +26,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9653_mutex_deadlock_check_fail
 // Needs: --deadlock-check
-// RUN: --deadlock-check --no-incremental-bmc
+// RUN: --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

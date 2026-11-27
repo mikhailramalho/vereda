@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_schedule
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order cannot be combined with --schedule$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

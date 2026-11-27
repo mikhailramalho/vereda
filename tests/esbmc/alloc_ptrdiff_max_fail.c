@@ -11,5 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/alloc_ptrdiff_max_fail
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,7 +9,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_11013_fail
-// RUN: --solver z3 --std 11 --no-incremental-bmc
+// RUN: --solver z3 --std 11
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

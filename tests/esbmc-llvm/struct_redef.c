@@ -19,5 +19,4 @@ int main()
 {
 }
 // Imported from ESBMC regression/llvm/struct_redef
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

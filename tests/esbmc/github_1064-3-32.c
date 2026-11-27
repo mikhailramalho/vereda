@@ -14,6 +14,6 @@ int main(int argc, char* argv[]) {
 }
 // Imported from ESBMC regression/esbmc/github_1064-3-32
 // Needs: __ESBMC_POINTER_OBJECT
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

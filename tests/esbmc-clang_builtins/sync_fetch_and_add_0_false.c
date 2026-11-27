@@ -8,5 +8,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/sync_fetch_and_add_0_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

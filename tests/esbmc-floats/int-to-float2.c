@@ -50,7 +50,6 @@ int main(void)
   #endif
 }
 // Imported from ESBMC regression/floats/int-to-float2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

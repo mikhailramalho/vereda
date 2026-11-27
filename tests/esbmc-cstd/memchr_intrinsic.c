@@ -30,5 +30,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cstd/memchr_intrinsic
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

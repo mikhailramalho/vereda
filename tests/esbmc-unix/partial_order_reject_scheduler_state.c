@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_scheduler_state
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support the scheduler state __ESBMC_num_threads_running yet, at file .*partial_order_reject_scheduler_state\.c line +13 column 3 function main$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

@@ -6,5 +6,4 @@ int main() {
   assert((x-y>0) == (x>y));
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_BV_Arithmetic1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

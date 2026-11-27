@@ -11,5 +11,5 @@ int main()
   b.a += a;
 }
 // Imported from ESBMC regression/esbmc/github_162_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

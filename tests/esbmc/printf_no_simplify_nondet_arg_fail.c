@@ -13,5 +13,4 @@ int main()
   assert(r == 2);
 }
 // Imported from ESBMC regression/esbmc/printf_no_simplify_nondet_arg_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

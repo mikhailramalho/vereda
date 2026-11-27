@@ -13,7 +13,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10853_or_invariant
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --witness-output-yaml
-// RUN: --loop-invariant-check --witness-output-yaml - --no-incremental-bmc
+// RUN: --loop-invariant-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)line: 5\s+column: \d+\s+function: "main"\s+value: "i <= 10"

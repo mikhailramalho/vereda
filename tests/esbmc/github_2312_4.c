@@ -9,5 +9,4 @@ int main(int argc, char *argv[])
     __VERIFIER_assert(0); // 0
 }
 // Imported from ESBMC regression/esbmc/github_2312_4
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -16,5 +16,4 @@ int main()
   free(p);
 }
 // Imported from ESBMC regression/esbmc/gcse_heap_alias_kill_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

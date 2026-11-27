@@ -7,7 +7,6 @@ int main()
   assert(n == k);
 }
 // Imported from ESBMC regression/esbmc/github_588
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

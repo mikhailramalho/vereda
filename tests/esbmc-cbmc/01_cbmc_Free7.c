@@ -9,7 +9,7 @@ int main ( void )
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Free7
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --no-incremental-bmc
+// RUN: --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

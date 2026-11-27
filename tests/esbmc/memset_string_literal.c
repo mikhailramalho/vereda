@@ -13,5 +13,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memset_string_literal
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

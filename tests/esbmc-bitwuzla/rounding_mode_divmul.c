@@ -13,5 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/rounding_mode_divmul
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$

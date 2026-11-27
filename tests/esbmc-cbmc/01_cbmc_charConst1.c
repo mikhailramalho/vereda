@@ -10,5 +10,4 @@ int main ()
   assert (o == 100);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_charConst1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

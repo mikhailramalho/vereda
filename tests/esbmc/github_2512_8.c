@@ -57,5 +57,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_2512_8
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -189,7 +189,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/tuple_const_array_member_reads_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$

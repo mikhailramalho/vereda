@@ -14,5 +14,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assume_equality_fp_zero
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

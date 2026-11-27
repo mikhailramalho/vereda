@@ -6,5 +6,4 @@ int main()
 	assert(!isfinite(INFINITY));
 }
 // Imported from ESBMC regression/floats-regression/infty-finite-1-nosimp
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

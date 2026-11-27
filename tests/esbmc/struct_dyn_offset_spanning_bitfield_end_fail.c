@@ -9,7 +9,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_spanning_bitfield_end_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  d$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  d$

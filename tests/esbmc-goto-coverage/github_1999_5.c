@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1999_5
 // Needs: --condition-coverage-claims
-// RUN: --condition-coverage-claims --no-incremental-bmc
+// RUN: --condition-coverage-claims
 // MODE: FUTURE
 // EXPECT: ^Short Circuited Conditions:  2
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

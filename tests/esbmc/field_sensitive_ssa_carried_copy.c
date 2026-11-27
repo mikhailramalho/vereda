@@ -24,5 +24,4 @@ int main(void)
   return *g.p;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_carried_copy
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

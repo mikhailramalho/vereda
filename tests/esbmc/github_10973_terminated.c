@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10973_terminated
 // Needs: --printf-check --memory-leak-check
-// RUN: --printf-check --memory-leak-check --no-incremental-bmc
+// RUN: --printf-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

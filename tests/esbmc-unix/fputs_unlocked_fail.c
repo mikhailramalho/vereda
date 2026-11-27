@@ -34,6 +34,5 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/fputs_unlocked_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: THOROUGH

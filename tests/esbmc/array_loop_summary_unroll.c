@@ -9,5 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_unroll
-// RUN: --no-unwinding-assertions --no-incremental-bmc
+// RUN: --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$

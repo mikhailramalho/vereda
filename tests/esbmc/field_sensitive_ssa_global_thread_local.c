@@ -16,7 +16,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_global_thread_local
-// RUN: --no-incremental-bmc
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$

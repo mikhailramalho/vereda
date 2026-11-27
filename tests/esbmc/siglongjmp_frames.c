@@ -49,5 +49,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/siglongjmp_frames
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

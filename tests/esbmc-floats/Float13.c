@@ -36,5 +36,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/Float13
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

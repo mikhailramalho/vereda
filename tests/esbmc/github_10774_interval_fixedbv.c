@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_interval_fixedbv
 // Needs: --interval-analysis
-// RUN: --interval-analysis --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --interval-analysis --ub-div-by-zero-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

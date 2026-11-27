@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9159_fail
 // Needs: --memory-leak-check
-// RUN: -m64 --memory-leak-check --no-incremental-bmc
+// RUN: -m64 --memory-leak-check
 // EXPECT: ^\s*dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

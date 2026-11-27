@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_vacuity_off
 // Needs: --synthesise-loop-invariants --no-vacuity-check
-// RUN: --synthesise-loop-invariants --no-vacuity-check --no-incremental-bmc
+// RUN: --synthesise-loop-invariants --no-vacuity-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

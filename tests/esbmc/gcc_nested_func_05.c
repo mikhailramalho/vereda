@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/gcc_nested_func_05
 // Needs: --gcc-nested-functions --no-library
-// RUN: --gcc-nested-functions --no-library --no-incremental-bmc
+// RUN: --gcc-nested-functions --no-library
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

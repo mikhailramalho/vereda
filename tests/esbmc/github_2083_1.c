@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_2083_1
 // Needs: --assign-param-nondet
-// RUN: --function foo --assign-param-nondet --no-incremental-bmc
+// RUN: --function foo --assign-param-nondet
 // MODE: FUTURE
 // EXPECT: \bx = 0\b
 // EXPECT: ^VERIFICATION FAILED$

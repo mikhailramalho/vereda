@@ -18,5 +18,4 @@ int main() {
   }
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Boolean_Guards1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

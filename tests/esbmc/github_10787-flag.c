@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10787-flag
 // Needs: --no-pointer-arith-check
-// RUN: --no-pointer-arith-check --no-incremental-bmc
+// RUN: --no-pointer-arith-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

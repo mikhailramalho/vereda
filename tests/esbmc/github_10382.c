@@ -7,7 +7,7 @@ int main(int argc, char **argv, char **envp)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10382
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.1\]
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.1\]

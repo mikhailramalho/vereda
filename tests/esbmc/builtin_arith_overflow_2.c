@@ -26,5 +26,4 @@ int main()
     "Overflow detection mismatch");
 }
 // Imported from ESBMC regression/esbmc/builtin_arith_overflow_2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

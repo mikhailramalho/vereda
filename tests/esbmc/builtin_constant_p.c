@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_constant_p
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

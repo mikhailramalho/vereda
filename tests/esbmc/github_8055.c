@@ -20,5 +20,4 @@ int main()
   __VERIFIER_assert(i == 0); // loop not entered
 }
 // Imported from ESBMC regression/esbmc/github_8055
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

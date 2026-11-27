@@ -10,5 +10,5 @@ int main()
   ERROR:;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_error-label1
-// RUN: --error-label ERROR --no-incremental-bmc
+// RUN: --error-label ERROR
 // EXPECT: ^VERIFICATION FAILED$

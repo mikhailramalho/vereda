@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/github_10821_ctest
 // Needs: --generate-ctest-testcase CHECK_FILE esbmc-ctest/test_case.c contains static unsigned char const v\[\] = \{ 5, 6, 7 \};
-// RUN: --generate-ctest-testcase --no-incremental-bmc
+// RUN: --generate-ctest-testcase
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

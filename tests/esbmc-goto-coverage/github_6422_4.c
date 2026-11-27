@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/goto-coverage/github_6422_4
 // Needs: --assertion-coverage
-// RUN: --assertion-coverage --no-incremental-bmc
+// RUN: --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^Total Asserts: 0
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

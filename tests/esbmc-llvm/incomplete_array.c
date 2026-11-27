@@ -11,5 +11,4 @@ int main()
   func(a, 2);
 }
 // Imported from ESBMC regression/llvm/incomplete_array
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

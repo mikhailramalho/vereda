@@ -32,5 +32,4 @@ int main(void)
 }
 
 // Imported from ESBMC regression/esbmc/github_364_3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

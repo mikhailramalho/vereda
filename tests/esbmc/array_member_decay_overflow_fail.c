@@ -15,7 +15,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_member_decay_overflow_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED +\[main\.array-bounds-violated\.1\]
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

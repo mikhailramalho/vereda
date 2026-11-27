@@ -14,7 +14,6 @@ int main() {
   free(e);
 }
 // Imported from ESBMC regression/esbmc/github_134
-// RUN: --no-incremental-bmc
 // EXPECT: (?s)dereference failure.*^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: (?s)dereference failure.*^VERIFICATION FAILED$
 // MODE: FUTURE

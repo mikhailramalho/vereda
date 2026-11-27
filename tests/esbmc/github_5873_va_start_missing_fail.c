@@ -19,7 +19,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5873_va_start_missing_fail
-// RUN: --entry main --no-incremental-bmc
+// RUN: --entry main
 // EXPECT: missing va_start: va_arg on an uninitialised va_list
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: missing va_start: va_arg on an uninitialised va_list

@@ -24,6 +24,6 @@ int main()
 }
 // Imported from ESBMC regression/z3/github_6154_count_forall_fail
 // Needs: __ESBMC_forall
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

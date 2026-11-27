@@ -16,5 +16,4 @@ int main(int argc, char **argv)
   longjmp(b, 1);
 }
 // Imported from ESBMC regression/esbmc/github_9906_recursive_main
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

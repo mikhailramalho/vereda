@@ -12,7 +12,6 @@ int main()
   assert(data->fmt);
 }
 // Imported from ESBMC regression/esbmc/github_1173
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -19,5 +19,4 @@ int main() {
 	QUEUE *ptr = queue_create();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Structs2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

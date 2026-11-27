@@ -19,5 +19,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7907_packed
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

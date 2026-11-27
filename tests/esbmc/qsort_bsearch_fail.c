@@ -17,7 +17,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/qsort_bsearch_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: PASSED\s+\[main.assertion.1\].*bsearch
 // EXPECT: FAILED\s+\[main.assertion.2\].*a\[0\] == 3

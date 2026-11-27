@@ -9,7 +9,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_6387_11
 // Needs: --multi-fail-fast 1 --assertion-coverage
-// RUN: --multi-property --multi-fail-fast 1 --assertion-coverage --no-incremental-bmc
+// RUN: --multi-property --multi-fail-fast 1 --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS INCOMPLETE: 2 goal\(s\) undecided
 // EXPECT: reason: --multi-fail-fast limit reached

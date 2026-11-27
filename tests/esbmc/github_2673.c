@@ -7,7 +7,6 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2673
-// RUN: --no-incremental-bmc
 // EXPECT: dereference failure: invalid pointer
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: invalid pointer

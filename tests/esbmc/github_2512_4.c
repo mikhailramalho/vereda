@@ -36,5 +36,5 @@ free(c);
 return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2512_4
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

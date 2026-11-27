@@ -13,5 +13,4 @@ int main() {
    return 0;
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_convertvector_0_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

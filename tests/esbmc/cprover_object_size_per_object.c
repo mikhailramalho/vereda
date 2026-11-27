@@ -24,6 +24,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cprover_object_size_per_object
 // Needs: __CPROVER_OBJECT_SIZE
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

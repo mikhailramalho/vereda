@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_float_return_digits
 // Needs: --witness-output-yaml w.yml
-// RUN: -m64 --witness-output-yaml w.yml --no-incremental-bmc
+// RUN: -m64 --witness-output-yaml w.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

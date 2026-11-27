@@ -26,6 +26,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_6154_count_exists
 // Needs: __ESBMC_exists
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -29,5 +29,4 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc12
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

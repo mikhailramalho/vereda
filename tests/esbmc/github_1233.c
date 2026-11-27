@@ -17,7 +17,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1233
 // Needs: --show-stacktrace
-// RUN: --show-stacktrace --no-incremental-bmc
+// RUN: --show-stacktrace
 // MODE: FUTURE
 // EXPECT: ^Stack trace:$
 // EXPECT: ^  inner at file .*github_1233\.c line 10 column 3 function middle$

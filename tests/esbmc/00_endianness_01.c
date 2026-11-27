@@ -45,5 +45,5 @@ int main() {
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/00_endianness_01
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

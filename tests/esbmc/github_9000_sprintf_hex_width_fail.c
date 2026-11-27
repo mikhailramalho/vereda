@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9000_sprintf_hex_width_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

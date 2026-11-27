@@ -25,7 +25,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_stats_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor [0-9]+, pruned_by_hash 0, pruned_by_sleep 0, pruned_by_cs_bound 0$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

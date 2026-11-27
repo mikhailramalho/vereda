@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/128_pointer_arith
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -6,5 +6,4 @@ int main()
   realloc(q, 2 * sizeof(int));
 }
 // Imported from ESBMC regression/esbmc/github_10301_discard
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

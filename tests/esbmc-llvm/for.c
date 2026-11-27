@@ -113,5 +113,4 @@ int main()
 }
 
 // Imported from ESBMC regression/llvm/for
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

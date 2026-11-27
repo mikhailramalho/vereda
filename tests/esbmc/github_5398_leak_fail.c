@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5398_leak_fail
 // Needs: --malloc-zero-is-null --memory-leak-check
-// RUN: --force-malloc-success --malloc-zero-is-null --memory-leak-check --no-incremental-bmc
+// RUN: --force-malloc-success --malloc-zero-is-null --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*dereference failure: forgotten memory: dynamic_1_array$

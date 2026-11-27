@@ -14,5 +14,4 @@ int main() {
   assert(y.f == 7);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Struct_Array1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

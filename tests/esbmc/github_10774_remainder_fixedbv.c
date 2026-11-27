@@ -8,4 +8,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_remainder_fixedbv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// RUN: --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --ub-div-by-zero-check=false

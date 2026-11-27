@@ -26,5 +26,4 @@ int main()
 }
 
 // Imported from ESBMC regression/llvm/anon_union
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

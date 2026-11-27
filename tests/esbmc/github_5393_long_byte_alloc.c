@@ -20,5 +20,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5393_long_byte_alloc
-// RUN: --ub-pointer-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$

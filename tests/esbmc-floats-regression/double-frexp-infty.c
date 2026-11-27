@@ -8,7 +8,6 @@ int main()
 	assert(isinf(r));
 }
 // Imported from ESBMC regression/floats-regression/double-frexp-infty
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

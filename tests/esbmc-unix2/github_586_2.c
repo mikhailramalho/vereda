@@ -19,7 +19,6 @@ main()
   pthread_create(&e, 0, c, 0);
 }
 // Imported from ESBMC regression/esbmc-unix2/github_586_2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

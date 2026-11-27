@@ -17,5 +17,4 @@ int main()
   __VERIFIER_assert(i == 2); // i is 1 when the second nondet bool is false
 }
 // Imported from ESBMC regression/esbmc/interval_bool_assign_symex_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_1470_overflow_witness_fail
 // Needs: --witness-output-graphml
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml - --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: data == 9223372036854775807
 // EXPECT: ^VERIFICATION FAILED$

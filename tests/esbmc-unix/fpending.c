@@ -32,7 +32,6 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/fpending
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

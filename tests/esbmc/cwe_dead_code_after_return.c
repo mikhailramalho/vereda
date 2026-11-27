@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_after_return
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-incremental-bmc
+// RUN: --dead-code-check
 // MODE: FUTURE
 // EXPECT: ^\[Dead code\]$
 // EXPECT: ^No provably-dead code found\.$

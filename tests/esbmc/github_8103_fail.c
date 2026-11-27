@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8103_fail
 // Needs: --interval-analysis --interval-analysis-wrapped
-// RUN: --interval-analysis --interval-analysis-wrapped --no-incremental-bmc
+// RUN: --interval-analysis --interval-analysis-wrapped
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

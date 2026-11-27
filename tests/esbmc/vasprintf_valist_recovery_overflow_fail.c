@@ -28,5 +28,5 @@ int main(void)
   return sum != 0;
 }
 // Imported from ESBMC regression/esbmc/vasprintf_valist_recovery_overflow_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

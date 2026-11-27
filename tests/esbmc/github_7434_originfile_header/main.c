@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_originfile_header
 // Needs: --witness-output-graphml
-// RUN: --witness-output-graphml - --no-incremental-bmc
+// RUN: --witness-output-graphml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="originfile">[^<]*helper\.h

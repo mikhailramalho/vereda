@@ -6,5 +6,4 @@ int main() {
   assert(x == y);
 }
 // Imported from ESBMC regression/esbmc/bitvector_01
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

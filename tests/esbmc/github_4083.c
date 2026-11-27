@@ -18,7 +18,7 @@ END:
 }
 // Imported from ESBMC regression/esbmc/github_4083
 // Needs: --no-standard-checks
-// RUN: --no-standard-checks --no-incremental-bmc
+// RUN: --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

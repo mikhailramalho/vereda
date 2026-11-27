@@ -19,5 +19,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/null_offset_int_read
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

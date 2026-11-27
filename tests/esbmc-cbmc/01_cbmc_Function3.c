@@ -14,5 +14,4 @@ int main()
   g();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

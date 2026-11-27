@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/github_10080_long_double
 // Needs: --generate-testcase --i386-linux
-// RUN: --generate-testcase --ub-pointer-check=false -m64 --i386-linux --no-incremental-bmc
+// RUN: --generate-testcase --ub-pointer-check=false -m64 --i386-linux
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

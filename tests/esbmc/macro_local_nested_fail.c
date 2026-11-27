@@ -5,5 +5,4 @@
 #define OUTER(a, b) INNER(unsigned char, 1000, a) INNER(int, 1000, b)
 int main(void) { int r1, r2; OUTER(r1, r2); assert(r1 == 232); assert(r2 == 232); return 0; }
 // Imported from ESBMC regression/esbmc/macro_local_nested_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

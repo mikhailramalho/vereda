@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_struct
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support a global that is not a scalar or an array of scalars yet, at file .*partial_order_reject_struct\.c line +16 column 3 function main$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

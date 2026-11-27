@@ -55,7 +55,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/02_account_symbolic_03
 // Needs: --context-bound 1
-// RUN: --context-bound 1 --no-incremental-bmc
+// RUN: --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

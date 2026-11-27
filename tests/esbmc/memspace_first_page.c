@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/memspace_first_page
 // Needs: --reserve-first-page
-// RUN: --reserve-first-page --no-incremental-bmc
+// RUN: --reserve-first-page
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

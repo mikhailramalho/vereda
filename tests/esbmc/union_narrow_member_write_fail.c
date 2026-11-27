@@ -10,5 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_narrow_member_write_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$

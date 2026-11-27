@@ -125,7 +125,7 @@ int main(void) {
 
 // Imported from ESBMC regression/esbmc/realloc19
 // Needs: --force-realloc-success
-// RUN: --force-malloc-success --force-realloc-success --no-incremental-bmc
+// RUN: --force-malloc-success --force-realloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -13,7 +13,6 @@ int main(void)
   return buf[0];
 }
 // Imported from ESBMC regression/esbmc/github_9356
-// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated$

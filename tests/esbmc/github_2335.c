@@ -28,7 +28,7 @@ int main () {
 }
 // Imported from ESBMC regression/esbmc/github_2335
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null --no-incremental-bmc
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

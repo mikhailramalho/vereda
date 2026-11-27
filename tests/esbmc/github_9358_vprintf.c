@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9358_vprintf
 // Needs: --printf-check
-// RUN: --printf-check --ub-pointer-check=false --no-incremental-bmc
+// RUN: --printf-check --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

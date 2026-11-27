@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10891_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: PASSED +\[main\.assertion\.[0-9]+\] +line [0-9]+ +dereference failure: Object accessed with incompatible base type
 // Vereda: unmet EXPECT: PASSED +\[main\.assertion\.[0-9]+\] +line [0-9]+ +dereference failure: Object accessed with incompatible base type

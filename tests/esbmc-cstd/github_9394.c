@@ -32,5 +32,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/github_9394
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

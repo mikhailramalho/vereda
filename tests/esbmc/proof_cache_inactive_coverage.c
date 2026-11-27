@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_inactive_coverage
 // Needs: --assertion-coverage --proof-cache proof-store
-// RUN: --assertion-coverage --proof-cache proof-store --no-incremental-bmc
+// RUN: --assertion-coverage --proof-cache proof-store
 // MODE: FUTURE
 // EXPECT: ^WARNING: Proof cache: inactive \(coverage measurement\); every claim will be solved and none stored$
 // Vereda: verdict none

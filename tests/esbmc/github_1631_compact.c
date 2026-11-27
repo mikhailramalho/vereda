@@ -8,5 +8,5 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/github_1631_compact
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$

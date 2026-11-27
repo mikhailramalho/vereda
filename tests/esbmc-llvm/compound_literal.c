@@ -22,7 +22,6 @@ int main(void)
 
 // THIS FILE SHOULDN'T FAIL! It's a remainder to fix a infinity loop at line 9
 // Imported from ESBMC regression/llvm/compound_literal
-// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict SUCCESSFUL

@@ -31,7 +31,7 @@ void main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1999_2
 // Needs: --condition-coverage
-// RUN: --condition-coverage --no-incremental-bmc
+// RUN: --condition-coverage
 // MODE: FUTURE
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

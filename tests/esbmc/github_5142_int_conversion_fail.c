@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5142_int_conversion_fail
 // Needs: --sv-comp
-// RUN: --sv-comp --no-incremental-bmc
+// RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^Violated property:$
 // EXPECT: ^VERIFICATION FAILED$

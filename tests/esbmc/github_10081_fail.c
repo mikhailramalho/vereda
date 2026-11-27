@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10081_fail
 // Needs: --sv-comp
-// RUN: --sv-comp --ub-pointer-check=false --no-incremental-bmc
+// RUN: --sv-comp --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+8\s+reach_error$

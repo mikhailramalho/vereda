@@ -10,5 +10,5 @@ int main()
   __VERIFIER_assert(q != arr + 100); // q kept
 }
 // Imported from ESBMC regression/esbmc/github_9937_later_step_fail
-// RUN: -m64 --no-incremental-bmc
+// RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$

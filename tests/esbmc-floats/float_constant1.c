@@ -27,5 +27,4 @@ int main()
   #endif
 }
 // Imported from ESBMC regression/floats/float_constant1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

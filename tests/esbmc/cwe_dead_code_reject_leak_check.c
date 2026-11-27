@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_leak_check
 // Needs: --dead-code-check --memory-leak-check
-// RUN: --dead-code-check --memory-leak-check --no-incremental-bmc
+// RUN: --dead-code-check --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --memory-leak-check$
 // Vereda: verdict none

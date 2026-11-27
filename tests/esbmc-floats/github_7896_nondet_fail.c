@@ -13,5 +13,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_7896_nondet_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

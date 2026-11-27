@@ -17,7 +17,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_bodies_pragma_unroll_01_fail
-// RUN: --no-unwinding-assertions --no-incremental-bmc
+// RUN: --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

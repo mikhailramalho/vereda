@@ -17,5 +17,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_ptr_row
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

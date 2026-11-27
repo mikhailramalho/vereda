@@ -21,7 +21,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/switch_into_scope_witness
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: --validate-violation-witness --witness witness.yml --no-incremental-bmc
+// RUN: --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

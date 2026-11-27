@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/extensions/unsupported_includes
 // Needs: --dont-care-about-missing-extensions REQUIRES arch_x86
-// RUN: --dont-care-about-missing-extensions --no-incremental-bmc
+// RUN: --dont-care-about-missing-extensions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

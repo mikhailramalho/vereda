@@ -22,5 +22,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/realloc_pointed_objects_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

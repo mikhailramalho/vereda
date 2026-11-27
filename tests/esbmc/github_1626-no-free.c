@@ -20,7 +20,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_1626-no-free
 // Needs: --printf-check
-// RUN: --printf-check --no-incremental-bmc
+// RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

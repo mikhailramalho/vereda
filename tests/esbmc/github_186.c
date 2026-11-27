@@ -8,5 +8,4 @@ int main()
   assert(x1[2][a] == 2);
 } 
 // Imported from ESBMC regression/esbmc/github_186
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

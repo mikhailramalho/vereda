@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_unmodelled_free_heap
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*PASSED.*dereference failure: invalid pointer freed$
 // Vereda: unmet EXPECT: ^.*PASSED.*dereference failure: invalid pointer freed$

@@ -18,5 +18,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer_diff_neg_add_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

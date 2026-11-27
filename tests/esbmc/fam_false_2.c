@@ -11,7 +11,7 @@ main() {
   free(ptr);
 }
 // Imported from ESBMC regression/esbmc/fam_false_2
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: Access to object out of bounds: heap object
 // MODE: FUTURE

@@ -29,7 +29,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_367
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

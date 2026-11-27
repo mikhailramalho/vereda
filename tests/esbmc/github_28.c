@@ -13,5 +13,5 @@ int main() {
    assert(d->bytes[a] == 0);
 }
 // Imported from ESBMC regression/esbmc/github_28
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

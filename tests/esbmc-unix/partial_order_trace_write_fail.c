@@ -17,7 +17,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_trace_write_fail
 // Needs: --partial-order
-// RUN: --partial-order --no-incremental-bmc
+// RUN: --partial-order
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?=[\s\S]*thread 1\n  x = 1 [\s\S]*\n  m = 1 [\s\S]*Violated property)

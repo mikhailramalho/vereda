@@ -24,5 +24,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_rel_huge_object_force_success
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

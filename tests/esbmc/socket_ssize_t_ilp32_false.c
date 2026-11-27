@@ -32,5 +32,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/socket_ssize_t_ilp32_false
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,5 +15,4 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_shufflevector_4_true
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

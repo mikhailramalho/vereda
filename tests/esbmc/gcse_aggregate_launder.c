@@ -23,5 +23,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_aggregate_launder
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

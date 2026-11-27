@@ -22,5 +22,5 @@ int main() {
   return v;
 }
 // Imported from ESBMC regression/esbmc/if_cond_overflow_check
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

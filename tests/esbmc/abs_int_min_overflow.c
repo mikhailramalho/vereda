@@ -16,5 +16,5 @@ int main() {
   return y;
 }
 // Imported from ESBMC regression/esbmc/abs_int_min_overflow
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

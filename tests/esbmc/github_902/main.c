@@ -9,7 +9,6 @@
 
 }
 // Imported from ESBMC regression/esbmc/github_902
-// RUN: --no-incremental-bmc
 // FILES: file1.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$

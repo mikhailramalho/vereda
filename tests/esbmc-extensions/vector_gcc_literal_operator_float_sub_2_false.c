@@ -15,5 +15,4 @@ int main() {
    return 0; 
 }
 // Imported from ESBMC regression/extensions/vector_gcc_literal_operator_float_sub_2_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -22,5 +22,4 @@ int main() {
   assert(z == x + y);
 }
 // Imported from ESBMC regression/esbmc/github_323
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

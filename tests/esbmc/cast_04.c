@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/cast_04
 // Needs: --struct-fields-check
-// RUN: --struct-fields-check --no-incremental-bmc
+// RUN: --struct-fields-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

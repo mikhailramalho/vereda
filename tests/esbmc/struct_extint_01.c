@@ -12,5 +12,4 @@ int main()
   assert(*(&s.field_2) == *(int *)((void *)&s.field_1 + 4));
 }
 // Imported from ESBMC regression/esbmc/struct_extint_01
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

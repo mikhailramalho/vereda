@@ -21,5 +21,4 @@ int main()
   assert(p->i==1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc21
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

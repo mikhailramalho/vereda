@@ -7,5 +7,4 @@ int main(int argc, char *argv[]){
   }
 }
 // Imported from ESBMC regression/esbmc/argc_argv
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

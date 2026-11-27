@@ -13,7 +13,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pragma_unroll_undefined_macro_fail
-// RUN: --no-unwinding-assertions --no-incremental-bmc
+// RUN: --no-unwinding-assertions
 // EXPECT: PARSING ERROR
 // Vereda: unmet EXPECT: PARSING ERROR
 // MODE: FUTURE

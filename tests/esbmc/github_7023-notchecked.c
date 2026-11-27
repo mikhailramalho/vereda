@@ -10,7 +10,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7023-notchecked
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ +NOT CHECKED .*a is not (one|two)$
 // EXPECT: ^VERIFICATION FAILED$

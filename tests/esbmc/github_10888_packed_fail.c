@@ -19,6 +19,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10888_packed_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$

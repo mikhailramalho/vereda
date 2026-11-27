@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_coverage
 // Needs: --dead-code-check --assertion-coverage
-// RUN: --dead-code-check --assertion-coverage --no-incremental-bmc
+// RUN: --dead-code-check --assertion-coverage
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --assertion-coverage$
 // Vereda: verdict none

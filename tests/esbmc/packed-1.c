@@ -13,5 +13,5 @@ short fun1(size_t i)
 	return q[i].b;
 }
 // Imported from ESBMC regression/esbmc/packed-1
-// RUN: --entry fun1 --no-incremental-bmc
+// RUN: --entry fun1
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -22,7 +22,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pragma_unroll_nested_true
-// RUN: --no-unwinding-assertions --no-incremental-bmc
+// RUN: --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 3 to loop
 // EXPECT: Applying #pragma unroll 5 to loop

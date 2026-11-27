@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1720_6
 // Needs: --condition-coverage-claims --no-cov-asserts
-// RUN: --condition-coverage-claims --no-cov-asserts --no-incremental-bmc
+// RUN: --condition-coverage-claims --no-cov-asserts
 // MODE: KNOWNBUG
 // EXPECT: ^Condition Coverage: 100%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

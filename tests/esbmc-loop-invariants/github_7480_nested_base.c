@@ -26,7 +26,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_7480_nested_base
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
+// RUN: --loop-invariant-check --multi-property
 // MODE: FUTURE
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.1\]\s+line\s+13\s+loop invariant base case$
 // EXPECT: ^\s+UNKNOWN\s+\[main\.assertion\.3\]\s+line\s+17\s+loop invariant base case \(loop invariant too weak

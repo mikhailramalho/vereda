@@ -17,5 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10786_side_effect
-// RUN: --std c11 --no-incremental-bmc
+// RUN: --std c11
 // EXPECT: ^VERIFICATION SUCCESSFUL$

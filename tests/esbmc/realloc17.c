@@ -110,6 +110,5 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc/realloc17
-// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

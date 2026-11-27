@@ -37,7 +37,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_falsify_prepass_sound
 // Needs: --no-por --context-bound 3 --falsify-context-bound 1
-// RUN: --no-por --context-bound 3 --falsify-context-bound 1 --no-incremental-bmc
+// RUN: --no-por --context-bound 3 --falsify-context-bound 1
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 1$
 // EXPECT: Falsifying with context bound 1\n(?:(?!VERIFICATION SUCCESSFUL)[\s\S])*VERIFICATION FAILED

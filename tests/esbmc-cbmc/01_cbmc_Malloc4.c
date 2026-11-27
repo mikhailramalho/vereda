@@ -15,7 +15,6 @@ int main()
   p->i = __VERIFIER_nondet_int();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc4
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9881_function_return_once
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml - --no-incremental-bmc
+// RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 7"\n.*\n.*\n.*\n *line: 16$

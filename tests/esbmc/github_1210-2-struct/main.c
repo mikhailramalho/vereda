@@ -18,6 +18,5 @@ int main()
 
 // struct incomplete { short x, y; };
 // Imported from ESBMC regression/esbmc/github_1210-2-struct
-// RUN: --no-incremental-bmc
 // FILES: incomplete-lib.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$

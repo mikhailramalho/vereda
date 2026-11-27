@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/00_atomicity05
 // Needs: --atomicity-check
-// RUN: --atomicity-check --no-incremental-bmc
+// RUN: --atomicity-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/char32-lit-no-simp
 // Needs: REQUIRES uchar_h
-// RUN: --no-simplify --no-incremental-bmc
+// RUN: --no-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

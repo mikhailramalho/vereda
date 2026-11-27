@@ -29,7 +29,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/symex_return_value_cswitch
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

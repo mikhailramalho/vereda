@@ -6,6 +6,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10812_scanf_literal_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: write access to string constant$
 // EXPECT: ^VERIFICATION FAILED$

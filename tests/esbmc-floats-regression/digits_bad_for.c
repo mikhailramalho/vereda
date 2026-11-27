@@ -17,5 +17,4 @@ int main()
 }
 
 // Imported from ESBMC regression/floats-regression/digits_bad_for
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

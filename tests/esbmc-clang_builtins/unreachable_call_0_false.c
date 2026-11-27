@@ -21,5 +21,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/unreachable_call_0_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

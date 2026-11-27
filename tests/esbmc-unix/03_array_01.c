@@ -31,7 +31,7 @@ int main(void){
 }
 // Imported from ESBMC regression/esbmc-unix/03_array_01
 // Needs: --context-bound 3
-// RUN: --context-bound 3 --no-incremental-bmc
+// RUN: --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

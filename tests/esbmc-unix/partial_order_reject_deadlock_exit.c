@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_deadlock_exit
 // Needs: --partial-order --deadlock-check
-// RUN: --partial-order --deadlock-check --no-incremental-bmc
+// RUN: --partial-order --deadlock-check
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support checking deadlocks with a call to pthread_exit yet, at file .*partial_order_reject_deadlock_exit\.c line +6 column 3 function
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

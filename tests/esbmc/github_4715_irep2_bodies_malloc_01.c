@@ -29,5 +29,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_bodies_malloc_01
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

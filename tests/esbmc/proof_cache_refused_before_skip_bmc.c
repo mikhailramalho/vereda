@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_refused_before_skip_bmc
 // Needs: --proof-cache proof-store --skip-bmc
-// RUN: --proof-cache proof-store --skip-bmc --no-incremental-bmc
+// RUN: --proof-cache proof-store --skip-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --proof-cache reuses claims one at a time and needs --multi-property$
 // Vereda: verdict none

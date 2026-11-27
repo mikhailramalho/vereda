@@ -11,5 +11,4 @@ int main()
   return r;
 }
 // Imported from ESBMC regression/esbmc/loop_local_l1_reuse_address
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

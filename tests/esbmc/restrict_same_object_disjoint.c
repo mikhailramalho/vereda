@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/restrict_same_object_disjoint
 // Needs: --restrict-check
-// RUN: --restrict-check --no-incremental-bmc
+// RUN: --restrict-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

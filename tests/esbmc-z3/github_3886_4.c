@@ -45,6 +45,6 @@ int main()
 }
 // Imported from ESBMC regression/z3/github_3886_4
 // Needs: __ESBMC_exists, __ESBMC_forall
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

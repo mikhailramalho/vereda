@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4311-ascii
 // Needs: --all-witnesses --ascii-report
-// RUN: --all-witnesses --ascii-report --no-incremental-bmc
+// RUN: --all-witnesses --ascii-report
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  \+- Witness 1 of [0-9]+ -+$

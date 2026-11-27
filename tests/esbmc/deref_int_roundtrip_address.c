@@ -9,5 +9,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_int_roundtrip_address
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

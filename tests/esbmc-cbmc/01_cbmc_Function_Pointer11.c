@@ -18,5 +18,4 @@ int main(int argc, char **argv)
   f(x);
 } 
 // Imported from ESBMC regression/cbmc/01_cbmc_Function_Pointer11
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

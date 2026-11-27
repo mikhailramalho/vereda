@@ -13,7 +13,6 @@ int main(void)
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2007
-// RUN: --no-incremental-bmc
 // EXPECT: dereference failure: Incorrect alignment when accessing data object
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: Incorrect alignment when accessing data object

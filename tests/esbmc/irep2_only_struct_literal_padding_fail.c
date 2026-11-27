@@ -26,7 +26,7 @@ void c2(void) { free(g); }
 int main(void) { parse("c1"); parse("c1"); parse("c2"); return 0; }
 // Imported from ESBMC regression/esbmc/irep2_only_struct_literal_padding_fail
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success --no-incremental-bmc
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*forgotten memory.*$

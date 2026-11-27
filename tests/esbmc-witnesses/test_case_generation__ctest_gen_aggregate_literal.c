@@ -32,7 +32,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_aggregate_literal
 // Needs: --generate-ctest-testcase CHECK_FILE esbmc-ctest/test_case.c contains static int const v\[\] = \{ -?[0-9]+, -?[0-9]+, -?[0-9]+, 2, 1 \};
-// RUN: --generate-ctest-testcase --no-incremental-bmc
+// RUN: --generate-ctest-testcase
 // MODE: FUTURE
 // EXPECT: ^Generated CTest test case\: test_case\.c$
 // EXPECT: ^VERIFICATION FAILED$

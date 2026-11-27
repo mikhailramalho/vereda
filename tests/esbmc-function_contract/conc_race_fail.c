@@ -28,7 +28,7 @@ int main()
 }
 // Imported from ESBMC regression/function_contract/conc_race_fail
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --ub-pointer-check=false --no-incremental-bmc
+// RUN: --ub-data-race-check --ub-pointer-check=false
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

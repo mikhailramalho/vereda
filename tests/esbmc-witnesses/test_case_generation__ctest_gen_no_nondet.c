@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_no_nondet
 // Needs: --generate-ctest-testcase
-// RUN: --generate-ctest-testcase --no-incremental-bmc
+// RUN: --generate-ctest-testcase
 // MODE: FUTURE
 // EXPECT: ^WARNING: No nondet variables found\. No CTest test case generated\.$
 // EXPECT: ^VERIFICATION FAILED$

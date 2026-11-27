@@ -18,6 +18,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/count_up_down_bug
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

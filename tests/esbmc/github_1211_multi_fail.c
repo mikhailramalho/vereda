@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1211_multi_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^Caching time: .*\(removed 0 assertions\)$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^Caching time: .*\(removed 0 assertions\)$

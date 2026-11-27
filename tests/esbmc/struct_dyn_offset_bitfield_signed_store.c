@@ -9,5 +9,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_dyn_offset_bitfield_signed_store
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

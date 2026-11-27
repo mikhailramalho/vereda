@@ -30,5 +30,4 @@ int main(int argc, char *argv[]) {
   free(p);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Free5
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

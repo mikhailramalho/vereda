@@ -25,6 +25,5 @@ int main (void) {
   return 1;
 }
 // Imported from ESBMC regression/floats/Float-data-dependent-rounding
-// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

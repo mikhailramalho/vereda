@@ -26,5 +26,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/atomic_store
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

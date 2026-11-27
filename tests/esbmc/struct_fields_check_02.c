@@ -43,7 +43,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/struct_fields_check_02
 // Needs: --struct-fields-check
-// RUN: --struct-fields-check --no-incremental-bmc
+// RUN: --struct-fields-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

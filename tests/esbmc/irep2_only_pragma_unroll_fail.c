@@ -13,7 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_pragma_unroll_fail
-// RUN: --no-unwinding-assertions --no-incremental-bmc
+// RUN: --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: array bounds violated: array `a' upper bound
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

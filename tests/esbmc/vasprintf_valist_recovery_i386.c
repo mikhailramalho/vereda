@@ -29,5 +29,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vasprintf_valist_recovery_i386
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

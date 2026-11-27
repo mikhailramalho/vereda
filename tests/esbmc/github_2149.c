@@ -18,7 +18,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_2149
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-incremental-bmc
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_1628_7
 // Needs: --printf-check
-// RUN: --printf-check --no-incremental-bmc
+// RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf format specifier \%s requires pointer argument$
 // Vereda: verdict none

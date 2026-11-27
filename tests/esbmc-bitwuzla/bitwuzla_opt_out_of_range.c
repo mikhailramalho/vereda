@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/bitwuzla_opt_out_of_range
 // Needs: --bitwuzla-opt rewrite-level=9
-// RUN: --bitwuzla --bitwuzla-opt rewrite-level=9 --no-incremental-bmc
+// RUN: --bitwuzla --bitwuzla-opt rewrite-level=9
 // MODE: FUTURE
 // EXPECT: ^ERROR: Bitwuzla error encountered$
 // EXPECT: invalid value '9' for numeric option '--rewrite-level', maximum is 2

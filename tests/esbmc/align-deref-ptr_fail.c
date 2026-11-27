@@ -19,7 +19,7 @@ int main(void)
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/align-deref-ptr_fail
-// RUN: --entry f --no-incremental-bmc
+// RUN: --entry f
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b

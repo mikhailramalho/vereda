@@ -22,7 +22,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_concurrent
 // Needs: --dead-code-check --sarif-output out.sarif CHECK_FILE out.sarif absent "ruleId": "dead-code"
-// RUN: --dead-code-check --sarif-output out.sarif --no-incremental-bmc
+// RUN: --dead-code-check --sarif-output out.sarif
 // MODE: FUTURE
 // EXPECT: ^\[Dead code\]$
 // EXPECT: ^No provably-dead code found\.$

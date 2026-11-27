@@ -17,6 +17,6 @@ int main()
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/cpachecker-long-min-32.c
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: x = -2147483648

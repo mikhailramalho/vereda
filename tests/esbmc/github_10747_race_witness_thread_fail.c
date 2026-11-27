@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10747_race_witness_thread_fail
 // Needs: --ub-data-race-check --witness-output-yaml
-// RUN: --ub-data-race-check --no-assertions --witness-output-yaml - --no-incremental-bmc
+// RUN: --ub-data-race-check --no-assertions --witness-output-yaml -
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: format_version: "2\.4"
 // EXPECT: (?s)type: "target"(?:(?!waypoint:).)*thread_id: any\s+- waypoint:\s+type: "target"(?:(?!waypoint:).)*thread_id: any

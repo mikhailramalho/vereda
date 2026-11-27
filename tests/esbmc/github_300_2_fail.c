@@ -28,5 +28,4 @@ int main(void) {
     assert(str2_info.field2.field1 == 2); // change to 1 for verification successful
 }
 // Imported from ESBMC regression/esbmc/github_300_2_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_kept_nondet_call_guard_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml - --no-incremental-bmc
+// RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 5"\n\s+format: "ext_c_expression"\n\s+location:\n\s+file_name: "[^"]*witness_kept_nondet_call_guard_fail\.c"\n\s+line: 15$

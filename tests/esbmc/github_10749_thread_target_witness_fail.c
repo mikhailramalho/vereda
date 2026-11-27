@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10749_thread_target_witness_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml - --no-incremental-bmc
+// RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^    format_version: "2\.4"$

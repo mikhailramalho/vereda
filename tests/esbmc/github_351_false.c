@@ -30,7 +30,7 @@ void foo(__linseg_supovr uint32_t* param1_p, uint32_t param2) {
   *param1_p = param2;
 }
 // Imported from ESBMC regression/esbmc/github_351_false
-// RUN: --entry foo --no-incremental-bmc
+// RUN: --entry foo
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

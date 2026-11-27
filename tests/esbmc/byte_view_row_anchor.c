@@ -9,5 +9,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/byte_view_row_anchor
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

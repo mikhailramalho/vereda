@@ -14,5 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assert_desc_not_literal_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

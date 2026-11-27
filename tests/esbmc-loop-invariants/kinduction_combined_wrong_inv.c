@@ -23,7 +23,7 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/kinduction_combined_wrong_inv
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant --no-incremental-bmc
+// RUN: --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: loop invariant base case

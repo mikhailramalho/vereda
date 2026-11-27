@@ -13,7 +13,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_row_alias_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^\s+the row.s earlier store must not be dropped$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the row.s earlier store must not be dropped$

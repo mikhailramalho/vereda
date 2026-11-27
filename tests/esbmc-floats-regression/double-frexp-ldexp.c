@@ -66,7 +66,6 @@ int main()
 	assert(ze == 0);
 }
 // Imported from ESBMC regression/floats-regression/double-frexp-ldexp
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

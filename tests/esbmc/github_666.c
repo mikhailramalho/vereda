@@ -7,7 +7,6 @@ int main() {
         return 0;
 }
 // Imported from ESBMC regression/esbmc/github_666
-// RUN: --no-incremental-bmc
 // EXPECT: \bfoo = 42\b
 // EXPECT: \bfoo = 15\b
 // EXPECT: ^VERIFICATION FAILED$

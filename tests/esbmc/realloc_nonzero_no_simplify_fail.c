@@ -13,5 +13,4 @@ int main()
   assert(q == NULL);
 }
 // Imported from ESBMC regression/esbmc/realloc_nonzero_no_simplify_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

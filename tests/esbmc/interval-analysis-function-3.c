@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval-analysis-function-3
 // Needs: --interval-analysis
-// RUN: --interval-analysis --no-incremental-bmc
+// RUN: --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -11,7 +11,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/fixedbv/fract_div_floor_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

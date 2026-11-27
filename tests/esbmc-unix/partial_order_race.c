@@ -25,7 +25,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_race
 // Needs: --partial-order --ub-data-race-check
-// RUN: --partial-order --ub-data-race-check --no-incremental-bmc
+// RUN: --partial-order --ub-data-race-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

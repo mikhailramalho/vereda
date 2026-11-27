@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1054
 // Needs: --interval-analysis --interval-analysis-simplify
-// RUN: --interval-analysis  --interval-analysis-simplify --no-incremental-bmc
+// RUN: --interval-analysis  --interval-analysis-simplify
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

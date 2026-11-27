@@ -53,7 +53,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_5133_mixed_context_race
 // Needs: --data-races-check-only --context-bound 2
-// RUN: --data-races-check-only --no-assertions --context-bound 2 --no-incremental-bmc
+// RUN: --data-races-check-only --no-assertions --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@data$

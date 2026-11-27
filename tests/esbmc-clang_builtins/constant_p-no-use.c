@@ -5,5 +5,4 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/constant_p-no-use
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

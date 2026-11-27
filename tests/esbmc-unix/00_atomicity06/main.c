@@ -96,6 +96,6 @@ int main(){
 // Imported from ESBMC regression/esbmc-unix/00_atomicity06
 // Needs: __ESBMC_yield
 // Needs: --atomicity-check -I .
-// RUN: --atomicity-check -I . --no-incremental-bmc
+// RUN: --atomicity-check -I .
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

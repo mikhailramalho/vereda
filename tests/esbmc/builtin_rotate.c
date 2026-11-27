@@ -15,5 +15,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_rotate
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

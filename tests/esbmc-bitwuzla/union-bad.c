@@ -19,5 +19,5 @@ void main(void)
   free(data.p0);
 }
 // Imported from ESBMC regression/bitwuzla/union-bad
-// RUN: --solver bitwuzla --no-incremental-bmc
+// RUN: --solver bitwuzla
 // EXPECT: ^VERIFICATION FAILED$

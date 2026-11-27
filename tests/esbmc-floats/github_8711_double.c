@@ -10,5 +10,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8711_double
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

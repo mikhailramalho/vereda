@@ -11,5 +11,4 @@ int main()
 
 
 // Imported from ESBMC regression/esbmc/00_bitshift_03
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

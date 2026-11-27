@@ -9,7 +9,7 @@ int main()
   return old + 1;
 }
 // Imported from ESBMC regression/esbmc/atomic_fetch_add_signed_wrap_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 9 column [0-9]+ function main$
 // EXPECT: arithmetic overflow on add

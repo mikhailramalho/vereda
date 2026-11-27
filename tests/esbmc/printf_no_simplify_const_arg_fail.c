@@ -9,5 +9,4 @@ int main()
   assert(a == 3);
 }
 // Imported from ESBMC regression/esbmc/printf_no_simplify_const_arg_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

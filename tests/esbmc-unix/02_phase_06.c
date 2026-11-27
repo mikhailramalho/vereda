@@ -63,7 +63,7 @@ int main()
 
 // Imported from ESBMC regression/esbmc-unix/02_phase_06
 // Needs: --context-bound 3 --lock-order-check
-// RUN: --context-bound 3 --lock-order-check --no-incremental-bmc
+// RUN: --context-bound 3 --lock-order-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

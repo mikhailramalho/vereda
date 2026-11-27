@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/floats/github_2763_plus_inf_fail
 // Needs: --round-to-plus-inf
-// RUN: --round-to-plus-inf --no-incremental-bmc
+// RUN: --round-to-plus-inf
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

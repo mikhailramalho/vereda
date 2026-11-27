@@ -9,7 +9,7 @@ int main()
     assert(y == 3);   
 }
 // Imported from ESBMC regression/cstd/printf_bug_1
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32 --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: NULL pointer\b

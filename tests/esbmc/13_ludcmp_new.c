@@ -143,5 +143,4 @@ int ludcmp(int nmax, int n, double eps)
 }
 
 // Imported from ESBMC regression/esbmc/13_ludcmp_new
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/frexpl_binary128_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED\s+\[main.assertion.2\].*ldexpl
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

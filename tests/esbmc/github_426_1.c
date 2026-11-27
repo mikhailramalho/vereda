@@ -13,5 +13,4 @@ int main(void) {
 	assert(s.y == 3);
 }
 // Imported from ESBMC regression/esbmc/github_426_1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

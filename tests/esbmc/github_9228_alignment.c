@@ -15,5 +15,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9228_alignment
-// RUN: --std c11 -m64 --no-incremental-bmc
+// RUN: --std c11 -m64
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -16,5 +16,4 @@ int main()
   assert(k==0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_gcc_conditional_expr1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

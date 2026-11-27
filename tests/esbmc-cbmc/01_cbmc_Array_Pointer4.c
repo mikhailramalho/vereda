@@ -15,5 +15,4 @@ int main()
   assert(sizeof(a3)==10*sizeof(int *));
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Pointer4
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

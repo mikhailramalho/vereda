@@ -7,7 +7,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_bitreverse_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED\s+\[main.assertion.2\].*__builtin_bitreverse16
 // Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*__builtin_bitreverse16

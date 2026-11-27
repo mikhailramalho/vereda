@@ -30,7 +30,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/por_local_mutex
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

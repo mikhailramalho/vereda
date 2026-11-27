@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_falsify_prepass_reject
 // Needs: --falsify-context-bound 1
-// RUN: --multi-property --falsify-context-bound 1 --no-incremental-bmc
+// RUN: --multi-property --falsify-context-bound 1
 // MODE: FUTURE
 // EXPECT: ^ERROR: --falsify-context-bound cannot be combined with --multi-property$
 // Vereda: verdict none

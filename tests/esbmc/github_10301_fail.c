@@ -6,6 +6,5 @@ int main()
   q = realloc(q, sizeof(int));
 }
 // Imported from ESBMC regression/esbmc/github_10301_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED.*invalid-pointer-freed.*line 6.*dereference failure: invalid pointer freed$

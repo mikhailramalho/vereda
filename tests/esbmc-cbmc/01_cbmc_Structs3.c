@@ -9,5 +9,4 @@ int main() {
   assert(s.a==q.a);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Structs3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

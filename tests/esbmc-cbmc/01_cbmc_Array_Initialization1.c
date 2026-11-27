@@ -19,5 +19,4 @@ static const char * const a1[] = { "abc" };
 static const char * const a2[] = { "abc", "" };
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Initialization1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

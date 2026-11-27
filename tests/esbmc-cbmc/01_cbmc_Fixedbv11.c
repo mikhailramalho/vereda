@@ -279,5 +279,5 @@ int checkLimitCycle(void)
 	return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv11
-// RUN: --entry checkOverflow -m32 --no-incremental-bmc
+// RUN: --entry checkOverflow -m32
 // EXPECT: ^VERIFICATION FAILED$

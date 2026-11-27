@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 	f(atoi(argv[1]), atoi(argv[2]));
 }
 // Imported from ESBMC regression/esbmc/align-deref_fail
-// RUN: --entry f --no-incremental-bmc
+// RUN: --entry f
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b

@@ -12,5 +12,4 @@ int main(void)
   return EXIT_SUCCESS;
 }
 // Imported from ESBMC regression/esbmc/github_exit_macros
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -17,4 +17,4 @@ int main()
 // Vereda: unmet EXPECT: State [0-9]+ file \S+function_return_location\.c line 10 column 9 function main thread 0\n-+\n  M_z =
 // Vereda: verdict FAILED
 // MODE: FUTURE
-// RUN: --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --ub-div-by-zero-check=false

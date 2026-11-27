@@ -11,5 +11,4 @@ int main() {
   __VERIFIER_assert(j == 3 * N);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_counter
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

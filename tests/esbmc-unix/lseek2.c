@@ -19,7 +19,6 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/lseek2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

@@ -34,7 +34,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/double_assign_check_local_array
 // Needs: --double-assign-check
-// RUN: --double-assign-check --no-incremental-bmc
+// RUN: --double-assign-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

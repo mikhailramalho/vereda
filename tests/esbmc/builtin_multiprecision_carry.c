@@ -40,5 +40,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_multiprecision_carry
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

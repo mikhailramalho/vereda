@@ -14,5 +14,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cstd/intrinsic_memcpy-no-use
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

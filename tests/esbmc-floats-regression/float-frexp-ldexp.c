@@ -49,7 +49,6 @@ int main()
 	assert(ze == FLT_MAX_EXP);
 }
 // Imported from ESBMC regression/floats-regression/float-frexp-ldexp
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

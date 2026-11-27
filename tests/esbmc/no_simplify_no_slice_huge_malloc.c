@@ -10,5 +10,4 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/no_simplify_no_slice_huge_malloc
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

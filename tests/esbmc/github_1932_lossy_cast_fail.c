@@ -12,5 +12,4 @@ int main(int argc, char **argv) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1932_lossy_cast_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -7,7 +7,7 @@ int main()
 	return data == -data;
 }
 // Imported from ESBMC regression/esbmc/overflow-neg
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: // 10000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
 // EXPECT: arithmetic overflow on neg

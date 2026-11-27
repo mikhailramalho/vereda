@@ -36,5 +36,4 @@ int main()
   assert(2==((sensorData[0]*sensorData[1]*sensorData[2])/3));
 }
 // Imported from ESBMC regression/esbmc/19_arithmetic_operators
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

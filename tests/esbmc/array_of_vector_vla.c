@@ -14,5 +14,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_of_vector_vla
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

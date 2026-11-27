@@ -27,7 +27,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/realloc1-fail
 // Needs: --force-realloc-success
-// RUN: --force-realloc-success --force-malloc-success --no-incremental-bmc
+// RUN: --force-realloc-success --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

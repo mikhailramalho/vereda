@@ -19,5 +19,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10965_with_chain_scope
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

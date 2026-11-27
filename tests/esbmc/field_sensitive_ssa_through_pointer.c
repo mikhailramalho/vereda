@@ -27,7 +27,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_through_pointer
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 3 struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -6,5 +6,4 @@ int main()
   __asm("mov ax, dx");
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_asm1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

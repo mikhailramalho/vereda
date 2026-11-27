@@ -7,5 +7,4 @@ int main() {
    assert((float)c > 0); // Works with Boolector
 }
 // Imported from ESBMC regression/esbmc/github_877
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,7 +15,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/goto_sideways_scope_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: expired variable
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

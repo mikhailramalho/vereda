@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_phase
 // Needs: --dead-code-check --forward-condition
-// RUN: --dead-code-check --forward-condition --no-incremental-bmc
+// RUN: --dead-code-check --forward-condition
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --forward-condition$
 // Vereda: verdict none

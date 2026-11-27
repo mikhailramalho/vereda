@@ -19,5 +19,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7707-long-double
 // Needs: REQUIRES x87_long_double
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION SUCCESSFUL$

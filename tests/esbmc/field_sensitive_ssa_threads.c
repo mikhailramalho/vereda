@@ -22,7 +22,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_threads
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^WARNING: --field-sensitive-ssa is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -14,7 +14,7 @@ int main()
 }  
 // Imported from ESBMC regression/goto-coverage/github_1720_1
 // Needs: --condition-coverage --no-cov-asserts
-// RUN: --condition-coverage --no-cov-asserts --no-incremental-bmc
+// RUN: --condition-coverage --no-cov-asserts
 // MODE: FUTURE
 // EXPECT: ^Condition Coverage: 25%
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

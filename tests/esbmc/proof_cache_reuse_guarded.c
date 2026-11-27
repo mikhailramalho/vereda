@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_reuse_guarded
 // Needs: --proof-cache proof-store fp.tsv
-// RUN: --multi-property --proof-cache proof-store fp.tsv --no-incremental-bmc
+// RUN: --multi-property --proof-cache proof-store fp.tsv
 // MODE: FUTURE
 // EXPECT: ^Proof cache: 1 claim\(s\) reused, 1 solved$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

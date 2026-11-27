@@ -11,5 +11,4 @@ int main()
     __VERIFIER_assert(arr[i] == i); // arr[i] == i
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

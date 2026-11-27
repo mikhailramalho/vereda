@@ -32,7 +32,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/race_unlock_then_join
 // Needs: --data-races-check-only
-// RUN: --data-races-check-only --no-assertions --no-incremental-bmc
+// RUN: --data-races-check-only --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -12,7 +12,6 @@ int main(void)
   return a.bytes[0];
 }
 // Imported from ESBMC regression/esbmc/github_10939_struct_src_offset_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED +\[main\.assertion\.[0-9]+\] +line +[0-9]+ +dereference failure: .*got illegal offset
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

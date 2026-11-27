@@ -14,5 +14,4 @@ int main()
   __VERIFIER_assert(a[y] == y || y == c); // only a[c] changed
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_update
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

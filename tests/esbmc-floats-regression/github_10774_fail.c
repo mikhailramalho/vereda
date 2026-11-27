@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/floats-regression/github_10774_fail
 // Needs: --interval-analysis
-// RUN: --interval-analysis --ub-div-by-zero-check=false --no-incremental-bmc
+// RUN: --interval-analysis --ub-div-by-zero-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

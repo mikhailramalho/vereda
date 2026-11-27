@@ -9,5 +9,4 @@ int main()
     __VERIFIER_assert(a[x] == a[x + 1]); // distinct values can differ
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_nondet_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

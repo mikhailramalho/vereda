@@ -11,7 +11,7 @@ int main()
   strcpy(a, b);
 }
 // Imported from ESBMC regression/incremental-smt/incremental-16
-// RUN: --solver z3 --no-incremental-bmc
+// RUN: --solver z3
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict SUCCESSFUL

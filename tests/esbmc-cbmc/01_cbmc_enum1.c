@@ -33,5 +33,4 @@ void fun2()
   fun((int) L);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_enum1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -16,5 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_two_dims_flat_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

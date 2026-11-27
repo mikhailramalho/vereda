@@ -10,5 +10,5 @@ int main() {
   (dataBuffer + 1)->intOne = 1;
 }
 // Imported from ESBMC regression/esbmc/github_331
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

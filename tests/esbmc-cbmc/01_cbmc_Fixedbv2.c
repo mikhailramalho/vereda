@@ -9,5 +9,4 @@ int main() {
         assert(b==1.25);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

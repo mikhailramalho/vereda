@@ -22,7 +22,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_stats_bound
 // Needs: --context-bound 1
-// RUN: --context-bound 1 --no-incremental-bmc
+// RUN: --context-bound 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Schedule reduction: peak_threads 3, schedules_explored [0-9]+, pruned_by_mpor [0-9]+, pruned_by_hash 0, pruned_by_sleep 0, pruned_by_cs_bound [1-9][0-9]*$

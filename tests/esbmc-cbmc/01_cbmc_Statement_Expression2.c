@@ -16,5 +16,4 @@ int main(int argc, char* p[])
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Statement_Expression2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

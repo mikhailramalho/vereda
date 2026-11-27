@@ -94,11 +94,6 @@ RENAMED = {
 UNSUPPORTED_ALIASES = {"--data-races-check": "--ub-data-race-check",
                        "--no-standard-check": "--no-standard-checks"}
 RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
-# ESBMC flags that give a bound or check bounds incrementally. Without one,
-# ESBMC checks one bound and Vereda bounds incrementally, so the test gets
-# --no-incremental-bmc.
-BOUNDED = {"--unwind", "--incremental-bmc", "--incremental", "--k-induction",
-           "--k-induction-parallel", "--falsification", "--termination"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
 # pipeline switches and numeric selectors in both normal and fallback commands,
@@ -225,9 +220,6 @@ def header(origin, mode, args, expected, test_dir, builtins):
     architectures = {"REQUIRES arch32": "-m32", "REQUIRES arch64": "-m64"}
     missing += [r for r in expected if r.split()[0] in DIRECTIVES
                 and not (r in architectures and architectures[r] == target)]
-    single_bound = not BOUNDED & {t.partition("=")[0] for t in shlex.split(args)}
-    if single_bound:
-        flags.append("--no-incremental-bmc")
     lines = [f"// Imported from ESBMC regression/{origin}"]
     if builtins:
         lines.append("// Needs: " + ", ".join(builtins))
@@ -266,8 +258,7 @@ def header(origin, mode, args, expected, test_dir, builtins):
                 raw_args.append(args[start:end])
                 kept = True
             start = end
-        run_args = "".join(raw_args).strip() + " --no-incremental-bmc" * single_bound
-        lines += ["// Needs: " + " ".join(missing), ("// RUN: " + run_args.strip()).rstrip()]
+        lines += ["// Needs: " + " ".join(missing), ("// RUN: " + "".join(raw_args).strip()).rstrip()]
     elif flags:
         lines.append("// RUN: " + " ".join(flags))
     # Keep both the summarized and unrolled decrement performance regressions.

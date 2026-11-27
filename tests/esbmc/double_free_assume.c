@@ -11,7 +11,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/double_free_assume
 // Needs: --conv-assert-to-assume
-// RUN: --force-malloc-success --conv-assert-to-assume --no-incremental-bmc
+// RUN: --force-malloc-success --conv-assert-to-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

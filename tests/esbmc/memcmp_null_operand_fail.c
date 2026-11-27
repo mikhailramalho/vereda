@@ -11,7 +11,6 @@ int main()
   return memcmp(p, b, 4);
 }
 // Imported from ESBMC regression/esbmc/memcmp_null_operand_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: NULL pointer on memcmp$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

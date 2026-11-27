@@ -39,6 +39,6 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/eureka_05
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

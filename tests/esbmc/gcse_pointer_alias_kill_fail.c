@@ -15,5 +15,4 @@ int main()
   assert(b == a || d == c);
 }
 // Imported from ESBMC regression/esbmc/gcse_pointer_alias_kill_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

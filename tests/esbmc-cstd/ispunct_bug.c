@@ -14,5 +14,4 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/ispunct_bug
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -21,5 +21,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_union_array_write_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

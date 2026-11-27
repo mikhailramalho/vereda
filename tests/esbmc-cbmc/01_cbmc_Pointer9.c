@@ -36,5 +36,4 @@ int main()
   //assert( x == 12345 );     /* fails - OK */
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer9
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

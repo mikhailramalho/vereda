@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-incremental-bmc
+// RUN: --dead-code-check
 // MODE: FUTURE
 // EXPECT: ^\[Dead code\]$
 // EXPECT: :9: dead code: unreachable branch

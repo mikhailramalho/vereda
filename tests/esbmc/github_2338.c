@@ -3,5 +3,5 @@ int main() {
   return -a;
 }
 // Imported from ESBMC regression/esbmc/github_2338
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$

@@ -7,5 +7,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/nan_double
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

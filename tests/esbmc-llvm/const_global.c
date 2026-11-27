@@ -13,5 +13,4 @@ int main()
   x = fun4(1,0);
 }
 // Imported from ESBMC regression/llvm/const_global
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

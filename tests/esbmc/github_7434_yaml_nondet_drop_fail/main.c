@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_yaml_nondet_drop_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml - --no-incremental-bmc
+// RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "function_return"

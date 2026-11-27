@@ -26,5 +26,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/rem_div_identity_equiv
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -26,5 +26,4 @@ int main (void)
   return 1;
 }
 // Imported from ESBMC regression/floats/Double-to-float-no-simp1-fix2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

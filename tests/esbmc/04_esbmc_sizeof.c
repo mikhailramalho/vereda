@@ -51,5 +51,5 @@ main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/04_esbmc_sizeof
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$

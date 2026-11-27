@@ -22,7 +22,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/SV_COMP_02_success
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-incremental-bmc
+// RUN: --ub-data-race-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

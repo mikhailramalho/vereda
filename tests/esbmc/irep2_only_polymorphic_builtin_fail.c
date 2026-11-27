@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_polymorphic_builtin_fail
-// RUN: --std c11 --no-incremental-bmc
+// RUN: --std c11
 // EXPECT: ^\s*FAILED\s+\[__c11_atomic_store\.null-pointer-dereference\.1\]\s+line +9\s+dereference failure: NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[__c11_atomic_store\.null-pointer-dereference\.1\]\s+line +9\s+dereference failure: NULL pointer$

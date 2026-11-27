@@ -13,7 +13,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2629
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

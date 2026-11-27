@@ -9,5 +9,4 @@ int main()
   assert(j==100);
 }
 // Imported from ESBMC regression/floats/Float-no-simp1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

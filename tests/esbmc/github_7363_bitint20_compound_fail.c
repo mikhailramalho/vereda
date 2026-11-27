@@ -10,6 +10,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7363_bitint20_compound_fail
 // Needs: REQUIRES bitint
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*arithmetic overflow on add$

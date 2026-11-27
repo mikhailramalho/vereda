@@ -24,5 +24,4 @@ int main()
 
 int i;
 // Imported from ESBMC regression/cbmc/01_cbmc_ExternExtern3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -8,7 +8,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bundled_headers_from_vfs
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^clang invocation:.*'-isystem' '([A-Za-z]:)?/esbmc-vfs/libc/headers'
 // EXPECT: ^clang invocation:.*'-resource-dir' '([A-Za-z]:)?/esbmc-vfs/clang'

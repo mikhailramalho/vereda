@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/multi_property_interval_assume_asserts_pass
 // Needs: --interval-analysis --interval-analysis-assume-asserts
-// RUN: --interval-analysis --interval-analysis-assume-asserts --multi-property --no-incremental-bmc
+// RUN: --interval-analysis --interval-analysis-assume-asserts --multi-property
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*VERIFICATION FAILED)[\s\S]*\Z

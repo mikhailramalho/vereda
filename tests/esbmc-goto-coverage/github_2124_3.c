@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_2124_3
 // Needs: --no-standard-checks --branch-coverage
-// RUN: --function sort --no-standard-checks --branch-coverage --no-incremental-bmc
+// RUN: --function sort --no-standard-checks --branch-coverage
 // MODE: FUTURE
 // EXPECT: ^Branches : 2
 // EXPECT: ^Reached : 2

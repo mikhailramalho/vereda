@@ -36,5 +36,4 @@ int main()
   g(-__VERIFIER_nondet_int() * 0);
 }
 // Imported from ESBMC regression/esbmc/github_8055_safe
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

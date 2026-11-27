@@ -26,7 +26,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval-analysis-function-ptr-false
 // Needs: --interval-analysis
-// RUN: --interval-analysis --ub-pointer-check=false --no-incremental-bmc
+// RUN: --interval-analysis --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

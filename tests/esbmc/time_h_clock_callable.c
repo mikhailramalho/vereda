@@ -7,5 +7,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/time_h_clock_callable
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

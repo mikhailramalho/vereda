@@ -28,6 +28,5 @@ int main ()
 
 }
 // Imported from ESBMC regression/llvm/char_literal
-// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

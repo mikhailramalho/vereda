@@ -13,6 +13,5 @@ int main()
 	assert(j == k);
 }
 // Imported from ESBMC regression/esbmc/github_1210-2-array
-// RUN: --no-incremental-bmc
 // FILES: incomplete-lib.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$

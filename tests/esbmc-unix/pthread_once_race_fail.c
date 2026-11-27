@@ -23,7 +23,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/pthread_once_race_fail
 // Needs: --data-races-check-only
-// RUN: --data-races-check-only --no-incremental-bmc
+// RUN: --data-races-check-only
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@g

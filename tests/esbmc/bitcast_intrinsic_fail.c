@@ -12,5 +12,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitcast_intrinsic_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

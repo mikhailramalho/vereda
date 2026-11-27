@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/smtlib/github_7929
 // Needs: --smtlib --smtlib-solver-prog z3 -in REQUIRES z3_binary
-// RUN: --smtlib --smtlib-solver-prog "z3 -in" --no-incremental-bmc
+// RUN: --smtlib --smtlib-solver-prog "z3 -in"
 // MODE: FUTURE
 // EXPECT: ^  a = -4; // 11111111 11111111 11111111 11111100$
 // EXPECT: ^  f = 1; // 00000000 00000000 00000000 00000001$

@@ -26,7 +26,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_plane_memcpy_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^\s+the plane.s first element was grafted too$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the plane.s first element was grafted too$

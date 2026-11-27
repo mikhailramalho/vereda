@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/union_value_sets_assume
 // Needs: --conv-assert-to-assume
-// RUN: --conv-assert-to-assume --no-incremental-bmc
+// RUN: --conv-assert-to-assume
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

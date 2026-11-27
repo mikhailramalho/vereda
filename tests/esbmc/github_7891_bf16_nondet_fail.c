@@ -13,5 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7891_bf16_nondet_fail
-// RUN: --fp2bv --no-incremental-bmc
+// RUN: --fp2bv
 // EXPECT: ^VERIFICATION FAILED$

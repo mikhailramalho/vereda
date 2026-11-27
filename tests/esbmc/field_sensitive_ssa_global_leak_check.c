@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_global_leak_check
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --no-incremental-bmc
+// RUN: --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^Field-sensitive SSA splits 1 struct object\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

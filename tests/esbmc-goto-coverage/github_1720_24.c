@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1720_24
 // Needs: --condition-coverage-rm
-// RUN: --condition-coverage-rm --no-incremental-bmc
+// RUN: --condition-coverage-rm
 // MODE: FUTURE
 // EXPECT: ^Reached Conditions:  2
 // EXPECT: ^Short Circuited Conditions:  0

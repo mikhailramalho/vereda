@@ -16,5 +16,4 @@ int main()
   p->a[9]=3;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Structs6
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

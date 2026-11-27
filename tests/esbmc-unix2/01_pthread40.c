@@ -45,7 +45,7 @@ int main()
 
 // Imported from ESBMC regression/esbmc-unix2/01_pthread40
 // Needs: --context-bound 5
-// RUN: --context-bound 5 --no-incremental-bmc
+// RUN: --context-bound 5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

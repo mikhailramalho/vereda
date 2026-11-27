@@ -12,7 +12,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9895_free_expired
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: free\(\) of non-dynamic memory
 // EXPECT: \A(?![\s\S]*accessed expired variable pointer)[\s\S]*\Z

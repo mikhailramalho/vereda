@@ -12,5 +12,5 @@ int main()
 }
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv12
-// RUN: -m32 --no-incremental-bmc
+// RUN: -m32
 // EXPECT: ^VERIFICATION FAILED$

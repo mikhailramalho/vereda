@@ -9,6 +9,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/r_ok4
 // Needs: __ESBMC_r_ok
-// RUN: --ub-pointer-check=false --force-malloc-success --no-incremental-bmc
+// RUN: --ub-pointer-check=false --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

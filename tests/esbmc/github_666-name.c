@@ -8,7 +8,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_666-name
 // Needs: c:no_slice.c@21@F@main@foo
-// RUN: c:no_slice.c@21@F@main@foo --no-incremental-bmc
+// RUN: c:no_slice.c@21@F@main@foo
 // MODE: FUTURE
 // EXPECT: \bfoo = 42\b
 // EXPECT: \bfoo = 15\b

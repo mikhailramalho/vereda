@@ -31,5 +31,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/sync_swap_builtins
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

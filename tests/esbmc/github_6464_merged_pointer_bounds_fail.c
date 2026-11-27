@@ -34,7 +34,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6464_merged_pointer_bounds_fail
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: array bounds violated: heap object$

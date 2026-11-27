@@ -32,5 +32,4 @@ int main(void)
   assert(d == X);
 }
 // Imported from ESBMC regression/llvm/integer_literal
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

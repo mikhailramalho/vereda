@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/github_10080_double
 // Needs: --generate-testcase CHECK_FILE testcase.xml contains <testcase coversError="true">\n<input>0\.10000000000000002</input>\n</testcase>
-// RUN: --generate-testcase --ub-pointer-check=false --no-incremental-bmc
+// RUN: --generate-testcase --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

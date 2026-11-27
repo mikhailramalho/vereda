@@ -10,5 +10,4 @@ int main(int argc, char **argv) {
 }
 
 // Imported from ESBMC regression/extensions/builtin_object_size11_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

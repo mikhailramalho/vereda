@@ -20,7 +20,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/scalarize_structs_loop_invariant
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^Scalarized 1 struct variable\(s\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

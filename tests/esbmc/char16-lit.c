@@ -9,5 +9,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/char16-lit
 // Needs: REQUIRES uchar_h
-// RUN: --no-incremental-bmc
+// RUN: 
 // EXPECT: ^VERIFICATION SUCCESSFUL$

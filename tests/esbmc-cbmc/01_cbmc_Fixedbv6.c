@@ -44,5 +44,4 @@ int main()
   assert(!(-b>=-a));  
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv6
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

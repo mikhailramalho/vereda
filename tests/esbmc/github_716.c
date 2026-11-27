@@ -42,5 +42,4 @@ void main(void) {
     struct1_p->struct1_flag = (u2.union2_var) != 0;
 }
 // Imported from ESBMC regression/esbmc/github_716
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

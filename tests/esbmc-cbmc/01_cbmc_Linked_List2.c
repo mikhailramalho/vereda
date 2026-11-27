@@ -20,5 +20,4 @@ int main() {
   assert(new_node->payload==1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Linked_List2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

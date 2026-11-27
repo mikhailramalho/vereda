@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Free6
 // Needs: --claim 1
-// RUN: --claim 1 --no-incremental-bmc
+// RUN: --claim 1
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

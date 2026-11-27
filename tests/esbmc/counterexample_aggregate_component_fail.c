@@ -25,7 +25,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_aggregate_component_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^  harr\[0\] = \{ \.un=9, \.t=4 \}$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  harr\[0\] = \{ \.un=9, \.t=4 \}$

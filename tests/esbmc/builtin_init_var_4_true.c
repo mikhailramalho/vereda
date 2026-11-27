@@ -10,6 +10,5 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/builtin_init_var_4_true
 // Needs: __ESBMC_init_object
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

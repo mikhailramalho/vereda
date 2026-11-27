@@ -27,6 +27,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/float_mul_zero_absorber
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*FAILED)[\s\S]*\Z

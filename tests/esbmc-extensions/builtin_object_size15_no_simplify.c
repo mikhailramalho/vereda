@@ -8,5 +8,4 @@ int main() {
 }
 
 // Imported from ESBMC regression/extensions/builtin_object_size15_no_simplify
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

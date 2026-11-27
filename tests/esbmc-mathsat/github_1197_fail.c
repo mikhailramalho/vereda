@@ -10,7 +10,6 @@ int main()
 	pthread_detach(t1);   /* genuine double detach: MUST be reported */
 }
 // Imported from ESBMC regression/mathsat/github_1197_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: already detached
 // MODE: FUTURE

@@ -10,7 +10,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10853_shadowed
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --witness-output-yaml
-// RUN: --loop-invariant-check --witness-output-yaml - --no-incremental-bmc
+// RUN: --loop-invariant-check --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$

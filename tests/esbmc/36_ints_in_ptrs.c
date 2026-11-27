@@ -20,5 +20,4 @@ main()
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/36_ints_in_ptrs
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

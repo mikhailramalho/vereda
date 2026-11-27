@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_746
 // Needs: always
-// RUN: always --no-incremental-bmc
+// RUN: always
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \x1b\[0;1;35mAtomicExpr

@@ -113,7 +113,6 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/06_bs_new
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

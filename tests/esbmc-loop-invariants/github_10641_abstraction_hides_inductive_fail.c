@@ -17,7 +17,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_10641_abstraction_hides_inductive_fail
 // Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant --no-standard-checks
-// RUN: --loop-invariant --no-standard-checks --no-incremental-bmc
+// RUN: --loop-invariant --no-standard-checks
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+12\s+loop invariant inductive step$

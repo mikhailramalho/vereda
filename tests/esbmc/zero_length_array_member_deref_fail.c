@@ -26,5 +26,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/zero_length_array_member_deref_fail
-// RUN: --force-malloc-success -m64 --no-incremental-bmc
+// RUN: --force-malloc-success -m64
 // EXPECT: ^VERIFICATION FAILED$

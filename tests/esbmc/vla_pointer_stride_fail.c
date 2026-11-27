@@ -13,7 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_pointer_stride_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^  PASSED .* dereference failure: array bounds violated$
 // EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,7 +9,7 @@ int main(void)
   return strncasecmp(a, "ABC", 3);
 }
 // Imported from ESBMC regression/esbmc/strcasecmp_model_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Properties: 6 checked, \d+ passed, 2 failed, \d+ not checked
 // EXPECT: FAILED\s+\[main.assertion.2\]

@@ -8,5 +8,5 @@ int main()
 	assert(err); // C99 says this must not be NULL
 }
 // Imported from ESBMC regression/esbmc/strerror-no-overflow
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

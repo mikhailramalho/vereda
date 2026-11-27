@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-assertions --no-incremental-bmc
+// RUN: --ub-data-race-check --no-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

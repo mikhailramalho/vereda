@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_fixed_branch_waypoint_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml - --no-incremental-bmc
+// RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)value: "false"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_waypoint_fail\.c"\n\s+line: 9$.*value: "true"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_waypoint_fail\.c"\n\s+line: 9$

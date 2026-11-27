@@ -9,5 +9,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9351_bitint_memset
-// RUN: -m64 --std c23 --no-incremental-bmc
+// RUN: -m64 --std c23
 // EXPECT: ^VERIFICATION SUCCESSFUL$

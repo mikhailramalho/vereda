@@ -8,5 +8,4 @@ int main()
   assert((int)fs2==2);
 }
 // Imported from ESBMC regression/floats/Float-no-simp3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

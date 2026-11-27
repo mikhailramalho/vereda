@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/ternary_start_line_9883
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: --validate-violation-witness --witness witness.yml --no-incremental-bmc
+// RUN: --validate-violation-witness --witness witness.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

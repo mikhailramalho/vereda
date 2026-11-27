@@ -25,5 +25,4 @@ int main()
   assert(*fuzz == 1);
 }
 // Imported from ESBMC regression/esbmc/memory_model_2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/fnptr_no_target_result_fail
-// RUN: --ub-pointer-check=false --no-incremental-bmc
+// RUN: --ub-pointer-check=false
 // EXPECT: ^No target candidate for function call \*ext_cb$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^No target candidate for function call \*ext_cb$

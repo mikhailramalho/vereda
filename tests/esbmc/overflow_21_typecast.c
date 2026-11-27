@@ -9,7 +9,7 @@ int main()
   a = (int)b;
 }
 // Imported from ESBMC regression/esbmc/overflow_21_typecast
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^.*floating-point conversion out of range.*$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^.*floating-point conversion out of range.*$

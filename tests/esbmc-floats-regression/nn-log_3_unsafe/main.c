@@ -30,7 +30,7 @@ int main() /* check_derivative */
 }
 // Imported from ESBMC regression/floats-regression/nn-log_3_unsafe
 // Needs: -I .
-// RUN: -I . --no-incremental-bmc
+// RUN: -I .
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

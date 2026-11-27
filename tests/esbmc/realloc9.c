@@ -15,5 +15,4 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/realloc9
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

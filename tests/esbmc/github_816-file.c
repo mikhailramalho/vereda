@@ -7,5 +7,4 @@ int main()
 	assert(x == 42);
 }
 // Imported from ESBMC regression/esbmc/github_816-file
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

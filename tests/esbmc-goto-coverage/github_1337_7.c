@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_1337_7
 // Needs: --assertion-coverage
-// RUN: --assertion-coverage --no-incremental-bmc
+// RUN: --assertion-coverage
 // EXPECT: ^Total Asserts: 10
 // EXPECT: ^Total Assertion Instances: 10
 // EXPECT: ^Assertion Instances Coverage: 100%

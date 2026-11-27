@@ -5,5 +5,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/nontemporal_load_int_true
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7119_exists_fail
 // Needs: __ESBMC_exists
-// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  __ESBMC_exists\(\(void \*\)\(&i\), i > 0 && i < 0\)$

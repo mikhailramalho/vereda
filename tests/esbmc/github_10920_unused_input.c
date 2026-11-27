@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10920_unused_input
 // Needs: --all-witnesses
-// RUN: --all-witnesses --no-incremental-bmc
+// RUN: --all-witnesses
 // MODE: FUTURE
 // EXPECT: ^\[Counterexamples - 1 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses

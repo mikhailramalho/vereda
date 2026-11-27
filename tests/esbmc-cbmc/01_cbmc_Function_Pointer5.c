@@ -13,5 +13,4 @@ int main()
   signal2(2, handler);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function_Pointer5
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

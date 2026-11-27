@@ -13,6 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/alloca_const_above_layable
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: alloca: size exceeds PTRDIFF_MAX

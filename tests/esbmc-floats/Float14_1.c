@@ -15,5 +15,4 @@ int main()
   assert(isinf(temp));
 }
 // Imported from ESBMC regression/floats/Float14_1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

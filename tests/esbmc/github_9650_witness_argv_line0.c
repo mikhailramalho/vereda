@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 }
 // Imported from ESBMC regression/esbmc/github_9650_witness_argv_line0
 // Needs: --witness-output-yaml w.yml CHECK_FILE w.yml contains type: "branching" CHECK_FILE w.yml absent line: 0$ CHECK_FILE w.yml contains line: 8$
-// RUN: --witness-output-yaml w.yml --no-incremental-bmc
+// RUN: --witness-output-yaml w.yml
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

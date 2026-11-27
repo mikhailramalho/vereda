@@ -18,5 +18,4 @@ int main(void) {
     assert(s1.a.a == 2); // change to 1 for verification successful
 }
 // Imported from ESBMC regression/esbmc/github_300_3_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

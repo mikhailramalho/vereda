@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_6387_17
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-incremental-bmc
+// RUN: --dead-code-check
 // MODE: FUTURE
 // EXPECT: ^\[Dead code\]$
 // EXPECT: dead code: unreachable branch

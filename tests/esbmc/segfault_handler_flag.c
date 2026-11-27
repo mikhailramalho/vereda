@@ -7,7 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/segfault_handler_flag
 // Needs: --segfault-handler
-// RUN: --segfault-handler --no-incremental-bmc
+// RUN: --segfault-handler
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

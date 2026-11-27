@@ -9,5 +9,5 @@ void func1(int y)
   func2(y);
 }
 // Imported from ESBMC regression/esbmc/github_885-valid
-// RUN: --entry func1 --no-incremental-bmc
+// RUN: --entry func1
 // EXPECT: ^VERIFICATION SUCCESSFUL$

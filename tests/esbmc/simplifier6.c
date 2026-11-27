@@ -64,5 +64,4 @@ int main(void)
 }
 
 // Imported from ESBMC regression/esbmc/simplifier6
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

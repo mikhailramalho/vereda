@@ -21,5 +21,4 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc23
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

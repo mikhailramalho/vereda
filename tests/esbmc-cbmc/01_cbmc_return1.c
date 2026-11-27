@@ -44,5 +44,4 @@ int main()
   assert( save_res0 == save_res1 );
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_return1
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

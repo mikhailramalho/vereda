@@ -19,5 +19,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/long_double_member_layout
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

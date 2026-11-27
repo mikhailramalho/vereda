@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_9892_fail
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
+// RUN: --memory-leak-check --no-reachable-memory-leak
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED +\[main\.memory-leak\.1\].*forgotten memory

@@ -13,5 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats-regression/github_7021
-// RUN: --solver z3 --multi-property --no-incremental-bmc
+// RUN: --solver z3 --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$

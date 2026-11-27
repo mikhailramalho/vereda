@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8684_fail
-// RUN: --multi-property --no-incremental-bmc
+// RUN: --multi-property
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+10\s
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+11\s
 // EXPECT: ^VERIFICATION FAILED$

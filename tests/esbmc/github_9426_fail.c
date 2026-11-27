@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9426_fail
 // Needs: --no-standard-checks
-// RUN: -m64 --no-standard-checks --no-incremental-bmc
+// RUN: -m64 --no-standard-checks
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

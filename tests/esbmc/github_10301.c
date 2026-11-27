@@ -7,5 +7,4 @@ int main()
   free(r ? r : q);
 }
 // Imported from ESBMC regression/esbmc/github_10301
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -14,5 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9000_sprintf_hex_width
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION SUCCESSFUL$

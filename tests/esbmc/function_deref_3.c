@@ -15,5 +15,4 @@ int main()
   trampo(g);
 }
 // Imported from ESBMC regression/esbmc/function_deref_3
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

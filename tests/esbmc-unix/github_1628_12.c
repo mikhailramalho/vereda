@@ -6,7 +6,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_1628_12
 // Needs: --printf-check
-// RUN: --printf-check --no-incremental-bmc
+// RUN: --printf-check
 // MODE: FUTURE
 // EXPECT: ^  printf has more format specifiers than arguments$
 // Vereda: verdict none

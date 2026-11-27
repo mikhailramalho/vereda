@@ -58,5 +58,4 @@ int main()
     test_nondet_complete();
 }
 // Imported from ESBMC regression/cstd/intrinsic_memset_array_union
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,5 +11,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/128_bitint_width
 // Needs: REQUIRES bitint
-// RUN: --no-incremental-bmc
+// RUN: 
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -19,5 +19,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_polymorphic_builtin
-// RUN: --std c11 --no-incremental-bmc
+// RUN: --std c11
 // EXPECT: ^VERIFICATION SUCCESSFUL$

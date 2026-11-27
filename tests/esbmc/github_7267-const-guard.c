@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7267-const-guard
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-incremental-bmc
+// RUN: --dead-code-check
 // MODE: FUTURE
 // EXPECT: ^No provably-dead code found\.$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -7,5 +7,4 @@ int main()
 
 }
 // Imported from ESBMC regression/llvm/anon_enum
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

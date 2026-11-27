@@ -14,5 +14,4 @@ int main()
 	u.s.u = &u;
 }
 // Imported from ESBMC regression/esbmc/github_637-2
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

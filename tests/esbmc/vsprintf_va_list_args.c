@@ -43,5 +43,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vsprintf_va_list_args
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

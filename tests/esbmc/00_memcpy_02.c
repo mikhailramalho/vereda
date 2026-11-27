@@ -11,5 +11,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/00_memcpy_02
-// RUN: --force-malloc-success --no-incremental-bmc
+// RUN: --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$

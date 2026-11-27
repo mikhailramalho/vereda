@@ -21,6 +21,6 @@ int main() {
 }
 // Imported from ESBMC regression/cvc/quantifiers-float
 // Needs: __ESBMC_exists, __ESBMC_forall
-// RUN: --solver cvc5 --no-incremental-bmc
+// RUN: --solver cvc5
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

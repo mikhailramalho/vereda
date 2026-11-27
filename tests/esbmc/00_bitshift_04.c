@@ -11,5 +11,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/00_bitshift_04
-// RUN: --ub-signed-overflow-check --ub-shift-check --no-incremental-bmc
+// RUN: --ub-signed-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

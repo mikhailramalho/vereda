@@ -7,5 +7,4 @@ int main() {
     assert((X+Z) > 0);
 }
 // Imported from ESBMC regression/esbmc/128_signed_false
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

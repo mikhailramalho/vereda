@@ -24,5 +24,4 @@ int main()
   __VERIFIER_assert(u.s.a == &x); // a is x
 }
 // Imported from ESBMC regression/esbmc/github_9937_branch_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,5 +9,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/c23_bool_literal_fail
-// RUN: --std c23 --no-incremental-bmc
+// RUN: --std c23
 // EXPECT: ^VERIFICATION FAILED$

@@ -16,5 +16,4 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_array_ite_new_index_fail
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

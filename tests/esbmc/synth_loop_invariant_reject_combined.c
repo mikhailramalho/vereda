@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_reject_combined
 // Needs: --synthesise-loop-invariants --loop-invariant
-// RUN: --synthesise-loop-invariants --loop-invariant --no-incremental-bmc
+// RUN: --synthesise-loop-invariants --loop-invariant
 // MODE: FUTURE
 // EXPECT: ^ERROR: --synthesise-loop-invariants cannot be combined with --loop-invariant; use --loop-invariant-check, which it implies$
 // Vereda: verdict none

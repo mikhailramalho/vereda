@@ -11,5 +11,4 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/github_2763_default
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

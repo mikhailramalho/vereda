@@ -9,5 +9,4 @@ void main()
   assert(i==1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Division_Assignment
-// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

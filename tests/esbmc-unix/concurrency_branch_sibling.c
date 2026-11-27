@@ -45,7 +45,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/concurrency_branch_sibling
 // Needs: --context-bound 4
-// RUN: --context-bound 4 --no-incremental-bmc
+// RUN: --context-bound 4
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

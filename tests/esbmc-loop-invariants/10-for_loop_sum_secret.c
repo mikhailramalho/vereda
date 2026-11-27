@@ -28,7 +28,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/10-for_loop_sum_secret
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --no-incremental-bmc
+// RUN: --loop-invariant-check
 // MODE: FUTURE
 // EXPECT: ^WARNING: every violated claim lies downstream of a loop invariant havoc
 // EXPECT: ^VERIFICATION UNKNOWN$
