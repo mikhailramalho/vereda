@@ -20,7 +20,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10769_while_or_lines_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --unwind 10 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

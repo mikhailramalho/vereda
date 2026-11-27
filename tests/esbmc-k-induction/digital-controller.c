@@ -37,7 +37,7 @@ int main() {
 }
 // Imported from ESBMC regression/k-induction/digital-controller
 // Needs: --k-induction
-// RUN: --k-induction -Wno-error=implicit-function-declaration
+// RUN: --k-induction
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

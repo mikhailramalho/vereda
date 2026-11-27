@@ -29,9 +29,10 @@ struct Options {
   bool unwindingAssertions = true; // check the bound instead of assuming it
   bool forceMallocSuccess = false; // malloc never returns null
   Property property = Property::All;
-  // An "Unwinding loop" line per iteration; off under --incremental-bmc,
-  // whose walks repeat every iteration at each bound, so an unbounded run
-  // printed gigabytes.
+  // An "Unwinding loop" line the first time a loop reaches each iteration,
+  // and past iteration 1024 only at powers of two, so that a loop walked
+  // again or a long loop does not flood the output (#383). Off under
+  // --incremental-bmc, whose walks repeat every iteration at each bound.
   bool showIterations = true;
   // The loops analysis/loops.h accepts are replaced by their effect, both
   // those with a store (ESBMC's default) and those that only check or count

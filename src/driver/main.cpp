@@ -10,6 +10,8 @@
 #include "witness/witness.h"
 #include "vereda-version.h"
 
+#include <llvm/ADT/StringExtras.h>
+#include <llvm/ADT/StringSwitch.h>
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FileSystem.h>
@@ -20,7 +22,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <cerrno>
 #include <numeric>
+#include <set>
+
+#ifdef VEREDA_MIMALLOC
+#include <mimalloc.h>
+#endif
 
 using namespace llvm;
 using vereda::util::progress;
@@ -60,6 +68,8 @@ static cl::opt<bool> ubPointerCheck(
              "=false disables)"),
     cl::init(true));
 static cl::opt<bool> noAssertions("no-assertions", cl::desc("Do not check user assertions"));
+static cl::opt<std::string> errorLabel("error-label", cl::value_desc("label"),
+                                       cl::desc("Check that the C label <label> is never reached"));
 static cl::opt<bool> ubDivByZeroCheck(
     "ub-div-by-zero-check",
     cl::desc("Check integer division and remainder by zero (default on; =false disables)"),
@@ -110,6 +120,10 @@ static cl::opt<std::string> witnessFile(
                         "as an SV-COMP violation witness (YAML, format 2.0); - is standard "
                         "output"),
     cl::value_desc("file"));
+static cl::list<std::string> sanitized(
+    "sanitized", cl::Hidden, cl::CommaSeparated,
+    cl::desc("The clang sanitizer checks vereda.py compiled in, as -fsanitize= names them, "
+             "for the [INFO] Checks line, which also lists those whose traps the IR holds"));
 
 using vereda::walker::Property;
 static cl::opt<Property> property(
@@ -173,6 +187,12 @@ static void svcomp(StringRef verdict) {
 // means VERIFICATION FAILED only.
 static const int ErrorExit = 6;
 
+[[noreturn]] static void outOfMemory() {
+  outs().flush();
+  std::fputs("vereda: out of memory\n", stderr);
+  std::_Exit(ErrorExit);
+}
+
 static int unknown(const Twine &reason) {
   results();
   outs() << "\nVERIFICATION UNKNOWN: " << reason << "\n";
@@ -200,6 +220,58 @@ static int finish(int code) {
 // What bmc() returns under --incremental-bmc when a loop or recursion needs
 // a larger bound.
 static const int BoundTooSmall = -1;
+
+// The checks this run counts, each named after the flag that controls it,
+// for an [INFO] line that gives the verdict its scope. A property counts
+// only its own checks and the unwinding assertions (walker::counts). The
+// sanitizers are those vereda.py compiled in (--sanitized) and those whose
+// traps the IR holds.
+static std::string checkFamilies(const Module &m) {
+  bool all = property == Property::All;
+  SmallVector<StringRef, 12> on;
+  if (all && !noAssertions)
+    on.push_back("assertions");
+  if (property == Property::UnreachCall)
+    on.push_back("reach-error");
+  // As the walker counts an error label: as an assertion, or the error
+  // location under unreach-call.
+  std::string label = "error-label " + errorLabel;
+  if (!errorLabel.empty() && ((all && !noAssertions) || property == Property::UnreachCall))
+    on.push_back(label);
+  if (!noUnwindingAssertions)
+    on.push_back("unwinding-assertions");
+  if (all && ubPointerCheck)
+    on.push_back("pointer");
+  if (property == Property::ValidFree)
+    on.push_back("valid-free");
+  if (all && ubDivByZeroCheck)
+    on.push_back("div-by-zero");
+  if (all && vlaSizeCheck)
+    on.push_back("vla-size");
+  std::set<std::string> sanitizers(sanitized.begin(), sanitized.end());
+  if (const NamedMDNode *md = m.getNamedMetadata("vereda.sanitized"))
+    for (const MDNode *n : md->operands())
+      sanitizers.insert(cast<MDString>(n->getOperand(0))->getString().str());
+  if (all || property == Property::NoOverflow)
+    for (const std::string &s : sanitizers) {
+      StringRef name = StringSwitch<StringRef>(s)
+                           .Case("signed-integer-overflow", "signed-overflow")
+                           .Case("unsigned-integer-overflow", "unsigned-overflow")
+                           .Case("integer-divide-by-zero", "div-by-zero")
+                           .Default(s);
+      if (!is_contained(on, name))
+        on.push_back(name);
+    }
+  if (all && ubFloatCastOverflowCheck)
+    on.push_back("float-cast-overflow");
+  if (all && ubCountZeroCheck)
+    on.push_back("count-zero");
+  if (all && ubAlignmentCheck)
+    on.push_back("alignment");
+  if (all && ubUninitCheck)
+    on.push_back("uninit");
+  return on.empty() ? "none" : join(on, ", ");
+}
 
 struct BMCState {
   camada::SMTSolverRef solver;
@@ -383,7 +455,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   bool initialSolverUsed = false;
   vereda::solver::Verdict verdict =
       useIncremental
-          ? vereda::solver::decide(terms, checks, multiProperty,
+          ? vereda::solver::decide(terms, checks, multiProperty, incrementalBMC,
                                    [&](const vereda::checks::Check &c) {
                                      onViolated(terms, checks, trace, &c - checks.data());
                                    })
@@ -497,15 +569,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   return finish(0);
 }
 
-int main(int argc, char **argv) {
-  // Out of memory ends the run. A std::bad_alloc thrown in the solver would
-  // not: camada turns it into an unknown answer, and the next query runs on a
-  // solver left half updated and crashes.
-  std::set_new_handler([] {
-    outs().flush();
-    std::fputs("vereda: out of memory\n", stderr);
-    std::_Exit(ErrorExit);
-  });
+static int run(int argc, char **argv) {
   cl::SetVersionPrinter(printVersion);
   // With an error stream, a bad option returns false instead of exiting with 1.
   if (!cl::ParseCommandLineOptions(argc, argv, "Vereda: LLVM-IR verifier\n", &errs()))
@@ -548,7 +612,7 @@ int main(int argc, char **argv) {
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
-                       ubUninitCheck && property == Property::All);
+                       ubUninitCheck && property == Property::All, errorLabel);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
@@ -563,6 +627,7 @@ int main(int argc, char **argv) {
     if (dumpIROnly)
       return 0;
   }
+  info() << "Checks: " << checkFamilies(**module) << "\n";
   Function *fn = (*module)->getFunction(entry);
   if (!fn || fn->isDeclaration()) {
     errs() << argv[0] << ": no function " << entry << "\n";
@@ -631,4 +696,27 @@ int main(int argc, char **argv) {
       return r;
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
+}
+
+int main(int argc, char **argv) {
+  // Out of memory ends the run wherever an allocation fails. A std::bad_alloc
+  // thrown in the solver would not: camada turns it into an unknown answer,
+  // and the next query runs on a solver left half updated and crashes.
+  // operator new calls the new-handler, but Bitwuzla allocates its nodes with
+  // calloc and throws std::bad_alloc itself (#384); mimalloc's error hook sees
+  // that failure first. The catch covers a std::bad_alloc that escapes the
+  // solver in a build with glibc's malloc; one thrown inside a solver check
+  // there still becomes an unknown answer.
+  std::set_new_handler(outOfMemory);
+#ifdef VEREDA_MIMALLOC
+  mi_register_error([](int err, void *) {
+    if (err == ENOMEM)
+      outOfMemory();
+  }, nullptr);
+#endif
+  try {
+    return run(argc, argv);
+  } catch (const std::bad_alloc &) {
+    outOfMemory();
+  }
 }

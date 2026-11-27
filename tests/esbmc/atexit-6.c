@@ -108,7 +108,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/atexit-6
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --force-malloc-success --incremental-bmc --no-simplify
+// RUN: --memory-leak-check --force-malloc-success --incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

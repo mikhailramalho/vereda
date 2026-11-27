@@ -181,7 +181,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix2/11_qrcu
 // Needs: --context-bound 2
-// RUN: --no-unwinding-assertions --unwind 2 --context-bound 2 -Wno-error=implicit-function-declaration
+// RUN: --no-unwinding-assertions --unwind 2 --context-bound 2
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -11,7 +11,7 @@ int main(void)
     return 1;
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_pass_sarif
-// Needs: --dead-code-check --sarif-output -
+// Needs: --dead-code-check --sarif-output
 // RUN: --dead-code-check --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

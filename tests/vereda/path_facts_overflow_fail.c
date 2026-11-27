@@ -1,7 +1,7 @@
 // RUN: --overflow-check --unsigned-overflow-check --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT-NOT: SUCCESS
-// EXPECT: ^  FAILED +\[main\.assertion\.5\]
+// EXPECT: ^  FAILED +\[main\.arithmetic-overflow\.5\]
 // path_facts_overflow with each operation one past what its operands'
 // ranges keep in range (#296), so a range one off would lose a failure.
 extern int __VERIFIER_nondet_int(void);

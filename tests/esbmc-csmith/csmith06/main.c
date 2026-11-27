@@ -1672,7 +1672,7 @@ XXX percentage an existing variable is used: 78.6
 
 // Imported from ESBMC regression/csmith/csmith06
 // Needs: --falsification --partial-loops --memory-leak-check
-// RUN: --no-unwinding-assertions --unwind 15 --falsification --ub-pointer-check=false --partial-loops --no-align-check --memory-leak-check --force-malloc-success
+// RUN: --no-unwinding-assertions --unwind 15 --falsification --ub-pointer-check=false --partial-loops --memory-leak-check --force-malloc-success
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

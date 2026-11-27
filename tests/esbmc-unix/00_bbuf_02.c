@@ -319,8 +319,8 @@ assert(0);
 }
 
 // Imported from ESBMC regression/esbmc-unix/00_bbuf_02
-// Needs: --context-bound 2 --schedule --depth 300
-// RUN: --unwind 1 --context-bound 2 --schedule --depth 300 -Wno-error=implicit-function-declaration
+// Needs: --context-bound 2 --depth 300
+// RUN: --unwind 1 --context-bound 2 --depth 300
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

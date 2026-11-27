@@ -9,7 +9,7 @@ int main(argc, argv) char **argv;
 
 // Imported from ESBMC regression/esbmc/github_330_3
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check -Wno-error=implicit-int
+// RUN: --memory-leak-check
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

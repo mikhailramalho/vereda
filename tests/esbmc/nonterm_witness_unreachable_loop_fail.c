@@ -20,8 +20,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nonterm_witness_unreachable_loop_fail
-// Needs: --termination --max-inductive-step 3 --witness-output-yaml -
-// RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --ub-pointer-check=false --no-bounds-check --witness-output-yaml -
+// Needs: --termination --max-inductive-step 3 --witness-output-yaml
+// RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --ub-pointer-check=false --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: non-terminating execution

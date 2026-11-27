@@ -26,7 +26,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10769_return_and_lines_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

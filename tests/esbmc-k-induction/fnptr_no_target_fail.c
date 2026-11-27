@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/k-induction/fnptr_no_target_fail
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 4 --ub-pointer-check=false --no-bounds-check
+// RUN: --k-induction --max-k-step 4 --ub-pointer-check=false
 // MODE: FUTURE
 // EXPECT: Disabling inductive step
 // EXPECT: ^VERIFICATION FAILED$

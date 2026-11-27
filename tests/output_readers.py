@@ -62,6 +62,8 @@ for esbmc, vereda in (
          ["--ub-signed-overflow-check", "--ub-shift-check", "--ub-float-cast-overflow-check",
           "--unsigned-overflow-check"])):
     assert import_esbmc.translate(esbmc, ".") == (vereda, [], []), esbmc
+assert import_esbmc.translate("--error-label ERROR --unwind 1", ".") == (
+    ["--error-label", "ERROR", "--unwind", "1"], [], [])
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 
@@ -242,3 +244,34 @@ for args, expected in (('--gcse --z3', '--solver z3'),
     lines = import_esbmc.header('suite/last_blocker', 'CORE', args, [], '.', [])
     assert '// RUN: ' + expected in lines, lines
     assert not any(line.startswith('// Needs:') for line in lines), lines
+
+# A FUTURE test's RUN line keeps its flags, but not those translate() drops.
+for args, run in (
+        ("--overflow-check --no-fp-conversion-check --no-bounds-check -Wno-error --k-induction",
+         "--ub-signed-overflow-check --ub-shift-check --k-induction"),
+        ("--k-induction --no-fp-conversion-check --overflow-check --no-slice",
+         "--k-induction --ub-signed-overflow-check --ub-shift-check"),
+        ("--overflow-check --k-induction",
+         "--ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction")):
+    lines = import_esbmc.header("suite/raw_flags", "CORE", args, [], ".", [])
+    assert "// RUN: " + run in lines, lines
+    assert "// Needs: --k-induction" in lines, lines
+
+# Output-only and scheduling flags are dropped, --i386-macos is -m32, and a bare
+# "-" (stdin or stdout) goes with the flag before it, never into a Needs line.
+assert import_esbmc.translate("--smt-model --memstats --interactive-ileaves --schedule "
+                              "--i386-macos --unwind 3", ".") == (["-m32", "--unwind", "3"], [], [])
+assert import_esbmc.translate("--claim-fingerprint-dump - --multi-property", ".") == (
+    ["--multi-property"], [], [])
+for args, needs, run in (
+        ("--witness-output-yaml - --k-induction", "--witness-output-yaml --k-induction",
+         "--witness-output-yaml - --k-induction"),
+        ("--claim-fingerprint-dump - --k-induction", "--k-induction", "--k-induction"),
+        ("--schedule --k-induction --i386-macos", "--k-induction", "--k-induction -m32")):
+    lines = import_esbmc.header("suite/dash", "CORE", args, [], ".", [])
+    assert "// Needs: " + needs in lines and "// RUN: " + run in lines, lines
+# --timeout and its value go: run.py sets the time limit.
+assert import_esbmc.translate("--timeout 60s --unwind 2", ".") == (["--unwind", "2"], [], [])
+assert import_esbmc.translate("--timeout=30 --k-induction", ".") == ([], [], ["--k-induction"])
+lines = import_esbmc.header("suite/timeout", "CORE", "--timeout 60s --k-induction", [], ".", [])
+assert "// Needs: --k-induction" in lines and "// RUN: --k-induction" in lines, lines

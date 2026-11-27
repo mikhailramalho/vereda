@@ -13,7 +13,7 @@ out:
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9939_memtrack_goto
-// Needs: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml -
+// Needs: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml
 // RUN: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

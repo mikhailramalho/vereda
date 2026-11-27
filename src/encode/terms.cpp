@@ -115,8 +115,10 @@ void Terms::releaseWalkTables() {
   decltype(implied)().swap(implied);
   decltype(arith)().swap(arith);
   decltype(filled)().swap(filled);
+  decltype(constArrays)().swap(constArrays);
   decltype(lambdas)().swap(lambdas);
   decltype(under)().swap(under);
+  decltype(constrained)().swap(constrained);
   decltype(reduced)().swap(reduced);
   decltype(selects)().swap(selects);
   decltype(scratch)().swap(scratch);
@@ -133,22 +135,31 @@ Ref Terms::fromSolver(const camada::SMTExprRef &e) const {
   return it == made.end() ? Ref(e) : it->second;
 }
 
-bool Terms::entails(const Ref &guard, const Ref &lit) { return entails(guard, lit, 0); }
+bool Terms::entails(const Ref &guard, const Ref &lit) {
+  static constexpr size_t MaxImplied = 1 << 16;
+  if (implied.size() >= MaxImplied)
+    implied.clear();
+  unsigned budget = 512;
+  return entails(guard, lit, 0, budget);
+}
 
-bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth) {
+bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth, unsigned &budget) {
   if (guard == lit || isTrue(lit) || isFalse(guard))
     return true;
   const Node *n = node(guard);
-  // Deep guards give up, which only loses a fold.
+  // Deep or wide guards give up, which only loses a fold.
   if (!n || (n->op != Op::And && n->op != Op::Or) || depth > 1000)
     return false;
-  auto [it, fresh] = implied.try_emplace({guard.id(), lit.id()}, false);
-  if (!fresh)
+  if (auto it = implied.find({guard.id(), lit.id()}); it != implied.end())
     return it->second;
+  if (!budget)
+    return false;
+  --budget;
   Ref a = n->a, b = n->b;
-  bool r = n->op == Op::And ? entails(a, lit, depth + 1) || entails(b, lit, depth + 1)
-                            : entails(a, lit, depth + 1) && entails(b, lit, depth + 1);
-  implied[{guard.id(), lit.id()}] = r; // the map may have rehashed
+  bool r = n->op == Op::And ? entails(a, lit, depth + 1, budget) || entails(b, lit, depth + 1, budget)
+                            : entails(a, lit, depth + 1, budget) && entails(b, lit, depth + 1, budget);
+  if (r || budget)
+    implied[{guard.id(), lit.id()}] = r;
   return r;
 }
 
@@ -257,24 +268,18 @@ Ref Terms::make(Node n) {
     n.x = it == nodes.end() ? 0 : it->second + 1;
   }
   if (!lambdas.empty() && (n.op == Op::Store || n.op == Op::Ite)) {
-    std::vector<Ref> reads;
-    auto add = [&](const Ref &l) {
-      if (std::none_of(reads.begin(), reads.end(), [&](const Ref &x) { return x == l; }))
-        reads.push_back(l);
-    };
-    auto through = [&](const Ref &array) {
-      if (lambdas.count(array.id()))
-        add(array);
-      else if (auto u = under.find(array.id()); u != under.end())
-        for (const Ref &l : u->second)
-          add(l);
+    llvm::SmallVector<Ref, 2> kids;
+    auto add = [&](const Ref &array) {
+      if (lambdas.count(array.id()) || under.count(array.id()))
+        if (kids.empty() || kids[0] != array)
+          kids.push_back(array);
     };
     if (n.op == Op::Store)
-      through(n.a);
+      add(n.a);
     else
-      through(n.b), through(n.c);
-    if (!reads.empty())
-      under.emplace(r.id(), std::move(reads));
+      add(n.b), add(n.c);
+    if (!kids.empty())
+      under.try_emplace(r.id(), std::move(kids));
   }
   uint32_t idx = static_cast<uint32_t>(entries.size());
   entries.push_back(Entry{std::move(n), r});
@@ -380,6 +385,22 @@ Ref Terms::cancel(const Ref &sum, const Ref &part, unsigned &budget) {
     if (Ref r = cancel(n->b, part, budget)) return add(n->a, r);
   }
   return {};
+}
+
+bool Terms::isAdd(const Ref &e, Ref &a, Ref &b) const {
+  const Node *n = node(e);
+  if (!n || n->op != Op::Add)
+    return false;
+  a = n->a, b = n->b;
+  return true;
+}
+
+bool Terms::isSub(const Ref &e, Ref &a, Ref &b) const {
+  const Node *n = node(e);
+  if (!n || n->op != Op::Sub)
+    return false;
+  a = n->a, b = n->b;
+  return true;
 }
 
 bool Terms::sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth) {
@@ -501,10 +522,13 @@ Ref Terms::concat(const Ref &hi, const Ref &lo) {
   // Past 1000 levels the join stops, which only loses a fold and
   // keeps the recursion off the end of the stack.
   if (nh && nl && nh->op == Op::Ite && nl->op == Op::Ite && nh->a == nl->a &&
-      joinDepth < 1000) {
+      joinDepth < 64 && (joinDepth == 0 || joinBudget > 0)) {
     Key k{Op::Concat, hi.id(), lo.id(), nullptr, 0, 0};
     if (Ref cached = memoFind(k))
       return cached;
+    if (joinDepth == 0)
+      joinBudget = 64;
+    --joinBudget;
     Ref c = nh->a, ha = nh->b, hb = nh->c, la = nl->b, lb = nl->c;
     ++joinDepth;
     Ref r = ite(c, concat(ha, la), concat(hb, lb));
@@ -806,11 +830,22 @@ Ref Terms::uncached(const Ref &array, const Ref &index) {
   }
   bool fresh = !memoFind({Op::Select, arr.id(), index.id(), nullptr, 0, 0});
   Ref r = make({Op::Select, arr, index});
-  if (!lambdas.empty())
-    if (auto u = under.find(arr.id()); fresh && u != under.end())
-      for (const Ref &l : std::vector<Ref>(u->second))
-        if (!memoFind({Op::Select, l.id(), index.id(), nullptr, 0, 0}))
-          addConstraint(eq(make({Op::Select, l, index}), reduce(l, index)));
+  if (!lambdas.empty() && fresh && under.count(arr.id())) {
+    llvm::SmallVector<Ref, 8> work{arr};
+    while (!work.empty()) {
+      Ref cur = work.pop_back_val();
+      if (!constrained.insert({cur.id(), index.id()}).second)
+        continue;
+      if (lambdas.count(cur.id())) {
+        if (!memoFind({Op::Select, cur.id(), index.id(), nullptr, 0, 0}))
+          addConstraint(eq(make({Op::Select, cur, index}), reduce(cur, index)));
+      } else if (auto u = under.find(cur.id()); u != under.end()) {
+        llvm::SmallVector<Ref, 2> kids = u->second;
+        for (const Ref &k : kids)
+          work.push_back(k);
+      }
+    }
+  }
   return r;
 }
 
@@ -1428,8 +1463,12 @@ Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
 }
 
 Ref Terms::constArray(const camada::SMTSortRef &index, const Ref &value) {
+  auto key = std::make_pair(static_cast<const void *>(index.get()), value.id());
+  if (auto it = constArrays.find(key); it != constArrays.end())
+    return it->second;
   Ref r(s.mkArrayConst(index, solverTerm(value)));
   filled.try_emplace(r.id(), r, value);
+  constArrays.try_emplace(key, r);
   return r;
 }
 

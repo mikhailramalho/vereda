@@ -43,7 +43,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/github_538_weaver_false
 // Needs: --context-bound 3 --interval-analysis
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --context-bound 3 --incremental-bmc --interval-analysis -Wno-error=implicit-function-declaration
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --context-bound 3 --incremental-bmc --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

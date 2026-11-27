@@ -36,7 +36,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/lasso_eca_fixpoint
 // Needs: --force-realloc-success --termination --max-inductive-step 3
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --vla-size-check=false -m32 --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --k-step 2 --vla-size-check=false -m32 --ub-pointer-check=false --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^Recurrent set shows a non-terminating execution$
 // MODE: FUTURE
 // Vereda: verdict none

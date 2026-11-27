@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cwe_heap_overflow_sarif
-// Needs: --sarif-output -
+// Needs: --sarif-output
 // RUN: --incremental-bmc --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -22,8 +22,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/injected_control_bodies_fail
-// Needs: --sv-comp --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
-// RUN: --sv-comp -m32 --ub-div-by-zero-check=false --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false --ub-pointer-check=false --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
+// Needs: --sv-comp --interval-analysis --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
+// RUN: --sv-comp -m32 --ub-div-by-zero-check=false --k-step 2 --unlimited-k-steps --vla-size-check=false --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3 --validate-correctness-witness --witness witness.yml
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

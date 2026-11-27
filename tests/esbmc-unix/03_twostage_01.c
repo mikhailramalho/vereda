@@ -128,7 +128,7 @@ void unlock(pthread_mutex_t *lock) {
    
 // Imported from ESBMC regression/esbmc-unix/03_twostage_01
 // Needs: --context-bound 3
-// RUN: --no-slice --context-bound 3 -m32 --incremental-bmc --force-malloc-success
+// RUN: --context-bound 3 -m32 --incremental-bmc --force-malloc-success
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

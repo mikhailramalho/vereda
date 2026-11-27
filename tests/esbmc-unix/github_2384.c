@@ -30,7 +30,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc-unix/github_2384
 // Needs: --no-por --context-bound 5 --ub-data-race-check
-// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --no-por --context-bound 5 --ub-pointer-check=false --no-bounds-check --ub-data-race-check --no-assertions --incremental-bmc
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --no-por --context-bound 5 --ub-pointer-check=false --ub-data-race-check --no-assertions --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

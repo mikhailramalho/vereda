@@ -20,7 +20,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/witness_fixed_branch_after_nondet_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

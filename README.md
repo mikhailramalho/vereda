@@ -93,9 +93,16 @@ short commit hash; builds without Git metadata report `commit unknown`.
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and the checks it compiles in with clang's
 sanitizers: `--ub-signed-overflow-check`, `--unsigned-overflow-check`,
-`--ub-shift-check`, and `--overflow-check` for both overflow checks), and
-forwards everything else to the binary. Each check flag checks one thing and
-takes `=true` or `=false`; the last one naming a check wins. Unsigned
+`--ub-shift-check`, `--overflow-check` for both overflow checks, and
+`--ub-checks`), and forwards everything else to the binary. Each check flag
+checks one thing and takes `=true` or `=false`; the last one naming a check
+wins. `--ub-checks` turns on every opt-in undefined-behaviour check: signed
+overflow, shifts, floating-point to integer conversions, count-zero builtins,
+alignment and uninitialised reads (not unsigned overflow, which is defined, nor
+data races, which are not implemented). It stands for those six flags in its
+place, so `--ub-checks --ub-shift-check=false` leaves shifts out, an earlier
+`--ub-shift-check=false` is overridden, and `--ub-checks=false` turns all six
+off. Like the sanitizer flags, it needs C input. Unsigned
 arithmetic wraps by definition (C11 6.2.5p9), so its check has no `ub-`
 prefix. Unlike ESBMC's `--overflow-check`, which checks signed overflow,
 shifts and floating-point to integer conversions, Vereda's checks signed and
@@ -126,6 +133,7 @@ The main verifier flags:
 | `--property unreach-call\|no-overflow\|valid-free\|termination` | Count only that property's failures and print `TRUE`, `FALSE_REACH`, `FALSE_OVERFLOW`, `FALSE_FREE` or `UNKNOWN` after the verdict; `vereda.py --property-file` sets unreach-call, no-overflow and termination |
 | `--force-malloc-success` | `malloc` never returns null |
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
+| `--error-label L` | Report reaching the C label `L` as a failed assertion, `error label`, as ESBMC's `--error-label` (off with `--no-assertions`) |
 | `--ub-pointer-check` | Check writes into string literals and const objects, and invalid frees (default on; `=false` disables) |
 | `--ub-div-by-zero-check` | Check integer division/remainder by zero (default on for C and IR inputs unless `--property` is given; `=false` disables) |
 | `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
@@ -152,6 +160,13 @@ overflow and bounds panics remain program failures. Leak, race and deadlock flag
 are disabled by default and the binary rejects an enabled request with error
 exit code 6, before loading the input. `--no-assertions` conflicts with an
 unreach-call property request, `--ub-pointer-check=false` with valid-free, `--no-unwinding-assertions` with termination. A selected property reports only its own failures.
+An `[INFO] Checks:` line before the walk names the checks the run counts,
+each after the flag that controls it: `assertions`, `unwinding-assertions`,
+`pointer`, `div-by-zero` and `vla-size` by default, then the opt-in ones given
+(`signed-overflow`, `unsigned-overflow`, `shift`, `float-cast-overflow`,
+`count-zero`, `alignment`, `uninit`); under `--property`, `reach-error` or
+`valid-free` and the property's own checks. Run on IR directly, the binary
+also lists the sanitizer checks whose traps the IR holds.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or

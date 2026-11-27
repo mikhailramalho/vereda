@@ -42,8 +42,5 @@ int main() {
   check(sum <= n);
 }
 // Imported from ESBMC regression/esbmc/vla_size_slice_type_only
-// Needs: --error-label ERROR
-// RUN: --no-bounds-check --vla-size-check=false --error-label ERROR --unwind 3 --no-unwinding-assertions
-// MODE: FUTURE
+// RUN: --vla-size-check=false --error-label ERROR --unwind 3 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

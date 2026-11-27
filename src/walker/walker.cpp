@@ -955,9 +955,14 @@ private:
           it->second.clear();
           return;
         }
-        if (opts.showIterations)
-          util::progress(Twine("Unwinding loop ") + Twine(number) + " iteration " + Twine(i) +
-                         "   " + locDisplay);
+        if (opts.showIterations) {
+          unsigned &shown = shownIterations[l];
+          if (i > shown && (i <= 1024 || isPowerOf2_32(i))) {
+            util::progress(Twine("Unwinding loop ") + Twine(number) + " iteration " + Twine(i) +
+                           "   " + locDisplay);
+            shown = i;
+          }
+        }
       }
       frame.iteration[l] = i;
       region(frame, fi, l);
@@ -1535,6 +1540,16 @@ private:
       }
       throw Unsupported("intrinsic " + name.str());
     }
+    // --error-label: reaching the label fails as ESBMC's assert(false) there
+    // does, which goes on under --multi-property as an assertion does. Under
+    // unreach-call it is the error location the property names; where no
+    // check counts it, it is nothing.
+    if (name == "__vereda_error_label") {
+      if (opts.property != Property::UnreachCall && !(opts.assertions && counts(false)))
+        return guard;
+      assertion(c, guard, "error label", "");
+      return opts.multiProperty ? guard : t.boolean(false);
+    }
     if (opts.property == Property::UnreachCall && name == "reach_error") {
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
@@ -1634,6 +1649,15 @@ private:
         return guard;
       if (counts(false))
         assertion(c, guard, "longjmp to a jmp_buf whose setjmp is not active", "");
+      return t.boolean(false);
+    }
+    // From models/stdio.c: pclose of a stream popen did not open, which
+    // POSIX leaves undefined, reported at the program's call to pclose.
+    if (name == "__vereda_pclose_not_popen") {
+      if (!counts(false))
+        return guard;
+      assertion(c.getDebugLoc() || !site ? c : *site, guard,
+                "pclose of a stream popen did not open", "");
       return t.boolean(false);
     }
     if (name == "__vereda_longjmp_unsupported")
@@ -2639,6 +2663,8 @@ private:
   std::optional<Stopped> stopped;
   SmallVector<ActiveCall, 4> calls;
   bool truncatedInner = false;
+  // The deepest iteration printed per loop (Options::showIterations).
+  DenseMap<const Loop *, unsigned> shownIterations;
   bool threads = false;
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global

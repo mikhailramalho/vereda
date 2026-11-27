@@ -64,7 +64,7 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--unlimited-k-steps",
         "--no-summarize-array-loops", "--no-assertions"}
-SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
+SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std", "--error-label"}
 # ESBMC's overflow flags -> Vereda's checks, as ESBMC's goto_checkt turns them
 # on: overflow_check checks signed operations under any of the three and
 # unsigned ones only under --unsigned-overflow-check, shift_check runs under
@@ -84,6 +84,8 @@ RENAMED = {
     "--clz-zero-check": ["--ub-count-zero-check"],
     "--uninitialised-vars-check": ["--ub-uninit-check"],
     "--no-div-by-zero-check": ["--ub-div-by-zero-check=false"],
+    # 32-bit x86 with macOS's ABI; -m32 is the closest target Vereda has.
+    "--i386-macos": ["-m32"],
     "--no-pointer-check": ["--ub-pointer-check=false"],
     "--no-vla-size-check": ["--vla-size-check=false"],
     "--bitwuzla": ["--solver", "bitwuzla"], "--z3": ["--solver", "z3"],
@@ -120,9 +122,15 @@ IGNORED_FLAGS |= {
     "--ts-push-pop", "--show-symex-value-sets", "--all-runs",
     "--ts-check", "--ts-no-fallback", "--old-frontend", "--clang-c-irep2-adjust",
     "--clang-c-irep2-adjust-writeback-all",
+    # Output only (the SMT model of a counterexample, memory statistics), an
+    # interactive choice of thread interleavings, and another encoding of
+    # them (schedule recording): none changes the verdict.
+    "--smt-model", "--memstats", "--interactive-ileaves", "--schedule",
 }
 IGNORED_WITH_VALUE = {
     "--verbosity",
+    # ESBMC's own time limit; run.py sets each test's.
+    "--timeout",
     "--bitwuzllob-prog", "--bitwuzllob-model-prog", "--neurosym-prog",
     "--neurosym-model-prog",
 }
@@ -138,6 +146,8 @@ def translate(args, test_dir):
     no_fp_conversion = False
     for tok in tokens:
         name, eq, value = tok.partition("=")
+        if tok == "-":  # stdin or stdout, the value of the flag before it
+            continue
         if name in IGNORED_WITH_VALUE:
             if not eq:
                 next(tokens, "")
@@ -216,13 +226,21 @@ def header(origin, mode, args, expected, test_dir, builtins):
     if missing or builtins:
         mode = "KNOWNBUG" if mode == "KNOWNBUG" else "FUTURE"
     if missing:
-        # Keep unsupported options visible without restoring ignored flags.
+        # Keep unsupported options visible, leaving out the flags translate()
+        # drops.
         lexer = shlex.shlex(args, posix=True)
         lexer.whitespace_split, lexer.commenters = True, ""
-        raw_args, start, skip_value = [], 0, False
+        raw_args, start, skip_value, kept = [], 0, False, False
+        no_fp_conversion = "--no-fp-conversion-check" in shlex.split(args)
         for token in lexer:
             end = lexer.instream.tell()
             name, eq, value = token.partition("=")
+            if token == "-":  # the value of the flag before it, kept with it
+                if kept:
+                    raw_args.append(args[start:end])
+                start = end
+                continue
+            kept = False
             if skip_value:
                 skip_value = False
             elif name in IGNORED_WITH_VALUE:
@@ -230,12 +248,15 @@ def header(origin, mode, args, expected, test_dir, builtins):
             elif name in UNSUPPORTED_ALIASES:
                 raw_args.append(UNSUPPORTED_ALIASES[name] + ("=" + value if eq else "") + " ")
             elif name in RENAMED or name in OVERFLOW:
-                renamed = shlex.join(RENAMED.get(name) or OVERFLOW[name])
-                raw_args.append(renamed + " ")
+                renamed = [f for f in RENAMED.get(name) or OVERFLOW[name]
+                           if not (no_fp_conversion and f == FLOAT_CAST)]
+                raw_args.append(shlex.join(renamed) + " ")
             elif name in RENAMED_WITH_VALUE:
                 raw_args.append(RENAMED_WITH_VALUE[name] + ("=" + value if eq else " "))
-            elif name not in IGNORED_FLAGS:
+            elif name not in DROPPED and name != "--no-fp-conversion-check" \
+                    and not name.startswith("-Wno-"):
                 raw_args.append(args[start:end])
+                kept = True
             start = end
         lines += ["// Needs: " + " ".join(missing), ("// RUN: " + "".join(raw_args).strip()).rstrip()]
     elif flags:

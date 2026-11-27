@@ -37,7 +37,7 @@ void main()
 }
 // Imported from ESBMC regression/esbmc-unix/03_falcon
 // Needs: --context-bound 3
-// RUN: --context-bound 3 -Wno-error=implicit-function-declaration
+// RUN: --context-bound 3
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

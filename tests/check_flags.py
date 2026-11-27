@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check defaults, independent opt-outs, and unsupported check diagnostics."""
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -40,9 +41,82 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text('int main(void) { volatile char *p = "x"; *p = 1; }\n')
     check(command + [str(source), "--no-assertions"], 1, "write access to string constant")
     check(command + [str(source), "--ub-pointer-check=false"], 0, "VERIFICATION SUCCESSFUL")
+
+    # The [INFO] Checks line names the checks the run counts, and only those:
+    # a property counts its own and the unwinding assertions.
+    source.write_text("int main(void) { return 0; }\n")
+    overflow = tmp / "overflow.prp"
+    overflow.write_text("CHECK( init(main()), LTL(G ! overflow) )\n")
+    defaults = "assertions, unwinding-assertions, pointer, div-by-zero, vla-size"
+    for flags, families in (
+            ([], defaults),
+            (["--no-assertions", "--ub-pointer-check=false", "--vla-size-check=false"],
+             "unwinding-assertions, div-by-zero"),
+            (["--ub-shift-check", "--overflow-check", "--ub-uninit-check", "--ub-alignment-check"],
+             defaults + ", shift, signed-overflow, unsigned-overflow, alignment, uninit"),
+            (["--ub-float-cast-overflow-check", "--ub-count-zero-check"],
+             defaults + ", float-cast-overflow, count-zero"),
+            (["--property", "unreach-call", "--ub-shift-check"], "reach-error, unwinding-assertions"),
+            (["--property", "valid-free"], "unwinding-assertions, valid-free"),
+            (["--property-file", str(overflow)], "unwinding-assertions, signed-overflow"),
+            (["--property", "termination"], "unwinding-assertions"),
+            # An error label counts where the walker counts it.
+            (["--error-label", "ERROR"],
+             "assertions, error-label ERROR, unwinding-assertions, pointer, div-by-zero, vla-size"),
+            (["--error-label", "ERROR", "--property", "unreach-call"],
+             "reach-error, error-label ERROR, unwinding-assertions"),
+            (["--error-label", "ERROR", "--no-assertions"],
+             "unwinding-assertions, pointer, div-by-zero, vla-size"),
+            (["--error-label", "ERROR", "--property", "termination"], "unwinding-assertions")):
+        check(command + [str(source)] + flags, 0, "[INFO] Checks: " + families + "\n")
+    ir.write_text("define i32 @main() { ret i32 0 }\n")
+    check([binary, str(ir), "--no-assertions", "--no-unwinding-assertions",
+           "--ub-pointer-check=false", "--ub-div-by-zero-check=false", "--vla-size-check=false"],
+          0, "[INFO] Checks: none\n")
     source.write_text("#include <assert.h>\nint main(void) { assert(0); }\n")
     check(command + [str(source), "--ub-pointer-check=false"], 1, "__assert_fail")
 
+    # Run directly on IR whose sanitizer traps clang compiled in, without
+    # vereda.py's --sanitized, the binary lists them too; with it, both.
+    kept = tmp / "main.c.ll"
+    source.write_text("int main(int argc, char **argv) { return (argc << argc) + argc; }\n")
+    check(command + [str(source), "--ub-shift-check", "--ub-signed-overflow-check", "--keep-ir"],
+          1, "VERIFICATION FAILED")
+    check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", shift, signed-overflow\n")
+    check([binary, str(kept), "--sanitized=unsigned-integer-overflow"], 1,
+          "[INFO] Checks: " + defaults + ", shift, signed-overflow, unsigned-overflow\n")
+    check([binary, str(kept), "--property", "unreach-call"], 0,
+          "[INFO] Checks: reach-error, unwinding-assertions\n")
+    source.write_text("int main(int argc, char **argv) { return (unsigned)argc * 3u; }\n")
+    check(command + [str(source), "--unsigned-overflow-check", "--keep-ir"], 1, "VERIFICATION FAILED")
+    check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", unsigned-overflow\n")
+    # With optimisation, clang shares one trap block between a function's
+    # checks, signed and unsigned alike: each branch into it counts.
+    for program, families in (
+            ("g = argc + 7; return argc + 9;", "signed-overflow"),
+            ("g = argc + 7; u = (unsigned)argc + 3u; return argc + 9;",
+             "signed-overflow, unsigned-overflow")):
+        source.write_text("int g;\nunsigned u;\nint main(int argc, char **argv) { "
+                          + program + " }\n")
+        sanitizers = "-fsanitize=signed-integer-overflow,unsigned-integer-overflow"
+        subprocess.run([clang, "-S", "-emit-llvm", "-O2", sanitizers,
+                        sanitizers.replace("-fsanitize=", "-fsanitize-trap="),
+                        str(source), "-o", str(ir)], check=True)
+        assert re.search(r"preds = %\w+, %\w+\n.*@llvm\.ubsantrap", ir.read_text()), "no shared trap"
+        check([binary, str(ir)], 1, "[INFO] Checks: " + defaults + ", " + families + "\n")
+    # A division trap checks a divisor of zero or INT_MIN / -1, by what its
+    # branch compares; div-by-zero, also the binary's own check, is listed once.
+    source.write_text("int main(int argc, char **argv) { return 100 / argc; }\n")
+    unflagged = "assertions, unwinding-assertions, pointer, vla-size, "
+    for sanitizer, status, flags, families in (
+            ("integer-divide-by-zero", 1, [], defaults),
+            ("integer-divide-by-zero", 1, ["--ub-div-by-zero-check=false"],
+             unflagged + "div-by-zero"),
+            ("signed-integer-overflow", 0, ["--ub-div-by-zero-check=false"],
+             unflagged + "signed-overflow")):
+        subprocess.run([clang, "-S", "-emit-llvm", "-fsanitize=" + sanitizer,
+                        "-fsanitize-trap=" + sanitizer, str(source), "-o", str(ir)], check=True)
+        check([binary, str(ir)] + flags, status, "[INFO] Checks: " + families + "\n")
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
@@ -152,6 +226,44 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--ub-shift-check"], 1, "undefined behavior on shift operation shl")
     check(command + [str(source), "--ub-shift-check=false"], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), "--overflow-check"], 0, "VERIFICATION SUCCESSFUL")
+
+    # --ub-checks finds one violation of each opt-in family, and stands for
+    # the six flags in its place: the last flag naming a check decides it.
+    source.write_text("extern int __VERIFIER_nondet_int(void);\n"
+                      "extern double __VERIFIER_nondet_double(void);\n"
+                      "int main(void) {\n"
+                      "  int n = __VERIFIER_nondet_int(), r = 0;\n"
+                      "  r += n + 1;\n"
+                      "  r += 1 << n;\n"
+                      "  r += (int)__VERIFIER_nondet_double();\n"
+                      "  r += __builtin_ctz(n);\n"
+                      "  long b[2] = {0, 0};\n"
+                      "  r += *(int *)((char *)b + n % 4);\n"
+                      "  int u;\n"
+                      "  r += u;\n"
+                      "  return r;\n"
+                      "}\n")
+    families = {"--ub-signed-overflow-check": "arithmetic overflow on add",
+                "--ub-shift-check": "undefined behavior on shift operation",
+                "--ub-float-cast-overflow-check": "floating-point conversion out of range",
+                "--ub-count-zero-check": "__builtin_clz/ctz of zero is undefined",
+                "--ub-alignment-check": "Incorrect alignment when accessing data object",
+                "--ub-uninit-check": "use of uninitialized variable: u"}
+    run = command + [str(source), "--multi-property"]
+    check(run, 0, "VERIFICATION SUCCESSFUL")
+    output = check(run + ["--ub-checks"], 1, "VERIFICATION FAILED")
+    assert all(text in output for text in families.values()), output
+    for flag, text in families.items():
+        output = check(run + ["--ub-checks", flag + "=false"], 1, "VERIFICATION FAILED")
+        assert text not in output, output
+        assert all(t in output for f, t in families.items() if f != flag), output
+        check(run + [flag + "=false", "--ub-checks"], 1, text)
+    check(run + ["--ub-shift-check", "--ub-checks=false"], 0, "VERIFICATION SUCCESSFUL")
+    check(run + ["--ub-checks=maybe"], 6, "--ub-checks takes true or false")
+    # Unsigned overflow is defined, so --ub-checks leaves it out.
+    source.write_text("int main(int n, char **p) { unsigned u = n; return u + 4294967295u > 0; }\n")
+    check(command + [str(source), "--ub-checks"], 0, "VERIFICATION SUCCESSFUL")
+    check(command + [str(source), "--unsigned-overflow-check"], 1, "VERIFICATION FAILED")
 
     source.write_text("extern void reach_error(void);\n"
                       "int main(int n, char **argv) { int x = 7 / n; reach_error(); return x; }\n")

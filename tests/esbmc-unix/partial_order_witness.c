@@ -22,7 +22,7 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_witness
-// Needs: --partial-order --witness-output-yaml -
+// Needs: --partial-order --witness-output-yaml
 // RUN: --partial-order --unwind 4 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

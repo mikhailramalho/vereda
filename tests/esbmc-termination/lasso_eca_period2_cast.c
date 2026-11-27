@@ -35,7 +35,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/lasso_eca_period2_cast
 // Needs: --termination --max-inductive-step 3 --interval-analysis
-// RUN: --ub-div-by-zero-check=false --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// RUN: --ub-div-by-zero-check=false --k-step 2 --unlimited-k-steps --vla-size-check=false -m32 --ub-pointer-check=false --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

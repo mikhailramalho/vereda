@@ -39,7 +39,7 @@ static bool isErrorCall(const Instruction *inst) {
   const Function *f = callee(inst);
   StringRef name = f ? f->getName() : "";
   const auto *call = dyn_cast_or_null<CallBase>(inst);
-  return name == "reach_error" || name == "__VERIFIER_error" ||
+  return name == "reach_error" || name == "__VERIFIER_error" || name == "__vereda_error_label" ||
          (call && isAssertFail(name, call->arg_size()));
 }
 
@@ -73,7 +73,7 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
     return name.starts_with("llvm.ubsantrap")
                ? counted.traps
                : f->getIntrinsicID() == Intrinsic::prefetch || f->doesNotAccessMemory();
-  if (name == "reach_error" && counted.reachError)
+  if ((name == "reach_error" || name == "__vereda_error_label") && counted.reachError)
     return true;
   // A loop in the callee may not end, which would stop the loop being
   // summarised part way.

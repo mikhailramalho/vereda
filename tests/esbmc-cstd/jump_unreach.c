@@ -32,8 +32,8 @@ int main(void)
 
 
 // Imported from ESBMC regression/cstd/jump_unreach
-// Needs: --sv-comp --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
-// RUN: --sv-comp --ub-div-by-zero-check=false --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --interval-analysis --no-bounds-check --error-label ERROR --k-induction --max-inductive-step 3
+// Needs: --sv-comp --interval-analysis --k-induction --max-inductive-step 3
+// RUN: --sv-comp --ub-div-by-zero-check=false --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --interval-analysis --error-label ERROR --k-induction --max-inductive-step 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

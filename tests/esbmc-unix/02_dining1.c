@@ -55,7 +55,7 @@ int main ( void )
 }
 // Imported from ESBMC regression/esbmc-unix/02_dining1
 // Needs: --deadlock-check --context-bound 8
-// RUN: --unwind 3 --deadlock-check --context-bound 8 -Wno-error=implicit-function-declaration
+// RUN: --unwind 3 --deadlock-check --context-bound 8
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

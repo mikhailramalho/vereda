@@ -12,7 +12,9 @@
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
+#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
@@ -35,6 +37,8 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/FixIrreducible.h>
 #include <llvm/Transforms/Utils/LowerSwitch.h>
+
+#include <set>
 
 using namespace llvm;
 
@@ -380,6 +384,72 @@ static Instruction *guardedOperation(CallBase &call) {
                                                       : nullptr;
   }
   return nullptr;
+}
+
+// Records the clang sanitizers whose traps the module holds, as -fsanitize=
+// names them, in the named metadata vereda.sanitized, for the driver's
+// [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
+// it: an overflow trap is signed or unsigned by the overflow intrinsics in
+// the blocks that branch to it (with optimisation, clang shares one trap
+// block between the checks of a function), and a division trap checks a
+// divisor of zero or a signed overflow by what their branches compare.
+static void recordSanitizers(Module &m) {
+  std::set<std::string> names;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f)) {
+      auto *c = dyn_cast<CallBase>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if (!callee || callee->getName() != "llvm.ubsantrap")
+        continue;
+      switch (cast<ConstantInt>(c->getArgOperand(0))->getZExtValue()) {
+      case 20: // ShiftOutOfBounds
+        names.insert("shift");
+        break;
+      case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+        for (BasicBlock *pred : predecessors(c->getParent())) {
+          auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+          SmallVector<Value *, 4> conditions;
+          if (br)
+            conditions.push_back(br->getCondition());
+          while (!conditions.empty()) {
+            auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+            if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+              if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+                names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+            } else if (cond && cond->getType()->isIntegerTy(1) &&
+                       (cond->getOpcode() == Instruction::And ||
+                        cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
+              conditions.append(cond->op_begin(), cond->op_end());
+            }
+          }
+        }
+        break;
+      case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
+        for (BasicBlock *pred : predecessors(c->getParent()))
+          for (Instruction &p : *pred)
+            if (auto *ii = dyn_cast<IntrinsicInst>(&p))
+              switch (ii->getIntrinsicID()) {
+              case Intrinsic::sadd_with_overflow:
+              case Intrinsic::ssub_with_overflow:
+              case Intrinsic::smul_with_overflow:
+                names.insert("signed-integer-overflow");
+                break;
+              case Intrinsic::uadd_with_overflow:
+              case Intrinsic::usub_with_overflow:
+              case Intrinsic::umul_with_overflow:
+                names.insert("unsigned-integer-overflow");
+                break;
+              default:
+                break;
+              }
+        break;
+      }
+    }
+  if (names.empty())
+    return;
+  NamedMDNode *md = m.getOrInsertNamedMetadata("vereda.sanitized");
+  for (const std::string &name : names)
+    md->addOperand(MDNode::get(m.getContext(), MDString::get(m.getContext(), name)));
 }
 
 // Names clang's division-overflow, shift and float-cast checks as ESBMC
@@ -1766,10 +1836,98 @@ static void threadBoolPhis(Module &m) {
   }
 }
 
+// --error-label: a call to the bodyless __vereda_error_label, a failed
+// check for the walker, at each debug label record named label, as ESBMC's
+// assert(false) at the C label. It goes before the instruction the record
+// is attached to, at the label's location.
+static void markErrorLabels(Module &m, StringRef label) {
+  SmallVector<std::pair<Instruction *, DebugLoc>, 1> at;
+  for (Function &f : m)
+    for (Instruction &i : instructions(f))
+      for (DbgRecord &r : i.getDbgRecordRange())
+        if (auto *l = dyn_cast<DbgLabelRecord>(&r); l && l->getLabel()->getName() == label)
+          at.push_back({&i, l->getDebugLoc()});
+  if (at.empty())
+    return;
+  FunctionCallee error =
+      m.getOrInsertFunction("__vereda_error_label", Type::getVoidTy(m.getContext()));
+  for (auto &[i, loc] : at)
+    CallInst::Create(error, "", i->getIterator())->setDebugLoc(loc);
+}
+
+// Turns a scalar global that only the entry function uses into a local of
+// it, so that mem2reg and SCEV see a loop over a global counter as they see
+// one over a local, and its array loop is summarised (#380, cause 5). Sound
+// only when nothing else can see the global: every use is a plain load or
+// store of its whole value in the entry function, which nothing calls (C
+// allows calling main), so no other function, constructor, destructor,
+// atexit handler or thread reaches it; the module has no inline assembly,
+// which names globals without a use; and no call in the entry function
+// returns twice. The initial value is stored at the entry. Runs after
+// linkModels, so that a model using a global of the same name still shares it.
+static bool promoteEntryGlobals(Module &m, StringRef entry) {
+  Function *f = m.getFunction(entry);
+  if (!f || f->isDeclaration() || !f->use_empty() || !m.getModuleInlineAsm().empty())
+    return false;
+  for (Function &g : m)
+    for (Instruction &i : instructions(g))
+      if (auto *c = dyn_cast<CallBase>(&i);
+          c && (c->isInlineAsm() || (&g == f && c->hasFnAttr(Attribute::ReturnsTwice))))
+        return false;
+  auto plainUse = [f](User *u, GlobalVariable &g) {
+    Type *ty = g.getValueType();
+    if (auto *l = dyn_cast<LoadInst>(u))
+      return l->getFunction() == f && l->isSimple() && l->getType() == ty;
+    if (auto *s = dyn_cast<StoreInst>(u))
+      return s->getFunction() == f && s->isSimple() && s->getPointerOperand() == &g &&
+             s->getValueOperand() != &g && s->getValueOperand()->getType() == ty;
+    return false;
+  };
+  SmallVector<GlobalVariable *, 4> promoted;
+  for (GlobalVariable &g : m.globals()) {
+    Type *ty = g.getValueType();
+    if (g.hasInitializer() && !g.isConstant() && !g.isThreadLocal() &&
+        !g.isExternallyInitialized() && !g.hasSection() &&
+        (g.hasLocalLinkage() || g.hasExternalLinkage()) &&
+        (ty->isIntegerTy() || ty->isPointerTy() || ty->isFloatingPointTy()) &&
+        llvm::all_of(g.users(), [&](User *u) { return plainUse(u, g); }))
+      promoted.push_back(&g);
+  }
+  // The global's debug variable becomes one of the entry function's, with a
+  // value record at each store, where the assignment is (mem2reg would put a
+  // declare's records at line 0, shown at the global's declaration). As for
+  // a global, the initial value gets none.
+  DIBuilder dib(m);
+  DISubprogram *sp = f->getSubprogram();
+  IRBuilder<> b(&*f->getEntryBlock().getFirstInsertionPt());
+  for (GlobalVariable *g : promoted) {
+    AllocaInst *a = b.CreateAlloca(g->getValueType(), nullptr, g->getName());
+    b.CreateStore(g->getInitializer(), a);
+    SmallVector<DIGlobalVariableExpression *, 1> vars;
+    g->getDebugInfo(vars);
+    if (sp && !vars.empty()) {
+      DIGlobalVariable *v = vars[0]->getVariable();
+      DILocalVariable *local =
+          dib.createAutoVariable(sp, v->getName(), v->getFile(), v->getLine(), v->getType());
+      DILocation *declared = DILocation::get(m.getContext(), v->getLine(), 0, sp);
+      for (User *u : g->users())
+        if (auto *s = dyn_cast<StoreInst>(u)) {
+          const DILocation *at = s->getDebugLoc() ? s->getDebugLoc().get() : declared;
+          dib.insertDbgValueIntrinsic(s->getValueOperand(), local, dib.createExpression(), at,
+                                      std::next(s->getIterator()));
+        }
+    }
+    g->replaceAllUsesWith(a);
+    g->eraseFromParent();
+  }
+  dib.finalize();
+  return !promoted.empty();
+}
+
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
-                                       bool uninitCheck) {
+                                       bool uninitCheck, StringRef errorLabel) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1784,9 +1942,12 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
 
   pruneUnreachable(*module, entry);
   stripUBAssumptions(*module);
+  recordSanitizers(*module);
   nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);
+  if (!errorLabel.empty())
+    markErrorLabels(*module, errorLabel);
   if (alignmentCheck)
     checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);
@@ -1834,6 +1995,9 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
                            alignmentCheck))
     return std::move(e);
+  if (promoteEntryGlobals(*module, entry))
+    if (Error e = runPipeline(*module, "function(mem2reg,loop-simplify,lcssa)"))
+      return std::move(e);
   // Vereda intercepts libc assertion failures and never passes their
   // string arguments outside; mark its pointer parameters non-capturing before
   // function-attrs so callers do not appear to expose assert message literals.

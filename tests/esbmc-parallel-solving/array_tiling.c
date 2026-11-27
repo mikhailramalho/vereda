@@ -9,7 +9,7 @@ main()
 }
 // Imported from ESBMC regression/parallel-solving/array_tiling
 // Needs: --k-induction
-// RUN: --k-induction --max-k-step 5 -Wno-error=implicit-int
+// RUN: --k-induction --max-k-step 5
 // MODE: FUTURE
 // EXPECT: ^Bug found \(k = 1\)$
 // EXPECT: ^VERIFICATION FAILED$
