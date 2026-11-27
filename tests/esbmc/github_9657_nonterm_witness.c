@@ -8,7 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9657_nonterm_witness
-// Needs: --termination --max-inductive-step 3 --witness-output-yaml -
+// Needs: --termination --max-inductive-step 3 --witness-output-yaml
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --ub-pointer-check=false --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

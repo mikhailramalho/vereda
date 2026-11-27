@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9689_branching_cap
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml - --unwind 1600 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

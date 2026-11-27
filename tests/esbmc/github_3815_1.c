@@ -43,8 +43,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_3815_1
-// Needs: --no-standard-checks --timeout 60
-// RUN: --no-standard-checks --multi-property --unwind 3 --no-unwinding-assertions --timeout 60
+// Needs: --no-standard-checks
+// RUN: --no-standard-checks --multi-property --unwind 3 --no-unwinding-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

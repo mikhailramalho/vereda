@@ -19,7 +19,7 @@ int main(void)
   return sum;
 }
 // Imported from ESBMC regression/esbmc/nonterm_witness_ranked_loop_fail
-// Needs: --termination --max-inductive-step 3 --witness-output-yaml -
+// Needs: --termination --max-inductive-step 3 --witness-output-yaml
 // RUN: --termination --max-inductive-step 3 --k-step 2 --unlimited-k-steps --ub-pointer-check=false --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

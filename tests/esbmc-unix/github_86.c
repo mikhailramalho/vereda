@@ -19,8 +19,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_86
-// Needs: --schedule --memory-leak-check
-// RUN: --schedule --memory-leak-check --force-malloc-success
+// Needs: --memory-leak-check
+// RUN: --memory-leak-check --force-malloc-success
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

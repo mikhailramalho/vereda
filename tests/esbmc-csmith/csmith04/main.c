@@ -2970,8 +2970,7 @@ FYI: the random generator makes assumptions about the integer size. See platform
 ********************* end of statistics **********************/
 
 // Imported from ESBMC regression/csmith/csmith04
-// Needs: --memstats --interactive-ileaves --schedule --i386-macos
-// RUN: --no-unwinding-assertions --unwind 15 --ub-div-by-zero-check=false --memstats --interactive-ileaves --schedule --i386-macos
+// RUN: --no-unwinding-assertions --unwind 15 --ub-div-by-zero-check=false -m32
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: verdict SUCCESSFUL

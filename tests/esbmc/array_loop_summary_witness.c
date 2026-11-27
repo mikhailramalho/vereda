@@ -12,7 +12,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_witness
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

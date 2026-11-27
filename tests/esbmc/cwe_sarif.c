@@ -6,7 +6,7 @@ int main(void)
   return *p;
 }
 // Imported from ESBMC regression/esbmc/cwe_sarif
-// Needs: --sarif-output -
+// Needs: --sarif-output
 // RUN: --incremental-bmc --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

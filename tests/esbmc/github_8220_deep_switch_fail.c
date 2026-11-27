@@ -37,8 +37,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8220_deep_switch_fail
-// Needs: --sv-comp --timeout 60s
-// RUN: --sv-comp --timeout 60s
+// Needs: --sv-comp
+// RUN: --sv-comp
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cwe_excessive_alloc_sarif
-// Needs: --excessive-alloc-check --sarif-output -
+// Needs: --excessive-alloc-check --sarif-output
 // RUN: --excessive-alloc-check --incremental-bmc --sarif-output -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

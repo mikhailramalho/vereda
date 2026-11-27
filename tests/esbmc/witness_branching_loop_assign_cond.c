@@ -14,7 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/witness_branching_loop_assign_cond
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --unwind 3 --no-unwinding-assertions --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

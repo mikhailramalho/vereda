@@ -18,7 +18,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10769_while_pure_first_legacy_fail
-// Needs: --witness-output-yaml -
+// Needs: --witness-output-yaml
 // RUN: --unwind 6 --witness-output-yaml -
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
