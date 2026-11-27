@@ -1733,6 +1733,8 @@ private:
       assertion(c, t.land(guard, t.lnot(holds)),
                 "dereference failure: Incorrect alignment when accessing data object", "",
                 nullptr, checks::Property::Alignment);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -1755,6 +1757,8 @@ private:
                 isDiv ? checks::Property::DivisionByZero
                       : isCount ? checks::Property::CountZero
                                 : checks::Property::FloatCastOverflow);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
