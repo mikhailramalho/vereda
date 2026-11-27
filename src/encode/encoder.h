@@ -130,6 +130,10 @@ private:
   camada::SMTExprRef fp(const llvm::Value *v);
   camada::SMTExprRef fp(Term x, llvm::Type *ty); // as above, for a value's term
   Term bits(const camada::SMTExprRef &fp, llvm::Type *ty); // an operation's result as a value
+  // x, a value of type ty in that type's encoding, as a float in camada's
+  // bit-vector encoding; and such a float back as a value of type ty.
+  camada::SMTExprRef bvFloat(Term x, llvm::Type *ty);
+  Term fromBVFloat(const camada::SMTExprRef &f, llvm::Type *ty);
   Term fp80ToIEEE79(Term bv80);
   Term ieee79ToFP80(Term bv79);
   bool native() const { return fpEncoding == camada::FPEncoding::Native; }
