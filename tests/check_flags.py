@@ -40,6 +40,30 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text('int main(void) { volatile char *p = "x"; *p = 1; }\n')
     check(command + [str(source), "--no-assertions"], 1, "write access to string constant")
     check(command + [str(source), "--ub-pointer-check=false"], 0, "VERIFICATION SUCCESSFUL")
+
+    # The [INFO] Checks line names the checks the run counts, and only those:
+    # a property counts its own and the unwinding assertions.
+    source.write_text("int main(void) { return 0; }\n")
+    overflow = tmp / "overflow.prp"
+    overflow.write_text("CHECK( init(main()), LTL(G ! overflow) )\n")
+    defaults = "assertions, unwinding-assertions, pointer, div-by-zero, vla-size"
+    for flags, families in (
+            ([], defaults),
+            (["--no-assertions", "--ub-pointer-check=false", "--vla-size-check=false"],
+             "unwinding-assertions, div-by-zero"),
+            (["--ub-shift-check", "--overflow-check", "--ub-uninit-check", "--ub-alignment-check"],
+             defaults + ", shift, signed-overflow, unsigned-overflow, alignment, uninit"),
+            (["--ub-float-cast-overflow-check", "--ub-count-zero-check"],
+             defaults + ", float-cast-overflow, count-zero"),
+            (["--property", "unreach-call", "--ub-shift-check"], "reach-error, unwinding-assertions"),
+            (["--property", "valid-free"], "unwinding-assertions, valid-free"),
+            (["--property-file", str(overflow)], "unwinding-assertions, signed-overflow"),
+            (["--property", "termination"], "unwinding-assertions")):
+        check(command + [str(source)] + flags, 0, "[INFO] Checks: " + families + "\n")
+    ir.write_text("define i32 @main() { ret i32 0 }\n")
+    check([binary, str(ir), "--no-assertions", "--no-unwinding-assertions",
+           "--ub-pointer-check=false", "--ub-div-by-zero-check=false", "--vla-size-check=false"],
+          0, "[INFO] Checks: none\n")
     source.write_text("#include <assert.h>\nint main(void) { assert(0); }\n")
     check(command + [str(source), "--ub-pointer-check=false"], 1, "__assert_fail")
 

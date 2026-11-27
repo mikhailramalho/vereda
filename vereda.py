@@ -256,6 +256,8 @@ def main():
         # function inlined at the check, which names the reason; without it,
         # the trap is at the check itself.
         flags.append("-fsanitize-debug-trap-reasons=none")
+        # For the binary's list of the run's checks.
+        rest.append("--sanitized=" + ",".join(sorted(sanitize)))
 
     binary = args.bin or find_binary()
     if args.help:
