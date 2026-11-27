@@ -78,6 +78,14 @@ reads the terms directly.
   object). Every other object keeps the contents it has as the loop is
   entered, which is where the relation is more precise than havocking all
   memory.
+- Initialisation, under `--ub-uninit-check`: `havoc` marks the object it
+  writes initialised, as an unknown call may write it all, but a loop may
+  leave some bytes untouched. So each byte of a written object is
+  initialised in the pre-state if it was before the loop or an earlier
+  iteration may have written it (the old bit or a fresh one). Keeping only
+  the old bit would report bytes an earlier iteration wrote; marking all of
+  them initialised lost the reads of bytes the loop never writes. An object
+  of unknown size or above `Memory::MaxBytes` is unsupported under the check.
 
 `analysis::writtenObjects(l)` (new, `analysis/writes.h`) lists the objects:
 for each store, atomic, memset/memcpy/memmove destination and each pointer a
