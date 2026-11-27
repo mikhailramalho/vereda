@@ -147,3 +147,5 @@ A value excluded inside a range (`x != 5` with x in [0, 10]) is not kept,
 nor is a relation between two terms that is not an equality (`v <= u`
 leaves `u - v`'s overflow test to the solver). `srange` keeps no cache,
 hence its depth limit.
+
+Follow-up issues: #367, #368, #369.

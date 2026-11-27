@@ -1276,7 +1276,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
       }
       // x != c, where c is an end of x's bounds, moves that end off c.
       auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
-        if (c.ulo != c.uhi)
+        if (c.ulo != c.uhi || c.slo != c.shi)
           return;
         Bounds nb = b;
         if (b.ulo != b.uhi && b.ulo == c.ulo)
