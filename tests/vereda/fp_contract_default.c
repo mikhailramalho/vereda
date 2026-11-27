@@ -1,8 +1,8 @@
-// Without a property file a * b + c follows clang's default,
-// -ffp-contract=on: it may fuse, and Vereda fuses it, so the product of
-// a = b = 1 + 2^-27 keeps its 2^-54 and does not cancel c = -(1 + 2^-26).
-// An explicit fma() fuses either way.
-// EXPECT: ^VERIFICATION FAILED$
+// Without a property file too, vereda.py turns contraction off, so a * b + c
+// rounds the product and the sum apart, as x86-64 without FMA runs it: the
+// product of a = b = 1 + 2^-27 loses its 2^-54 and cancels c = -(1 + 2^-26)
+// exactly. An explicit fma() still fuses and keeps the 2^-54.
+// EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 extern double __VERIFIER_nondet_double(void);
 extern void __VERIFIER_assume(int);
