@@ -866,6 +866,7 @@ static void lowerCalls(Module &m) {
 // Calls to the libm functions LLVM has an intrinsic for become that
 // intrinsic when the program gives no body, so the encoder computes them.
 // errno is not set; clang keeps sqrt and fma as calls only for it.
+// fmod has no intrinsic; it is lowered to the frem instruction instead.
 static void libmToIntrinsics(Module &m) {
   static const std::pair<const char *, Intrinsic::ID> names[] = {
       {"sqrt", Intrinsic::sqrt},   {"fabs", Intrinsic::fabs},
@@ -891,6 +892,26 @@ static void libmToIntrinsics(Module &m) {
             c && c->getCalledOperand() == f && c->getFunctionType() == f->getFunctionType())
           c->setCalledFunction(intrinsic);
     }
+  // fmod has no intrinsic; it is the frem instruction.
+  for (const char *name : {"fmod", "fmodf", "fmodl"}) {
+    Function *f = m.getFunction(name);
+    if (!f || !f->isDeclaration() || f->isVarArg() || f->arg_size() != 2 ||
+        !f->getReturnType()->isFloatingPointTy() ||
+        any_of(f->getFunctionType()->params(),
+               [&](Type *p) { return p != f->getReturnType(); }))
+      continue;
+    for (User *u : make_early_inc_range(f->users()))
+      if (auto *c = dyn_cast<CallInst>(u);
+          c && c->getCalledOperand() == f &&
+          c->getFunctionType() == f->getFunctionType()) {
+        Instruction *r =
+            BinaryOperator::Create(Instruction::FRem, c->getArgOperand(0), c->getArgOperand(1),
+                                   c->getName(), c->getIterator());
+        r->setDebugLoc(c->getDebugLoc());
+        c->replaceAllUsesWith(r);
+        c->eraseFromParent();
+      }
+  }
 }
 
 // The instructions an inline asm runs where it stands, joined by " ; ":
