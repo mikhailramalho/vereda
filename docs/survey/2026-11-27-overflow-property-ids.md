@@ -205,4 +205,4 @@ flag or `--multi-property`, or expect one of these ids or messages, all pass
 changed, including the 13 ESBMC `--ub-shift-check` tests that now also check
 signed overflow.
 
-Follow-up issues: #349, #350, #351.
+Follow-up issues: #349, #350, #351, #385, #386.
