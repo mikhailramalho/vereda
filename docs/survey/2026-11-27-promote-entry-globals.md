@@ -36,7 +36,13 @@ a global. As before for a global, the initial value is not shown.
 One test changed: `endless_loop_store_false` checks the unwinding claim of
 an endless loop that stores to a global, and that store now goes away with
 the promotion, so the loop counts as one with no effect (#373). The test now
-stores to a volatile global.
+stores to a volatile global. The same holds for programs: an endless loop
+whose only effect is a store to a global only `main` uses now ends its path
+as an effect-free loop does, so under `--unwind N` such a program, which
+failed its unwinding assertion before, may now pass. That is #373's
+dependence of the unwinding verdict on the IR's shape, which this change
+makes reach more programs; it does not change what can be reached, so
+reachability verdicts stay the same.
 
 ## Measurements
 
