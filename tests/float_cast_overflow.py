@@ -82,12 +82,12 @@ int main(void) {{
   return 0;
 }}
 ''')
-        out = check(command + [str(source), flag], 1, "main.float-cast-overflow.1")
-        assert "main.float-cast-overflow.2" not in out, out
-        check(command + [str(source), flag, "--fp2bv"], 1, "main.float-cast-overflow.1")
+        out = check(command + [str(source), flag], 1, "main.assertion.1")
+        assert "main.assertion.2" not in out, out
+        check(command + [str(source), flag, "--fp2bv"], 1, "main.assertion.1")
         check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
         check(command + [str(source), flag, flag + "=false"], 0, "VERIFICATION SUCCESSFUL")
-        check(command + [str(source), flag, "--no-assertions"], 1, "main.float-cast-overflow.1")
+        check(command + [str(source), flag, "--no-assertions"], 1, "main.assertion.1")
 
     # Excluded under --property unreach-call and --property no-overflow (must NOT prune reach_error).
     source.write_text('''
@@ -118,7 +118,7 @@ int main(void) {
 }
 ''')
     out = check(command + [str(source), flag, "--multi-property"], 1, "main.assertion.1")
-    assert "main.float-cast-overflow.1" in out, out
+    assert "main.assertion.2" in out and "floating-point conversion" in out, out
 
     # Raw LLVM IR: scalar widths (including i1 and i128 where 2^128 exceeds float max) and vector lanes.
     ir.write_text('''
@@ -128,7 +128,7 @@ define i32 @main(float %x) {
 }
 ''')
     # float -> i128 fails on negative/NaN/+inf, succeeds for finite nonnegative floats.
-    check([binary, str(ir), flag], 1, "main.float-cast-overflow.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
     ir.write_text('''
 declare void @__VERIFIER_assume(i1)
 define i32 @main(float %x) {
@@ -157,7 +157,7 @@ define i32 @main() {
   ret i32 0
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.float-cast-overflow.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
 
     # Raw IR: vector lanes checked before scalarization (lane 1 overflows).
     ir.write_text('''
@@ -167,7 +167,7 @@ define i32 @main(float %x) {
   ret i32 0
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.float-cast-overflow.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
 
     # A wider ubsan guard (double -> i32) in the predecessor must NOT suppress
     # instrumentation of a narrower cast (double -> i8) in the same block.
@@ -191,4 +191,4 @@ cont:
   ret i32 %wide
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.float-cast-overflow.2")
+    check([binary, str(ir), flag], 1, "main.assertion.2")

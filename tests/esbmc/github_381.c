@@ -12,4 +12,4 @@ int main()
 // EXPECT: github_381\.c line 7 column 3 function main$
 // Vereda: unmet EXPECT: github_381\.c line 7 column 3 function main$
 // MODE: FUTURE
-// Vereda: verdict SUCCESSFUL
+// Vereda: verdict FAILED

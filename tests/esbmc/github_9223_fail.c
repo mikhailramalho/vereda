@@ -9,6 +9,3 @@ int main(void)
 // RUN: --overflow-check --solver z3 --std c11
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on shl
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

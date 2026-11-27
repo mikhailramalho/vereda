@@ -228,8 +228,6 @@ public:
       claims.erase({saved.loop, nullptr});
     } else {
       claims = std::move(saved.claims);
-      assertionNumber = std::move(saved.assertionNumber);
-      assertionsIn = std::move(saved.assertionsIn);
       recursionNumber = std::move(saved.recursionNumber);
       recursionsIn = std::move(saved.recursionsIn);
       summarised = std::move(saved.summarised);
@@ -290,8 +288,6 @@ private:
     for (const checks::Check &check : checks)
       cp.violated.push_back(check.violated);
     cp.claims = claims;
-    cp.assertionNumber = assertionNumber;
-    cp.assertionsIn = assertionsIn;
     cp.recursionNumber = recursionNumber;
     cp.recursionsIn = recursionsIn;
     cp.summarised = summarised;
@@ -1420,8 +1416,14 @@ private:
       }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
-        if (counts(true))
-          assertion(c, guard, ir::sanitizerCheck(code->getZExtValue()), "");
+        if (counts(true)) {
+          std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+          StringRef s(comment);
+          assertion(c, guard, comment, "", nullptr,
+                    s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
+                    : s.starts_with("undefined behavior on shift") ? checks::Property::Shift
+                                                                  : checks::Property::Assertion);
+        }
         return t.boolean(false);
       }
       throw Unsupported("intrinsic " + name.str());
@@ -1442,7 +1444,8 @@ private:
         assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
                   checks::Property::DivisionByZero);
       if (counts(true) && !t.isTrue(zero))
-        assertion(c, t.land(guard, t.lnot(zero)), "arithmetic overflow on division", "", nullptr,
+        assertion(c, t.land(guard, t.lnot(zero)),
+                  ir::checkComment(c, "arithmetic overflow on division"), "", nullptr,
                   checks::Property::ArithmeticOverflow);
       return t.boolean(false);
     }
@@ -1588,8 +1591,9 @@ private:
     }
     if (name == "__ubsan_handle_float_cast_overflow_abort") {
       if (counts(false))
-        assertion(c, guard, "float cast overflow", "", nullptr,
-                  checks::Property::FloatCastOverflow);
+        assertion(c, guard,
+                  ir::checkComment(c, "floating-point conversion out of range on typecast"), "",
+                  nullptr, checks::Property::FloatCastOverflow);
       return t.boolean(false);
     }
     if (name == "__vereda_check_alignment") {
@@ -1618,9 +1622,9 @@ private:
       bool isDiv = name == "__vereda_check_divisor";
       bool isCount = name == "__vereda_check_count_zero";
       assertion(c, t.land(guard, t.lnot(holds)),
-                isDiv ? "division by zero"
-                      : isCount ? "__builtin_clz/ctz of zero is undefined"
-                                : "float cast overflow",
+                isDiv     ? "division by zero"
+                : isCount ? "__builtin_clz/ctz of zero is undefined"
+                          : ir::checkComment(c, "floating-point conversion out of range on typecast"),
                 "", nullptr,
                 isDiv ? checks::Property::DivisionByZero
                       : isCount ? checks::Property::CountZero
@@ -2022,15 +2026,13 @@ private:
   }
 
   // A check at inst, violated when violated holds; comment names it. An
-  // instruction with several checks tells them apart by what.
+  // instruction with several checks tells them apart by what. The driver
+  // numbers the checks (checks::number).
   void assertion(const Instruction &inst, Term violated, std::string comment,
                  std::string expr, const void *what = nullptr,
                  checks::Property kind = checks::Property::Assertion) {
-    unsigned &index = assertionNumber[{&inst, what}];
-    if (!index)
-      index = ++assertionsIn[{inst.getFunction(), unsigned(kind)}];
-    claim(kind, ir::location(inst), std::move(comment), std::move(expr),
-          index, violated, {&inst, what});
+    claim(kind, ir::location(inst), std::move(comment), std::move(expr), 0, violated,
+          {&inst, what});
   }
 
   // A write at inst through p where guard holds, which fails where p points
@@ -2151,14 +2153,28 @@ private:
       enc.bind(a, p);
       return true;
     }
-    auto checkInitRead = [&](Term p, Type *ty) {
+    auto checkInitRead = [&](Term p, Value *ptr, Type *ty) {
       if (!opts.uninitCheck || !counts(false))
         return;
       uint64_t bytes = mem.layout().getTypeStoreSize(ty).getFixedValue();
       Term ok = mem.isInitialised(st, p, bytes);
       if (!t.isTrue(ok)) {
-        assertion(inst, t.land(guard, t.lnot(ok)), "read of uninitialised memory", "", nullptr,
-                  checks::Property::UninitialisedRead);
+        // ESBMC's wording for a named variable, whose declare InstCombine
+        // may have lowered to a dbg_value of its address; ESBMC checks no
+        // other memory.
+        std::string name;
+        if (auto *var = namedObject(ptr))
+          name = var->first;
+        else if (auto *a = dyn_cast<AllocaInst>(getUnderlyingObject(ptr)))
+          for (DbgVariableRecord *d : findDVRValues(a))
+            if (d->getExpression()->isDeref()) {
+              name = d->getVariable()->getName().str();
+              break;
+            }
+        assertion(inst, t.land(guard, t.lnot(ok)),
+                  name.empty() ? "read of uninitialised memory"
+                               : "use of uninitialized variable: " + name,
+                  "", nullptr, checks::Property::UninitialisedRead);
         guard = t.land(guard, ok);
         mem.setContext(guard);
       }
@@ -2171,7 +2187,7 @@ private:
         uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
         shadows[l] = mem.initBytes(st, p, bytes);
       } else {
-        checkInitRead(p, l->getType());
+        checkInitRead(p, l->getPointerOperand(), l->getType());
       }
       enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
       return true;
@@ -2196,7 +2212,7 @@ private:
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {
       Term p = enc.value(rmw->getPointerOperand());
-      checkInitRead(p, rmw->getType());
+      checkInitRead(p, rmw->getPointerOperand(), rmw->getType());
       writes(inst, guard, p);
       atomicRMW(*rmw, st);
       return true;
@@ -2206,7 +2222,7 @@ private:
       if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) && !ty->isPointerTy())
         throw Unsupported("instruction " + encode::describe(&inst));
       Term p = enc.value(cx->getPointerOperand());
-      checkInitRead(p, ty);
+      checkInitRead(p, cx->getPointerOperand(), ty);
       Term old = mem.load(st, p, ty), expected = enc.value(cx->getCompareOperand());
       // Pointers compare as icmp eq compares them.
       Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(old, expected);
@@ -2428,8 +2444,6 @@ private:
     size_t checks = 0, trace = 0;
     SmallVector<encode::Term, 16> violated;
     DenseMap<ClaimKey, unsigned> claims;
-    DenseMap<ClaimKey, unsigned> assertionNumber;
-    DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
     DenseMap<const CallBase *, unsigned> recursionNumber;
     DenseMap<const Function *, unsigned> recursionsIn;
     SmallPtrSet<const Loop *, 8> summarised;
@@ -2455,9 +2469,7 @@ private:
   // violation inside it at the call, the violation unreach-call names.
   const CallBase *reachError = nullptr;
   DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
-  DenseMap<ClaimKey, unsigned> assertionNumber;
   const char literals = 0; // what the checks of writes into string literals check
-  DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;

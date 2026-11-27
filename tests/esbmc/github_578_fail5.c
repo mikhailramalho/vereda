@@ -22,6 +22,3 @@ int main()
 // Imported from ESBMC regression/esbmc/github_578_fail5
 // RUN: --unwind 32 --overflow-check
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

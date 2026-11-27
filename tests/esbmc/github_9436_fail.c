@@ -8,6 +8,3 @@ int main(void)
 // RUN: --ub-shift-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: undefined behavior on shift operation shl$
-// Vereda: unmet EXPECT: undefined behavior on shift operation shl$
-// MODE: FUTURE
-// Vereda: verdict FAILED

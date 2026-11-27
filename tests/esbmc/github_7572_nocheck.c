@@ -13,10 +13,7 @@ int main(void)
   return (int)x + b;
 }
 // Imported from ESBMC regression/esbmc/github_7572_nocheck
-// Needs: --no-fp-conversion-check
 // RUN: --overflow-check --no-fp-conversion-check
-// MODE: FUTURE
 // EXPECT: \A(?![\s\S]*floating-point conversion out of range)[\s\S]*\Z
 // EXPECT: ^  FAILED       \[main\.arithmetic-overflow\.1\]\s+line 12  arithmetic overflow on add$
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

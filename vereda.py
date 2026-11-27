@@ -38,11 +38,14 @@ CLANG_FLAGS = [
 ]
 
 # ESBMC's flags for the checks clang's sanitizers insert. They trap into
-# llvm.ubsantrap, which the binary takes as a failed check.
+# llvm.ubsantrap, which the binary takes as a failed check. As in ESBMC,
+# either overflow check also checks shifts, and --overflow-check also
+# float-to-integer conversions (--ub-float-cast-overflow-check), unless
+# --no-fp-conversion-check.
 SANITIZERS = {
-    "--overflow-check": "signed-integer-overflow",
-    "--unsigned-overflow-check": "unsigned-integer-overflow",
-    "--ub-shift-check": "shift",
+    "--overflow-check": ("signed-integer-overflow", "shift"),
+    "--unsigned-overflow-check": ("signed-integer-overflow", "unsigned-integer-overflow", "shift"),
+    "--ub-shift-check": ("shift",),
 }
 # SV-COMP property formula -> (the binary's --property, sanitizers). Only
 # signed overflow: SV-COMP's no-overflow is a signed result out of range,
@@ -191,9 +194,11 @@ def main():
                         help="write the IR handed to the binary next to the input as <input>.ll")
     parser.add_argument("--property-file",
                         help="SV-COMP property file: unreach-call or no-overflow")
-    for flag, check in SANITIZERS.items():
-        parser.add_argument(flag, dest="sanitize", action="append_const", const=check,
-                            default=[], help=f"check with clang's -fsanitize={check}")
+    for flag, checks in SANITIZERS.items():
+        parser.add_argument(flag, dest="sanitize", action="append_const", const=checks,
+                            default=[], help=f"check with clang's -fsanitize={','.join(checks)}")
+    parser.add_argument("--no-fp-conversion-check", action="store_true",
+                        help="do not check float-to-integer conversions under --overflow-check")
     parser.add_argument("-v", "--verbose", action="store_true", help="echo every command run")
 
     # argparse exits with 2, the UNKNOWN code, on a bad option.
@@ -212,7 +217,7 @@ def main():
         flags.append("-std=" + args.std)
     if args.property_file:
         entry, prop, sanitize = read_property(args.property_file)
-        args.sanitize += sanitize
+        args.sanitize.append(sanitize)
         rest += ["--entry", entry, "--property", prop]
         # As ESBMC's SV-COMP runs (esbmc-wrapper.py): no largest bound, so the
         # time limit ends the run, and a step of 2. A step of 8 answered more
@@ -220,9 +225,13 @@ def main():
         # where others fail (docs/survey/2026-11-24-k-step-2.md).
         if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
             rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "2"])
-    if args.sanitize:
-        flags += [f + ",".join(sorted(set(args.sanitize)))
-                  for f in ("-fsanitize=", "-fsanitize-trap=")]
+    # The binary takes the flag once, and an explicit one wins.
+    if SANITIZERS["--overflow-check"] in args.sanitize and not args.no_fp_conversion_check and \
+            not any(a.partition("=")[0] == "--ub-float-cast-overflow-check" for a in rest):
+        rest.append("--ub-float-cast-overflow-check")
+    sanitize = sorted({check for checks in args.sanitize for check in checks})
+    if sanitize:
+        flags += [f + ",".join(sanitize) for f in ("-fsanitize=", "-fsanitize-trap=")]
         # Since clang 22, a trap's location is line 0 of an artificial
         # function inlined at the check, which names the reason; without it,
         # the trap is at the check itself.
@@ -272,7 +281,7 @@ def main():
         name, eq, value = flag.partition("=")
         if name == "--no-div-by-zero-check":
             no_divisor = not eq or value in ("", "true", "1")
-        if name == "--ub-count-zero-check":
+        if name in ("--ub-count-zero-check", "--clz-zero-check"):
             count_zero = not eq or value in ("", "true", "1")
         if name == "--ub-float-cast-overflow-check":
             float_cast_overflow = not eq or value in ("", "true", "1")

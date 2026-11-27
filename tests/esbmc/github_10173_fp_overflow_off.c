@@ -6,8 +6,5 @@ int main()
   return (int)(b != b);
 }
 // Imported from ESBMC regression/esbmc/github_10173_fp_overflow_off
-// Needs: --no-fp-conversion-check --no-fp-overflow-check
-// RUN: --overflow-check --no-fp-conversion-check --no-fp-overflow-check --no-pointer-check --no-bounds-check --no-assertions
-// MODE: FUTURE
+// RUN: --overflow-check --no-fp-conversion-check --no-pointer-check --no-assertions
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none

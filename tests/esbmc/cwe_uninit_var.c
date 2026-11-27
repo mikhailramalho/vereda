@@ -8,10 +8,10 @@ int main(void)
   return x;
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_var
-// Needs: --uninitialised-vars-check
 // RUN: --uninitialised-vars-check --incremental-bmc
+// Vereda: unmet EXPECT: ^  CWE: CWE-457$ (Vereda prints no CWE line)
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  use of uninitialized variable: x$
 // EXPECT: ^  CWE: CWE-457$
-// Vereda: verdict none
+// Vereda: verdict FAILED

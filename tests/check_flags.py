@@ -142,7 +142,7 @@ with tempfile.TemporaryDirectory() as directory:
     check(command + [str(source), "--unsigned-overflow-check"], 1, "arithmetic overflow on add")
     source.write_text("int main(int n, char **argv) { return 1 << n; }\n")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
-    check(command + [str(source), "--ub-shift-check"], 1, "shift out of bounds")
+    check(command + [str(source), "--ub-shift-check"], 1, "undefined behavior on shift operation shl")
 
     source.write_text("extern void reach_error(void);\n"
                       "int main(int n, char **argv) { int x = 7 / n; reach_error(); return x; }\n")

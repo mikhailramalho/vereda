@@ -66,10 +66,10 @@ SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--ub-shift-check", "--ub-count-zero-check", "--ub-float-cast-overflow-check",
         "--ub-alignment-check", "--ub-uninit-check", "--unlimited-k-steps",
         "--no-summarize-array-loops", "--no-pointer-check", "--no-vla-size-check",
-        "--no-assertions", "--no-div-by-zero-check"}
+        "--no-assertions", "--no-div-by-zero-check", "--clz-zero-check",
+        "--uninitialised-vars-check", "--no-fp-conversion-check"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
-    "--clz-zero-check": ["--ub-count-zero-check"],
     "--unlimited-k-step": ["--unlimited-k-steps"],
     "--no-unwinding-assertion": ["--no-unwinding-assertions"],
     "--32": ["-m32"], "--64": ["-m64"], "--overflow": ["--overflow-check"],
@@ -114,7 +114,7 @@ IGNORED_WITH_VALUE = {
     "--neurosym-model-prog",
 }
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
-           "--no-align-check", "--no-pointer-relation-check",
+           "--no-align-check", "--no-pointer-relation-check", "--no-fp-overflow-check",
            "--no-simplify", "--no-slice"} | IGNORED_FLAGS
 
 

@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <numeric>
 
 using namespace llvm;
 using vereda::util::progress;
@@ -59,6 +60,8 @@ static cl::opt<bool> noDivByZeroCheck(
     "no-div-by-zero-check", cl::desc("Do not check integer division or remainder by zero"));
 static cl::opt<bool> ubCountZeroCheck(
     "ub-count-zero-check", cl::desc("Check undefined zero arguments to count-leading/trailing-zeros"));
+static cl::alias clzZeroCheck("clz-zero-check", cl::desc("ESBMC's name for --ub-count-zero-check"),
+                              cl::aliasopt(ubCountZeroCheck));
 static cl::opt<bool> ubFloatCastOverflowCheck(
     "ub-float-cast-overflow-check",
     cl::desc("Check out-of-range floating-point to integer conversions"));
@@ -66,6 +69,10 @@ static cl::opt<bool> ubAlignmentCheck(
     "ub-alignment-check", cl::desc("Check alignment of typed memory accesses"));
 static cl::opt<bool> ubUninitCheck(
     "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
+static cl::alias uninitialisedVarsCheck(
+    "uninitialised-vars-check",
+    cl::desc("ESBMC's name for --ub-uninit-check, which checks locals only"),
+    cl::aliasopt(ubUninitCheck));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
 static cl::opt<bool> dataRaceCheck(
@@ -441,7 +448,13 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     results();
     std::string lastUnit;
     unsigned checked = 0, failed = 0;
-    for (size_t i = 0; i < checks.size(); ++i) {
+    vereda::checks::number(checks);
+    std::vector<size_t> order(checks.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+      return vereda::checks::before(checks[a], checks[b]);
+    });
+    for (size_t i : order) {
       if (verdict.status[i] == Status::NotChecked)
         continue;
       const vereda::checks::Check &c = checks[i];

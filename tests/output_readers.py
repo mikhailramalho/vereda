@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory() as directory:
 assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
     ["--no-assertions", "--no-div-by-zero-check"], [], [])
 assert import_esbmc.translate("--clz-zero-check", ".") == (
-    ["--ub-count-zero-check"], [], [])
+    ["--clz-zero-check"], [], [])
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 

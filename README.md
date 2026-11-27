@@ -91,7 +91,10 @@ short commit hash; builds without Git metadata report `commit unknown`.
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and ESBMC's `--overflow-check`,
 `--unsigned-overflow-check` and `--ub-shift-check`, which compile in clang's
-sanitizer checks), and forwards everything else to the binary.
+sanitizer checks, and `--no-fp-conversion-check`), and forwards everything else
+to the binary. As in ESBMC, either overflow check also checks shifts, and
+`--overflow-check` also floating-point to integer conversions unless
+`--no-fp-conversion-check` is given.
 `vereda.py -h` lists both sets.
 
 Rust source is compiled with edition 2024, debug info, no optimisation,
@@ -120,10 +123,10 @@ The main verifier flags:
 | `--no-assertions` | Disable user assertion checks; unwinding and recursion checks remain enabled |
 | `--no-pointer-check` | Disable the current pointer checks: writes into string literals and const objects |
 | `--no-div-by-zero-check` | Disable integer division/remainder-by-zero checks, enabled by default for C and IR inputs unless `--property` is given |
-| `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in) |
+| `--ub-count-zero-check` | Check undefined zero arguments to `clz`/`ctz` builtins and LLVM count intrinsics; defined-zero variants remain valid (opt-in; ESBMC's `--clz-zero-check` is an alias) |
 | `--ub-float-cast-overflow-check` | Check out-of-range floating-point to integer conversions (opt-in) |
 | `--ub-alignment-check` | Check alignment of typed memory accesses (opt-in) |
-| `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in) |
+| `--ub-uninit-check` | Check reads of uninitialised local values and memory (opt-in; ESBMC's `--uninitialised-vars-check`, which checks locals only, is an alias) |
 | `--memory-leak-check` | Request leak checking; currently errors because it is not implemented |
 | `--data-race-check` | Request data-race checking; currently errors because it is not implemented (`--data-races-check` is an alias) |
 | `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
