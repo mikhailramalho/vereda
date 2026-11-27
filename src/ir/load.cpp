@@ -387,8 +387,9 @@ static Instruction *guardedOperation(CallBase &call) {
 // Records the clang sanitizers whose traps the module holds, as -fsanitize=
 // names them, in the named metadata vereda.sanitized, for the driver's
 // [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
-// it: an overflow trap is signed or unsigned by the overflow intrinsic in the
-// block that branches to it.
+// it: an overflow trap is signed or unsigned by the overflow intrinsics in
+// the blocks that branch to it (with optimisation, clang shares one trap
+// block between the checks of a function).
 static void recordSanitizers(Module &m) {
   std::set<std::string> names;
   for (Function &f : m)
@@ -405,7 +406,7 @@ static void recordSanitizers(Module &m) {
         names.insert("signed-integer-overflow");
         break;
       case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
-        if (BasicBlock *pred = c->getParent()->getSinglePredecessor())
+        for (BasicBlock *pred : predecessors(c->getParent()))
           for (Instruction &p : *pred)
             if (auto *ii = dyn_cast<IntrinsicInst>(&p))
               switch (ii->getIntrinsicID()) {

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check defaults, independent opt-outs, and unsupported check diagnostics."""
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -81,6 +82,20 @@ with tempfile.TemporaryDirectory() as directory:
     source.write_text("int main(int argc, char **argv) { return (unsigned)argc * 3u; }\n")
     check(command + [str(source), "--unsigned-overflow-check", "--keep-ir"], 1, "VERIFICATION FAILED")
     check([binary, str(kept)], 1, "[INFO] Checks: " + defaults + ", unsigned-overflow\n")
+    # With optimisation, clang shares one trap block between a function's
+    # checks, signed and unsigned alike: each branch into it counts.
+    for program, families in (
+            ("g = argc + 7; return argc + 9;", "signed-overflow"),
+            ("g = argc + 7; u = (unsigned)argc + 3u; return argc + 9;",
+             "signed-overflow, unsigned-overflow")):
+        source.write_text("int g;\nunsigned u;\nint main(int argc, char **argv) { "
+                          + program + " }\n")
+        sanitizers = "-fsanitize=signed-integer-overflow,unsigned-integer-overflow"
+        subprocess.run([clang, "-S", "-emit-llvm", "-O2", sanitizers,
+                        sanitizers.replace("-fsanitize=", "-fsanitize-trap="),
+                        str(source), "-o", str(ir)], check=True)
+        assert re.search(r"preds = %\w+, %\w+\n.*@llvm\.ubsantrap", ir.read_text()), "no shared trap"
+        check([binary, str(ir)], 1, "[INFO] Checks: " + defaults + ", " + families + "\n")
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
