@@ -35,6 +35,7 @@ llvm_map_components_to_libnames(llvm_libs core irreader support passes linker)
 # One static library for every stage; the driver and the unit tests link it.
 add_library(libvereda STATIC
   src/analysis/loops.cpp
+  src/analysis/termination.cpp
   src/analysis/writes.cpp
   src/ir/load.cpp
   src/ir/source.cpp

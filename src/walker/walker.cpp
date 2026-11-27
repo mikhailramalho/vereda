@@ -863,7 +863,9 @@ private:
     }
     // The paths that reach an endless loop end there, as at unreachable,
     // and its header keeps the IR, debug info and loop numbers as they were.
-    if (endless(l)) {
+    // Under termination such a path is the violation, so the loop unrolls
+    // and the bound's unwinding check reports it.
+    if (opts.property != Property::Termination && endless(l)) {
       frame.arrivals.erase(header);
       return;
     }
@@ -1723,6 +1725,10 @@ private:
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
+    // Under termination, a bodyless reach_error is an unknown function that
+    // returns, not the end of the run.
+    if (name == "reach_error" && opts.property == Property::Termination)
+      return guard;
     if (isAssertFail(name, c.arg_size()) || name == "reach_error" || name == "__VERIFIER_error") {
       if (opts.assertions && counts(false))
         assertion(c, guard, name.str(), "");

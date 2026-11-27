@@ -19,6 +19,9 @@ enum class Property {
   UnreachCall, // a call to reach_error, whose body is not walked
   NoOverflow,  // a clang sanitizer check
   ValidFree,   // a free of a pointer no allocator returned, or already freed
+  // No failure: a path ends only by ending the run, and the unwinding and
+  // recursion checks say whether the bound left some run unfinished.
+  Termination,
 };
 
 struct Options {

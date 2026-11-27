@@ -54,6 +54,7 @@ OVERFLOW = ("--ub-signed-overflow-check", "--unsigned-overflow-check")
 PROPERTIES = {
     "G ! call(reach_error())": ("unreach-call", []),
     "G ! overflow": ("no-overflow", ["signed-integer-overflow"]),
+    "F end": ("termination", []),
 }
 CHECK = re.compile(r"CHECK\(\s*init\((\w+)\(\)\)\s*,\s*LTL\((.*)\)\s*\)")
 
@@ -76,7 +77,7 @@ def read_property(path):
     formula = " ".join(checks[0].group(2).split()) if len(checks) == 1 and checks[0] else None
     if formula not in PROPERTIES:
         fail(f"vereda.py: unsupported property in {path}; "
-             "supported: unreach-call, no-overflow")
+             "supported: unreach-call, no-overflow, termination")
     return (checks[0].group(1),) + PROPERTIES[formula]
 
 
@@ -205,7 +206,7 @@ def main():
     parser.add_argument("--keep-ir", action="store_true",
                         help="write the IR handed to the binary next to the input as <input>.ll")
     parser.add_argument("--property-file",
-                        help="SV-COMP property file: unreach-call or no-overflow")
+                        help="SV-COMP property file: unreach-call, no-overflow or termination")
     # Parsed below, since argparse takes no --flag=false; listed for -h.
     for flag, check in SANITIZERS.items():
         parser.add_argument(flag, action="store_true",
