@@ -8,6 +8,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/Support/Error.h>
 #include <memory>
+#include <vector>
 
 namespace vereda::walker {
 
@@ -39,9 +40,9 @@ struct Options {
   bool witness = false;
   // A write into a string literal or an object defined const, and an
   // invalid free, are violations, as ESBMC's pointer check has them (off
-  // with --no-pointer-check).
+  // with --ub-pointer-check=false).
   bool pointerCheck = true;
-  // Report stack objects above PTRDIFF_MAX, unless --no-vla-size-check.
+  // Report stack objects above PTRDIFF_MAX, unless --vla-size-check=false.
   bool vlaSizeCheck = true;
   bool assertions = true; // user assertions, independent of unwinding and pointer checks
   bool multiProperty = false; // keep exploring after predicate assertion failures
@@ -57,6 +58,34 @@ struct Options {
 // handle yet.
 llvm::Error walk(llvm::Function &entry, const Options &opts, encode::Encoder &enc,
                  memory::Memory &mem, checks::Checks &checks, Trace &trace);
+
+// One pass through a loop's body from any state at its header (plan, §4.5
+// choice 4; survey 2026-11-27-loop-transition-relation). The post-state is
+// built from the pre-state's symbols, so next with post = f(pre) is the
+// relation.
+struct Transition {
+  // Each header phi a fresh value, in order, and memory as the loop is
+  // entered but with every object the loop may write given nondet contents
+  // (analysis/writes.h).
+  std::vector<encode::Term> pre;
+  memory::State preMem;
+  // Where the iteration takes a back edge, and the phis and memory there.
+  encode::Term next;
+  std::vector<encode::Term> post;
+  memory::State postMem;
+  // The checks the iteration raised: an index into checks, and what
+  // violates it in this iteration.
+  std::vector<std::pair<size_t, encode::Term>> checks;
+};
+
+// Walks entry as walk() does, but each time the walk reaches the loop headed
+// by header, walks one iteration of it as a Transition instead of unrolling
+// it, appends that to out, and goes on after the loop from the iteration's
+// exits, which over-approximate every way out of the loop. A pointer phi at
+// the header, or a write the pre-state cannot havoc, is unsupported.
+llvm::Error transitions(llvm::Function &entry, const llvm::BasicBlock &header,
+                        const Options &opts, encode::Encoder &enc, memory::Memory &mem,
+                        checks::Checks &checks, Trace &trace, std::vector<Transition> &out);
 
 // Keeps a prefix stopped at the first loop or recursive call the bound cuts,
 // in the entry function or a callee, at any nesting depth, and rolls back the

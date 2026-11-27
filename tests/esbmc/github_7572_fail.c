@@ -9,9 +9,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7572_fail
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*floating-point conversion out of range.*$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

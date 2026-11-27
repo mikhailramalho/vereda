@@ -22,8 +22,8 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_3955_4
-// Needs: --context-bound 2 --data-race-check
-// RUN: --context-bound 2 --data-race-check
+// Needs: --context-bound 2 --ub-data-race-check
+// RUN: --context-bound 2 --ub-data-race-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: RACE_CHECK
 // MODE: FUTURE

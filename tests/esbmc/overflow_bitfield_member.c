@@ -13,5 +13,5 @@ int main()
   b.a += a;
 }
 // Imported from ESBMC regression/esbmc/overflow_bitfield_member
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$

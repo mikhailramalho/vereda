@@ -63,5 +63,5 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/bitwuzla/github_1352-success
-// RUN: --unwind 1 --no-unwinding-assertions --force-malloc-success --no-pointer-check --solver bitwuzla
+// RUN: --unwind 1 --no-unwinding-assertions --force-malloc-success --ub-pointer-check=false --solver bitwuzla
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,5 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_748_02
-// RUN: --no-pointer-check --no-unwinding-assertions --unwind 1
+// RUN: --ub-pointer-check=false --no-unwinding-assertions --unwind 1
 // EXPECT: ^VERIFICATION FAILED$

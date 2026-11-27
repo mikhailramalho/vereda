@@ -18,5 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_nested
-// RUN: --no-pointer-check
+// RUN: --ub-pointer-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$

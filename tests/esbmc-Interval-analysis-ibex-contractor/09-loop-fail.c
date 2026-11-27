@@ -19,7 +19,7 @@ int main() {
 }
 // Imported from ESBMC regression/Interval-analysis-ibex-contractor/09-loop-fail
 // Needs: --interval-analysis --interval-analysis-ibex-contractor --k-induction
-// RUN: --interval-analysis --no-pointer-check --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
+// RUN: --interval-analysis --ub-pointer-check=false --interval-analysis-ibex-contractor --k-induction --unlimited-k-steps
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

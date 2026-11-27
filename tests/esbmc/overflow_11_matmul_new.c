@@ -80,7 +80,7 @@ int main()
 	 
 
 // Imported from ESBMC regression/esbmc/overflow_11_matmul_new
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

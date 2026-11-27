@@ -26,7 +26,7 @@ int main()
 }
 // Imported from ESBMC regression/termination/ranking_nonterm_increasing
 // Needs: --force-realloc-success --termination --max-inductive-step 3
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --no-vla-size-check -m32 --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --vla-size-check=false -m32 --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3
 // EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -2,6 +2,7 @@
 #include "util/assert.h"
 
 #include "analysis/loops.h"
+#include "analysis/writes.h"
 #include "ir/debug.h"
 #include "ir/sanitizer.h"
 #include "ir/source.h"
@@ -205,6 +206,12 @@ public:
 
   bool resumable() const { return stopped.has_value(); }
 
+  // Walk the loop headed by header as Transitions into out (walker.h).
+  void iterate(const BasicBlock &header, std::vector<Transition> &out) {
+    iterated = &header;
+    transitions = &out;
+  }
+
   void finalizeStopped() {
     if (stopped && !stopped->immediate &&
         (t.constraintsEpoch() != stopped->epoch || mem.objectCount() != stopped->objects))
@@ -229,15 +236,16 @@ public:
       claims.erase({saved.loop, nullptr});
     } else {
       claims = std::move(saved.claims);
-      assertionNumber = std::move(saved.assertionNumber);
-      assertionsIn = std::move(saved.assertionsIn);
       recursionNumber = std::move(saved.recursionNumber);
       recursionsIn = std::move(saved.recursionsIn);
       summarised = std::move(saved.summarised);
     }
+    // An immediate checkpoint saves neither the bindings nor the shadows:
+    // nothing ran after it, so the live ones are still the prefix's.
     if (saved.bindings)
       enc.restoreBindings(std::move(*saved.bindings));
-    shadows = std::move(saved.shadows);
+    if (!saved.immediate)
+      shadows = std::move(saved.shadows);
     stack = std::move(saved.stack);
     if (stack.empty())
       stack.push_back(&f);
@@ -292,8 +300,6 @@ private:
     for (const checks::Check &check : checks)
       cp.violated.push_back(check.violated);
     cp.claims = claims;
-    cp.assertionNumber = assertionNumber;
-    cp.assertionsIn = assertionsIn;
     cp.recursionNumber = recursionNumber;
     cp.recursionsIn = recursionsIn;
     cp.summarised = summarised;
@@ -851,6 +857,10 @@ private:
 
   void loop(Frame &frame, FunctionInfo &fi, Loop *l, unsigned start = 0) {
     BasicBlock *header = l->getHeader();
+    if (header == iterated) {
+      transition(frame, fi, l);
+      return;
+    }
     // The paths that reach an endless loop end there, as at unreachable,
     // and its header keeps the IR, debug info and loop numbers as they were.
     if (endless(l)) {
@@ -1063,6 +1073,78 @@ private:
     ++summaryCount;
     summarised.insert(l);
     return true;
+  }
+
+  // Walks one iteration of l from any state at its header and appends it to
+  // transitions (walker.h, Transition); the paths that leave l in it go on
+  // after l.
+  void transition(Frame &frame, FunctionInfo &fi, Loop *l) {
+    BasicBlock *header = l->getHeader();
+    auto in = frame.arrivals.find(header);
+    if (in == frame.arrivals.end() || in->second.empty())
+      return;
+    // Reached again through recursion, or in a summarised iteration, whose
+    // index k the pre-state would capture.
+    if (iterating || summary)
+      throw Unsupported("a loop transition inside its own iteration or a summarised loop");
+    SmallVector<Arrival, 2> arrivals = std::move(in->second);
+    frame.arrivals.erase(in);
+    Term guard = anyGuard(arrivals);
+    Transition tr;
+    tr.preMem = merged(arrivals);
+    mem.setContext(guard);
+    for (const Value *o : analysis::writtenObjects(*l)) {
+      SmallPtrSet<const Value *, 8> visiting;
+      auto *a = dyn_cast<AllocaInst>(o);
+      if (a && !current(fi.li, a, l))
+        throw Unsupported("a loop transition writing an alloca made in another loop");
+      if (!holdsNoPointers(o, visiting))
+        throw Unsupported("a loop transition writing an object that may hold pointers");
+      Term p = a ? enc.bound(a) : enc.value(o);
+      // havoc marks the object initialised, as an unknown call may write it
+      // all; here a byte is initialised if it was before the loop or an
+      // earlier iteration may have written it, so the bytes the loop never
+      // writes keep their state.
+      std::vector<Term> init;
+      if (opts.uninitCheck) {
+        const APInt *size = t.constant(mem.size(mem.object(p)));
+        if (!size || size->ugt(memory::Memory::MaxBytes))
+          throw Unsupported("a loop transition over a large object under --ub-uninit-check");
+        init = mem.initBytes(tr.preMem, p, size->getZExtValue());
+        Type *flag = Type::getInt1Ty(header->getContext());
+        for (Term &b : init)
+          b = t.lor(b, enc.fresh(flag, "pre.init"));
+      }
+      mem.havoc(tr.preMem, p);
+      if (!init.empty())
+        mem.setInitBytes(tr.preMem, p, init);
+    }
+    for (PHINode &phi : header->phis()) {
+      if (containsPointer(phi.getType()))
+        throw Unsupported("a loop transition with a pointer phi");
+      tr.pre.push_back(enc.fresh(phi.getType(), "pre." + phi.getName().str()));
+    }
+    // The facts are about terms the loop does not change.
+    frame.arrivals[header].push_back(
+        {guard, SmallVector<Term, 2>(tr.pre.begin(), tr.pre.end()), tr.preMem, common(arrivals)});
+    iterating = &tr;
+    region(frame, fi, l);
+    iterating = nullptr;
+    SmallVector<Arrival, 2> back = std::move(frame.arrivals[header]);
+    frame.arrivals.erase(header);
+    tr.next = t.boolean(false);
+    tr.post = tr.pre;
+    tr.postMem = tr.preMem;
+    if (!back.empty()) {
+      tr.next = anyGuard(back);
+      tr.postMem = merged(back);
+      for (unsigned p = 0; p < tr.post.size(); ++p) {
+        tr.post[p] = back[0].phiValues[p];
+        for (unsigned i = 1; i < back.size(); ++i)
+          tr.post[p] = t.ite(back[i].guard, back[i].phiValues[p], tr.post[p]);
+      }
+    }
+    transitions->push_back(std::move(tr));
   }
 
   // Whether the term bound to i is its value as l is entered: i is outside
@@ -1423,8 +1505,14 @@ private:
       }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
-        if (counts(true))
-          assertion(c, guard, ir::sanitizerCheck(code->getZExtValue()), "");
+        if (counts(true)) {
+          std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+          StringRef s(comment);
+          assertion(c, guard, comment, "", nullptr,
+                    s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
+                    : s.starts_with("undefined behavior on shift") ? checks::Property::Shift
+                                                                  : checks::Property::Assertion);
+        }
         return t.boolean(false);
       }
       throw Unsupported("intrinsic " + name.str());
@@ -1445,7 +1533,8 @@ private:
         assertion(c, t.land(guard, zero), "division by zero", "", c.getArgOperand(2),
                   checks::Property::DivisionByZero);
       if (counts(true) && !t.isTrue(zero))
-        assertion(c, t.land(guard, t.lnot(zero)), "arithmetic overflow on division", "", nullptr,
+        assertion(c, t.land(guard, t.lnot(zero)),
+                  ir::checkComment(c, "arithmetic overflow on division"), "", nullptr,
                   checks::Property::ArithmeticOverflow);
       return t.boolean(false);
     }
@@ -1593,8 +1682,9 @@ private:
     }
     if (name == "__ubsan_handle_float_cast_overflow_abort") {
       if (counts(false))
-        assertion(c, guard, "float cast overflow", "", nullptr,
-                  checks::Property::FloatCastOverflow);
+        assertion(c, guard,
+                  ir::checkComment(c, "floating-point conversion out of range on typecast"), "",
+                  nullptr, checks::Property::FloatCastOverflow);
       return t.boolean(false);
     }
     if (name == "__vereda_check_alignment") {
@@ -1623,9 +1713,9 @@ private:
       bool isDiv = name == "__vereda_check_divisor";
       bool isCount = name == "__vereda_check_count_zero";
       assertion(c, t.land(guard, t.lnot(holds)),
-                isDiv ? "division by zero"
-                      : isCount ? "__builtin_clz/ctz of zero is undefined"
-                                : "float cast overflow",
+                isDiv     ? "division by zero"
+                : isCount ? "__builtin_clz/ctz of zero is undefined"
+                          : ir::checkComment(c, "floating-point conversion out of range on typecast"),
                 "", nullptr,
                 isDiv ? checks::Property::DivisionByZero
                       : isCount ? checks::Property::CountZero
@@ -2031,15 +2121,13 @@ private:
   }
 
   // A check at inst, violated when violated holds; comment names it. An
-  // instruction with several checks tells them apart by what.
+  // instruction with several checks tells them apart by what. The driver
+  // numbers the checks (checks::number).
   void assertion(const Instruction &inst, Term violated, std::string comment,
                  std::string expr, const void *what = nullptr,
                  checks::Property kind = checks::Property::Assertion) {
-    unsigned &index = assertionNumber[{&inst, what}];
-    if (!index)
-      index = ++assertionsIn[{inst.getFunction(), unsigned(kind)}];
-    claim(kind, ir::location(inst), std::move(comment), std::move(expr),
-          index, violated, {&inst, what});
+    claim(kind, ir::location(inst), std::move(comment), std::move(expr), 0, violated,
+          {&inst, what});
   }
 
   // A write at inst through p where guard holds, which fails where p points
@@ -2081,6 +2169,8 @@ private:
     bool viaReachError = reachError || comment == "reach_error";
     trace.add(Step::Check, violated, reachError ? ir::location(*reachError) : loc,
               viaReachError ? "reach_error" : "", {}, false, it->second);
+    if (iterating)
+      iterating->checks.push_back({it->second, violated});
     if (!inserted) {
       checks[it->second].violated = t.lor(checks[it->second].violated, violated);
       return;
@@ -2160,14 +2250,28 @@ private:
       enc.bind(a, p);
       return true;
     }
-    auto checkInitRead = [&](Term p, Type *ty) {
+    auto checkInitRead = [&](Term p, Value *ptr, Type *ty) {
       if (!opts.uninitCheck || !counts(false))
         return;
       uint64_t bytes = mem.layout().getTypeStoreSize(ty).getFixedValue();
       Term ok = mem.isInitialised(st, p, bytes);
       if (!t.isTrue(ok)) {
-        assertion(inst, t.land(guard, t.lnot(ok)), "read of uninitialised memory", "", nullptr,
-                  checks::Property::UninitialisedRead);
+        // ESBMC's wording for a named variable, whose declare InstCombine
+        // may have lowered to a dbg_value of its address; ESBMC checks no
+        // other memory.
+        std::string name;
+        if (auto *var = namedObject(ptr))
+          name = var->first;
+        else if (auto *a = dyn_cast<AllocaInst>(getUnderlyingObject(ptr)))
+          for (DbgVariableRecord *d : findDVRValues(a))
+            if (d->getExpression()->isDeref()) {
+              name = d->getVariable()->getName().str();
+              break;
+            }
+        assertion(inst, t.land(guard, t.lnot(ok)),
+                  name.empty() ? "read of uninitialised memory"
+                               : "use of uninitialized variable: " + name,
+                  "", nullptr, checks::Property::UninitialisedRead);
         guard = t.land(guard, ok);
         mem.setContext(guard);
       }
@@ -2180,7 +2284,7 @@ private:
         uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
         shadows[l] = mem.initBytes(st, p, bytes);
       } else {
-        checkInitRead(p, l->getType());
+        checkInitRead(p, l->getPointerOperand(), l->getType());
       }
       enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
       return true;
@@ -2205,7 +2309,7 @@ private:
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {
       Term p = enc.value(rmw->getPointerOperand());
-      checkInitRead(p, rmw->getType());
+      checkInitRead(p, rmw->getPointerOperand(), rmw->getType());
       writes(inst, guard, p);
       atomicRMW(*rmw, st);
       return true;
@@ -2215,7 +2319,7 @@ private:
       if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) && !ty->isPointerTy())
         throw Unsupported("instruction " + encode::describe(&inst));
       Term p = enc.value(cx->getPointerOperand());
-      checkInitRead(p, ty);
+      checkInitRead(p, cx->getPointerOperand(), ty);
       Term old = mem.load(st, p, ty), expected = enc.value(cx->getCompareOperand());
       // Pointers compare as icmp eq compares them.
       Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(old, expected);
@@ -2383,7 +2487,7 @@ private:
   // free(p), or with release false only its checks: realloc's model checks
   // p first, as an invalid p is undefined even where the new allocation
   // fails (C17 7.22.3.5p3). The checks are ESBMC's pointer checks on free,
-  // off with --no-pointer-check. The path goes on only where the free is
+  // off with --ub-pointer-check=false. The path goes on only where the free is
   // valid, so a later free does not report the same object again; a free
   // whose checks do not count still releases, but prunes nothing. Neither
   // is checked under Rust's allocator shims: the standard library functions
@@ -2488,8 +2592,6 @@ private:
     size_t checks = 0, trace = 0;
     SmallVector<encode::Term, 16> violated;
     DenseMap<ClaimKey, unsigned> claims;
-    DenseMap<ClaimKey, unsigned> assertionNumber;
-    DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
     DenseMap<const CallBase *, unsigned> recursionNumber;
     DenseMap<const Function *, unsigned> recursionsIn;
     SmallPtrSet<const Loop *, 8> summarised;
@@ -2518,9 +2620,7 @@ private:
   // library model, which has none, is reported there.
   const CallBase *site = nullptr;
   DenseMap<ClaimKey, unsigned> claims; // source construct -> index in checks
-  DenseMap<ClaimKey, unsigned> assertionNumber;
   const char literals = 0; // what the checks of writes into string literals check
-  DenseMap<std::pair<const Function *, unsigned>, unsigned> assertionsIn;
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
@@ -2543,6 +2643,10 @@ private:
   DenseMap<const SCEV *, Term> inputs;
   unsigned summaryCount = 0; // names each summary's fresh symbols
   SmallPtrSet<const Loop *, 8> summarised;
+  // The loop walked as transitions (iterate()), and the one being walked.
+  const BasicBlock *iterated = nullptr;
+  std::vector<Transition> *transitions = nullptr;
+  Transition *iterating = nullptr;
   // What a call without a body may write besides its arguments' objects:
   // errno, and the writable globals the program declares without defining,
   // except the models' stdin, stdout and stderr objects, whose contents no
@@ -2585,6 +2689,19 @@ Error walk(Function &entry, const Options &opts, encode::Encoder &enc, memory::M
     Walk w(*entry.getParent(), opts, enc, mem, checks, trace);
     w.entry(entry);
     w.report();
+  } catch (const Unsupported &e) {
+    return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
+  }
+  return Error::success();
+}
+
+Error transitions(Function &entry, const BasicBlock &header, const Options &opts,
+                  encode::Encoder &enc, memory::Memory &mem, checks::Checks &checks, Trace &trace,
+                  std::vector<Transition> &out) {
+  try {
+    Walk w(*entry.getParent(), opts, enc, mem, checks, trace);
+    w.iterate(header, out);
+    w.entry(entry);
   } catch (const Unsupported &e) {
     return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
   }

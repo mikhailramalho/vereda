@@ -16,7 +16,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/recurrent_state_cycle
 // Needs: --termination --max-inductive-step 3 --interval-analysis
-// RUN: --no-div-by-zero-check --no-align-check --k-step 2 --no-vla-size-check --no-pointer-check --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
+// RUN: --ub-div-by-zero-check=false --no-align-check --k-step 2 --vla-size-check=false --ub-pointer-check=false --no-bounds-check --no-assertions --termination --max-inductive-step 3 --interval-analysis
 // MODE: FUTURE
 // EXPECT: ^Recurrent state shows a non-terminating execution
 // EXPECT: ^VERIFICATION FAILED$

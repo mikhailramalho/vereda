@@ -65,9 +65,9 @@ int main(void) {
   return 0;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.alignment.1")
-    check(command + [str(source), flag, "-m32"], 1, "main.alignment.1")
-    check(command + [str(source), flag, "--no-assertions"], 1, "main.alignment.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")
+    check(command + [str(source), flag, "-m32"], 1, "main.assertion.1")
+    check(command + [str(source), flag, "--no-assertions"], 1, "main.assertion.1")
     check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
     check(command + [str(source), flag, flag + "=false"], 0, "VERIFICATION SUCCESSFUL")
 
@@ -83,7 +83,7 @@ int main(void) {
   return *p;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.alignment.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")
 
     source.write_text('''
 extern unsigned __VERIFIER_nondet_uint(void);
@@ -106,7 +106,7 @@ int main(void) {
   return *p;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.alignment.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")
 
     # Misaligned store through a pointer to a packed member must not be erased by SROA.
     source.write_text('''
@@ -118,8 +118,8 @@ int main(void) {
   return 0;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.alignment.1")
-    check(command + [str(source), flag, "-m32"], 1, "main.alignment.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")
+    check(command + [str(source), flag, "-m32"], 1, "main.assertion.1")
 
     # Excluded under --property unreach-call and --property no-overflow (does not prune).
     source.write_text('''
@@ -154,7 +154,7 @@ define i32 @main() {
   ret i32 %v
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.alignment.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
 
     # A pointer chosen among objects in nested choices (malloc may also give
     # null) is checked object by object: each object's own alignment decides,
@@ -184,4 +184,4 @@ int main(void) {
   return (int)*r;
 }
 ''')
-    check(command + [str(source), flag], 1, "main.alignment.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")

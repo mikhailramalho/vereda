@@ -37,8 +37,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals
-// Needs: --data-race-check --context-bound 3
-// RUN: --data-race-check --context-bound 3
+// Needs: --ub-data-race-check --context-bound 3
+// RUN: --ub-data-race-check --context-bound 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -34,7 +34,7 @@ dead condition reads the array once at the pointer's object rather than once
 per candidate: a pointer into an object exists only where the object does,
 so `exists` adds nothing. On a 10-node list freed node by node (`--unwind
 12`, single runs on a shared machine) the solve took 92 s with a read per
-candidate and 80 s with one; it takes 70 s with `--no-pointer-check`, the
+candidate and 80 s with one; it takes 70 s with `--ub-pointer-check=false`, the
 difference being mostly the extra solver phase that a non-unwinding check
 brings. Unchanged programs pay
 nothing: without a free the array stays the constant one and every join
@@ -44,7 +44,7 @@ After the checks the path goes on only where the free was valid (the guard
 is conjoined, as the alignment check does, never a global assumption), so
 the first invalid free is reported and later frees of the same object are
 not reported again on that path. A free whose checks do not count (under
-`--property unreach-call`, `no-overflow` or `--no-pointer-check`) still kills
+`--property unreach-call`, `no-overflow` or `--ub-pointer-check=false`) still kills
 the object but prunes nothing.
 
 `realloc`'s model now calls `__vereda_check_free(p)` before it allocates, so
@@ -59,9 +59,9 @@ the imported `github_10301_fail` expects.
 ## Defaults and properties
 
 As in ESBMC, the free checks are part of the pointer checks: on by default,
-off with `--no-pointer-check`. `--property valid-free` counts only them and
+off with `--ub-pointer-check=false`. `--property valid-free` counts only them and
 prints `FALSE_FREE`, as ESBMC's SV-COMP wrapper does; it conflicts with
-`--no-pointer-check`. The front end still rejects the valid-memsafety
+`--ub-pointer-check=false`. The front end still rejects the valid-memsafety
 property file, whose valid-deref and valid-memtrack checks do not exist yet:
 accepting it would answer TRUE without them.
 

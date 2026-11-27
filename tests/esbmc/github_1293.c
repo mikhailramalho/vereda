@@ -69,7 +69,7 @@ int main(){
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1293
-// RUN: --unwind 1 --no-unwinding-assertions --overflow-check --multi-property
+// RUN: --unwind 1 --no-unwinding-assertions --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --multi-property
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

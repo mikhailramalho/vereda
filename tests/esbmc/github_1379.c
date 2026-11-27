@@ -59,5 +59,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_1379
-// RUN: --overflow-check --solver z3
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,8 +11,8 @@ int main(void)
   return big[0]; // uninitialised read, intentionally not flagged
 }
 // Imported from ESBMC regression/esbmc/cwe_uninit_array_oversize
-// Needs: --uninitialised-vars-check
-// RUN: --uninitialised-vars-check --incremental-bmc
+// RUN: --ub-uninit-check --incremental-bmc
+// Vereda: the verdict is wrong for ESBMC's 4096-element cap; Vereda checks arrays of any size
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: verdict none
+// Vereda: verdict FAILED

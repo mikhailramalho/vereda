@@ -19,6 +19,6 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/math_exp03
-// RUN: --no-pointer-check --no-div-by-zero-check --unwind 20
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --unwind 20
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

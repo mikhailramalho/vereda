@@ -6,5 +6,5 @@ int main() {
   __VERIFIER_assert(j == 95);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_overflow_check
-// RUN: --unsigned-overflow-check
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -6,8 +6,5 @@ int main()
   __VERIFIER_assert(a[3] == 0); // a[3]
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_uninit_fail
-// Needs: --uninitialised-vars-check
-// RUN: --uninitialised-vars-check
-// MODE: FUTURE
+// RUN: --ub-uninit-check
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

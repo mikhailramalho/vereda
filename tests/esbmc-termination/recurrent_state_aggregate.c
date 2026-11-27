@@ -21,7 +21,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/recurrent_state_aggregate
 // Needs: --termination --max-inductive-step 3
-// RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --no-pointer-check --no-bounds-check --no-assertions
+// RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --ub-pointer-check=false --no-bounds-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^Recurrent state shows a non-terminating execution
 // EXPECT: ^VERIFICATION FAILED$

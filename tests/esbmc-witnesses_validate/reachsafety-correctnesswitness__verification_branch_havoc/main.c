@@ -8,7 +8,7 @@ int main() {
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-correctnesswitness/verification_branch_havoc
 // Needs: --k-induction --validate-correctness-witness --witness witness.yml
-// RUN: -m32 --overflow-check --k-induction --validate-correctness-witness --witness witness.yml
+// RUN: -m32 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --k-induction --validate-correctness-witness --witness witness.yml
 // EXPECT: UNKNOWN +\[main\.arithmetic-overflow\.1\].*loop invariant too weak
 // EXPECT: ^VERIFICATION UNKNOWN$
 // MODE: FUTURE
