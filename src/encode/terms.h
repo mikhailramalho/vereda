@@ -384,8 +384,8 @@ private:
     std::function<bool(const Ref &)> misses;
   };
   std::unordered_map<const void *, Lambda> lambdas;
-  // Per store or choice of arrays, its direct children that are lambdas or
-  // reach one (at most 1 for Store, 2 for Ite).
+  // At most two descendants covering each array's reachable lambdas. Forward
+  // their children when the union fits, otherwise keep the two choice arms.
   llvm::DenseMap<const void *, llvm::SmallVector<Ref, 2>> under;
   // (array, index) pairs whose reachable lambdas have already been constrained
   // at index.

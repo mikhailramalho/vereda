@@ -50,6 +50,10 @@ if(TARGET libvereda)
   target_link_libraries(vereda-solver-verdicts PRIVATE libvereda)
   add_test(NAME vereda/solver_verdicts COMMAND vereda-solver-verdicts)
   set_tests_properties(vereda/solver_verdicts PROPERTIES LABELS vereda TIMEOUT 60)
+  add_executable(vereda-lambda-dependencies lambda_dependencies.cpp)
+  target_link_libraries(vereda-lambda-dependencies PRIVATE libvereda)
+  add_test(NAME vereda/lambda_dependencies COMMAND vereda-lambda-dependencies)
+  set_tests_properties(vereda/lambda_dependencies PROPERTIES LABELS vereda TIMEOUT 60)
   add_test(NAME vereda/banner
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")

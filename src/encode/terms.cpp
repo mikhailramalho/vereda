@@ -268,18 +268,25 @@ Ref Terms::make(Node n) {
     n.x = it == nodes.end() ? 0 : it->second + 1;
   }
   if (!lambdas.empty() && (n.op == Op::Store || n.op == Op::Ite)) {
-    llvm::SmallVector<Ref, 2> kids;
+    llvm::SmallVector<Ref, 4> kids;
     auto add = [&](const Ref &array) {
-      if (lambdas.count(array.id()) || under.count(array.id()))
-        if (kids.empty() || kids[0] != array)
+      if (lambdas.count(array.id())) {
+        if (!llvm::is_contained(kids, array))
           kids.push_back(array);
+      } else if (auto it = under.find(array.id()); it != under.end()) {
+        for (const Ref &child : it->second)
+          if (!llvm::is_contained(kids, child))
+            kids.push_back(child);
+      }
     };
     if (n.op == Op::Store)
       add(n.a);
     else
       add(n.b), add(n.c);
+    if (kids.size() > 2)
+      kids = {n.b, n.c};
     if (!kids.empty())
-      under.try_emplace(r.id(), std::move(kids));
+      under.try_emplace(r.id(), kids.begin(), kids.end());
   }
   uint32_t idx = static_cast<uint32_t>(entries.size());
   entries.push_back(Entry{std::move(n), r});
