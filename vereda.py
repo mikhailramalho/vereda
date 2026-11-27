@@ -268,7 +268,7 @@ def main():
         # skipped the small bounds where others fail
         # (docs/survey/2026-11-24-k-step-2.md).
         names = {a.partition("=")[0] for a in rest}
-        off = {"--no-incremental-bmc", "--unwind", "--no-unwinding-assertions", "--dump-smt-only"}
+        off = {"--no-incremental-bmc", "--unwind"}
         incremental = "--incremental-bmc" in names or not off & names
         if incremental and not {"--max-k-step", "--unlimited-k-steps"} & names:
             rest += ["--unlimited-k-steps"] + ([] if "--k-step" in names else ["--k-step", "2"])
