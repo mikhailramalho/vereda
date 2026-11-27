@@ -78,8 +78,13 @@ struct Arrival {
   encode::Encoder::Facts facts;
 };
 
+// Under --ub-uninit-check, whether each byte of a value only copied
+// (copyOnly) is initialised, carried from the load to the stores it reaches.
+using Shadow = std::vector<Term>;
+
 struct Return {
   Term guard, value;
+  Shadow shadow; // empty: initialised
   memory::State mem;
   encode::Encoder::Facts facts;
 };
@@ -145,6 +150,7 @@ struct CallState {
   memory::State mem;
   encode::Encoder::Facts facts;
   SmallVector<std::pair<const Value *, Term>, 0> bindings;
+  SmallVector<std::pair<const Value *, Shadow>, 0> shadows;
   const CallBase *reachError = nullptr;
 };
 
@@ -230,6 +236,7 @@ public:
     }
     if (saved.bindings)
       enc.restoreBindings(std::move(*saved.bindings));
+    shadows = std::move(saved.shadows);
     stack = std::move(saved.stack);
     if (stack.empty())
       stack.push_back(&f);
@@ -289,6 +296,7 @@ private:
     cp.recursionsIn = recursionsIn;
     cp.summarised = summarised;
     cp.bindings = enc.saveBindings();
+    cp.shadows = shadows;
     cp.stack = stack;
     cp.varArgs = varArgs;
     cp.reachError = reachError;
@@ -330,6 +338,40 @@ private:
   // a call, converted to an integer, returned, compared), or it is in a
   // global's initialiser. A constant getelementptr or cast of v is followed
   // as an instruction would be.
+  // Whether v, a load, argument or call result, is only copied: stored, or
+  // passed to (returned to) a defined function's argument (call result) that
+  // is itself only copied. Its bytes may then be uninitialised without being
+  // read as a value, as when clang copies a struct with padding or members
+  // not yet set by loading it as an integer (C17 6.2.6.1p6); the walker
+  // carries their initialisation to where they are stored, and checks them
+  // when they are loaded again. Any other use checks at the load, as does a
+  // value not used at all.
+  bool copyOnly(const Value *v) {
+    if (!isa<LoadInst, Argument, CallBase>(v) || v->use_empty())
+      return false;
+    if (auto it = copies.find(v); it != copies.end())
+      return it->second;
+    copies[v] = false; // a cycle through recursion is not a copy
+    bool copy = all_of(v->uses(), [&](const Use &u) {
+      if (isa<StoreInst>(u.getUser()))
+        return u.getOperandNo() == 0;
+      if (auto *r = dyn_cast<ReturnInst>(u.getUser())) {
+        const Function *f = r->getFunction();
+        return !f->use_empty() && all_of(f->uses(), [&](const Use &fu) {
+          auto *c = dyn_cast<CallBase>(fu.getUser());
+          return c && c->isCallee(&fu) && copyOnly(c);
+        });
+      }
+      auto *c = dyn_cast<CallBase>(u.getUser());
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if (!callee || callee->isDeclaration() || !c->isArgOperand(&u))
+        return false;
+      unsigned i = c->getArgOperandNo(&u);
+      return i < callee->arg_size() && !c->isByValArgument(i) && copyOnly(callee->getArg(i));
+    });
+    return copies[v] = copy;
+  }
+
   bool exposed(const Value *v) {
     struct Tracker : CaptureTracker {
       bool exposed = false;
@@ -1307,7 +1349,8 @@ private:
         arrive(frame, bb, succ, t.land(guard, to), st, to);
     } else if (auto *ret = dyn_cast<ReturnInst>(&term)) {
       Value *v = ret->getReturnValue();
-      frame.returns.push_back({guard, v ? enc.value(v) : Term(), st, enc.facts});
+      frame.returns.push_back({guard, v ? enc.value(v) : Term(), v ? shadows.lookup(v) : Shadow(),
+                               st, enc.facts});
     } else if (isa<UnreachableInst>(term)) {
       // Clang ends a block with unreachable after a call that never returns:
       // the path ends there. Anywhere else it is __builtin_unreachable,
@@ -1326,6 +1369,7 @@ private:
   // Returns the path condition after the call: unchanged, strengthened by an
   // assume, or false when the callee does not return.
   Term call(Frame &frame, CallBase &c, Term guard, memory::State &st) {
+    shadows.erase(&c);
     // Inline asm that ir did not turn into IR. As GCC's contract for asm
     // has it, it writes its outputs and no other memory, unless it clobbers
     // "memory". Its register outputs get nondet values; one that may write
@@ -1553,18 +1597,7 @@ private:
       // As below: an uncounted check must not prune the paths violating it.
       if (align <= 1 || !counts(false))
         return guard;
-      Term p = enc.value(c.getArgOperand(0));
-      Term mask = t.bv(align - 1, mem.pointerBits());
-      Term zero = t.bv(0, mem.pointerBits());
-      // When p targets one known object whose base already satisfies align,
-      // only the offset matters (avoids forcing address layout).
-      Term addr;
-      if (const APInt *id = t.constant(mem.object(p));
-          id && !id->isZero() && mem.objectAlign(id->getZExtValue()) >= align)
-        addr = mem.offset(p);
-      else
-        addr = mem.address(p);
-      Term holds = t.eq(t.bvand(addr, mask), zero);
+      Term holds = mem.aligned(enc.value(c.getArgOperand(0)), align);
       if (t.isTrue(holds))
         return guard;
       assertion(c, t.land(guard, t.lnot(holds)),
@@ -1779,7 +1812,20 @@ private:
       for (Instruction &inst : instructions(callee))
         if (Term term = enc.bound(&inst))
           context.bindings.push_back({&inst, term});
+      if (opts.uninitCheck) {
+        auto save = [&](const Value *v) {
+          if (copyOnly(v))
+            context.shadows.push_back({v, shadows.lookup(v)});
+        };
+        for (Argument &arg : callee.args())
+          save(&arg);
+        for (Instruction &inst : instructions(callee))
+          save(&inst);
+      }
     }
+    SmallVector<Shadow, 4> passed;
+    for (Value *arg : c.args())
+      passed.push_back(shadows.lookup(arg));
     const DataLayout &dl = mem.layout();
     for (Argument &arg : callee.args()) {
       unsigned i = arg.getArgNo();
@@ -1797,6 +1843,10 @@ private:
         val = copy;
       }
       enc.bind(&arg, val);
+      if (passed[i].empty())
+        shadows.erase(&arg);
+      else
+        shadows[&arg] = passed[i];
     }
 
     if (callee.getName() == "reach_error")
@@ -1830,8 +1880,21 @@ private:
     }
     for (const auto &[v, term] : context.bindings)
       enc.bind(v, term);
+    for (const auto &[v, shadow] : context.shadows)
+      if (shadow.empty())
+        shadows.erase(v);
+      else
+        shadows[v] = shadow;
     if (!c.getType()->isVoidTy())
       enc.bind(&c, result ? result : enc.fresh(c.getType(), "noreturn"));
+    // A byte is initialised as the return taken has it.
+    if (any_of(frame.returns, [](const Return &r) { return !r.shadow.empty(); })) {
+      Shadow &shadow = shadows[&c];
+      shadow.assign(mem.layout().getTypeStoreSize(c.getType()), t.boolean(true));
+      for (const Return &r : frame.returns)
+        for (size_t i = 0; i < shadow.size() && !r.shadow.empty(); ++i)
+          shadow[i] = t.ite(r.guard, r.shadow[i], shadow[i]);
+    }
     return after;
   }
 
@@ -2104,7 +2167,12 @@ private:
     // orders nothing.
     if (auto *l = dyn_cast<LoadInst>(&inst)) {
       Term p = enc.value(l->getPointerOperand());
-      checkInitRead(p, l->getType());
+      if (opts.uninitCheck && copyOnly(l)) {
+        uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
+        shadows[l] = mem.initBytes(st, p, bytes);
+      } else {
+        checkInitRead(p, l->getType());
+      }
       enc.bind(l, enc.fromBits(mem.load(st, p, l->getType()), l->getType()));
       return true;
     }
@@ -2113,6 +2181,8 @@ private:
       Term p = enc.value(w->getPointerOperand());
       writes(*w, guard, p);
       mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
+      if (auto it = shadows.find(v); it != shadows.end())
+        mem.setInitBytes(st, p, it->second);
       if (summary && w == summary->store)
         summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
       // A source store into a named variable kept in memory (a global, an
@@ -2364,6 +2434,7 @@ private:
     DenseMap<const Function *, unsigned> recursionsIn;
     SmallPtrSet<const Loop *, 8> summarised;
     std::optional<encode::Encoder::Bindings> bindings;
+    DenseMap<const Value *, Shadow> shadows;
     uint64_t epoch = 0;
     size_t objects = 0;
     bool immediate = false;
@@ -2375,6 +2446,8 @@ private:
   DenseMap<const Function *, std::unique_ptr<FunctionInfo>> infos;
   DenseMap<const Value *, unsigned> owns; // ownsArrays, per alloca and global
   DenseMap<const Value *, bool> exposes;  // exposed, per alloca, global and function
+  DenseMap<const Value *, bool> copies;   // copyOnly, per load, argument and call
+  DenseMap<const Value *, Shadow> shadows;
   DenseMap<const Value *, std::optional<std::pair<std::string, const DIType *>>> namedObjects;
   SmallVector<Function *, 8> stack;
   SmallVector<VarArgs, 2> varArgs; // of the variadic frames on the stack, innermost last
