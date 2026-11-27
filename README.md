@@ -152,6 +152,12 @@ overflow and bounds panics remain program failures. Leak, race and deadlock flag
 are disabled by default and the binary rejects an enabled request with error
 exit code 6, before loading the input. `--no-assertions` conflicts with an
 unreach-call property request, `--ub-pointer-check=false` with valid-free, `--no-unwinding-assertions` with termination. A selected property reports only its own failures.
+An `[INFO] Checks:` line before the walk names the checks the run counts,
+each after the flag that controls it: `assertions`, `unwinding-assertions`,
+`pointer`, `div-by-zero` and `vla-size` by default, then the opt-in ones given
+(`signed-overflow`, `unsigned-overflow`, `shift`, `float-cast-overflow`,
+`count-zero`, `alignment`, `uninit`); under `--property`, `reach-error` or
+`valid-free` and the property's own checks.
 
 The run ends with a counterexample for each violation, a results list and
 one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or

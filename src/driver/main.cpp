@@ -10,6 +10,8 @@
 #include "witness/witness.h"
 #include "vereda-version.h"
 
+#include <llvm/ADT/StringExtras.h>
+#include <llvm/ADT/StringSwitch.h>
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FileSystem.h>
@@ -115,6 +117,10 @@ static cl::opt<std::string> witnessFile(
                         "as an SV-COMP violation witness (YAML, format 2.0); - is standard "
                         "output"),
     cl::value_desc("file"));
+static cl::list<std::string> sanitized(
+    "sanitized", cl::Hidden, cl::CommaSeparated,
+    cl::desc("The clang sanitizer checks vereda.py compiled in, as -fsanitize= names them, "
+             "for the [INFO] Checks line"));
 
 using vereda::walker::Property;
 static cl::opt<Property> property(
@@ -211,6 +217,43 @@ static int finish(int code) {
 // What bmc() returns under --incremental-bmc when a loop or recursion needs
 // a larger bound.
 static const int BoundTooSmall = -1;
+
+// The checks this run counts, each named after the flag that controls it,
+// for an [INFO] line that gives the verdict its scope. A property counts
+// only its own checks and the unwinding assertions (walker::counts).
+static std::string checkFamilies() {
+  bool all = property == Property::All;
+  SmallVector<StringRef, 12> on;
+  if (all && !noAssertions)
+    on.push_back("assertions");
+  if (property == Property::UnreachCall)
+    on.push_back("reach-error");
+  if (!noUnwindingAssertions)
+    on.push_back("unwinding-assertions");
+  if (all && ubPointerCheck)
+    on.push_back("pointer");
+  if (property == Property::ValidFree)
+    on.push_back("valid-free");
+  if (all && ubDivByZeroCheck)
+    on.push_back("div-by-zero");
+  if (all && vlaSizeCheck)
+    on.push_back("vla-size");
+  if (all || property == Property::NoOverflow)
+    for (const std::string &s : sanitized)
+      on.push_back(StringSwitch<StringRef>(s)
+                       .Case("signed-integer-overflow", "signed-overflow")
+                       .Case("unsigned-integer-overflow", "unsigned-overflow")
+                       .Default(s));
+  if (all && ubFloatCastOverflowCheck)
+    on.push_back("float-cast-overflow");
+  if (all && ubCountZeroCheck)
+    on.push_back("count-zero");
+  if (all && ubAlignmentCheck)
+    on.push_back("alignment");
+  if (all && ubUninitCheck)
+    on.push_back("uninit");
+  return on.empty() ? "none" : join(on, ", ");
+}
 
 struct BMCState {
   camada::SMTSolverRef solver;
@@ -566,6 +609,7 @@ static int run(int argc, char **argv) {
     if (dumpIROnly)
       return 0;
   }
+  info() << "Checks: " << checkFamilies() << "\n";
   Function *fn = (*module)->getFunction(entry);
   if (!fn || fn->isDeclaration()) {
     errs() << argv[0] << ": no function " << entry << "\n";
