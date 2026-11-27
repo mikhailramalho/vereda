@@ -268,6 +268,7 @@ def main():
     no_divisor = False
     count_zero = False
     float_cast_overflow = False
+    alignment = False
     for flag in forwarded:
         name, eq, value = flag.partition("=")
         if name == "--no-div-by-zero-check":
@@ -276,6 +277,8 @@ def main():
             count_zero = not eq or value in ("", "true", "1")
         if name == "--ub-float-cast-overflow-check":
             float_cast_overflow = not eq or value in ("", "true", "1")
+        if name == "--ub-alignment-check":
+            alignment = not eq or value in ("", "true", "1")
     if any(i.endswith((".c", ".i")) for i in inputs) and selected.property == "all":
         if count_zero:
             flags += ["-fsanitize=builtin", "-fno-sanitize-recover=builtin",
@@ -283,6 +286,10 @@ def main():
         if float_cast_overflow:
             flags += ["-fsanitize=float-cast-overflow", "-fno-sanitize-recover=float-cast-overflow",
                       "-fsanitize-debug-trap-reasons=none"]
+        if alignment:
+            # A memcpy the user calls stays a library call, so the binary
+            # checks only the intrinsic ones, clang's struct copies.
+            flags += ["-fno-builtin-memcpy", "-fno-builtin-memmove"]
         if not no_divisor:
             # The nonreturning handler retains the operands, unlike ubsantrap's
             # shared code for zero division and signed division overflow.
