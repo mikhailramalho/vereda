@@ -1,7 +1,8 @@
 // fmodf on any floats: NaN when x is infinite, y is zero or either is NaN;
 // otherwise smaller in magnitude than y and no larger than x, with x's sign
 // (zeros included), which SMT's round-to-nearest fp.rem alone breaks.
-// RUN:
+// Bit-vector encoding only: on unconstrained operands Bitwuzla's own
+// fp.rem took over 120 s for the sign, camada's encoding about 15 s for all.
 // RUN: --fp2bv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <math.h>

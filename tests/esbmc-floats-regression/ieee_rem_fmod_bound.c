@@ -17,6 +17,3 @@ int main(void)
 // Imported from ESBMC regression/floats-regression/ieee_rem_fmod_bound
 // RUN: --fp2bv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED
