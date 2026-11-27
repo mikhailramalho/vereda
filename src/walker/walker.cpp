@@ -1626,10 +1626,12 @@ private:
       return t.boolean(false);
     }
     // From models/stdio.c: pclose of a stream popen did not open, which
-    // POSIX leaves undefined.
+    // POSIX leaves undefined, reported at the program's call to pclose.
     if (name == "__vereda_pclose_not_popen") {
-      if (counts(false))
-        assertion(c, guard, "pclose of a stream popen did not open", "");
+      if (!counts(false))
+        return guard;
+      assertion(c.getDebugLoc() || !site ? c : *site, guard,
+                "pclose of a stream popen did not open", "");
       return t.boolean(false);
     }
     if (name == "__vereda_longjmp_unsupported")

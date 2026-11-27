@@ -42,7 +42,8 @@ static bool callsNothing(StringRef name) {
          is_contained<StringRef>({"__vereda_check_alignment", "__vereda_check_count_zero",
                                   "__vereda_check_divisor", "__vereda_check_float_cast_overflow",
                                   "__vereda_havoc", "__vereda_object_size",
-                                  "__vereda_uninitialised", "__vereda_longjmp_unmatched", "abort",
+                                  "__vereda_uninitialised", "__vereda_longjmp_unmatched",
+                                  "__vereda_pclose_not_popen", "abort",
                                   "exit", "_Exit", "__assert_fail", "reach_error", "malloc",
                                   "calloc", "realloc", "free"},
                                  name);
