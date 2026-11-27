@@ -10,13 +10,15 @@ A test regresses when head's wall time is above RATIO times base's and at
 least MIN_SECONDS more, when its peak memory is above RATIO times base's and
 at least MIN_MB more, when the verdicts differ, when head times out or is
 killed for lack of memory and base was not, or when head ends without a
-verdict (a crash, a bad flag). A test that regresses on time or memory runs
+verdict (a crash, a bad flag), except a FUTURE test that ends with the same
+error on both binaries. A test that regresses on time or memory runs
 once more and counts only if it regresses again, since shared CI machines
 are noisy. Head's time limit is max(SLOWDOWN times base's wall time,
 MIN_LIMIT seconds).
 
-A test improves by the same margins the other way, or when base timed out or
-was killed and head was not; an improvement is also measured twice.
+A test improves by the same margins the other way, when base timed out or
+was killed and head was not, or when a FUTURE test gave no verdict on base
+and gives one on head; an improvement is also measured twice.
 
 Prints a Markdown table, also appended to $GITHUB_STEP_SUMMARY when set, and
 exits 1 when some test regressed. --changes FILE writes a table of only the
@@ -176,15 +178,17 @@ def measure(args, base_test, head_test, b=None):
     return b, h
 
 
-def regressions(b, h):
+def regressions(b, h, mode="CORE"):
     """Why the head result h is worse than the base result b, or []."""
     if h[4] in STOPPED:
         return [] if b[4] in STOPPED else [STOPPED[h[4]]]
     # A run without a verdict crashed or could not start; when both did,
-    # the setup is broken, and that must not pass as no regression.
+    # the setup is broken, and that must not pass as no regression, unless
+    # the test is FUTURE (e.g. needs an unimplemented flag or fails to compile)
+    # and errored identically on both binaries.
     if h[4].startswith("ERROR"):
-        return ["head gave no verdict"]
-    if b[4] in STOPPED:
+        return [] if mode == "FUTURE" and b[4] == h[4] else ["head gave no verdict"]
+    if b[4] in STOPPED or (mode == "FUTURE" and b[4].startswith("ERROR")):
         return []
     why = []
     if h[0] > RATIO * b[0] and h[0] - b[0] >= MIN_SECONDS:
@@ -196,10 +200,12 @@ def regressions(b, h):
     return why
 
 
-def improvements(b, h):
+def improvements(b, h, mode="CORE"):
     """Why the head result h is better than the base result b, or []."""
     if b[4] in STOPPED:
         return [] if h[4] in STOPPED or h[4].startswith("ERROR") else [f"base {STOPPED[b[4]][5:]}"]
+    if mode == "FUTURE" and b[4].startswith("ERROR"):
+        return [] if h[4] in STOPPED or h[4].startswith("ERROR") else ["base gave no verdict"]
     if h[4] in STOPPED or h[4].startswith("ERROR") or b[4] != h[4]:
         return []
     why = []
@@ -300,6 +306,7 @@ def main():  # pylint: disable=too-many-locals
         head_test = test_files(ROOT, name)
         if head_test is None:
             sys.exit(f"bench.py: no test {name}")
+        mode = run.parse(head_test[1][0])["MODE"]
         base_test = test_files(args.base_root, name)
         new_fixture = base_test is None or base_test[0] != head_test[0]
         if new_fixture:
@@ -311,10 +318,11 @@ def main():  # pylint: disable=too-many-locals
         # are Tests' job; comparing timing is meaningful only for like outcomes.
         incomparable = (new_fixture and b[4] != h[4] and b[4] not in STOPPED
                         and h[4] in {"SUCCESSFUL", "FAILED", "UNKNOWN"})
-        why, better = ([], []) if incomparable else (regressions(b, h), improvements(b, h))
+        why, better = ([], []) if incomparable else (
+            regressions(b, h, mode), improvements(b, h, mode))
         if (why or better) and b[4] == h[4] and not h[4].startswith("ERROR"):
             b, h = measure(args, base_test, head_test, previous)
-            why, better = regressions(b, h), improvements(b, h)
+            why, better = regressions(b, h, mode), improvements(b, h, mode)
         if why:
             failed.append(name)
         verdict = b[4] if b[4] == h[4] else f"{b[4]} → {h[4]}"
