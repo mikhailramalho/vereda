@@ -90,8 +90,8 @@ static cl::opt<bool> multiProperty("multi-property",
                                             "first violation"));
 static cl::opt<bool> incrementalSolver(
     "incremental-solver",
-    cl::desc("Keep one incremental solver across checks (with bv-cnf-scope=permanent on Bitwuzla) "
-             "instead of fresh non-incremental solves"));
+    cl::desc("Keep one incremental solver across checks and bounds (with "
+             "bv-cnf-scope=permanent on Bitwuzla) instead of a fresh one per solving phase"));
 static cl::opt<bool> showLibraryStates(
     "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
@@ -233,6 +233,10 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     }
   }
   camada::SMTSolver &solver = *state->solver;
+  // Each solving phase gets a fresh instance over the same terms: Bitwuzla
+  // preprocesses fully only on an instance's first query, and the walker's
+  // feasibility queries and earlier bounds leave state behind.
+  bool renew = !incrementalSolver && solver.supports(camada::SolverFeature::Renew);
   progress((state->resumable() ? "Resuming " : "Walking ") + entry);
   vereda::util::Stopwatch walkTime;
   auto &terms = state->terms;
@@ -316,8 +320,9 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     else if (!(incrementalBMC && terms.isTrue(c.violated)))
       hasNonConstUnwind = true;
   }
-  bool useIncremental = incrementalSolver || state->resumable();
-  bool mayRewalk = !useIncremental && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
+  bool useIncremental = incrementalSolver || (state->resumable() && !renew);
+  bool mayRewalk =
+      !useIncremental && !renew && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
   if (releaseModule && !mayRewalk)
     releaseModule->reset();
 
@@ -368,6 +373,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   };
   std::unique_ptr<BMCState> freshState;
   bool initialSolverUsed = false;
+  if (renew)
+    terms.renew();
   vereda::solver::Verdict verdict =
       useIncremental
           ? vereda::solver::decide(terms, checks, multiProperty,
@@ -377,6 +384,10 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
           : vereda::solver::decideNonIncremental(
                 terms, checks, multiProperty, incrementalBMC,
                 [&]() -> std::pair<vereda::encode::Terms *, const vereda::checks::Checks *> {
+                  if (renew) {
+                    terms.renew();
+                    return {&terms, &checks};
+                  }
                   freshState.reset();
                   Expected<camada::SMTSolverRef> created =
                       vereda::solver::create(solverKind, /*incremental=*/false);
@@ -432,8 +443,13 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   if (incrementalBMC && verdict.check && !bug) {
     info() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
     *unwindsAt = verdict.check->unwindsAt;
-    if (!incrementalSolver && initialSolverUsed)
-      state.reset();
+    // The solver holds the last phase's query; a resumed walk needs it without.
+    if (initialSolverUsed) {
+      if (state->resumable())
+        terms.renew();
+      else
+        state.reset();
+    }
     return BoundTooSmall;
   }
 

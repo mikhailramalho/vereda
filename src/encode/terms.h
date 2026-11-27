@@ -87,8 +87,16 @@ public:
   void addConstraint(const Ref &c) {
     if (isTrue(c))
       return;
-    s.addConstraint(solverTerm(c));
+    constraints.push_back(solverTerm(c));
+    s.addConstraint(constraints.back());
     ++epoch;
+  }
+  // Swaps the solver's instance for a fresh one over the same terms
+  // (camada's renew()) and asserts every global constraint on it again.
+  void renew() {
+    s.renew();
+    for (const camada::SMTExprRef &c : constraints)
+      s.addConstraint(c);
   }
   // Releases the hash-consing, folding and range caches once the walk is
   // done; only constant entries and solverTerm() remain valid afterwards.
@@ -381,6 +389,7 @@ private:
   // Per symbol, the terms found not to contain it (unique_ptr keeps each
   // set stable across recursive substitute calls).
   llvm::DenseMap<const void *, std::unique_ptr<llvm::DenseSet<const void *>>> freeOf;
+  std::vector<camada::SMTExprRef> constraints; // what addConstraint asserted
   uint64_t epoch = 0;
   bool walkDone = false;
 };
