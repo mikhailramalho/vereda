@@ -866,6 +866,59 @@ bool Encoder::intrinsic(CallBase &c) {
     bind(&c, r);
     return true;
   }
+  if (f->getIntrinsicID() == Intrinsic::ctpop) {
+    if (!c.getType()->isIntegerTy())
+      return false;
+    unsigned w = c.getType()->getIntegerBitWidth();
+    Term a = value(c.getArgOperand(0));
+    if (w == 1) {
+      bind(&c, a);
+      return true;
+    }
+    if (const APInt *v = t.constant(a)) {
+      bind(&c, t.bv(APInt(w, v->popcount())));
+      return true;
+    }
+    // Pairwise adder tree: each level widens by 1 bit, so no sum overflows
+    // and the final width is 1 + ceil(log2(w)) <= w for all w >= 2.
+    SmallVector<Term, 64> cur;
+    cur.reserve(w);
+    for (unsigned i = 0; i < w; ++i)
+      cur.push_back(t.extract(a, i, i));
+    while (cur.size() > 1) {
+      SmallVector<Term, 32> next;
+      next.reserve((cur.size() + 1) / 2);
+      for (size_t i = 0; i + 1 < cur.size(); i += 2)
+        next.push_back(t.add(t.zext(cur[i], 1), t.zext(cur[i + 1], 1)));
+      if (cur.size() % 2 == 1)
+        next.push_back(t.zext(cur.back(), 1));
+      cur = std::move(next);
+    }
+    Term r = cur[0];
+    if (r.width() < w)
+      r = t.zext(r, w - r.width());
+    bind(&c, r);
+    return true;
+  }
+  if (f->getIntrinsicID() == Intrinsic::bitreverse) {
+    if (!c.getType()->isIntegerTy())
+      return false;
+    unsigned w = c.getType()->getIntegerBitWidth();
+    Term a = value(c.getArgOperand(0));
+    if (w == 1) {
+      bind(&c, a);
+      return true;
+    }
+    if (const APInt *v = t.constant(a)) {
+      bind(&c, t.bv(v->reverseBits()));
+      return true;
+    }
+    Term r = t.extract(a, 0, 0);
+    for (unsigned i = 1; i < w; ++i)
+      r = t.concat(r, t.extract(a, i, i));
+    bind(&c, r);
+    return true;
+  }
   // Funnel shifts, as LangRef defines them: shift the concatenation a:b by
   // the amount modulo N and keep the high (fshl) or low (fshr) N bits. The
   // 2N-bit shift never reaches 2N, so an amount of 0 gives a or b unshifted.

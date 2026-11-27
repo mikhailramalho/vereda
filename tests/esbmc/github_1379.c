@@ -61,6 +61,3 @@ int main() {
 // Imported from ESBMC regression/esbmc/github_1379
 // RUN: --overflow-check --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict UNKNOWN
