@@ -145,3 +145,5 @@ array cap. The new shift and float-cast checks promoted `github_2789`,
 `github_578_fail4`, `github_578_fail5`, `github_7572_fail`,
 `github_7572_trunc_fail`, `github_9223_fail` and `github_9436_fail` to CORE;
 `github_381` now gives ESBMC's verdict but stays FUTURE for the column.
+
+Follow-up issues: #349, #350, #351.
