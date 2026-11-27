@@ -16,7 +16,8 @@ again.
 
 camada's new `SMTSolver::renew()` replaces the backend's instance by a fresh one
 over the same term manager, so every term stays valid. Vereda now renews at
-the start of each solving phase (a bound's assertions, then its unwinding
+the start of each solving phase (under incremental BMC only with
+`--fresh-solver`, see the decision below) (a bound's assertions, then its unwinding
 assertions, and each further query of `--multi-property`), and asserts again
 the constraints it asserted at top level. Those all go through
 `Terms::addConstraint` (memory layout, object sizes and bases, lambda
@@ -118,13 +119,42 @@ take 0.11-0.13 s, the time skip-const gave, so the patch is not applied. It
 would still help `--incremental-solver`, which keeps those tasks timing out,
 but that flag is meant to keep the shared instance exactly as before.
 
+## BenchExec against the base
+
+BenchExec on ReachSafety Arrays, ControlFlow, Heap and Loops, 60 s per task,
+`--incremental-bmc`, this change against its base (main with #392, which
+already skips the constant unwinding queries behind most of the
+reducercommutativity gains above). The branch answers 11 tasks the base did
+not: in nla-digbench-scaling lcm1_valuebound10, egcd3-ll_valuebound20, the
+fermat tasks at unwindbound1 and 2, mannadiv_unwindbound100,
+hard-ll_unwindbound10 and egcd2-ll_valuebound10, and loop-new/nested-1 and
+theatreSquare. It loses 11 the base answered: loop-new/gauss_sum and its three
+reducer variants (about 16 s on the base, timeouts here), loops/sum01-2 (6 s
+to a timeout), geo3-ll_valuebound10, prod4br-ll_valuebound100,
+fermat1-ll_valuebound20, freire1_valuebound10 and 50, and dll_of_dll-2.
+ps3-ll's wrong FALSE on the base becomes a timeout. On the tasks both answer
+the same, the branch uses 14 % more CPU time and 5 % less memory.
+
+So across the bounds of incremental BMC, renewing the instance at every bound
+is a trade-off, not a gain: what the kept instance learns at one bound helps
+as many tasks as its missing preprocessing hurts. The default-mode numbers
+above (a fixed bound, one walk) show no loss: dijkstra-u_valuebound100 9.4 s
+to 3.5 s, lcm1_valuebound5 3.8 s to 2.5 s, knuth_valuebound100 54 s to 57 s,
+within noise, with a fifth less memory, and the BenchExec run did not cover
+that mode.
+
 ## Decision
 
-Adopted: a fresh instance per solving phase is the default with Bitwuzla, and
-`--incremental-solver` the way back to one shared instance. The cost on knuth
-and geo3 is real; choosing between the two per bound, by what the previous
-bound's solve cost, is the follow-up rather than a reason to keep the shared
-instance, which loses far more on the tasks above.
+Adopted, after the BenchExec run: under incremental BMC, a fresh instance per
+solving phase of a resumed bound is opt-in, `--fresh-solver`; without it the
+resumed bounds share one instance as before this change. With a fixed bound
+(without `--incremental-bmc`), each solving phase renews the
+instance whenever the backend can (Bitwuzla), and the second phase renews
+instead of walking the program again, which the measurements above show only
+gaining. `--incremental-solver` keeps one shared instance everywhere, and
+conflicts with `--fresh-solver`. Choosing per bound between a renewed and a
+kept instance, by what the previous bound's solve cost, is the follow-up
+(#387) that would make the fresh instance worth turning on by default.
 
 Left open: choosing per bound between a renewed and a kept instance (knuth,
 geo3); skip-const for `--incremental-solver`; renew for Z3 and cvc5 in camada,

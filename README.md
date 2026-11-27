@@ -146,6 +146,7 @@ The main verifier flags:
 | `--vla-size-check` | Report stack allocations above `PTRDIFF_MAX`, an implementation limit rather than undefined behaviour (default on; `=false` disables; their paths still end at the allocation) |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
 | `--incremental-solver` | Keep one incremental solver across checks and bounds (with `bv-cnf-scope=permanent` on Bitwuzla) instead of a fresh one per solving phase |
+| `--fresh-solver` | Under incremental BMC, solve each phase of a resumed bound on a fresh Bitwuzla instance instead of the one kept across bounds |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
 | `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve |
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |

@@ -110,6 +110,10 @@ static cl::opt<bool> incrementalSolver(
     "incremental-solver",
     cl::desc("Keep one incremental solver across checks and bounds (with "
              "bv-cnf-scope=permanent on Bitwuzla) instead of a fresh one per solving phase"));
+static cl::opt<bool> freshSolver(
+    "fresh-solver",
+    cl::desc("Under incremental BMC, solve each phase of a resumed bound on a fresh instance "
+             "(Bitwuzla) instead of the one kept across bounds"));
 static cl::opt<bool> showLibraryStates(
     "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
@@ -320,8 +324,12 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   camada::SMTSolver &solver = *state->solver;
   // Each solving phase gets a fresh instance over the same terms: Bitwuzla
   // preprocesses fully only on an instance's first query, and the walker's
-  // feasibility queries and earlier bounds leave state behind.
-  bool renew = !incrementalSolver && solver.supports(camada::SolverFeature::Renew);
+  // feasibility queries and earlier bounds leave state behind. Across the
+  // bounds of incremental BMC that wins on some tasks and loses on those the
+  // kept instance's learning helps, so there it takes --fresh-solver
+  // (docs/survey/2026-11-27-fresh-solver-per-phase.md).
+  bool renew = !incrementalSolver && (!incrementalBMC || freshSolver) &&
+               solver.supports(camada::SolverFeature::Renew);
   progress((state->resumable() ? "Resuming " : "Walking ") + entry);
   vereda::util::Stopwatch walkTime;
   auto &terms = state->terms;
@@ -597,6 +605,10 @@ static int run(int argc, char **argv) {
       errs() << "vereda: " << flag << " is not implemented\n";
       return ErrorExit;
     }
+  }
+  if (freshSolver && incrementalSolver) {
+    errs() << "vereda: --fresh-solver conflicts with --incremental-solver\n";
+    return ErrorExit;
   }
   if (noUnwindingAssertions && property == Property::Termination) {
     errs() << "vereda: --no-unwinding-assertions conflicts with --property termination\n";

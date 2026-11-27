@@ -1,8 +1,9 @@
-// A resumed bound solves on a fresh solver instance (array-crafted/mapsum3
-// reduced). The bounds below 10001 each ask a trivial query; when one
-// instance answered all of them, Bitwuzla skipped its full preprocessing on
-// the last, real one and ran out of memory past 4 GB. Fresh, it needs 130 MB.
-// RUN: --incremental-bmc --unlimited-k-steps
+// With --fresh-solver, a resumed bound solves on a fresh solver instance
+// (array-crafted/mapsum3 reduced). The bounds below 10001 each asked a trivial
+// query; when one instance answered all of them, Bitwuzla skipped its full
+// preprocessing on the last, real one and ran out of memory past 4 GB. Since
+// #392 skips those constant queries the kept instance needs 130 MB too.
+// RUN: --incremental-bmc --fresh-solver --unlimited-k-steps
 // EXPECT: \[PROGRESS\] Resuming main
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);

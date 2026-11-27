@@ -1,7 +1,7 @@
-// Each solving phase of a resumed bound runs on a fresh solver instance, so
-// the constraints asserted while walking, here the layout that keeps the
-// objects apart, are asserted on it again.
-// RUN: --no-summarize-array-loops --incremental-bmc --max-k-step 10
+// With --fresh-solver, each solving phase of a resumed bound runs on a fresh
+// solver instance, so the constraints asserted while walking, here the layout
+// that keeps the objects apart, are asserted on it again.
+// RUN: --no-summarize-array-loops --incremental-bmc --fresh-solver --max-k-step 10
 // EXPECT: \[PROGRESS\] Resuming main
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdint.h>
