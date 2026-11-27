@@ -13,6 +13,7 @@
 #include <llvm/IR/AttributeMask.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/DebugProgramInstruction.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/InlineAsm.h>
@@ -35,7 +36,6 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/FixIrreducible.h>
 #include <llvm/Transforms/Utils/LowerSwitch.h>
-#include <llvm/IR/DebugProgramInstruction.h>
 
 using namespace llvm;
 
@@ -1789,7 +1789,7 @@ static void markErrorLabels(Module &m, StringRef label) {
 Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringRef models,
                                        StringRef entry, bool divByZeroCheck, bool countZeroCheck,
                                        bool floatCastOverflowCheck, bool alignmentCheck,
-                                       bool uninitCheck) {
+                                       bool uninitCheck, StringRef errorLabel) {
   SMDiagnostic diag;
   std::unique_ptr<Module> module = parseIRFile(path, diag, ctx);
   if (!module) {
@@ -1807,6 +1807,8 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
   nameSanitizerChecks(*module);
   lowerRustMain(*module);
   renameRustShims(*module);
+  if (!errorLabel.empty())
+    markErrorLabels(*module, errorLabel);
   if (alignmentCheck)
     checkAlignments(*module, compiledByClang(*module));
   nondetLocals(*module, uninitCheck);

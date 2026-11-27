@@ -596,7 +596,7 @@ static int run(int argc, char **argv) {
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
-                       ubUninitCheck && property == Property::All);
+                       ubUninitCheck && property == Property::All, errorLabel);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
