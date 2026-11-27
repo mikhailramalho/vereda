@@ -148,4 +148,4 @@ nor is a relation between two terms that is not an equality (`v <= u`
 leaves `u - v`'s overflow test to the solver). `srange` keeps no cache,
 hence its depth limit.
 
-Follow-up issues: #367, #368, #369.
+Follow-up issues: #367, #368, #369, #379.
