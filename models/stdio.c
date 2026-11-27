@@ -137,15 +137,18 @@ FILE *open_memstream(char **ptr, size_t *size) {
 // C17 7.21.5.1: fclose flushes the stream and closes it whether or not that
 // succeeds, so the object of an opened stream is freed and a second fclose
 // is a double free. The standard streams are no allocation and stay.
-// pclose frees a popen stream, so an fclose after it is a double free,
-// here only when c is 'q'.
-int pclose(FILE *s) {
-  free(s);
-  return __VERIFIER_nondet_int();
-}
 int fclose(FILE *s) {
   fflush(s);
   if (s != &__vereda_stdin && s != &__vereda_stdout && s != &__vereda_stderr)
     free(s);
   return __VERIFIER_nondet_int() ? EOF : 0;
+}
+
+// POSIX pclose closes a popen stream and returns its command's exit status,
+// or -1. A popen stream is an allocation as fopen's is, so fclose frees it
+// too (POSIX leaves that unspecified), and closing it twice, by either, is a
+// double free.
+int pclose(FILE *s) {
+  free(s);
+  return __VERIFIER_nondet_int();
 }
