@@ -54,6 +54,10 @@ if(TARGET libvereda)
   target_link_libraries(vereda-lambda-dependencies PRIVATE libvereda)
   add_test(NAME vereda/lambda_dependencies COMMAND vereda-lambda-dependencies)
   set_tests_properties(vereda/lambda_dependencies PROPERTIES LABELS vereda TIMEOUT 60)
+  add_executable(vereda-signed-ranges signed_ranges.cpp)
+  target_link_libraries(vereda-signed-ranges PRIVATE libvereda)
+  add_test(NAME vereda/signed_ranges COMMAND vereda-signed-ranges)
+  set_tests_properties(vereda/signed_ranges PROPERTIES LABELS vereda TIMEOUT 60)
   add_test(NAME vereda/banner
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")

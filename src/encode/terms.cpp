@@ -122,8 +122,10 @@ void Terms::releaseWalkTables() {
   decltype(reduced)().swap(reduced);
   decltype(selects)().swap(selects);
   decltype(scratch)().swap(scratch);
+  decltype(sscratch)().swap(sscratch);
   decltype(bounds)().swap(bounds);
   decltype(ranges)().swap(ranges);
+  decltype(sranges)().swap(sranges);
   decltype(freeOf)().swap(freeOf);
   walkDone = true;
 }
@@ -1161,6 +1163,9 @@ std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known kno
                                                          unsigned depth) {
   if (!e.isBV() || e.width() > 64)
     return std::nullopt;
+  auto &cache = known ? sscratch : sranges;
+  if (auto it = cache.find(e.id()); it != cache.end())
+    return it->second;
   unsigned w = e.width();
   int64_t lo = smin(w), hi = smax(w);
   auto meet = [&](int64_t l, int64_t h) {
@@ -1175,15 +1180,17 @@ std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known kno
   if (n && n->op == Op::SExt && depth <= 32)
     if (auto a = srange(n->a, known, depth + 1))
       meet(a->first, a->second);
-  // Signed arithmetic that cannot wrap; few levels, as srange keeps no cache.
-  if (n && (n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul) && depth <= 8)
+  // Signed arithmetic that cannot wrap.
+  if (n && (n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul) && depth <= 32)
     if (auto a = srange(n->a, known, depth + 1))
       if (auto b = srange(n->b, known, depth + 1))
         if (auto r = signedOp(n->op == Op::Add ? '+' : n->op == Op::Sub ? '-' : '*', *a, *b, w))
           meet(r->first, r->second);
-  if (lo > hi)
-    return std::nullopt;
-  return std::make_pair(lo, hi);
+  std::optional<std::pair<int64_t, int64_t>> r;
+  if (lo <= hi)
+    r = std::make_pair(lo, hi);
+  cache.try_emplace(e.id(), r);
+  return r;
 }
 
 int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known) {
@@ -1203,7 +1210,7 @@ int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known know
 }
 
 int Terms::decide(const Ref &cmp, Known known) {
-  scratch.clear();
+  clearScratch();
   return decided(cmp, known);
 }
 
@@ -1263,7 +1270,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
   auto now = [&](const Ref &e) {
     unsigned w = e.width();
     Bounds b{0, umax(w), smin(w), smax(w)};
-    scratch.clear(); // set may have moved a bound since the last query
+    clearScratch(); // set may have moved a bound since the last query
     if (std::optional<Range> r = range(e, known, 0))
       b.ulo = r->lo, b.uhi = r->hi;
     if (auto s = srange(e, known, 0))
@@ -1446,7 +1453,7 @@ Ref Terms::assumed(const Ref &x, Known known, llvm::DenseMap<const void *, Ref> 
 Ref Terms::assuming(const Ref &e, Known known) {
   llvm::DenseMap<const void *, Ref> memo;
   unsigned budget = 256;
-  scratch.clear(); // known stays as it is through the walk
+  clearScratch(); // known stays as it is through the walk
   return assumed(e, known, memo, budget);
 }
 

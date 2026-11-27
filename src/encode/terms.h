@@ -234,7 +234,7 @@ public:
   };
   std::optional<Range> range(const Ref &e, Known known = {}) {
     if (known)
-      scratch.clear();
+      clearScratch();
     return range(e, known, 0);
   }
   // Whether cmp, an =, <, <= (unsigned or signed), an overflow test or the
@@ -404,10 +404,17 @@ private:
   // range's results for one query under known, cleared per query (a
   // DenseMap shrinks when it clears, so a large query leaves no cost).
   llvm::DenseMap<const void *, std::optional<Range>> scratch;
+  void clearScratch() {
+    scratch.clear();
+    sscratch.clear();
+  }
   // How many low bits of e, a sum or product, are known to be zero.
   unsigned zeros(const Ref &e, unsigned depth = 0);
   llvm::DenseMap<const void *, std::pair<Ref, uint64_t>> bounds;
   llvm::DenseMap<const void *, std::optional<Range>> ranges;
+  // srange's results, kept as range's are: on every path in sranges, under
+  // one query's known in sscratch, cleared with scratch.
+  llvm::DenseMap<const void *, std::optional<std::pair<int64_t, int64_t>>> sranges, sscratch;
   // Per symbol, the terms found not to contain it (unique_ptr keeps each
   // set stable across recursive substitute calls).
   llvm::DenseMap<const void *, std::unique_ptr<llvm::DenseSet<const void *>>> freeOf;
