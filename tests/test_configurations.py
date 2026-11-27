@@ -263,6 +263,54 @@ class Configurations(unittest.TestCase):
         self.assertIn("ERROR 6 → SUCCESSFUL", output)
         self.assertIn("verdict differs; performance not compared", output)
 
+    def test_regressions_and_improvements_for_error_outcomes(self):
+        err6 = (0.1, None, None, None, "ERROR 6")
+        err1 = (0.1, None, None, None, "ERROR 1")
+        ok = (0.5, 0.1, 0.2, 30, "SUCCESSFUL")
+        self.assertEqual(bench.regressions(err6, err6, mode="FUTURE"), [])
+        self.assertEqual(bench.improvements(err6, err6, mode="FUTURE"), [])
+        self.assertEqual(bench.regressions(ok, err6, mode="FUTURE"), ["head gave no verdict"])
+        self.assertEqual(bench.regressions(err6, err1, mode="FUTURE"), ["head gave no verdict"])
+        for mode in ("CORE", "THOROUGH", "KNOWNBUG"):
+            with self.subTest(mode=mode):
+                self.assertEqual(bench.regressions(err6, err6, mode=mode),
+                                 ["head gave no verdict"])
+        self.assertEqual(bench.regressions(err6, err6), ["head gave no verdict"])
+        self.assertEqual(bench.regressions(err6, ok, mode="FUTURE"), [])
+        self.assertEqual(bench.improvements(err6, ok, mode="FUTURE"), ["base gave no verdict"])
+
+    def test_future_identical_errors_do_not_fail_benchmark(self):
+        base_suite = self.root / "base" / "tests" / "suite"
+        base_suite.mkdir(parents=True)
+        content = "// RUN: --unsupported\n// MODE: FUTURE\n"
+        (base_suite / "sample.c").write_text(content)
+        self.test.write_text(content)
+        code, output = self.benchmark("suite/sample")
+        self.assertEqual(code, 0, output)
+        self.assertIn("No regressions.", output)
+        self.assertNotIn("head gave no verdict", output)
+
+    def test_future_error_to_verdict_is_reported_as_improvement(self):
+        base_suite = self.root / "base" / "tests" / "suite"
+        base_suite.mkdir(parents=True)
+        content = "// RUN: --base-unsupported\n// MODE: FUTURE\n"
+        (base_suite / "sample.c").write_text(content)
+        self.test.write_text(content)
+        code, output = self.benchmark("suite/sample")
+        self.assertEqual(code, 0, output)
+        self.assertIn("ERROR 6 → SUCCESSFUL", output)
+        self.assertIn("base gave no verdict", output)
+
+    def test_knownbug_identical_errors_still_fail_benchmark(self):
+        base_suite = self.root / "base" / "tests" / "suite"
+        base_suite.mkdir(parents=True)
+        content = "// RUN: --unsupported\n// MODE: KNOWNBUG\n"
+        (base_suite / "sample.c").write_text(content)
+        self.test.write_text(content)
+        code, output = self.benchmark("suite/sample")
+        self.assertEqual(code, 1, output)
+        self.assertIn("head gave no verdict", output)
+
     def test_cmake_registers_runs_and_reconfigures_when_headers_change(self):
         # Exercise the real registration code with a tiny source-only project.
         (self.root / "CMakeLists.txt").write_text(
