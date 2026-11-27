@@ -93,9 +93,16 @@ short commit hash; builds without Git metadata report `commit unknown`.
 flags (`--clang`, `--rustc`, `--bin`, `-m32`/`-m64`, `-I`, `-D`, `--keep-ir`,
 `--property-file`, `-v`, and the checks it compiles in with clang's
 sanitizers: `--ub-signed-overflow-check`, `--unsigned-overflow-check`,
-`--ub-shift-check`, and `--overflow-check` for both overflow checks), and
-forwards everything else to the binary. Each check flag checks one thing and
-takes `=true` or `=false`; the last one naming a check wins. Unsigned
+`--ub-shift-check`, `--overflow-check` for both overflow checks, and
+`--ub-checks`), and forwards everything else to the binary. Each check flag
+checks one thing and takes `=true` or `=false`; the last one naming a check
+wins. `--ub-checks` turns on every opt-in undefined-behaviour check: signed
+overflow, shifts, floating-point to integer conversions, count-zero builtins,
+alignment and uninitialised reads (not unsigned overflow, which is defined, nor
+data races, which are not implemented). It stands for those six flags in its
+place, so `--ub-checks --ub-shift-check=false` leaves shifts out, an earlier
+`--ub-shift-check=false` is overridden, and `--ub-checks=false` turns all six
+off. Like the sanitizer flags, it needs C input. Unsigned
 arithmetic wraps by definition (C11 6.2.5p9), so its check has no `ub-`
 prefix. Unlike ESBMC's `--overflow-check`, which checks signed overflow,
 shifts and floating-point to integer conversions, Vereda's checks signed and

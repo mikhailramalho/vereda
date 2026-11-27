@@ -48,6 +48,11 @@ SANITIZERS = {
 # --overflow-check: both. ESBMC's checks signed overflow, shifts and
 # float-to-integer conversions instead (tests/import_esbmc.py maps it).
 OVERFLOW = ("--ub-signed-overflow-check", "--unsigned-overflow-check")
+# --ub-checks: every opt-in undefined-behaviour check, two of the above and
+# four of the binary's. Unsigned overflow is defined and data races are not
+# implemented, so neither is one.
+UB_CHECKS = ("--ub-signed-overflow-check", "--ub-shift-check", "--ub-float-cast-overflow-check",
+             "--ub-count-zero-check", "--ub-alignment-check", "--ub-uninit-check")
 # SV-COMP property formula -> (the binary's --property, sanitizers). Only
 # signed overflow: SV-COMP's no-overflow is a signed result out of range,
 # and clang's shift checks also flag negative operands, which are not.
@@ -214,6 +219,10 @@ def main():
     parser.add_argument("--overflow-check", action="store_true",
                         help="both --ub-signed-overflow-check and --unsigned-overflow-check; "
                         "unlike ESBMC's, no shifts or float-to-integer conversions")
+    parser.add_argument("--ub-checks", action="store_true",
+                        help="every opt-in undefined-behaviour check: " + ", ".join(UB_CHECKS) +
+                        "; it stands for them in its place, so a later one of them "
+                        "overrides it, and =false turns them all off")
     parser.add_argument("-v", "--verbose", action="store_true", help="echo every command run")
 
     # argparse exits with 2, the UNKNOWN code, on a bad option.
@@ -221,9 +230,17 @@ def main():
         parser.print_usage(sys.stderr)
         fail(f"{parser.prog}: error: {message}")
     parser.error = error
-    # The last flag naming a check decides it.
-    checks, argv = {}, []
+    # The last flag naming a check decides it; --ub-checks stands for each
+    # of UB_CHECKS in its place.
+    expanded = []
     for arg in sys.argv[1:]:
+        if arg.partition("=")[0] == "--ub-checks":
+            value = "true" if boolean(arg) else "false"
+            expanded += [f"{flag}={value}" for flag in UB_CHECKS]
+        else:
+            expanded.append(arg)
+    checks, argv = {}, []
+    for arg in expanded:
         name = arg.partition("=")[0]
         if name in SANITIZERS or name == "--overflow-check":
             for flag in OVERFLOW if name == "--overflow-check" else (name,):

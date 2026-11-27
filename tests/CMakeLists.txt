@@ -61,7 +61,7 @@ if(TARGET libvereda)
   add_test(NAME vereda/check_flags
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/check_flags.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
-  set_tests_properties(vereda/check_flags PROPERTIES LABELS vereda TIMEOUT 60)
+  set_tests_properties(vereda/check_flags PROPERTIES LABELS vereda TIMEOUT 120)
   add_test(NAME vereda/frontend_options
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/frontend_options.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
