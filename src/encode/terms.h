@@ -204,6 +204,9 @@ public:
   bool choice(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // One choice in an address sum, distributed over its additions.
   bool sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth = 0);
+  // e as add(a, b) or sub(a, b).
+  bool isAdd(const Ref &e, Ref &a, Ref &b) const;
+  bool isSub(const Ref &e, Ref &a, Ref &b) const;
   // e as store(a, i, v).
   bool stored(const Ref &e, Ref &a, Ref &i, Ref &v) const;
   // The value every index of e holds, if e is a constant array; else null.
@@ -359,21 +362,26 @@ private:
   llvm::DenseMap<const camada::SMTExpr *, Ref> made;
   Ref bools[2];
   unsigned joinDepth = 0; // nesting of the concat join, bounded
+  unsigned joinBudget = 0; // remaining ite splits in the current concat
   llvm::DenseMap<std::pair<const void *, const void *>, bool> implied;
-  bool entails(const Ref &guard, const Ref &lit, unsigned depth);
+  bool entails(const Ref &guard, const Ref &lit, unsigned depth, unsigned &budget);
   llvm::DenseMap<const void *, bool> arith;
   // Constant arrays built here (kept alive, so the key stays theirs) and
-  // the value each holds.
+  // the value each holds, plus memoisation by (index sort, value).
   llvm::DenseMap<const void *, std::pair<Ref, Ref>> filled;
+  llvm::DenseMap<std::pair<const void *, const void *>, Ref> constArrays;
   struct Lambda {
     Def def;
     Ref below;
     std::function<bool(const Ref &)> misses;
   };
   std::unordered_map<const void *, Lambda> lambdas;
-  // Per store or choice of arrays, the lambdas it reads through without
-  // passing another one.
-  std::unordered_map<const void *, std::vector<Ref>> under;
+  // Per store or choice of arrays, its direct children that are lambdas or
+  // reach one (at most 1 for Store, 2 for Ite).
+  llvm::DenseMap<const void *, llvm::SmallVector<Ref, 2>> under;
+  // (array, index) pairs whose reachable lambdas have already been constrained
+  // at index.
+  llvm::DenseSet<std::pair<const void *, const void *>> constrained;
   // Per lambda and index, the index (kept alive) and the definition there.
   llvm::DenseMap<std::pair<const void *, const void *>, std::pair<Ref, Ref>> reduced;
   // Per array and constant index, what select gave: a read walks up to 256

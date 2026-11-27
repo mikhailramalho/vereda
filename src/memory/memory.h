@@ -258,7 +258,11 @@ public:
 
 private:
   encode::Term fieldPointer(encode::Term p, unsigned bytes = 1);
-  encode::Term fromAddress(encode::Term a, unsigned &budget);
+  encode::Term fromAddress(encode::Term a, unsigned &budget,
+                           llvm::DenseMap<const void *, encode::Term> &memo);
+  std::optional<uint64_t> directBase(encode::Term a, unsigned depth = 0) const;
+  bool hasFoldableAddress(encode::Term a, unsigned &budget,
+                          llvm::DenseSet<const void *> &seen) const;
   encode::Term bytePtr(encode::Term p, uint64_t i);
   void ensureLayout(uint64_t id);
   encode::Term base(encode::Term obj);
@@ -364,7 +368,8 @@ private:
   camada::SMTSolver &s;
   const llvm::DataLayout &dl;
   unsigned ptrBits;
-  std::vector<Object> objects; // index = object id; 0 is null
+  std::vector<Object> objects;
+  llvm::DenseMap<const void *, uint64_t> baseToObj; // index = object id; 0 is null
   encode::Term bases;    // object id -> base address, created lazily on symbolic base()
   encode::Term sizes;    // object id -> size in bytes, created lazily on symbolic size()
   encode::Term end;      // first address after the last object
