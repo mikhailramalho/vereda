@@ -1,8 +1,8 @@
 // Models of <stdio.h> streams (C17 7.21). A bodyless call gives the objects
 // it gets pointers to nondet contents, so a stream must be an object of its
 // own: a pointer from a bodyless fopen could point anywhere, and such a
-// call refuses it. fmemopen and open_memstream stay bodyless, as their
-// streams write to the program's own memory.
+// call refuses it. fmemopen and open_memstream keep the program's memory
+// their streams write to in the stream (see below).
 #include <errno.h>
 #include <stdio.h>
 #include <sys/uio.h>
@@ -96,4 +96,39 @@ ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
   ssize_t r = __VERIFIER_nondet_long();
   __VERIFIER_assume(r >= -1);
   return r;
+}
+
+// fmemopen and open_memstream (POSIX) make streams that write to the
+// program's own memory: buf, or the buffer and size kept in *ptr and *size.
+// As for a bodyless call, those objects get nondet contents at the open. The
+// stream is an object of its own that keeps the pointers, so that the
+// bodyless calls writing to it change them too, and fclose frees it.
+FILE *fmemopen(void *buf, size_t size, const char *mode) {
+  if (buf)
+    __vereda_havoc(buf);
+  FILE *s = stream();
+  if (s)
+    s->_IO_buf_base = buf;
+  return s;
+}
+
+FILE *open_memstream(char **ptr, size_t *size) {
+  __vereda_havoc(ptr);
+  __vereda_havoc(size);
+  FILE *s = stream();
+  if (s) {
+    s->_IO_buf_base = (char *)ptr;
+    s->_IO_buf_end = (char *)size;
+  }
+  return s;
+}
+
+// C17 7.21.5.1: fclose flushes the stream and closes it whether or not that
+// succeeds, so the object of an opened stream is freed and a second fclose
+// is a double free. The standard streams are no allocation and stay.
+int fclose(FILE *s) {
+  fflush(s);
+  if (s != &__vereda_stdin && s != &__vereda_stdout && s != &__vereda_stderr)
+    free(s);
+  return __VERIFIER_nondet_int() ? EOF : 0;
 }
