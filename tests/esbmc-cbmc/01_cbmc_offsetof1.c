@@ -15,4 +15,5 @@ int main(void)
   assert(__builtin_offsetof(struct S, j)==8);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_offsetof1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

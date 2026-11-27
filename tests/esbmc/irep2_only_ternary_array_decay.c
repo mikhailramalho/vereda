@@ -14,4 +14,5 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_ternary_array_decay
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

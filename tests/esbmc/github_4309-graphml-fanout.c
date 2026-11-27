@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-graphml-fanout
 // Needs: --all-witnesses --witness-output-graphml violation.graphml --witness-output-yaml violation.yaml
-// RUN: --all-witnesses --witness-output-graphml violation.graphml --witness-output-yaml violation.yaml
+// RUN: --all-witnesses --witness-output-graphml violation.graphml --witness-output-yaml violation.yaml --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 2 witnesses\]

@@ -9,6 +9,7 @@ int main(int argc, char **argv)
   return c[4];
 }
 // Imported from ESBMC regression/esbmc/irep2_only_ternary_array_decay_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*array bounds violated.*$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

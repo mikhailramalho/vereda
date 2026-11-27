@@ -48,4 +48,5 @@ void main(){
 }
 
 // Imported from ESBMC regression/esbmc/02_eureka01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

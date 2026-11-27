@@ -31,4 +31,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_multibyte_array_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

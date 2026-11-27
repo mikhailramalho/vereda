@@ -24,6 +24,7 @@ int main(void)
   return g.k;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_carried_copy_fail
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^State [0-9]+ file .*field_sensitive_ssa_carried_copy_fail\.c line 22 column 7 function main thread 0$
 // EXPECT: ^  g = \{ \.p=.+, \.k=0 \}$

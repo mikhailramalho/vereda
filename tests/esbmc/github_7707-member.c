@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7707-member
+// RUN: --no-incremental-bmc
 // EXPECT: ^WARNING: not checking alignment for access to packed struct struct S$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment for access to packed struct struct S$

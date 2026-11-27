@@ -8,5 +8,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_2457_fail
 // Needs: __CPROVER_rw_ok
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

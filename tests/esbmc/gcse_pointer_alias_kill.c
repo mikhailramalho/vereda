@@ -15,4 +15,5 @@ int main()
   assert(b == 6 && d == 8);
 }
 // Imported from ESBMC regression/esbmc/gcse_pointer_alias_kill
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

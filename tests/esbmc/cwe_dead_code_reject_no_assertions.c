@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_no_assertions
 // Needs: --dead-code-check
-// RUN: --dead-code-check --no-assertions
+// RUN: --dead-code-check --no-assertions --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --no-assertions$
 // Vereda: verdict none

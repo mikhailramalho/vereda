@@ -22,5 +22,5 @@ int main()
 	free(r);
 }
 // Imported from ESBMC regression/esbmc/aligned-alloc-2
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

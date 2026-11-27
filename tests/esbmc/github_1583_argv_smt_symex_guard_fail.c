@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1583_argv_smt_symex_guard_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict UNKNOWN

@@ -27,6 +27,7 @@ int main(){
 }
 
 // Imported from ESBMC regression/esbmc/02_eureka09
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

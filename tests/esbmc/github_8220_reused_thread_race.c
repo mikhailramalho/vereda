@@ -33,7 +33,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8220_reused_thread_race
 // Needs: --sv-comp --data-races-check-only
-// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --ub-pointer-check=false
+// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --ub-pointer-check=false --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8700_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --multi-property
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --multi-property --no-incremental-bmc
 // EXPECT: ^  PASSED .*line +6  arithmetic overflow on add$
 // EXPECT: ^  FAILED .*line +8  arithmetic overflow on add$
 // EXPECT: ^  FAILED .*line +10  arithmetic overflow on add$

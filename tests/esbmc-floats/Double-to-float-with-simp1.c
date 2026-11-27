@@ -159,6 +159,7 @@ int main (void)
   return 1;
 }
 // Imported from ESBMC regression/floats/Double-to-float-with-simp1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

@@ -8,4 +8,5 @@ int main() {
         assert(0);
 }
 // Imported from ESBMC regression/esbmc-unix/pthread_exit
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

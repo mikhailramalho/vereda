@@ -11,6 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10941_short_circuit_fail
+// RUN: --no-incremental-bmc
 // EXPECT: array bounds violated
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: array bounds violated

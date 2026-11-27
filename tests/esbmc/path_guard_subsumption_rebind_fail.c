@@ -22,4 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/path_guard_subsumption_rebind_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -25,4 +25,5 @@ int main () {
   cmp_str(a, b, MAX);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_while1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

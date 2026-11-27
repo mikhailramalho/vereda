@@ -28,7 +28,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/branching_in_other_fp_target
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: --validate-violation-witness --witness witness.yml
+// RUN: --validate-violation-witness --witness witness.yml --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

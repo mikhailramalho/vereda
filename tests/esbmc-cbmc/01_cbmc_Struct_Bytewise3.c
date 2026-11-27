@@ -33,5 +33,5 @@ int main()
  
 
 // Imported from ESBMC regression/cbmc/01_cbmc_Struct_Bytewise3
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

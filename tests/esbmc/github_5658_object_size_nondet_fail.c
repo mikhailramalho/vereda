@@ -17,6 +17,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_5658_object_size_nondet_fail
 // Needs: __ESBMC_get_object_size
-// RUN: --entry f
+// RUN: --entry f --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -11,5 +11,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/builtin_free
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

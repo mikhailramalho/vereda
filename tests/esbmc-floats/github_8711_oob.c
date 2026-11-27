@@ -8,6 +8,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8711_oob
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure on memcpy: reading memory segment of size 2 with 4 bytes$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure on memcpy: reading memory segment of size 2 with 4 bytes$

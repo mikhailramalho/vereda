@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 }
 
 // Imported from ESBMC regression/esbmc/github_2312_5
-// RUN: --solver z3
+// RUN: --solver z3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

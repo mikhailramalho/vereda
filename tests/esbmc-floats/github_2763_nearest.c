@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/floats/github_2763_nearest
 // Needs: --round-to-nearest
-// RUN: --round-to-nearest
+// RUN: --round-to-nearest --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

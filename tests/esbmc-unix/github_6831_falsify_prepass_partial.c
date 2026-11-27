@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_falsify_prepass_partial
 // Needs: --partial-loops --falsify-context-bound 1
-// RUN: --partial-loops --falsify-context-bound 1
+// RUN: --partial-loops --falsify-context-bound 1 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Falsifying with context bound 1$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -15,5 +15,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10891_byte_offset_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

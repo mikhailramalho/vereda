@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/gcc_nested_func_inner_shadow_mixed
 // Needs: --gcc-nested-functions --no-library
-// RUN: --gcc-nested-functions --no-library
+// RUN: --gcc-nested-functions --no-library --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

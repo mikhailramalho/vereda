@@ -50,5 +50,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix/github_1009_success2
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

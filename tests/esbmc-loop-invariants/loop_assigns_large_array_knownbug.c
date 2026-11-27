@@ -29,6 +29,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/loop_assigns_large_array_knownbug
 // Needs: __ESBMC_loop_assigns, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --loop-frame-rule
-// RUN: --loop-invariant-check --loop-frame-rule
+// RUN: --loop-invariant-check --loop-frame-rule --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$

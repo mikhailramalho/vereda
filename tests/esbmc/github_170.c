@@ -18,7 +18,7 @@ struct s2 *make_s2(char ch)
 }
 // Imported from ESBMC regression/esbmc/github_170
 // Needs: -fms-extensions
-// RUN: -fms-extensions --function make_s2 --force-malloc-success
+// RUN: -fms-extensions --function make_s2 --force-malloc-success --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

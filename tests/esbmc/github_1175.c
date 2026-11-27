@@ -4,6 +4,7 @@ int main()
   int v = *ptr;
 }
 // Imported from ESBMC regression/esbmc/github_1175
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

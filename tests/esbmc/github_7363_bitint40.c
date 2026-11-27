@@ -14,5 +14,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7363_bitint40
 // Needs: REQUIRES bitint
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_5998-symmetry-breaking_float_fail
 // Needs: --no-standard-checks
-// RUN: --multi-property --no-standard-checks
+// RUN: --multi-property --no-standard-checks --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

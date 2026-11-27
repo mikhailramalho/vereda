@@ -11,5 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/llvm/static_assert
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

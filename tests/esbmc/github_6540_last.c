@@ -8,5 +8,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6540_last
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

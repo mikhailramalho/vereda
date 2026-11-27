@@ -98,4 +98,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/llvm/binary_operator
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

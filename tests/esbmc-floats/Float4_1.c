@@ -64,5 +64,6 @@ int main()
   assert(1.0!=2.5);
 }
 // Imported from ESBMC regression/floats/Float4_1
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -11,4 +11,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/simplifier19_no
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

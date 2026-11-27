@@ -31,4 +31,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_struct_member_bound_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -100,6 +100,6 @@ int main()
   
 }
 // Imported from ESBMC regression/esbmc/overflow_05_crc
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

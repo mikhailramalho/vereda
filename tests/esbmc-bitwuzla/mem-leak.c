@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/mem-leak
 // Needs: --memory-leak-check
-// RUN: --bitwuzla --memory-leak-check
+// RUN: --bitwuzla --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

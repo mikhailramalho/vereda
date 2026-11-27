@@ -97,7 +97,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4423_atomic_race
 // Needs: --data-races-check-only --context-bound 3
-// RUN: --data-races-check-only --no-assertions --context-bound 3
+// RUN: --data-races-check-only --no-assertions --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@stopped$

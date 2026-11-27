@@ -21,4 +21,5 @@ int main()
   assert(s.z==6);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer10
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

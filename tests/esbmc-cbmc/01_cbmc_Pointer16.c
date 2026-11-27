@@ -10,4 +10,5 @@ int main()
   assert(x==1000);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer16
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

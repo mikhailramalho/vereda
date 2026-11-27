@@ -44,7 +44,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/02_phase_03
 // Needs: --deadlock-check --context-bound 3
-// RUN: --deadlock-check --context-bound 3
+// RUN: --deadlock-check --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -7,5 +7,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/overflow_add2
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --solver z3
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --solver z3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

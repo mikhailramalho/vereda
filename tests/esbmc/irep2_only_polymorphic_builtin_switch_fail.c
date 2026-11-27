@@ -14,7 +14,7 @@ int main(void)
   }
 }
 // Imported from ESBMC regression/esbmc/irep2_only_polymorphic_builtin_switch_fail
-// RUN: --std c11
+// RUN: --std c11 --no-incremental-bmc
 // EXPECT: ^\s*FAILED\s+\[__c11_atomic_load\.null-pointer-dereference\.1\]\s+line +8\s+dereference failure: NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[__c11_atomic_load\.null-pointer-dereference\.1\]\s+line +8\s+dereference failure: NULL pointer$

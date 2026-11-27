@@ -22,4 +22,5 @@ int main()
   VLA_size(foo);
 }
 // Imported from ESBMC regression/esbmc/array_sideeffect1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

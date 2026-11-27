@@ -9,6 +9,7 @@ int main(int, int, int){
 }
 
 // Imported from ESBMC regression/esbmc/github_270_1
+// RUN: --no-incremental-bmc
 // EXPECT: ^ERROR: PARSING ERROR$
 // Vereda: unmet EXPECT: ^ERROR: PARSING ERROR$
 // MODE: FUTURE

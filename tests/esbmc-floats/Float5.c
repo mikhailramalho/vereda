@@ -9,4 +9,5 @@ int main()
   __VERIFIER_assert(a==b); // float div works
 }
 // Imported from ESBMC regression/floats/Float5
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

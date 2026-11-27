@@ -16,4 +16,5 @@ int main()
   assert(str_array[1].b==4);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Struct_Initialization2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

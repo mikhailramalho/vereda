@@ -27,5 +27,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/const_object_write_intrinsics
 // Needs: __ESBMC_init_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

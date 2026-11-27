@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-fp-nan
 // Needs: --all-witnesses --max-witnesses 4
-// RUN: --all-witnesses --max-witnesses 4
+// RUN: --all-witnesses --max-witnesses 4 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 4 witnesses\]

@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/goto-coverage/covered_set_all
 // Needs: --branch-coverage-claims --coverage-covered-set covered.json SEED_FILE covered.json {"version":1,"covered":[{"cond":"unrelated","loc":"unrelated"}]} CHECK_JSON covered.json $.version == 1 CHECK_FILE covered.json contains unrelated CHECK_FILE covered.json contains main.c
-// RUN: --branch-coverage-claims --no-assertions --coverage-covered-set covered.json
+// RUN: --branch-coverage-claims --no-assertions --coverage-covered-set covered.json --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Branches : 2$
 // EXPECT: ^Reached : 2$

@@ -17,7 +17,7 @@ int main()
 	return 0;
 }
 // Imported from ESBMC regression/esbmc/cpachecker-ulong-max-64.c
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: x = 0xFFFFFFFFFFFFFFFF
 // Vereda: unmet EXPECT: x = 0xFFFFFFFFFFFFFFFF

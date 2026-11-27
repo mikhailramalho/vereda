@@ -14,6 +14,7 @@ int main()
 	assert(!data);
 }
 // Imported from ESBMC regression/esbmc/switch-line-no
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: switch\-line\-no\.c line 8.*\n.*\n\s*data =
 // Vereda: unmet EXPECT: switch\-line\-no\.c line 8.*\n.*\n\s*data =

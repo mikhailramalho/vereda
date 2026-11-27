@@ -49,5 +49,6 @@ int main (void)
   return 0;
 }
 // Imported from ESBMC regression/floats/Float-div1
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

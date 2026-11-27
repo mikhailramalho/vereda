@@ -8,7 +8,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ilogb_logb_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED\s+\[main.assertion.2\].*logb
 // Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*logb

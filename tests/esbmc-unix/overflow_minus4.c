@@ -110,7 +110,7 @@ int minus(int a, int b) {
 }
 // Imported from ESBMC regression/esbmc-unix/overflow_minus4
 // Needs: --context-bound 2
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --z3 --context-bound 2
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --z3 --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

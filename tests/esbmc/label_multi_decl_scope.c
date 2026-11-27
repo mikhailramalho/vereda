@@ -7,4 +7,5 @@ L:
   return a;
 }
 // Imported from ESBMC regression/esbmc/label_multi_decl_scope
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

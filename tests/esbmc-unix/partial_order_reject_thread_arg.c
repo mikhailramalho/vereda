@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_thread_arg
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support a thread argument other than NULL yet, at file .*partial_order_reject_thread_arg\.c line +12 column 3 function
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

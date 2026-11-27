@@ -7,6 +7,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_clz_zero_default
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

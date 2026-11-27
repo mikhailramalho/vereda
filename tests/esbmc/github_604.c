@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_604
 // Needs: --closed-world-fnptr
-// RUN: --closed-world-fnptr
+// RUN: --closed-world-fnptr --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

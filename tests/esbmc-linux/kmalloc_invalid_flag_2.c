@@ -6,6 +6,7 @@ int main(void)
     return 0;
 }
 // Imported from ESBMC regression/linux/kmalloc_invalid_flag_2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

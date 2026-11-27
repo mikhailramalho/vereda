@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_cond
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support a call to pthread_cond_timedwait yet, at file .*partial_order_reject_cond\.c line +11 column 3 function
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

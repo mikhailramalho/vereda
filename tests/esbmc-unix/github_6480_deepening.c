@@ -31,7 +31,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6480_deepening
 // Needs: --deadlock-check --incremental-context-bound
-// RUN: --deadlock-check --incremental-context-bound
+// RUN: --deadlock-check --incremental-context-bound --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Context bound \d+ covered every interleaving
 // EXPECT: ^VERIFICATION SUCCESSFUL$

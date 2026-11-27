@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10920_input_order
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^    #1 : \[0\] = [56], \[1\] = 10, \[2\] = [01]$
 // EXPECT: ^    #2 : \[0\] = [56], \[1\] = 10, \[2\] = [01]$

@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9881_function_return_rparen
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == 3"\n.*\n.*\n.*\n *line: 9\n *column: 43$

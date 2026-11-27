@@ -26,6 +26,7 @@ int main()
   __VERIFIER_assert(v.p != arr + 100); // byte changed
 }
 // Imported from ESBMC regression/esbmc/github_9937
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \[main.assertion.1\]  line 17  kept
 // Vereda: unmet EXPECT: \[main.assertion.1\]  line 17  kept

@@ -15,4 +15,5 @@ int main()
   assert(test_bit_reverse8(127)==254);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_BV_Arithmetic3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

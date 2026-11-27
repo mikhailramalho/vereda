@@ -25,4 +25,5 @@ int main()
   return s == 6 ? 0 : 1;
 }
 // Imported from ESBMC regression/esbmc/github_133_flex_array
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

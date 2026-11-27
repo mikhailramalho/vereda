@@ -17,4 +17,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_remainder_ties_fixedbv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// RUN: --ub-div-by-zero-check=false
+// RUN: --ub-div-by-zero-check=false --no-incremental-bmc

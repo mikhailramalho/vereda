@@ -87,6 +87,7 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc-unix/03_circular_buffer_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

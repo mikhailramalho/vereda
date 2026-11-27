@@ -14,4 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/user_defined_popcnt
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

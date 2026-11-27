@@ -14,4 +14,5 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/endianness_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

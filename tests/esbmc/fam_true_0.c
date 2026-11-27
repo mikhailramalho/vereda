@@ -9,4 +9,5 @@ int main() {
   __VERIFIER_assert(F.arr != NULL); // FAM should be initialized properly
 }
 // Imported from ESBMC regression/esbmc/fam_true_0
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

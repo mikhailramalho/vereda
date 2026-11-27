@@ -27,6 +27,6 @@ int main()
 // Imported from ESBMC regression/z3/github_3936_1
 // Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant --no-standard-checks
-// RUN: --loop-invariant --no-standard-checks --z3
+// RUN: --loop-invariant --no-standard-checks --z3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

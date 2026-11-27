@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10920_library_nondets
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^\[Counterexamples - 1 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 1 witnesses

@@ -8,5 +8,5 @@ int main()
   __VERIFIER_assert(a[2] == 0); // a[2]
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_uninit
-// RUN: --ub-uninit-check
+// RUN: --ub-uninit-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -527,5 +527,5 @@ int main() {
   }
 }
 // Imported from ESBMC regression/esbmc/00_bitshift_05
-// RUN: --ub-signed-overflow-check --ub-shift-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

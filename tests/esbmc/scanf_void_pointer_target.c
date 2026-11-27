@@ -10,4 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_void_pointer_target
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

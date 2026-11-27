@@ -39,4 +39,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vasprintf_valist_vacopy_launder_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -10,7 +10,7 @@ void f()
   y=*px;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer13
-// RUN: --entry f
+// RUN: --entry f --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

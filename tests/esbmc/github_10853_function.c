@@ -16,7 +16,7 @@ int main(void)
 // Imported from ESBMC regression/esbmc/github_10853_function
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --witness-output-yaml
-// RUN: --loop-invariant-check --function count --witness-output-yaml -
+// RUN: --loop-invariant-check --function count --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  content:\n    \[\]$

@@ -7,7 +7,7 @@ int f(unsigned char x)
 }
 // Imported from ESBMC regression/esbmc/github_2074
 // Needs: --interval-analysis
-// RUN: --function f --interval-analysis
+// RUN: --function f --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

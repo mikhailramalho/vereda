@@ -9,7 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/log10_model_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED\s+\[main.assertion.2\].*log10\(1000.0\) != 3.0
 // Vereda: unmet EXPECT: FAILED\s+\[main.assertion.2\].*log10\(1000.0\) != 3.0

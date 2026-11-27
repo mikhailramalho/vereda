@@ -37,6 +37,7 @@ int main()
 
 #endif
 // Imported from ESBMC regression/floats/Float-Rounding2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

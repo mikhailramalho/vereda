@@ -7,4 +7,5 @@ int main()
 	assert(temp==12);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv18
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

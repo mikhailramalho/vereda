@@ -25,7 +25,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_atomic_fail
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

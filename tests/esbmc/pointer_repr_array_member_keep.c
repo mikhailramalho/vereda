@@ -21,4 +21,5 @@ int main()
   assert(s.a[0] == &k);
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_array_member_keep
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

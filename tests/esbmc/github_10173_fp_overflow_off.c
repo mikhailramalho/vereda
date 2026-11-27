@@ -6,5 +6,5 @@ int main()
   return (int)(b != b);
 }
 // Imported from ESBMC regression/esbmc/github_10173_fp_overflow_off
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-pointer-check=false --no-assertions
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-pointer-check=false --no-assertions --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

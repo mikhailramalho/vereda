@@ -15,4 +15,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_member_store_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

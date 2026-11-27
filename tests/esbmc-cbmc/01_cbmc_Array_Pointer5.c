@@ -11,4 +11,5 @@ int main(void)
   fun(p1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Pointer5
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

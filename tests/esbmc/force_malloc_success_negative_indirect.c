@@ -19,5 +19,5 @@ int main(void)
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/force_malloc_success_negative_indirect
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -22,7 +22,7 @@ void main()
 }
 // Imported from ESBMC regression/esbmc/github_2292_4
 // Needs: --interval-analysis --interval-analysis-simplify
-// RUN: --interval-analysis --interval-analysis-simplify
+// RUN: --interval-analysis --interval-analysis-simplify --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

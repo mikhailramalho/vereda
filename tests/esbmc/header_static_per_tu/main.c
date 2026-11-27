@@ -9,5 +9,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/header_static_per_tu
+// RUN: --no-incremental-bmc
 // FILES: a.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$

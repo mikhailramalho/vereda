@@ -19,4 +19,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/strcasecmp_model
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

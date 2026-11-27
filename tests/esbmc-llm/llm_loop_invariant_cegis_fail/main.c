@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/llm/llm_loop_invariant_cegis_fail
 // Needs: --llm-invariants --llm-command model.py REQUIRES posix_host
-// RUN: --llm-invariants --llm-command model.py
+// RUN: --llm-invariants --llm-command model.py --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^LLM loop invariants: 2 of 2 candidate conjunct\(s\) are inductive$
 // EXPECT: ^Synthesised loop invariants for 1 loop$

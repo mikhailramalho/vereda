@@ -22,5 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_rel_huge_object_alloca
-// RUN: --vla-size-check=false
+// RUN: --vla-size-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

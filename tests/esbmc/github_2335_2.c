@@ -22,7 +22,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_2335_2
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check
+// RUN: --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

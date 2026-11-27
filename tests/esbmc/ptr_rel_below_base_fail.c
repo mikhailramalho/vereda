@@ -12,4 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_rel_below_base_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

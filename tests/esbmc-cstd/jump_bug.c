@@ -32,4 +32,5 @@ int main(void)
 
 
 // Imported from ESBMC regression/cstd/jump_bug
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,4 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_stride_wrap_inner_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

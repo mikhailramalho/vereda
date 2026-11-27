@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/floats/github_2865_high
 // Needs: --fp-taylor-terms 12
-// RUN: --fp-taylor-terms 12
+// RUN: --fp-taylor-terms 12 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

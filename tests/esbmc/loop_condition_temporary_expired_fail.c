@@ -9,6 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/loop_condition_temporary_expired_fail
+// RUN: --no-incremental-bmc
 // EXPECT: accessed expired variable pointer `main::\$tmp::return_value\$_f\$1'
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: accessed expired variable pointer `main::\$tmp::return_value\$_f\$1'

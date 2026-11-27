@@ -46,7 +46,9 @@ several files) and forwards every flag it does not know to the binary:
 The binary (`build/vereda`) takes only `.bc`/`.ll`; its flags are `cl::opt`s in
 `src/driver/main.cpp`. Useful for debugging: `--dump-ir-only`, `--dump-smt-only`,
 `--dump-dir <dir>`, `--keep-ir` (front end). Exit codes: 0 SUCCESSFUL, 1 FAILED, 2 UNKNOWN,
-6 error (as ESBMC).
+6 error (as ESBMC). Without `--unwind` the binary checks bounds 1, 2, ... (incremental
+BMC, up to `--max-k-step`, 50); `--no-incremental-bmc` unrolls each loop until its next
+iteration is unreachable instead.
 
 ## Regression tests
 
@@ -77,8 +79,8 @@ and so do tests still calling an `__ESBMC_*` or `__CPROVER_*` function after the
 `--mark` flips the mode of tests Vereda currently disagrees with. Every test has a 300 s
 timeout (`REGRESS_TIMEOUT`); a run that times out is skipped in any mode, and `--mark`
 never changes a mode because of one. A run may write at most 256 MB to any file, its
-output included (a loop unrolled without `--unwind` prints a line per iteration); one
-stopped there counts as timed out.
+output included (a loop unrolled under `--no-incremental-bmc` without `--unwind` prints
+a line per iteration); one stopped there counts as timed out.
 Every test also runs under a memory limit (`REGRESS_MEMORY_LIMIT`, 4096 MB of address
 space); going past it fails the test, except a KNOWNBUG one, and `--mark` leaves its mode
 alone. CI runs 3 tests at a time so that three such tests fit its 16 GB.

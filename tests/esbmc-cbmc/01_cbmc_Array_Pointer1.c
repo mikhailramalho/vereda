@@ -19,4 +19,5 @@ int main() {
   assert(*p==0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Pointer1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

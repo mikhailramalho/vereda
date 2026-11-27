@@ -30,5 +30,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats-regression/github_7792_fail
-// RUN: -m32 --multi-property
+// RUN: -m32 --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

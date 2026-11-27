@@ -24,5 +24,6 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/overflow-result1
 // Needs: __ESBMC_overflow_result_plus
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

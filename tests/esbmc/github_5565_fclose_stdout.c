@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5565_fclose_stdout
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

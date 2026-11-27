@@ -7,6 +7,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10812_init_object_literal_fail
 // Needs: __ESBMC_init_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  dereference failure: write access to string constant$
 // EXPECT: ^VERIFICATION FAILED$

@@ -12,4 +12,5 @@ int main()
   __builtin_memcpy(&foo, &foo, 4);
 }
 // Imported from ESBMC regression/esbmc/github_1976
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -6,6 +6,7 @@ int main()
   return strnlen(buf, 5);
 }
 // Imported from ESBMC regression/esbmc/strnlen_model_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: array bounds violated$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

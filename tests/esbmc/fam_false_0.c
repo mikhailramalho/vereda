@@ -8,6 +8,7 @@ int main() {
   F.arr[10] = 7; // out-of-bounds
 }
 // Imported from ESBMC regression/esbmc/fam_false_0
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict SUCCESSFUL

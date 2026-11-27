@@ -48,5 +48,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/no_pointer_check_issue_273
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

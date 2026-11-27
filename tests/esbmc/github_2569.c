@@ -17,4 +17,5 @@ int main(int argc, char **argv)
   assert(x == 42);
 }
 // Imported from ESBMC regression/esbmc/github_2569
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

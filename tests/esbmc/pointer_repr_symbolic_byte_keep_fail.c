@@ -21,4 +21,5 @@ int main()
   assert(s.p == q);
 }
 // Imported from ESBMC regression/esbmc/pointer_repr_symbolic_byte_keep_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

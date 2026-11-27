@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/memspace_first_page_fail
 // Needs: --reserve-first-page
-// RUN: --reserve-first-page
+// RUN: --reserve-first-page --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

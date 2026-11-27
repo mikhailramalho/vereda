@@ -9,6 +9,6 @@ int main(void)
   return r;
 }
 // Imported from ESBMC regression/esbmc/github_8658_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --solver z3
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --solver z3 --no-incremental-bmc
 // EXPECT: ^  FAILED .*arithmetic overflow on add
 // EXPECT: ^VERIFICATION FAILED$

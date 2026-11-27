@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_big_endian_union
 // Needs: --big-endian
-// RUN: --big-endian
+// RUN: --big-endian --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  u\.s\.v\[0\] = \{ \.c=1
 // EXPECT: ^VERIFICATION FAILED$

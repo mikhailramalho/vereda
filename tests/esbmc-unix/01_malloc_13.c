@@ -35,7 +35,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_13
 // Needs: --deadlock-check --context-bound 2
-// RUN: --deadlock-check --context-bound 2
+// RUN: --deadlock-check --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

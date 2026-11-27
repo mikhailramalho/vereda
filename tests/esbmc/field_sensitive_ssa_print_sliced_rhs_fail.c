@@ -14,5 +14,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_sliced_rhs_fail
+// RUN: --no-incremental-bmc
 // EXPECT: \A(?![\s\S]*\n  s = )[\s\S]*\Z
 // EXPECT: ^VERIFICATION FAILED$

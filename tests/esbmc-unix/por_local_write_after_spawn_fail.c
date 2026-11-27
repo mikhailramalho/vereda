@@ -20,6 +20,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/por_local_write_after_spawn_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

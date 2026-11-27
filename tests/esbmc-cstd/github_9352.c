@@ -44,5 +44,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/github_9352
-// RUN: --std c11
+// RUN: --std c11 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

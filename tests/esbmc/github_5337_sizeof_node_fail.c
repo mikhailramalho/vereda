@@ -23,7 +23,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5337_sizeof_node_fail
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

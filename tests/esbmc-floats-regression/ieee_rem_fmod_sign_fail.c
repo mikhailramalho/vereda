@@ -14,5 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats-regression/ieee_rem_fmod_sign_fail
-// RUN: --fp2bv
+// RUN: --fp2bv --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

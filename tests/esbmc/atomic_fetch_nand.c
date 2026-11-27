@@ -9,4 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/atomic_fetch_nand
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

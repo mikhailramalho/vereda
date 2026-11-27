@@ -7,4 +7,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/yices/github_536_yices
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

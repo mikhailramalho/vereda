@@ -30,4 +30,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_punned_member_index
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

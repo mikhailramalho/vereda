@@ -13,4 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/spinlock_deadlock_no_check
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

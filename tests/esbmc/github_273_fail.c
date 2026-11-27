@@ -14,7 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_273_fail
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Relational comparison between pointers is only valid for pointers to the same object
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

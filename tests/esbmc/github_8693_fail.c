@@ -17,7 +17,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8693_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^  PASSED +\[main\.assertion\.1\]
 // EXPECT: ^  FAILED +\[main\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$

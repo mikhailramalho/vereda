@@ -11,4 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/stddef_reinclude_wint_t_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

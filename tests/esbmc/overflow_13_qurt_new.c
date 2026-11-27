@@ -164,7 +164,7 @@ int  qurt()
 
 // Imported from ESBMC regression/esbmc/overflow_13_qurt_new
 // Needs: --claim 1
-// RUN: --claim 1 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --claim 1 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

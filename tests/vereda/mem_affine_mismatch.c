@@ -1,5 +1,5 @@
 // A progression with a different last element must retain that last value.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern unsigned __VERIFIER_nondet_uint(void);
 extern void __VERIFIER_assume(int);

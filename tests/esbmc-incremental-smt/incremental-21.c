@@ -18,4 +18,5 @@ int main()
   assert(curr->val==2);
 }
 // Imported from ESBMC regression/incremental-smt/incremental-21
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

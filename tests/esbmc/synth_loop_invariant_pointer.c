@@ -9,7 +9,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_pointer
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants
+// RUN: --synthesise-loop-invariants --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^VERIFICATION FAILED$

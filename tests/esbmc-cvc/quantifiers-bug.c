@@ -24,6 +24,6 @@ int main()
 }
 // Imported from ESBMC regression/cvc/quantifiers-bug
 // Needs: __ESBMC_exists, __ESBMC_forall
-// RUN: --solver cvc5
+// RUN: --solver cvc5 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

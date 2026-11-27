@@ -16,5 +16,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10811_init_object_fail
 // Needs: __ESBMC_init_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

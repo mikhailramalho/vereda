@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/multi_property_interval_assume_asserts
 // Needs: --interval-analysis --interval-analysis-assume-asserts
-// RUN: --interval-analysis --interval-analysis-assume-asserts --multi-property
+// RUN: --interval-analysis --interval-analysis-assume-asserts --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

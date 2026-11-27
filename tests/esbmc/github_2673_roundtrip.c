@@ -6,4 +6,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_2673_roundtrip
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

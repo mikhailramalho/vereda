@@ -14,4 +14,5 @@ int main()
   assert(c==a+b || c==a-b);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv7
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

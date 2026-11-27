@@ -27,7 +27,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/sem_init_zero_value
 // Needs: --context-bound 2
-// RUN: --context-bound 2
+// RUN: --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

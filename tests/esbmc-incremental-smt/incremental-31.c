@@ -60,7 +60,7 @@ int main() {
 }
 // Imported from ESBMC regression/incremental-smt/incremental-31
 // Needs: --context-bound 2 --ub-data-race-check
-// RUN: --context-bound 2 --ub-data-race-check --multi-property --solver bitwuzla
+// RUN: --context-bound 2 --ub-data-race-check --multi-property --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

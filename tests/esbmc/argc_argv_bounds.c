@@ -6,7 +6,7 @@ int main(int argc, char **argv)
   return argv[argc] == 0 ? 0 : 1;
 }
 // Imported from ESBMC regression/esbmc/argc_argv_bounds
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s*PASSED\s+\[main\.array-bounds-violated\.1\]
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^\s*PASSED\s+\[main\.array-bounds-violated\.1\]

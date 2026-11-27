@@ -14,4 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_long_size_truncation_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

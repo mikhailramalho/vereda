@@ -18,7 +18,7 @@ done:
 }
 // Imported from ESBMC regression/esbmc/gcc_nested_func_label
 // Needs: --gcc-nested-functions --no-library
-// RUN: --gcc-nested-functions --no-library
+// RUN: --gcc-nested-functions --no-library --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: GCC __label__ declarations are not supported
 // Vereda: verdict none

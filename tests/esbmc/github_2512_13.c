@@ -20,4 +20,5 @@ int main()
   assert(c_off == 8);
 }
 // Imported from ESBMC regression/esbmc/github_2512_13
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

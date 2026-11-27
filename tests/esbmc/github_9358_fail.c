@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9358_fail
 // Needs: --printf-check
-// RUN: --printf-check
+// RUN: --printf-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  FAILED .* printf %s argument is not NUL-terminated within its object$
 // EXPECT: ^VERIFICATION FAILED$

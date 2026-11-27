@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_dead_store_sarif
 // Needs: --dead-code-check --dead-store-check --sarif-output out.sarif CHECK_JSON out.sarif $.version == "2.1.0" CHECK_JSON out.sarif $.runs[0].results[0].ruleId == "dead-code" CHECK_JSON out.sarif $.runs[0].results[1].ruleId == "dead-store"
-// RUN: --dead-code-check --dead-store-check --sarif-output out.sarif
+// RUN: --dead-code-check --dead-store-check --sarif-output out.sarif --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: :8: dead store: assignment to unused never read
 // EXPECT: ^\[Dead code\]$

@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/k-induction/github_6093
 // Needs: --loop-invariant --base-k-step 0
-// RUN: --loop-invariant --base-k-step 0 --max-k-step 2
+// RUN: --loop-invariant --base-k-step 0 --max-k-step 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: Please specify --base-k-step >= 1
 // EXPECT: ^ESBMC version

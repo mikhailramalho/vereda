@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_falsify
 // Needs: --partial-order --falsify-context-bound 2
-// RUN: --partial-order --falsify-context-bound 2
+// RUN: --partial-order --falsify-context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --falsify-context-bound cannot be combined with --partial-order$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

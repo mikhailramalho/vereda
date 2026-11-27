@@ -22,7 +22,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/testcomp_gen_nondet_memory_mixed
 // Needs: --generate-testcase
-// RUN: --generate-testcase -m64
+// RUN: --generate-testcase -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

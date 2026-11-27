@@ -78,4 +78,5 @@ int main()
 
 }
 // Imported from ESBMC regression/llvm/funcs
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

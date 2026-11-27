@@ -44,4 +44,5 @@ int main()
   assert(!(-b>=-a));  
 }
 // Imported from ESBMC regression/floats/Float6
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

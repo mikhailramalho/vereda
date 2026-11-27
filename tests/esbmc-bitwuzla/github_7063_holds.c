@@ -23,7 +23,7 @@ int main()
 // Imported from ESBMC regression/bitwuzla/github_7063_holds
 // Needs: __ESBMC_forall, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --multi-property --loop-invariant-check --bitwuzla
+// RUN: --multi-property --loop-invariant-check --bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^  PASSED +\[main\.assertion\.1\] +line 17 +loop invariant base case$

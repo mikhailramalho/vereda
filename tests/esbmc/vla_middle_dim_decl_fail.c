@@ -8,4 +8,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vla_middle_dim_decl_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,4 +15,5 @@ int main()
 	assert(k != 0);
 }
 // Imported from ESBMC regression/esbmc/github_1226-4
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9885_yaml_target_condition
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"\n.*\n.*\n.*\n\s*line: 9\n\s*column: 7$

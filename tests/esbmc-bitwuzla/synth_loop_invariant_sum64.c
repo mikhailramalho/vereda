@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/bitwuzla/synth_loop_invariant_sum64
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants --bitwuzla
+// RUN: --synthesise-loop-invariants --bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

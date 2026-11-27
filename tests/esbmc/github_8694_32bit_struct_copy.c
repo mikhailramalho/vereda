@@ -11,5 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8694_32bit_struct_copy
-// RUN: -m32 --multi-property
+// RUN: -m32 --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -26,6 +26,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/quantifiers-hello
 // Needs: __ESBMC_exists, __ESBMC_forall
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

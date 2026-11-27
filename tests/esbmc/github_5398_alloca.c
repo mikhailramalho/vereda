@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_5398_alloca
 // Needs: --malloc-zero-is-null
-// RUN: --malloc-zero-is-null
+// RUN: --malloc-zero-is-null --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

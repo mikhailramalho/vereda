@@ -7,4 +7,4 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10774_fmod_fixedbv_fail
 // EXPECT: ^VERIFICATION FAILED$
-// RUN: --ub-div-by-zero-check=false
+// RUN: --ub-div-by-zero-check=false --no-incremental-bmc

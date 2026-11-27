@@ -14,6 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_row_via_pointer_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^\s+the row.s first store is still readable$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s+the row.s first store is still readable$

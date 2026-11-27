@@ -13,6 +13,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6508
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*array bounds violated: array upper bound$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

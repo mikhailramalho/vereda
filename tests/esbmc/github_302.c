@@ -109,5 +109,6 @@ float distance(float aux1[DIM], float aux2[DIM]){
   return sqrt(dist);
 }
 // Imported from ESBMC regression/esbmc/github_302
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$

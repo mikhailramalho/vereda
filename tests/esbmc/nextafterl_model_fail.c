@@ -11,7 +11,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nextafterl_model_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: nextafterl\(1.0L, 2.0L\) == 1.0L$
 // EXPECT: nextafterl\(1.0L, 0.0L\) == 1.0L - LDBL_EPSILON$

@@ -7,5 +7,5 @@ unsigned long long q(unsigned a, unsigned b)
   return (unsigned long long)a * (unsigned long long)b;
 }
 // Imported from ESBMC regression/esbmc/github_7840_unsigned
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --entry q
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --entry q --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

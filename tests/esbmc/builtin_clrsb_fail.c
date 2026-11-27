@@ -11,5 +11,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_clrsb_fail
-// RUN: --ub-count-zero-check --multi-property
+// RUN: --ub-count-zero-check --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

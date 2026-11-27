@@ -11,6 +11,7 @@ int main() {
   (void)sizeof(c);
 }
 // Imported from ESBMC regression/esbmc/github_565
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

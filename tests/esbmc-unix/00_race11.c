@@ -29,7 +29,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/00_race11
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check
+// RUN: --ub-data-race-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -16,7 +16,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10383_struct_fail
-// RUN: --std c2x --solver z3 --multi-property
+// RUN: --std c2x --solver z3 --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

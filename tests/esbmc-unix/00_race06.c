@@ -46,7 +46,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/00_race06
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check
+// RUN: --ub-data-race-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

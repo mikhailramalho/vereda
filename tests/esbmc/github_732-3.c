@@ -52,5 +52,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_732-3
-// RUN: -DRANGE_CHECK_ERROR
+// RUN: -DRANGE_CHECK_ERROR --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

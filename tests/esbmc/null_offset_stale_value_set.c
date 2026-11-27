@@ -13,5 +13,5 @@ int main()
   return *p;
 }
 // Imported from ESBMC regression/esbmc/null_offset_stale_value_set
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

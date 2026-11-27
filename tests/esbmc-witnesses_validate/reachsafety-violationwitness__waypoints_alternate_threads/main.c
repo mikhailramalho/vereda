@@ -22,7 +22,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses_validate/reachsafety-violationwitness/waypoints_alternate_threads
 // Needs: --validate-violation-witness --witness witness.yml
-// RUN: --validate-violation-witness --witness witness.yml
+// RUN: --validate-violation-witness --witness witness.yml --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$
 // Vereda: verdict none

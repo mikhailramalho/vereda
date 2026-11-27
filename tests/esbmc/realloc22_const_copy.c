@@ -34,4 +34,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/realloc22_const_copy
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

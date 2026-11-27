@@ -18,5 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8692_bitint_member_32
-// RUN: -m32 --multi-property
+// RUN: -m32 --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

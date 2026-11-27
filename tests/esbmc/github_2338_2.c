@@ -7,5 +7,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_2338_2
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

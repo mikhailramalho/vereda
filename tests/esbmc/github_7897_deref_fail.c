@@ -13,6 +13,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7897_deref_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^.*dereference failure: NULL pointer$

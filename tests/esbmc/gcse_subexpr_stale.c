@@ -16,4 +16,5 @@ int main()
   return (int)(y + w);
 }
 // Imported from ESBMC regression/esbmc/gcse_subexpr_stale
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

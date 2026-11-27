@@ -16,7 +16,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/restrict_const_alias
 // Needs: --restrict-check
-// RUN: --restrict-check
+// RUN: --restrict-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*restrict pointer aliasing$

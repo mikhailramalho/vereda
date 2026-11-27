@@ -6,7 +6,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_1628_5
 // Needs: --printf-check
-// RUN: --printf-check
+// RUN: --printf-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

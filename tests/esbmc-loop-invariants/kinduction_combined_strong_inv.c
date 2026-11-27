@@ -24,7 +24,7 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/kinduction_combined_strong_inv
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant
+// RUN: --loop-invariant --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: Solution found by the inductive step

@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/goto-coverage/github_6422_1
 // Needs: --branch-coverage
-// RUN: --branch-coverage
+// RUN: --branch-coverage --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Coverage goals: 2 ✓ 2 reached$
 // EXPECT: ^Branches : 2

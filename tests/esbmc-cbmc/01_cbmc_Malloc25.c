@@ -18,4 +18,5 @@ int main()
   assert(accounts[0]->name!=1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc25
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

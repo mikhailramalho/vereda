@@ -19,7 +19,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_race_only
 // Needs: --dead-code-check --data-races-check-only
-// RUN: --dead-code-check --data-races-check-only
+// RUN: --dead-code-check --data-races-check-only --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --data-races-check-only$
 // Vereda: verdict none

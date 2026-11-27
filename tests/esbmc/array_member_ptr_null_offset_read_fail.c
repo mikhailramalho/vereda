@@ -9,6 +9,7 @@ int main(void)
   return v;
 }
 // Imported from ESBMC regression/esbmc/array_member_ptr_null_offset_read_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: NULL pointer$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: NULL pointer$

@@ -23,4 +23,5 @@ int main()
 	assert(u.a[1][3] == 0x11);
 }
 // Imported from ESBMC regression/esbmc/github_841-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

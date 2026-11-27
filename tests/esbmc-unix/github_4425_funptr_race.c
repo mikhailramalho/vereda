@@ -47,7 +47,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4425_funptr_race
 // Needs: --data-races-check-only --context-bound 2
-// RUN: --data-races-check-only --no-assertions --context-bound 2
+// RUN: --data-races-check-only --no-assertions --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@fp$

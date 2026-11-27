@@ -6,4 +6,5 @@
 #define OUTER(x, y) INNER(a, b, s1, x) INNER(b, a, s2, y)
 int main(void) { int r1, r2; OUTER(r1, r2); assert(r1 == 7); assert(r2 == 7); return 0; }
 // Imported from ESBMC regression/esbmc/local_struct_nested_macro_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

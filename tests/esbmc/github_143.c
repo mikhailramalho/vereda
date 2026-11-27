@@ -24,7 +24,7 @@ main()
   pthread_create(j, NULL, k, &d);
 }
 // Imported from ESBMC regression/esbmc/github_143
-// RUN: --solver z3
+// RUN: --solver z3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -14,5 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/fp2bv_nan_sign
-// RUN: --solver bitwuzla --fp2bv
+// RUN: --solver bitwuzla --fp2bv --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

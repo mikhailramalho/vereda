@@ -8,6 +8,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_exists
 // Needs: __ESBMC_exists
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

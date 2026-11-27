@@ -13,6 +13,7 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/extensions/builtin_object_size6_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

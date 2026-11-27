@@ -31,7 +31,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_4424_escape_norace
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check
+// RUN: --ub-data-race-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

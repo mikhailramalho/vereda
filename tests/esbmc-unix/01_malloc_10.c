@@ -83,4 +83,5 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_10
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

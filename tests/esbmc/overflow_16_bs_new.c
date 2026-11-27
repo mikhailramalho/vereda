@@ -113,7 +113,7 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/overflow_16_bs_new
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

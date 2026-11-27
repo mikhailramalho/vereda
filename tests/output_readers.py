@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory() as directory:
                                    '--clang-c-irep2-adjust-only --no-irep2-native-body\n'
                                    '^VERIFICATION SUCCESSFUL$\n')
     copy = import_esbmc.import_test(str(src), str(Path(directory) / 'copy'), 'suite/fe', None)
-    assert '// RUN' not in Path(copy).read_text()
+    assert '// RUN: --no-incremental-bmc\n' in Path(copy).read_text(encoding='utf-8')
 
 assert import_esbmc.translate("--no-assertions --no-div-by-zero-check", ".") == (
     ["--no-assertions", "--ub-div-by-zero-check=false"], [], [])
@@ -72,19 +72,20 @@ for flag in ignored:
     for token in (flag, flag + "=true", flag + "=false"):
         assert import_esbmc.translate(token + " --z3", ".") == (["--solver", "z3"], [], [])
         lines = import_esbmc.header("suite/internal_flag", "CORE", token, [], ".", [])
-        assert not any(s.startswith(("// RUN:", "// Needs:", "// MODE:")) for s in lines), lines
+        assert "// RUN: --no-incremental-bmc" in lines, lines
+        assert not any(s.startswith(("// Needs:", "// MODE:")) for s in lines), lines
         args = f"'{token}' --k-induction -DMSG='keep {flag} text'"
         lines = import_esbmc.header("suite/unsupported", "CORE", args, [], ".", [])
         assert "// Needs: --k-induction" in lines, lines
         assert f"// RUN: --k-induction -DMSG='keep {flag} text'" in lines, lines
 lines = import_esbmc.header("suite/internal_flags", "CORE", " ".join(ignored) + " --z3",
                            [], ".", ["__ESBMC_forall"])
-assert "// RUN: --solver z3" in lines, lines
+assert "// RUN: --solver z3 --no-incremental-bmc" in lines, lines
 assert "// Needs: __ESBMC_forall" in lines, lines
 assert "// MODE: FUTURE" in lines, lines
 lines = import_esbmc.header("suite/requirement", "CORE", " ".join(ignored),
                            ["REQUIRES uchar_h"], ".", [])
-assert "// RUN:" in lines, lines
+assert "// RUN: --no-incremental-bmc" in lines, lines
 assert "// Needs: REQUIRES uchar_h" in lines, lines
 
 with tempfile.TemporaryDirectory() as directory:
@@ -124,7 +125,7 @@ for args in ("--std c11", "--std=c11"):
     assert import_esbmc.translate(args + " --z3", ".") == (
         ["--std", "c11", "--solver", "z3"], [], [])
 lines = import_esbmc.header("suite/c_standard", "CORE", "--std=c23", [], ".", [])
-assert "// RUN: --std c23" in lines, lines
+assert "// RUN: --std c23 --no-incremental-bmc" in lines, lines
 assert not any(s.startswith(("// Needs:", "// MODE:")) for s in lines), lines
 
 for walk_tag, solve_tag in (("", ""), ("", "[PROGRESS] "), ("[INFO] ", "[INFO] ")):
@@ -182,7 +183,7 @@ for original in (r"^\*\* 0 of 1 properties failed, 1 unknown$",
 
 for name in ("ptr_rel_huge_object_alloca", "ptr_rel_huge_object_vla"):
     lines = import_esbmc.header("esbmc/" + name, "CORE", "", [], ".", [])
-    assert "// RUN: --vla-size-check=false" in lines, lines
+    assert "// RUN: --vla-size-check=false --no-incremental-bmc" in lines, lines
 
 for args, requirement, resolved in (("--32", "arch32", True), ("--64", "arch64", True),
                                     ("--64", "arch32", False), ("", "arch32", False),
@@ -190,7 +191,7 @@ for args, requirement, resolved in (("--32", "arch32", True), ("--64", "arch64",
     lines = import_esbmc.header("suite/target", "CORE", args, ["REQUIRES " + requirement], ".", [])
     assert ("// MODE: FUTURE" not in lines) == resolved, lines
     if resolved:
-        assert "// RUN: -m" + requirement[-2:] in lines, lines
+        assert "// RUN: -m" + requirement[-2:] + " --no-incremental-bmc" in lines, lines
     else:
         assert "// Needs: REQUIRES " + requirement in lines, lines
 
@@ -210,23 +211,23 @@ lines = import_esbmc.header("suite/quoted", "CORE", "'--floatbv' \"--fixedbv\" -
 assert "// RUN: --k-induction" in lines, lines
 lines = import_esbmc.header("floats/precision", "CORE", "--floatbv --z3 --32",
                            ["REQUIRES arch32"], ".", [])
-assert "// RUN: --solver z3 -m32" in lines, lines
+assert "// RUN: --solver z3 -m32 --no-incremental-bmc" in lines, lines
 assert not any(line.startswith(("// Needs:", "// MODE:")) for line in lines), lines
 lines = import_esbmc.header("z3/quantified", "CORE", "--floatbv --z3", [], ".",
                            ["__ESBMC_forall"])
 assert "// Needs: __ESBMC_forall" in lines, lines
 assert "// MODE: FUTURE" in lines, lines
-assert "// RUN: --solver z3" in lines, lines
+assert "// RUN: --solver z3 --no-incremental-bmc" in lines, lines
 
 for name, args, flags in (("vla_above_ptrdiff_max", "", []),
-                          ("vla_no_size_check_fail", "--32", ["// RUN: -m32"])):
+                          ("vla_no_size_check_fail", "--32", ["// RUN: -m32 --no-incremental-bmc"])):
     lines = import_esbmc.header("esbmc/" + name, "CORE", args,
                                ["object size exceeds PTRDIFF_MAX"], ".", [])
     assert "// EXPECT: alloca: size exceeds PTRDIFF_MAX" in lines, lines
     assert all(flag in lines for flag in flags), lines
 
 for name in ("array_loop_summary_decrement", "array_loop_summary_decrement_fail"):
-    for args, flags in (("", ""), ("--32", "-m32")):
+    for args, flags in (("", "--no-incremental-bmc"), ("--32", "-m32 --no-incremental-bmc")):
         lines = import_esbmc.header("esbmc/" + name, "CORE", args, [], ".", [])
         runs = [line.partition(":")[2].strip() for line in lines if line.startswith("// RUN:")]
         assert runs == [flags, (flags + " --no-summarize-array-loops").strip()], runs
@@ -242,8 +243,17 @@ for args, expected in (('--gcse --z3', '--solver z3'),
                         '--ub-signed-overflow-check --ub-shift-check '
                         '--ub-float-cast-overflow-check --solver bitwuzla')):
     lines = import_esbmc.header('suite/last_blocker', 'CORE', args, [], '.', [])
-    assert '// RUN: ' + expected in lines, lines
+    assert '// RUN: ' + expected + ' --no-incremental-bmc' in lines, lines
     assert not any(line.startswith('// Needs:') for line in lines), lines
+
+# ESBMC checks one bound unless a flag gives a bound or an incremental mode.
+for args, single in (("", True), ("--no-unwinding-assertions", True), ("--unwind 3", False),
+                     ("--unwind=3", False), ("--incremental-bmc", False),
+                     ("--k-induction", False), ("--falsification", False),
+                     ("--termination", False), ("--cheri purecap", True)):
+    lines = import_esbmc.header("suite/bound", "CORE", args, [], ".", [])
+    runs = [line for line in lines if line.startswith("// RUN:")]
+    assert any(r.endswith("--no-incremental-bmc") for r in runs) == single, (args, lines)
 
 # A FUTURE test's RUN line keeps its flags, but not those translate() drops.
 for args, run in (

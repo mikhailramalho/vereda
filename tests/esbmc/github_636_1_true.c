@@ -13,6 +13,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_636_1_true
 // Needs: __ESBMC_get_object_size
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_store_negative
 // Needs: --dead-store-check
-// RUN: --dead-store-check
+// RUN: --dead-store-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: \A(?![\s\S]*dead store)[\s\S]*\Z

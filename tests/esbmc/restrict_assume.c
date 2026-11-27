@@ -7,7 +7,7 @@ void f(void *restrict a, void *restrict b)
 }
 // Imported from ESBMC regression/esbmc/restrict_assume
 // Needs: --restrict-assume
-// RUN: --entry f --restrict-assume
+// RUN: --entry f --restrict-assume --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

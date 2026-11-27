@@ -34,7 +34,7 @@
    }
 // Imported from ESBMC regression/goto-coverage/github_1337_4
 // Needs: --assertion-coverage
-// RUN: --assertion-coverage
+// RUN: --assertion-coverage --no-incremental-bmc
 // EXPECT: ^Total Asserts: 8
 // EXPECT: ^Total Assertion Instances: 8
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$

@@ -10,5 +10,5 @@ int main()
   assert(b == NULL);
 }
 // Imported from ESBMC regression/esbmc/github_1631_neg_one
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -9,7 +9,7 @@ int main(){
   assert(str0 <= str1);
 }
 // Imported from ESBMC regression/esbmc/github_1537-assume
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bassertion str0 <= str1$
 // EXPECT: \bSAME-OBJECT\(str0, str1\)$

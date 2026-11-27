@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10920_struct_members
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 4 witnesses

@@ -11,4 +11,5 @@ int main() {
   assert(a==b);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Goto3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

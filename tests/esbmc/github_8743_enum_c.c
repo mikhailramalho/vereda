@@ -10,5 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8743_enum_c
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

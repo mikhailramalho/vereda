@@ -16,4 +16,5 @@ int main() {
 	assert(a[0] == y+1);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_originfile_single_file
 // Needs: --witness-output-graphml
-// RUN: --witness-output-graphml -
+// RUN: --witness-output-graphml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: <data key="startline">7</data>

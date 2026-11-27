@@ -24,4 +24,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_member_in_union
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

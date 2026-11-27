@@ -8,4 +8,5 @@ int main()
 	assert(v != INT32_MAX);
 }
 // Imported from ESBMC regression/esbmc/github_1592-random
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

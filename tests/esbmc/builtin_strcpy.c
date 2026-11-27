@@ -22,4 +22,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/builtin_strcpy
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

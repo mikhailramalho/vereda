@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_9882_switch_no_waypoint
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^ +type: "target"$

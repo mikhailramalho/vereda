@@ -37,7 +37,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/01_malloc_17
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check
+// RUN: --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

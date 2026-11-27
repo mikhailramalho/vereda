@@ -12,4 +12,5 @@ int main()
   __VERIFIER_assert(j == 4 || a[j] == (int)j); // init
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_store_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

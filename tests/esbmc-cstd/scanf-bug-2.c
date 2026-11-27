@@ -6,5 +6,5 @@ int main(int argc, char *argv[])
     printf("%d",*ptr);   // output --539222987
 }
 // Imported from ESBMC regression/cstd/scanf-bug-2
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m64
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

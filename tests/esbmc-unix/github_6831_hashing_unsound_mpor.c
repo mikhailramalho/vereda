@@ -20,6 +20,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_hashing_unsound_mpor
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict UNKNOWN

@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_multi_input_file_yaml_fail
 // Needs: --witness-output-yaml
-// RUN: first.c --witness-output-yaml -
+// RUN: first.c --witness-output-yaml - --no-incremental-bmc
 // FILES: first.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

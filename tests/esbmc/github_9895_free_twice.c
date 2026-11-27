@@ -9,6 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9895_free_twice
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: invalidated dynamic object freed
 // EXPECT: \A(?![\s\S]*invalidated dynamic object$)[\s\S]*\Z

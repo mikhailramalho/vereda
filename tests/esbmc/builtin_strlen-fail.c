@@ -14,4 +14,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/builtin_strlen-fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED

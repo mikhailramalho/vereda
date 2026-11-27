@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/irep2_only_complex_div_zero_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  division by zero$
 // EXPECT: ^  b\.real \* b\.real \+ b\.imag \* b\.imag != 0$
 // EXPECT: ^VERIFICATION FAILED$

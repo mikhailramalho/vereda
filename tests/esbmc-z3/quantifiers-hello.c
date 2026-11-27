@@ -26,6 +26,6 @@ int main()
 }
 // Imported from ESBMC regression/z3/quantifiers-hello
 // Needs: __ESBMC_exists, __ESBMC_forall
-// RUN: --solver z3
+// RUN: --solver z3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

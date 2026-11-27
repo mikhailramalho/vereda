@@ -24,5 +24,6 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/memcpy_bug
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$

@@ -13,5 +13,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/incremental-03
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

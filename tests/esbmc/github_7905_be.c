@@ -24,7 +24,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7905_be
 // Needs: --big-endian
-// RUN: --big-endian
+// RUN: --big-endian --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -17,6 +17,7 @@ int main()
     __VERIFIER_assert(a[i] == 0);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_verifier_assert
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^\[INFO\] Summarised 1 array loop\(s\)$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$

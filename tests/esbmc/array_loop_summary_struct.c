@@ -17,4 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_struct
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

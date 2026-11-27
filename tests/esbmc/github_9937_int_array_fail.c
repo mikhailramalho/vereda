@@ -10,5 +10,5 @@ int main()
   __VERIFIER_assert(0); // reachable
 }
 // Imported from ESBMC regression/esbmc/github_9937_int_array_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

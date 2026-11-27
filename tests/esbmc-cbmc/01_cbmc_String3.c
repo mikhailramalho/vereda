@@ -8,6 +8,7 @@ int main()
   *p=1;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_String3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -6,4 +6,5 @@ int main()
 	__VERIFIER_assert(a == 2); // Failed as expected
 }
 // Imported from ESBMC regression/esbmc/github_447-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

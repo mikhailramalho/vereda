@@ -15,7 +15,7 @@ int main(void)
   return g.f2[0];
 }
 // Imported from ESBMC regression/esbmc/github_10888_oob_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^  FAILED .* dereference failure: Access to object out of bounds$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  FAILED .* dereference failure: Access to object out of bounds$

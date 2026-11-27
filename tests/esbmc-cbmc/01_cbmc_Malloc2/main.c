@@ -31,5 +31,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc2
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

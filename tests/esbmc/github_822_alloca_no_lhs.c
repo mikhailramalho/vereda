@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_822_alloca_no_lhs
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check
+// RUN: --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -19,4 +19,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unreach-code-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

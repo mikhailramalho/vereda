@@ -27,4 +27,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/getenv_success
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

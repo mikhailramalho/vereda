@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/multi_fail_3
 // Needs: --multi-fail-fast 2
-// RUN: --multi-property --multi-fail-fast 2
+// RUN: --multi-property --multi-fail-fast 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

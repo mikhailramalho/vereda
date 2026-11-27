@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_cond_local_mutex
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support a mutex that is not a global yet, at file .*partial_order_reject_cond_local_mutex\.c line +6
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

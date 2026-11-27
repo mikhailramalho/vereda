@@ -10,6 +10,7 @@ int main() {
   printf("Next value of integer pointed by p: %d\n",*p);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function5
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

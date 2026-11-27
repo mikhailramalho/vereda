@@ -22,4 +22,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/time_asctime_r
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

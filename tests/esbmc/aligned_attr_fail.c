@@ -88,4 +88,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/aligned_attr_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -13,6 +13,7 @@ int main()
   __VERIFIER_assert(u.m[0][2] != 3 || u.m[1][2] != 5); // show
 }
 // Imported from ESBMC regression/esbmc/github_8097_trace_flattened_index
+// RUN: --no-incremental-bmc
 // EXPECT: ^  u\.m\[0\]\[2\] = 3
 // EXPECT: ^  u\.m\[1\]\[2\] = 5
 // EXPECT: ^VERIFICATION FAILED$

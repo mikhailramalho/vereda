@@ -33,7 +33,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval_widen_callee_many_calls
 // Needs: --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate
-// RUN: --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate
+// RUN: --interval-analysis --interval-analysis-arithmetic --interval-analysis-extrapolate --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

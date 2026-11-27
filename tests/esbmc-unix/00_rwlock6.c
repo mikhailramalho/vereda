@@ -36,7 +36,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/00_rwlock6
 // Needs: --no-por --context-bound 3
-// RUN: --no-por --context-bound 3
+// RUN: --no-por --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

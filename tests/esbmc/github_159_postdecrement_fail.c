@@ -11,6 +11,7 @@ int main() {
   (b--)->d.c;
 }
 // Imported from ESBMC regression/esbmc/github_159_postdecrement_fail
+// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict SUCCESSFUL

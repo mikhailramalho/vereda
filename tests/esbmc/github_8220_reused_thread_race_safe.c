@@ -23,7 +23,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8220_reused_thread_race_safe
 // Needs: --sv-comp --data-races-check-only --context-bound 2
-// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --ub-pointer-check=false --context-bound 2
+// RUN: --sv-comp --z3 --data-races-check-only --no-assertions --ub-pointer-check=false --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

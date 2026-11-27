@@ -7,4 +7,5 @@ int main() {
   __VERIFIER_assert(x == y);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_counter_order
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

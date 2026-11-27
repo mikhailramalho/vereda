@@ -17,7 +17,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc/github_9500_ret_global_fail
 // Needs: --interval-analysis
-// RUN: --interval-analysis
+// RUN: --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

@@ -9,7 +9,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/volatile_01
 // Needs: --volatile-check
-// RUN: --volatile-check
+// RUN: --volatile-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

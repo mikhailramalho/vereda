@@ -18,6 +18,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_unresolved_component_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  h\.p = \{ \.p=&x, \.t=0 \}$
 // EXPECT: ^  h\.t = 3; // 00000000 00000000 00000000 00000011$
 // EXPECT: ^VERIFICATION FAILED$

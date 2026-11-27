@@ -14,4 +14,5 @@ int main() {
   assert(u[1].ch==2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_union4
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

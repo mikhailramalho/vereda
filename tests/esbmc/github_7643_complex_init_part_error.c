@@ -8,7 +8,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7643_complex_init_part_error
 // Needs: never
-// RUN: never
+// RUN: never --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: Unknown Atomic expression$
 // EXPECT: ^ERROR: CONVERSION ERROR$

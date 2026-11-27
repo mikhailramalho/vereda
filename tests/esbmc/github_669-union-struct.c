@@ -4,7 +4,7 @@ typedef union { int x;
 struct { int x; } b;
 void func1() { a c = *(a *)&b; }
 // Imported from ESBMC regression/esbmc/github_669-union-struct
-// RUN: --entry func1
+// RUN: --entry func1 --no-incremental-bmc
 // EXPECT: ^\s*dereference failure:
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*dereference failure:

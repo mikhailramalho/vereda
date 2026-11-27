@@ -16,7 +16,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/interval_div_span_zero
 // Needs: --interval-analysis --interval-analysis-arithmetic
-// RUN: --interval-analysis --interval-analysis-arithmetic
+// RUN: --interval-analysis --interval-analysis-arithmetic --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

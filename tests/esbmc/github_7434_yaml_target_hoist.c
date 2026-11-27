@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_yaml_target_hoist
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: type: "target"

@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10239_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.\d+\]
 // EXPECT: ^\s*FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line 9\s
 // EXPECT: ^VERIFICATION FAILED$

@@ -17,4 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vector_op_nonconstant_lane
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

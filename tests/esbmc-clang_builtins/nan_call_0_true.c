@@ -6,4 +6,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/clang_builtins/nan_call_0_true
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

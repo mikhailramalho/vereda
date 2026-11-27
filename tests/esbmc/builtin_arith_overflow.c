@@ -33,4 +33,5 @@ int main()
   assert(!c6);
 }
 // Imported from ESBMC regression/esbmc/builtin_arith_overflow
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

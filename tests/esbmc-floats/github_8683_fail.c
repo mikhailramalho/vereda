@@ -9,7 +9,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8683_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.1\]\s+line\s+6\s
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.2\]\s+line\s+7\s
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.3\]\s+line\s+8\s

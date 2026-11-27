@@ -12,4 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/strncmp_zero_len
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

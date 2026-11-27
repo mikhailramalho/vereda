@@ -170,6 +170,7 @@ int main(int argc, char*argv[])
   assert(alt_sep_test()==0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_return2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

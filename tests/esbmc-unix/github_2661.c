@@ -60,7 +60,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_2661
 // Needs: --data-races-check-only --context-bound 2
-// RUN: --data-races-check-only --context-bound 2
+// RUN: --data-races-check-only --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^\s*R/W data race on c:@balance$
 // Vereda: verdict none

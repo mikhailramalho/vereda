@@ -20,7 +20,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_10641_loop_not_entered_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --loop-invariant-check --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  FAILED .*line 17  arithmetic overflow on add$

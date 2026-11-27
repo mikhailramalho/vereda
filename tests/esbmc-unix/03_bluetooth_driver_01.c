@@ -79,6 +79,7 @@ void main()
   BCSP_PnpAdd(&e);
 }
 // Imported from ESBMC regression/esbmc-unix/03_bluetooth_driver_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

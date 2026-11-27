@@ -12,4 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/compound_assign_narrow_divzero
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7891_mfp8
 // Needs: REQUIRES mfp8
-// RUN: 
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

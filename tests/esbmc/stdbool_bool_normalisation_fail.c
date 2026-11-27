@@ -12,4 +12,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/stdbool_bool_normalisation_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

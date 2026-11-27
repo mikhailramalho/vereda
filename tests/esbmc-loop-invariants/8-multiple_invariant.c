@@ -18,6 +18,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/8-multiple_invariant
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property
+// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/ssa_features_dump
 // Needs: --ssa-features-dump
-// RUN: --ssa-features-dump
+// RUN: --ssa-features-dump --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^SSA: Contains BITWISE OPERATIONS$
 // EXPECT: ^VERIFICATION FAILED$

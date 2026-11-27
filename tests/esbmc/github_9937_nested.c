@@ -10,5 +10,5 @@ int main()
   __VERIFIER_assert(u.s.b == 0); // b written
 }
 // Imported from ESBMC regression/esbmc/github_9937_nested
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

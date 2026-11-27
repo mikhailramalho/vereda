@@ -11,6 +11,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5934-solved
-// RUN: --multi-property --dump-smt-too --solver z3
+// RUN: --multi-property --dump-smt-too --solver z3 --no-incremental-bmc
 // EXPECT: ^ +FAILED +\[main\.assertion\.2\] +line +10(?:\s|$)
 // EXPECT: ^VERIFICATION FAILED$

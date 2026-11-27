@@ -23,7 +23,7 @@ int main()
   return r + (c != 0);
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_invalid_pointer_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED.*dereference failure: invalid pointer on memcmp$
 // EXPECT: FAILED.*dereference failure: invalid pointer on memset$

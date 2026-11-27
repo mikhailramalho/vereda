@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_originfile_pass
 // Needs: --witness-output-graphml
-// RUN: --witness-output-graphml -
+// RUN: --witness-output-graphml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

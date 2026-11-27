@@ -9,6 +9,7 @@ int main(void)
   return (int)(d.x >> 24);
 }
 // Imported from ESBMC regression/esbmc/github_11015_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

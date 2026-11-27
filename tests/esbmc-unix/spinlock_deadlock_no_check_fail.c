@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/spinlock_deadlock_no_check_fail
 // Needs: --deadlock-check
-// RUN: --deadlock-check
+// RUN: --deadlock-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Deadlocked state in pthread_spin_lock

@@ -20,7 +20,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10769_if_and_lines_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)type: "branching"(?:(?!type:).)*?^\s+line: 14$

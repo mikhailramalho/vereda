@@ -44,5 +44,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_963-no-dyn-off
-// RUN: -D__PASS
+// RUN: -D__PASS --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

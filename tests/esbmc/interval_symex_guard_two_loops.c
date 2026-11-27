@@ -12,4 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/interval_symex_guard_two_loops
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

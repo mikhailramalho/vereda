@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7023-color
 // Needs: always
-// RUN: always
+// RUN: always --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  \x1b\[31mFAILED +\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$
 // EXPECT: ^  \x1b\[33mNOT CHECKED\x1b\[0m +\[main\.assertion\.[23]\] +line +[89] +a is not (one|two)$

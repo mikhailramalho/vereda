@@ -11,7 +11,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/multi_property_or_assert_fold_assume_kept
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s+PASSED\s+\[main\.assertion\.\d+\]\s+line\s+10\s+w$
 // EXPECT: ^\s+FAILED\s+\[main\.assertion\.\d+\]\s+line\s+7\s+v$
 // Vereda: unmet EXPECT: ^\s+PASSED\s+\[main\.assertion\.\d+\]\s+line\s+10\s+w$

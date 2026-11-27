@@ -13,7 +13,7 @@ L:
 }
 // Imported from ESBMC regression/esbmc/github_4083-dup-address
 // Needs: --no-standard-checks
-// RUN: --no-standard-checks
+// RUN: --no-standard-checks --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

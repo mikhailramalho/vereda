@@ -25,7 +25,7 @@ int main()
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Structs7
 // Needs: --no-pointer-arith-check
-// RUN: --no-pointer-arith-check
+// RUN: --no-pointer-arith-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -14,5 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8048_huge_vla
-// RUN: --vla-size-check=false -m32
+// RUN: --vla-size-check=false -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

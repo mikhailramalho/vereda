@@ -16,7 +16,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pragma_unroll_for_true
-// RUN: --no-unwinding-assertions
+// RUN: --no-unwinding-assertions --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 5 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$

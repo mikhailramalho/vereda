@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval_return_bodiless_call
 // Needs: --interval-analysis
-// RUN: --interval-analysis
+// RUN: --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

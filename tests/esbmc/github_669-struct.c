@@ -4,5 +4,5 @@ typedef struct { float x;
 int b;
 void func1() { a c = *(a *)&b; }
 // Imported from ESBMC regression/esbmc/github_669-struct
-// RUN: --entry func1
+// RUN: --entry func1 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

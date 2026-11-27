@@ -22,7 +22,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/unwindsetname_03_priority
-// RUN: --unwindsetname test_priority:0:4 --unwindset 3:11 --solver z3
+// RUN: --unwindsetname test_priority:0:4 --unwindset 3:11 --solver z3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

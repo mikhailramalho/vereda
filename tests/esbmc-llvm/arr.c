@@ -25,4 +25,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/llvm/arr
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

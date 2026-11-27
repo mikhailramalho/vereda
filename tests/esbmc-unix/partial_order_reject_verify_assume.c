@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_verify_assume
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support verifying an assumption yet, at file .*partial_order_reject_verify_assume\.c line +6
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

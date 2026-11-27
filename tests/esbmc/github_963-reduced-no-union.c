@@ -44,5 +44,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/github_963-reduced-no-union
-// RUN: -D__PASS_WITHOUT_UNION
+// RUN: -D__PASS_WITHOUT_UNION --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

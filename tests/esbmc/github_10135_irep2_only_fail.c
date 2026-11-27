@@ -18,5 +18,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10135_irep2_only_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -102,7 +102,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_sleep_sets_forced_off
 // Needs: --data-races-check-only --context-bound 3 --sleep-sets
-// RUN: --data-races-check-only --no-assertions --context-bound 3 --sleep-sets
+// RUN: --data-races-check-only --no-assertions --context-bound 3 --sleep-sets --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*R/W data race on c:@stopped$

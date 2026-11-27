@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_6593_fail
 // Needs: --malloc-zero-is-null
-// RUN: --force-malloc-success --malloc-zero-is-null
+// RUN: --force-malloc-success --malloc-zero-is-null --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

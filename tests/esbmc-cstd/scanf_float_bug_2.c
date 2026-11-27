@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     printf("%f",tmp);
 }
 // Imported from ESBMC regression/cstd/scanf_float_bug_2
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict SUCCESSFUL

@@ -9,7 +9,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/cbrtl_model_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: FAILED\s+\[main.assertion.2\].*r == 1.25
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

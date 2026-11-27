@@ -10,4 +10,5 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/islower_bug
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

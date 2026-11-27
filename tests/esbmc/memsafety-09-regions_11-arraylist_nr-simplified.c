@@ -80,7 +80,7 @@ int main () {
 }
 // Imported from ESBMC regression/esbmc/memsafety-09-regions_11-arraylist_nr-simplified
 // Needs: --memory-leak-check --no-reachable-memory-leak --no-abnormal-memory-leak --malloc-zero-is-null
-// RUN: --ub-div-by-zero-check=false --force-malloc-success '-D__builtin_unreachable()' --vla-size-check=false -m32 --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null
+// RUN: --ub-div-by-zero-check=false --force-malloc-success '-D__builtin_unreachable()' --vla-size-check=false -m32 --memory-leak-check --no-reachable-memory-leak --no-assertions --no-abnormal-memory-leak --malloc-zero-is-null --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

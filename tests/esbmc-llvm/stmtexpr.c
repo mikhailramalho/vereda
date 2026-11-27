@@ -16,4 +16,5 @@ int main()
   return 0.0f;
 }
 // Imported from ESBMC regression/llvm/stmtexpr
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

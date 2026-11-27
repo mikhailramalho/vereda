@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/ssa_features_dump_multi_property
 // Needs: --ssa-features-dump
-// RUN: --ssa-features-dump --multi-property
+// RUN: --ssa-features-dump --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

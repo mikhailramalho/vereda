@@ -23,7 +23,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_github_10296_counter_fail
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

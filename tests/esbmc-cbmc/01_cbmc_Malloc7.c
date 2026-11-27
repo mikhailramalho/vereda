@@ -5,4 +5,5 @@ int main() {
   free(p);  
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc7
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

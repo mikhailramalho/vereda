@@ -14,4 +14,5 @@ int main()
 	assert(z2 == 43);
 }
 // Imported from ESBMC regression/esbmc/github_816-static-local
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

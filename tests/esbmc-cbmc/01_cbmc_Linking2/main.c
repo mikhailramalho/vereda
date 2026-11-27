@@ -18,5 +18,6 @@ struct struct_tag
   short int i;
 };
 // Imported from ESBMC regression/cbmc/01_cbmc_Linking2
+// RUN: --no-incremental-bmc
 // FILES: module.c
 // EXPECT: ^VERIFICATION SUCCESSFUL$

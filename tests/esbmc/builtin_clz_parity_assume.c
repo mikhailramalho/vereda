@@ -30,4 +30,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/builtin_clz_parity_assume
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

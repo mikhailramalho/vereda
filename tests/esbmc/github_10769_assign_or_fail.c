@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10769_assign_or_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)type: "branching"(?:(?!type:).)*?^\s+line: 11$

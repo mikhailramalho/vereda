@@ -12,7 +12,7 @@ int main(void)
 
 // Imported from ESBMC regression/floats-regression/union_inc2
 // Needs: --big-endian --interval-analysis
-// RUN: -m32 --big-endian --interval-analysis
+// RUN: -m32 --big-endian --interval-analysis --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

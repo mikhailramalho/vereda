@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_pointer
 // Needs: --generate-ctest-testcase CHECK_FILE esbmc-ctest/test_case.c contains static void\* const v\[\] CHECK_FILE esbmc-ctest/test_case.c absent static const void\*
-// RUN: --generate-ctest-testcase
+// RUN: --generate-ctest-testcase --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Generated CTest test case\: test_case\.c$
 // EXPECT: ^VERIFICATION FAILED$

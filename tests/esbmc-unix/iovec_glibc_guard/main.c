@@ -7,5 +7,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/iovec_glibc_guard
 // Needs: -I wrap
-// RUN: -I wrap -D_GNU_SOURCE
+// RUN: -I wrap -D_GNU_SOURCE --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

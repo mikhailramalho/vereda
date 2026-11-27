@@ -13,6 +13,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/time_h_timespec_get_ranges
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

@@ -44,5 +44,5 @@ int main()
   assert(two_lists(1, 5, 6) == 55);
 }
 // Imported from ESBMC regression/esbmc/va_list_own_cursor
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

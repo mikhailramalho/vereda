@@ -10,4 +10,5 @@ int main(int argc, char **argv)
 	memset(c, 0, 1);
 }
 // Imported from ESBMC regression/esbmc/memset-const
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

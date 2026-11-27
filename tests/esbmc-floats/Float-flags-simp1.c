@@ -61,4 +61,5 @@ int main()
   #endif
 }
 // Imported from ESBMC regression/floats/Float-flags-simp1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

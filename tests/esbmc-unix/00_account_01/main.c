@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
 // Imported from ESBMC regression/esbmc-unix/00_account_01
 // Needs: --context-bound 1 --depth 150
-// RUN: account.c --context-bound 1 --depth 150
+// RUN: account.c --context-bound 1 --depth 150 --no-incremental-bmc
 // FILES: account.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

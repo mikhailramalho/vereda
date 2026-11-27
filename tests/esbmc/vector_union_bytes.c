@@ -14,4 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vector_union_bytes
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

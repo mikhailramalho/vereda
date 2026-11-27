@@ -31,4 +31,5 @@ int main(int argc, char **argv)
 	assert(i == 84017);
 }
 // Imported from ESBMC regression/esbmc/struct_bitfields_14
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

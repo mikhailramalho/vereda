@@ -20,4 +20,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/counterexample_deref_component_value
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

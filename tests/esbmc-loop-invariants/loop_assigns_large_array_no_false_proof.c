@@ -27,7 +27,7 @@ int main()
 // Imported from ESBMC regression/loop-invariants/loop_assigns_large_array_no_false_proof
 // Needs: __ESBMC_loop_assigns, __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --loop-frame-rule
-// RUN: --loop-invariant-check --loop-frame-rule --z3
+// RUN: --loop-invariant-check --loop-frame-rule --z3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^WARNING: every violated claim lies downstream of a loop invariant havoc
 // EXPECT: ^VERIFICATION UNKNOWN$

@@ -6,4 +6,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/extensions/builtin_object_size16-no-use
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

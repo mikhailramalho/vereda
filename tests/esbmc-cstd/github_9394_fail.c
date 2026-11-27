@@ -21,5 +21,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/github_9394_fail
-// RUN: -m64 --multi-property
+// RUN: -m64 --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

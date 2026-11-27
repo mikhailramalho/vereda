@@ -7,4 +7,5 @@ int main(void) {
   return 10 / ((char *)&p->y == (char *)&s.y); /* divisor 1, no UB */
 }
 // Imported from ESBMC regression/esbmc/char_view_through_pointer
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

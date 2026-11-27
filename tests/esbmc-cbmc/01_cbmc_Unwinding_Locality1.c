@@ -8,4 +8,5 @@ int main() {
   assert(0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Unwinding_Locality1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

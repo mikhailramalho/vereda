@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/goto-coverage/negating_property_line_fail
 // Needs: --negating-property main:8
-// RUN: --negating-property main:8
+// RUN: --negating-property main:8 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 8

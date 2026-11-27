@@ -62,7 +62,7 @@ int main()
 }
 // Imported from ESBMC regression/floats-regression/nextafter-spec
 // Needs: --interval-analysis
-// RUN: --interval-analysis --fp2bv
+// RUN: --interval-analysis --fp2bv --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

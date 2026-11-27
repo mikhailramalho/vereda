@@ -10,4 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/atomic_flag_void_pointer_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -38,4 +38,5 @@ int main()
   assert(!(-0.999f>=-0.0f));
 }
 // Imported from ESBMC regression/floats/Float11
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

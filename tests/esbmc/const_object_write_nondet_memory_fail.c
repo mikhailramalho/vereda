@@ -6,5 +6,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/const_object_write_nondet_memory_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: write access to const object `t'$
 // EXPECT: ^VERIFICATION FAILED$

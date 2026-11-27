@@ -14,5 +14,5 @@ int main(void)
   return result == 0;
 }
 // Imported from ESBMC regression/esbmc/github_1470_overflow_witness
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

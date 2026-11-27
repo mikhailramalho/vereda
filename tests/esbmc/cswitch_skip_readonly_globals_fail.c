@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals_fail
 // Needs: --context-bound 3
-// RUN: --context-bound 3
+// RUN: --context-bound 3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

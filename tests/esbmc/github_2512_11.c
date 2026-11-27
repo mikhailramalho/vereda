@@ -18,4 +18,5 @@ void main() {
   assert(e.d);
 }
 // Imported from ESBMC regression/esbmc/github_2512_11
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

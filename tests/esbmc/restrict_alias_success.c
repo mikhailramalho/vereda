@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/restrict_alias_success
 // Needs: --restrict-check
-// RUN: --restrict-check
+// RUN: --restrict-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

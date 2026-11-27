@@ -21,7 +21,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_1520_witness_no_aggregate
 // Needs: --witness-output-graphml
-// RUN: --witness-output-graphml -
+// RUN: --witness-output-graphml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">x == 0;

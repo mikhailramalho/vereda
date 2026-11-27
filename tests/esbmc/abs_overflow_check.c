@@ -16,7 +16,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/abs_overflow_check
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --multi-property
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: PASSED\s+\[main.arithmetic-overflow.7\]\s+line 15\s+arithmetic overflow on abs
 // Vereda: unmet EXPECT: PASSED\s+\[main.arithmetic-overflow.7\]\s+line 15\s+arithmetic overflow on abs

@@ -20,6 +20,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8007
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^WARNING: --gcse is ignored: the program may create threads$
 // EXPECT: ^VERIFICATION FAILED$

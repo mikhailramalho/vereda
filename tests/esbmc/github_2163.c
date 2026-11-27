@@ -31,7 +31,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_2163
 // Needs: --assertion-coverage-claims
-// RUN: --assertion-coverage-claims
+// RUN: --assertion-coverage-claims --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Assertion Instances Coverage: 100%
 // EXPECT: : REACHED$

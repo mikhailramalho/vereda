@@ -22,6 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/fixedbv/bitcast_same_width_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -17,4 +17,5 @@ int main()
   assert(*q==3);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc10
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

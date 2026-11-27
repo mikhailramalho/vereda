@@ -32,6 +32,6 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/k_induction_issue_dowhile_entry_cond
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant
+// RUN: --loop-invariant --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

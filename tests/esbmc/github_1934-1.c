@@ -9,4 +9,5 @@ int main()
   y->ss;
 }
 // Imported from ESBMC regression/esbmc/github_1934-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

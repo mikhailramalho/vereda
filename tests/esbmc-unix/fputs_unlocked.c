@@ -23,4 +23,5 @@ int main(void) {
 }
 
 // Imported from ESBMC regression/esbmc-unix/fputs_unlocked
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

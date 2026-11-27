@@ -15,7 +15,7 @@ main() {
   free(matrix);
 }
 // Imported from ESBMC regression/esbmc/fam_true_5
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

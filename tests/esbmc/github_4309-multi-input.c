@@ -34,7 +34,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_4309-multi-input
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \[Counterexamples - 16 witnesses\]

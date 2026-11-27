@@ -9,4 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/assert_description
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_7024
 // Needs: __ESBMC_forall
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\[COUNTEREXAMPLE\]$

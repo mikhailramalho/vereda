@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/goto-coverage/github_6422_3
 // Needs: --branch-function-coverage
-// RUN: --branch-function-coverage
+// RUN: --branch-function-coverage --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Function Entry Points & Branches : 3
 // EXPECT: ^Reached : 3

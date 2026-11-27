@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_6831_smt_during_symex_implied
+// RUN: --no-incremental-bmc
 // EXPECT: ^Enabling --smt-during-symex to use features that involve encoding SMT during symex$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

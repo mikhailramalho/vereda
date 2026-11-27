@@ -21,4 +21,5 @@ int main()
   assert(d == 2.0);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Fixedbv3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

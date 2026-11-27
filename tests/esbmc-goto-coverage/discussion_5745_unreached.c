@@ -33,7 +33,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/discussion_5745_unreached
 // Needs: --assertion-coverage-claims
-// RUN: --assertion-coverage-claims
+// RUN: --assertion-coverage-claims --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Reached Assertion Instances: 3
 // EXPECT: Unreached Asserts: 4

@@ -15,6 +15,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_7478_shortcircuit_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check --multi-property
+// RUN: --loop-invariant-check --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

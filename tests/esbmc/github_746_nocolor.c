@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_746_nocolor
 // Needs: never
-// RUN: never
+// RUN: never --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^.*CONVERSION ERROR$
 // EXPECT: \A(?!(?s:.)*\x1b\[0;1;35m)

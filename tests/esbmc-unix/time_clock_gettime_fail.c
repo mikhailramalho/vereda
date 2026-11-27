@@ -12,4 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/time_clock_gettime_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

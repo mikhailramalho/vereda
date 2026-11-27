@@ -17,4 +17,5 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/char_walk_arrays_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

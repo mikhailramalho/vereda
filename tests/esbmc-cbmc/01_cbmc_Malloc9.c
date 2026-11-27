@@ -17,4 +17,5 @@ int main()
   assert(*p==3);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc9
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

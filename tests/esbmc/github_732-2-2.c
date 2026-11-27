@@ -15,5 +15,6 @@ int main()
 	assert(*b);
 }
 // Imported from ESBMC regression/esbmc/github_732-2-2
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION FAILED$

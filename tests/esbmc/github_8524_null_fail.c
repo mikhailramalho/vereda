@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8524_null_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 10\s+dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line 10\s+dereference failure: NULL pointer$

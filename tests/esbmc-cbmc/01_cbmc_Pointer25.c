@@ -18,4 +18,5 @@ int main()
   assert(curr.val==2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Pointer25
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

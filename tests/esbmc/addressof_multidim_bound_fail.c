@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/addressof_multidim_bound_fail
 // Needs: --no-pointer-arith-check
-// RUN: --no-pointer-arith-check
+// RUN: --no-pointer-arith-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: array bounds violated

@@ -6,5 +6,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10972_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: free\(\) of non-dynamic memory

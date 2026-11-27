@@ -32,5 +32,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_nested_union_fail
-// RUN: --ub-pointer-check=false
+// RUN: --ub-pointer-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

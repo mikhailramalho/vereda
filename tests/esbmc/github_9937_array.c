@@ -11,5 +11,5 @@ int main()
   __VERIFIER_assert(u.p[1] == brr + 50); // p[1] kept
 }
 // Imported from ESBMC regression/esbmc/github_9937_array
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

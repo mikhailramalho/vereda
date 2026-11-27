@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/floats/github_2763_zero
 // Needs: --round-to-zero
-// RUN: --round-to-zero
+// RUN: --round-to-zero --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

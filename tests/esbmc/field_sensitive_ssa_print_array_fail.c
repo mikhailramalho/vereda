@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_print_array_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  back = \{ \.x=1, \.pair=\(signed long int \[2\]\)0x70000000000000006 \}$
 // EXPECT: ^VERIFICATION FAILED$

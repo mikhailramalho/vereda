@@ -15,4 +15,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memcmp_null_operand
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

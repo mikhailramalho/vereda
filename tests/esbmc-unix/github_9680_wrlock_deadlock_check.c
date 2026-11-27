@@ -27,7 +27,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9680_wrlock_deadlock_check
 // Needs: --deadlock-check
-// RUN: --deadlock-check
+// RUN: --deadlock-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

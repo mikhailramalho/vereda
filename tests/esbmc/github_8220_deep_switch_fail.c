@@ -38,7 +38,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_8220_deep_switch_fail
 // Needs: --sv-comp
-// RUN: --sv-comp
+// RUN: --sv-comp --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

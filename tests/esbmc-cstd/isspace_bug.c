@@ -11,4 +11,5 @@ int main(void)
   assert(sp == 3);
 }
 // Imported from ESBMC regression/cstd/isspace_bug
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

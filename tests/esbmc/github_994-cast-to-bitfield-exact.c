@@ -9,4 +9,5 @@ int main() {
 	assert(((union U)x).raw == x);
 }
 // Imported from ESBMC regression/esbmc/github_994-cast-to-bitfield-exact
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

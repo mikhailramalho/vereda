@@ -30,4 +30,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/deref_punned_member_index_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

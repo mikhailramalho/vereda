@@ -32,4 +32,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/simplifier-ssa-reassoc
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

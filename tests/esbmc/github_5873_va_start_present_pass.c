@@ -91,5 +91,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5873_va_start_present_pass
-// RUN: --entry main
+// RUN: --entry main --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

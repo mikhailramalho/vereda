@@ -14,6 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/github_10103_smt_symex_guard
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --parallel-solving cannot be combined with --smt-symex-guard$
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

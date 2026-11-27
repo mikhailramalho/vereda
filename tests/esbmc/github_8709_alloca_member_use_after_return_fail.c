@@ -17,6 +17,7 @@ int main(void)
   return *p;
 }
 // Imported from ESBMC regression/esbmc/github_8709_alloca_member_use_after_return_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s*FAILED\s+\[main\.invalidated-dynamic-object\.1\]\s+line 17\s+dereference failure: invalidated dynamic object$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

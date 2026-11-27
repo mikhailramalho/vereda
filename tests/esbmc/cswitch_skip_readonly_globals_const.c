@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals_const
 // Needs: --context-bound 3
-// RUN: --context-bound 3
+// RUN: --context-bound 3 --no-incremental-bmc
 // EXPECT: ^Thread interleavings 7$(?![\s\S]*Thread interleavings)
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

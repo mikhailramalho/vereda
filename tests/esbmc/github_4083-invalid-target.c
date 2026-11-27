@@ -12,7 +12,7 @@ L1:
 }
 // Imported from ESBMC regression/esbmc/github_4083-invalid-target
 // Needs: --no-standard-checks
-// RUN: --no-standard-checks
+// RUN: --no-standard-checks --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

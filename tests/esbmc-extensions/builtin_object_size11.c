@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 }
 
 // Imported from ESBMC regression/extensions/builtin_object_size11
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

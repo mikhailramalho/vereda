@@ -33,7 +33,7 @@
 
 // Imported from ESBMC regression/esbmc-unix/spurious_wakeup_02
 // Needs: --context-bound 2
-// RUN: --context-bound 2
+// RUN: --context-bound 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

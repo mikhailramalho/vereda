@@ -18,7 +18,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9939_memtrack_loop_ahead
 // Needs: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml
-// RUN: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml -
+// RUN: --memory-leak-check --no-reachable-memory-leak --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: forgotten memory

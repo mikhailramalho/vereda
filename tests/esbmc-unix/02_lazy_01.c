@@ -48,7 +48,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/02_lazy_01
 // Needs: --context-bound 3
-// RUN: --context-bound 3
+// RUN: --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

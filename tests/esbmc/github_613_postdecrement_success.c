@@ -13,4 +13,5 @@ int main()
 	assert(x == 23);
 }
 // Imported from ESBMC regression/esbmc/github_613_postdecrement_success
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -23,7 +23,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_841-2
 // Needs: --big-endian
-// RUN: --big-endian
+// RUN: --big-endian --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

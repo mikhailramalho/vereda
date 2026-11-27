@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_deadlock_cond
 // Needs: --partial-order --deadlock-check
-// RUN: --partial-order --deadlock-check
+// RUN: --partial-order --deadlock-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order does not support a call to pthread_cond_wait_check yet, at file .*partial_order_reject_deadlock_cond\.c line +9 column 3 function
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

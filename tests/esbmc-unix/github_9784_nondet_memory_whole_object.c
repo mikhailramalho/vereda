@@ -19,7 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_9784_nondet_memory_whole_object
-// RUN: --ub-pointer-check=false
+// RUN: --ub-pointer-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^Symex completed in: [0-9.]+s \([0-9]{1,3} assignments\)$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$

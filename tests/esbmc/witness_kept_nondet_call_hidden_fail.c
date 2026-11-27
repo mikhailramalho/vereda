@@ -15,7 +15,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_kept_nondet_call_hidden_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: value: "\\\\result == -?\d+"\n\s+format: "ext_c_expression"\n\s+location:\n\s+file_name: "[^"]*witness_kept_nondet_call_hidden_fail\.c"\n\s+line: 10$

@@ -11,4 +11,5 @@ int main() {
   __VERIFIER_assert(i == N);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_stride_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

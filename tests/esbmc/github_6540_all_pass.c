@@ -8,6 +8,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6540_all_pass
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: 2 passed
 // EXPECT: ^VERIFICATION SUCCESSFUL$

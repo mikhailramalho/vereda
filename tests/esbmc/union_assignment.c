@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 }
 // Imported from ESBMC regression/esbmc/union_assignment
 // Needs: REQUIRES x87_long_double
-// RUN: -Wno-error=implicit-function-declaration
+// RUN: -Wno-error=implicit-function-declaration --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -17,6 +17,7 @@ int main()
   assert(x == (1LL << 53) + 2);
 }
 // Imported from ESBMC regression/esbmc/compound_assign_float_rhs
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

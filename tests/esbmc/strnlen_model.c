@@ -17,4 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/strnlen_model
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

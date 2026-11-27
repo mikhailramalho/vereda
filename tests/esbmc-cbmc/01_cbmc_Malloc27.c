@@ -21,6 +21,7 @@ void really ( char* p )
    p[2] = 'z';
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc27
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

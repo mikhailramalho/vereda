@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/ctest_gen_empty_file
 // Needs: --generate-ctest-testcase --ctest-output-dir out SEED_FILE out/CMakeLists.txt CHECK_FILE out/CMakeLists.txt contains project\(ESBMCGeneratedTest C\)
-// RUN: --generate-ctest-testcase --ctest-output-dir out
+// RUN: --generate-ctest-testcase --ctest-output-dir out --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Generated CTest test case\: test_case\.c$
 // EXPECT: ^VERIFICATION FAILED$

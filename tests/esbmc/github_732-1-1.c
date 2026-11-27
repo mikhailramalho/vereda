@@ -19,4 +19,5 @@ int main()
 	assert(*(int *)&s == 0x000fffff);
 }
 // Imported from ESBMC regression/esbmc/github_732-1-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

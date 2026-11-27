@@ -22,6 +22,6 @@ int main()
 // Imported from ESBMC regression/esbmc/multi_property_loop_invariant_copy_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant --multi-fail-fast 1
-// RUN: --loop-invariant --multi-property --multi-fail-fast 1 --max-k-step 2
+// RUN: --loop-invariant --multi-property --multi-fail-fast 1 --max-k-step 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

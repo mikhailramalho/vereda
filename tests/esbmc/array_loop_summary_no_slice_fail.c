@@ -10,4 +10,5 @@ int main()
     __VERIFIER_assert(a[x] != 77); // a[x] != 77
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_no_slice_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

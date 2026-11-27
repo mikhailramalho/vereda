@@ -31,7 +31,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/race_c11_mtx_unlock_then_join_fail
 // Needs: --data-races-check-only
-// RUN: --data-races-check-only --no-assertions
+// RUN: --data-races-check-only --no-assertions --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@global

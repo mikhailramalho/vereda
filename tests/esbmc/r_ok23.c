@@ -7,6 +7,6 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/r_ok23
 // Needs: __ESBMC_r_ok
-// RUN: --ub-pointer-check=false
+// RUN: --ub-pointer-check=false --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

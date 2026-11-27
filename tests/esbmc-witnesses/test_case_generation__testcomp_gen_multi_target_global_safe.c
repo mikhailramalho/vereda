@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/testcomp_gen_multi_target_global_safe
 // Needs: --generate-testcase
-// RUN: --generate-testcase
+// RUN: --generate-testcase --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

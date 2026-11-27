@@ -16,5 +16,6 @@ int main()
   assert(0);
 }
 // Imported from ESBMC regression/esbmc/symbolic_unrepresentable_malloc
+// RUN: --no-incremental-bmc
 // EXPECT: ^Violated property:$
 // EXPECT: ^VERIFICATION FAILED$

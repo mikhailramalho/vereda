@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/long_double_member_layout_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 18 +assertion
 // Vereda: unmet EXPECT: line 18 +assertion

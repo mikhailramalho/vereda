@@ -132,5 +132,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/same-object1
 // Needs: __ESBMC_same_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

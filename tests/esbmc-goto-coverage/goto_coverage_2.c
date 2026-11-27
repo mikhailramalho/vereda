@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/goto_coverage_2
 // Needs: --assertion-coverage
-// RUN: --multi-property --assertion-coverage
+// RUN: --multi-property --assertion-coverage --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
 // Vereda: verdict none

@@ -1,5 +1,5 @@
 // --no-summarize-array-loops unrolls the loops a summary would replace.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT-NOT: Summarised
 // EXPECT: ^\[PROGRESS\] Unwinding loop 0 iteration 10
 // EXPECT: ^VERIFICATION SUCCESSFUL$

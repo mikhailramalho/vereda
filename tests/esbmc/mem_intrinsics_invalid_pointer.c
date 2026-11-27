@@ -33,4 +33,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/mem_intrinsics_invalid_pointer
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/volatile_bitfield_range_pass
 // Needs: --volatile-check
-// RUN: --std c11 --volatile-check
+// RUN: --std c11 --volatile-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -9,6 +9,7 @@ int main()
   return s;
 }
 // Imported from ESBMC regression/esbmc/same_position_asserts_single_property
+// RUN: --no-incremental-bmc
 // EXPECT: ^\s+FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+8\s+array bounds violated: array `a' upper bound \[\([^)]*\)j < 4\]$
 // EXPECT: ^Properties: 1 checked, \d+ passed, 1 failed, 1 not checked$
 // EXPECT: ^VERIFICATION FAILED$

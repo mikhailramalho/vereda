@@ -8,4 +8,5 @@ int main()
   __VERIFIER_assert(a[49] == 1); // last element
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_bounds
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

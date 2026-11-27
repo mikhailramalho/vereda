@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_trace_lost_update_fail
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \A(?=[\s\S]*\n  tmp = 0 )(?=[\s\S]*\n  m = 0 )(?![\s\S]*\n  x = 1 [\s\S]*\n  (m|tmp) = 0 )

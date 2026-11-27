@@ -21,4 +21,5 @@ int main()
   f(0);
 }
 // Imported from ESBMC regression/esbmc/switch_skipped_decl_recursion
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

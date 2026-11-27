@@ -8,4 +8,5 @@ int main(void) {
   assert(a[0][0] == 0);
 }
 // Imported from ESBMC regression/esbmc/array_of_vector_store_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

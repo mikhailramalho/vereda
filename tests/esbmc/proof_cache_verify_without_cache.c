@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/proof_cache_verify_without_cache
 // Needs: --proof-cache-verify
-// RUN: --multi-property --proof-cache-verify
+// RUN: --multi-property --proof-cache-verify --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --proof-cache-verify has no cache to check without --proof-cache <dir>$
 // Vereda: verdict none

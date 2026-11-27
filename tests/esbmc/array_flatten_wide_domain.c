@@ -18,4 +18,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_flatten_wide_domain
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

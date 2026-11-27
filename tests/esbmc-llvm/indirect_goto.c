@@ -18,6 +18,7 @@ int main(){
     return(0);
 }
 // Imported from ESBMC regression/llvm/indirect_goto
+// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict UNKNOWN

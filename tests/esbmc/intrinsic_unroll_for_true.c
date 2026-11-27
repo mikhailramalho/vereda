@@ -14,6 +14,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_for_true
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 6 to loop
 // EXPECT: ^VERIFICATION SUCCESSFUL$

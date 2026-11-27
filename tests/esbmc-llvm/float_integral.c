@@ -15,4 +15,5 @@ int main(void)
   printf("-2.0e+308 --> %g\n", -2.0e+308);
 }
 // Imported from ESBMC regression/llvm/float_integral
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

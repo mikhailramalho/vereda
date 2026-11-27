@@ -46,5 +46,5 @@ int main(void)
   free(p);
 }
 // Imported from ESBMC regression/esbmc/struct_bitfields_07
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

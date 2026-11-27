@@ -29,7 +29,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/race_rwlock_unlock_then_return_fail
 // Needs: --ub-data-race-check
-// RUN: --ub-data-race-check --no-assertions
+// RUN: --ub-data-race-check --no-assertions --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: W/W data race on c:@global
 // MODE: FUTURE

@@ -10,4 +10,5 @@ ERROR:
     return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_if3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

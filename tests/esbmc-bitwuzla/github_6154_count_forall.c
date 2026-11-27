@@ -21,6 +21,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_6154_count_forall
 // Needs: __ESBMC_forall
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

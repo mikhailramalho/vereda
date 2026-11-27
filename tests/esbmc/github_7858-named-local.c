@@ -28,7 +28,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7858-named-local
 // Needs: --witness-output-graphml
-// RUN: -m64 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml -
+// RUN: -m64 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --witness-output-graphml - --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: key="assumption">local == 7;
 // EXPECT: (?s)\A(?!.*key="assumption">[^<]*(dynamic_|symex_|&amp;))

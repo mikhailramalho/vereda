@@ -12,6 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_member_heap_overflow_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated: heap object$

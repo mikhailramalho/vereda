@@ -1,5 +1,5 @@
 // A late mismatch must not be guessed away from the quadratic prefix.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 extern unsigned __VERIFIER_nondet_uint(void);
 extern void __VERIFIER_assume(int);

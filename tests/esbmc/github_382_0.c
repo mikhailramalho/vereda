@@ -12,6 +12,7 @@ int main(void) {
     global_var3 = *((uint32_t *)local_var_addr);
 }
 // Imported from ESBMC regression/esbmc/github_382_0
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

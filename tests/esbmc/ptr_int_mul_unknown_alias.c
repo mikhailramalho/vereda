@@ -22,6 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ptr_int_mul_unknown_alias
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: invalid pointer$
 // Vereda: unmet EXPECT: ^.*dereference failure: invalid pointer$

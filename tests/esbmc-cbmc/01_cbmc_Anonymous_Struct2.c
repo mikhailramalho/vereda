@@ -29,4 +29,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Anonymous_Struct2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

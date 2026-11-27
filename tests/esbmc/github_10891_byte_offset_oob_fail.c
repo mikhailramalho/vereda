@@ -11,6 +11,7 @@ int main(void)
   return r.v;
 }
 // Imported from ESBMC regression/esbmc/github_10891_byte_offset_oob_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated$

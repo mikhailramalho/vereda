@@ -4,7 +4,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/github_444_2
 // Needs: --stack-limit 3199
-// RUN: --stack-limit 3199
+// RUN: --stack-limit 3199 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

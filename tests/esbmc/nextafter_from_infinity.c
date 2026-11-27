@@ -12,4 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nextafter_from_infinity
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

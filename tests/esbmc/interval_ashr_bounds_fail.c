@@ -10,7 +10,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/interval_ashr_bounds_fail
 // Needs: --interval-analysis --interval-analysis-bitwise
-// RUN: --interval-analysis --interval-analysis-bitwise
+// RUN: --interval-analysis --interval-analysis-bitwise --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

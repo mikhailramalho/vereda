@@ -27,7 +27,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10749_race_branch_witness_fail
 // Needs: --ub-data-race-check --witness-output-yaml
-// RUN: --ub-data-race-check --no-assertions --witness-output-yaml -
+// RUN: --ub-data-race-check --no-assertions --witness-output-yaml - --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^    format_version: "2\.4"$
 // EXPECT: type: "function_enter"

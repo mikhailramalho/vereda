@@ -22,6 +22,6 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/mode_exit_reasoning_check_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check
+// RUN: --loop-invariant-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

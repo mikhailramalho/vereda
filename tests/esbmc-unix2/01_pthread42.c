@@ -37,6 +37,7 @@ void main()
   pthread_create(id4, NULL, t4, NULL);
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread42
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

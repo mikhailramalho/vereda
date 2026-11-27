@@ -34,7 +34,8 @@ with tempfile.TemporaryDirectory() as tmp:
     out_of_memory = 0
     for mb in range(200, 370, 10):
         limit = mb << 20
-        run = subprocess.run([binary, f"{source}.ll", "--no-summarize-array-loops"],
+        run = subprocess.run([binary, f"{source}.ll", "--no-summarize-array-loops",
+                              "--no-incremental-bmc"],
                              capture_output=True, text=True, timeout=60, check=False,
                              preexec_fn=lambda limit=limit: resource.setrlimit(
                                  resource.RLIMIT_AS, (limit, limit)))

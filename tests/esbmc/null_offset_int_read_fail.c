@@ -15,6 +15,7 @@ void *detach(struct dev *dev) {
 
 int main() { return detach(var_group1) != 0; }
 // Imported from ESBMC regression/esbmc/null_offset_int_read_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: NULL pointer$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

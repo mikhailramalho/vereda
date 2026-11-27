@@ -20,4 +20,5 @@ int main()
   analyze_this();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Malloc6
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,7 +12,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/const_object_write_memcpy_symbolic_null
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: \A(?![\s\S]*FAILED[^\n]*write access to const object)
 // EXPECT: FAILED[^\n]*NULL pointer on DST
 // EXPECT: ^VERIFICATION FAILED$

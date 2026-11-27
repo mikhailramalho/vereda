@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/github_10821_safe
 // Needs: --generate-testcase
-// RUN: --generate-testcase
+// RUN: --generate-testcase --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

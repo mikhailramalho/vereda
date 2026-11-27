@@ -11,4 +11,5 @@ int main()
   assert(result==a*b);
 }
 // Imported from ESBMC regression/esbmc/02_eureka23
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

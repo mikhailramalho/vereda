@@ -11,4 +11,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memcmp_symbolic_len
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

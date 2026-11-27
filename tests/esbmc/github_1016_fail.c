@@ -8,4 +8,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1016_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

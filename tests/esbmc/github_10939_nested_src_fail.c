@@ -10,5 +10,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_10939_nested_src_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Properties: [0-9]+ checked, \d+ passed, 1 failed, \d+ not checked

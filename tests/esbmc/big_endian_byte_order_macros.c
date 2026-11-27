@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/big_endian_byte_order_macros
 // Needs: --big-endian
-// RUN: --big-endian
+// RUN: --big-endian --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

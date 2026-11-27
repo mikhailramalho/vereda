@@ -19,4 +19,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/underscore_longjmp_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -14,4 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/union_mixed_field_bytes
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

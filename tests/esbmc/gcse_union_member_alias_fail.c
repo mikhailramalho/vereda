@@ -17,4 +17,5 @@ int main()
   assert(y == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_union_member_alias_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

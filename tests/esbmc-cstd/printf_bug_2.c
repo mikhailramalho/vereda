@@ -7,7 +7,7 @@ int main()
   assert(x == 20);
 }
 // Imported from ESBMC regression/cstd/printf_bug_2
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32 --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: NULL pointer\b

@@ -19,4 +19,5 @@ int main()
   assert(2[p]==2);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Access3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

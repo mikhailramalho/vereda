@@ -17,4 +17,5 @@ int main()
                                             // clang: selects cbrtf for const float
 }
 // Imported from ESBMC regression/llvm/generic1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

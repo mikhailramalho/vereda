@@ -6,4 +6,5 @@ int main() {
   f(1, 2, 3);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Ellipsis
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

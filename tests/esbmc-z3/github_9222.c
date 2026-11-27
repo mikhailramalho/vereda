@@ -20,5 +20,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/z3/github_9222
-// RUN: --solver z3 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unsigned-overflow-check
+// RUN: --solver z3 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --unsigned-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

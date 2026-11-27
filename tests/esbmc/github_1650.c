@@ -12,5 +12,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_1650
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

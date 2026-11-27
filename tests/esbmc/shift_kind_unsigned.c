@@ -13,5 +13,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/shift_kind_unsigned
-// RUN: --no-unwinding-assertions
+// RUN: --no-unwinding-assertions --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

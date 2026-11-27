@@ -27,7 +27,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/00_atomicity04
 // Needs: --atomicity-check --context-bound 3
-// RUN: --atomicity-check --context-bound 3
+// RUN: --atomicity-check --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

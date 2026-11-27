@@ -10,7 +10,7 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_zero_pad_pos
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check -m32 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

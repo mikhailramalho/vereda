@@ -20,4 +20,5 @@ int main()
   f(__VERIFIER_nondet_int());
 }
 // Imported from ESBMC regression/esbmc/github_8055_param
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -113,7 +113,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/03_token_ring
 // Needs: --context-bound 3
-// RUN: --context-bound 3
+// RUN: --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

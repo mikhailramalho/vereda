@@ -13,5 +13,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ub_05_shift_left_op2_size
-// RUN: --ub-signed-overflow-check --ub-shift-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

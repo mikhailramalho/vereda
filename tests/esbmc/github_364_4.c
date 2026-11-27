@@ -41,6 +41,7 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/github_364_4
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

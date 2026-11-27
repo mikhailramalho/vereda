@@ -12,6 +12,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/loop_local_l1_reuse_address_fail
+// RUN: --no-incremental-bmc
 // EXPECT: FAILED +\[main\.expired-pointer-dereference\.1\]
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: FAILED +\[main\.expired-pointer-dereference\.1\]

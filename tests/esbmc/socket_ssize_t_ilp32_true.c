@@ -38,7 +38,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/socket_ssize_t_ilp32_true
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

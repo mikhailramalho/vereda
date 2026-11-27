@@ -14,6 +14,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7572_trunc_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^  FAILED       \[main\.assertion\.1\]\s+line 12  floating-point conversion out of range of unsignedbv on typecast$
 // EXPECT: ^VERIFICATION FAILED$

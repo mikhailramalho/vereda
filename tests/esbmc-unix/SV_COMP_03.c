@@ -64,7 +64,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/SV_COMP_03
 // Needs: --context-bound 3 --ub-data-race-check
-// RUN: --context-bound 3 --no-assertions --ub-data-race-check
+// RUN: --context-bound 3 --no-assertions --ub-data-race-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

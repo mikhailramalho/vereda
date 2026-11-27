@@ -8,4 +8,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/byte_view_3d_anchor_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

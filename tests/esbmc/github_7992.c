@@ -13,4 +13,5 @@ int main()
   b1 ^= main_b2;
 }
 // Imported from ESBMC regression/esbmc/github_7992
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -12,7 +12,7 @@ int main(int argc, char **argv, char **envp)
   return envp[0][0];
 }
 // Imported from ESBMC regression/esbmc/github_10382_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s*PASSED\s+\[main\.null-pointer-dereference\.\d+\]\s+line\s+9\s
 // EXPECT: ^\s*FAILED\s+\[main\.array-bounds-violated\.\d+\]\s+line\s+10\s
 // EXPECT: ^\s*FAILED\s+\[main\.null-pointer-dereference\.\d+\]\s+line\s+12\s

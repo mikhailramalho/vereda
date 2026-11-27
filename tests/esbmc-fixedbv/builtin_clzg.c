@@ -21,4 +21,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/fixedbv/builtin_clzg
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

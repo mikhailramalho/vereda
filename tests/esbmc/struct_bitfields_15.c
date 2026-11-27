@@ -22,5 +22,5 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/struct_bitfields_15
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

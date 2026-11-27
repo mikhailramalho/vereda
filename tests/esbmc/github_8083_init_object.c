@@ -10,6 +10,6 @@ int main()
 // Imported from ESBMC regression/esbmc/github_8083_init_object
 // Needs: __ESBMC_init_object
 // Needs: --interval-analysis
-// RUN: --interval-analysis
+// RUN: --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

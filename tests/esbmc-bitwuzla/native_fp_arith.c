@@ -19,5 +19,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/bitwuzla/native_fp_arith
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

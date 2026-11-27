@@ -22,6 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/vsprintf_va_list_args_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: array bounds violated
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

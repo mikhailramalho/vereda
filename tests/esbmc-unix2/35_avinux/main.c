@@ -19154,7 +19154,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix2/35_avinux
 // Needs: --depth 99
-// RUN: --depth 99
+// RUN: --depth 99 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

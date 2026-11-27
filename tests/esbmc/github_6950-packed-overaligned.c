@@ -21,4 +21,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_6950-packed-overaligned
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

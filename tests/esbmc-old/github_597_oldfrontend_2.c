@@ -13,5 +13,5 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc-old/github_597_oldfrontend_2
-// RUN: --entry func_overflow
+// RUN: --entry func_overflow --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

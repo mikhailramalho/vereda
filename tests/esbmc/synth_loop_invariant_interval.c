@@ -27,7 +27,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_interval
 // Needs: --synthesise-loop-invariants --interval-analysis
-// RUN: --synthesise-loop-invariants --interval-analysis
+// RUN: --synthesise-loop-invariants --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Synthesised loop invariants for 1 loop$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -6,5 +6,5 @@ int main()
     f*=2; // should not overflow
 }
 // Imported from ESBMC regression/floats/Float-overflow1
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

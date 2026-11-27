@@ -21,6 +21,7 @@ int main()
   assert(g==10);
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread4
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

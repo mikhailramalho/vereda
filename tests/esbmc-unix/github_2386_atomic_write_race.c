@@ -29,7 +29,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_2386_atomic_write_race
 // Needs: --ub-data-race-check --context-bound 2
-// RUN: --ub-data-race-check --context-bound 2
+// RUN: --ub-data-race-check --context-bound 2 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

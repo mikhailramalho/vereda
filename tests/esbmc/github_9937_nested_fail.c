@@ -10,5 +10,5 @@ int main()
   __VERIFIER_assert(u.p != arr + 100); // p kept
 }
 // Imported from ESBMC regression/esbmc/github_9937_nested_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

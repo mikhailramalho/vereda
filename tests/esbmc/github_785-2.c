@@ -8,5 +8,5 @@ int main()
 		assert(!malloc(2 * GiB));
 }
 // Imported from ESBMC regression/esbmc/github_785-2
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

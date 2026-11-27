@@ -7,7 +7,7 @@ int main(void)
   return (int)(r >> 63);
 }
 // Imported from ESBMC regression/esbmc/github_9223_unsigned_signed_amount_fail
-// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --no-incremental-bmc
 // EXPECT: ^  !overflow\("shl", a, 32\)$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  !overflow\("shl", a, 32\)$

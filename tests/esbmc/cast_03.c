@@ -11,4 +11,5 @@ int main()
 	*((uint64_t *)&s.a + 0);
 }
 // Imported from ESBMC regression/esbmc/cast_03
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

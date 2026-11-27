@@ -41,4 +41,5 @@ int main ( void )
 
 }
 // Imported from ESBMC regression/esbmc-unix/04_valgrind
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

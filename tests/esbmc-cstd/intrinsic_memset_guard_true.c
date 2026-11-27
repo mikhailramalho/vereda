@@ -9,4 +9,5 @@ int main() {
 	
 }
 // Imported from ESBMC regression/cstd/intrinsic_memset_guard_true
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

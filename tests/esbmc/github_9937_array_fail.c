@@ -9,5 +9,5 @@ int main()
   __VERIFIER_assert(u.p[0] != arr + 100); // copied pointer
 }
 // Imported from ESBMC regression/esbmc/github_9937_array_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

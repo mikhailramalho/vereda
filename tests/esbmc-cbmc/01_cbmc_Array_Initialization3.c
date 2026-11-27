@@ -9,4 +9,5 @@ void main(void)
   assert(array[1][0] ==3);    // returned false in this case
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Array_Initialization3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

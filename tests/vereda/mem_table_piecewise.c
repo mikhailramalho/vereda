@@ -1,5 +1,5 @@
 // Contiguous segments may use distinct symbolic bases and constant values.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern unsigned __VERIFIER_nondet_uint(void);
 extern void __VERIFIER_assume(int);

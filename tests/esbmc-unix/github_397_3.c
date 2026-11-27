@@ -74,6 +74,7 @@ module_exit:
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_397_3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

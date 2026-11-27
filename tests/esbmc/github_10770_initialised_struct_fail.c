@@ -17,7 +17,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10770_initialised_struct_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)\A(?:(?!function_return).)*type: "function_return"(?:(?!function_return).)*\Z

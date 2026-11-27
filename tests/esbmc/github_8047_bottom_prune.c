@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_8047_bottom_prune
 // Needs: --interval-symex-assert
-// RUN: --interval-symex-assert
+// RUN: --interval-symex-assert --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

@@ -25,5 +25,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7311_forall
 // Needs: __ESBMC_forall
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

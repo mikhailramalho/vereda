@@ -10,4 +10,5 @@ int main()
     assert(d==x);
 }
 // Imported from ESBMC regression/floats/Float12
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

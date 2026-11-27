@@ -13,4 +13,5 @@ int main()
   if(i>100) f();
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Refinement6
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

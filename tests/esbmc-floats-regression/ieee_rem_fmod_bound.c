@@ -15,7 +15,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats-regression/ieee_rem_fmod_bound
-// RUN: --fp2bv
+// RUN: --fp2bv --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

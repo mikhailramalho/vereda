@@ -15,4 +15,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/array_of_vector_symbolic_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

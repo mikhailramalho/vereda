@@ -11,6 +11,7 @@ int main(void)
   assert(__builtin_object_size(&s.a, __VERIFIER_nondet_int()) == 8);
 }
 // Imported from ESBMC regression/esbmc/github_10186_object_size_nondet_type_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

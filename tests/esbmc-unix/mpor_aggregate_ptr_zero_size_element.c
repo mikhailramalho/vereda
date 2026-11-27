@@ -31,6 +31,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_zero_size_element
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  dereference failure: array bounds violated$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

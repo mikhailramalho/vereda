@@ -32,7 +32,7 @@ void foo(__linseg_supovr uint32_t* param1_p, uint32_t param2) {
   __VERIFIER_assert(*param1_p == param2); // Value should be set correctly
 }
 // Imported from ESBMC regression/esbmc/github_351_true
-// RUN: --entry foo
+// RUN: --entry foo --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

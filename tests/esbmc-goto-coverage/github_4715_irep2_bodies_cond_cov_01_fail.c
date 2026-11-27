@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_4715_irep2_bodies_cond_cov_01_fail
 // Needs: --condition-coverage
-// RUN: --condition-coverage
+// RUN: --condition-coverage --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Reached Conditions:  6
 // EXPECT: ^Short Circuited Conditions:  0

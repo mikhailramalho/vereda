@@ -21,7 +21,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pointer_distinct_objects_fold_fail
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.1\]
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.2\]
 // EXPECT: ^\s*FAILED\s+\[main\.assertion\.3\]

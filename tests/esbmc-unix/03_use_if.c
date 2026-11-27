@@ -123,7 +123,7 @@ int main(){
 }
 // Imported from ESBMC regression/esbmc-unix/03_use_if
 // Needs: --no-por --context-bound 6
-// RUN: --no-por --context-bound 6
+// RUN: --no-por --context-bound 6 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

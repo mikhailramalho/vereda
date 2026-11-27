@@ -23,6 +23,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_global_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^Field-sensitive SSA splits 4 struct object\(s\)$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^Field-sensitive SSA splits 4 struct object\(s\)$

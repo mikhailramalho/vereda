@@ -32,7 +32,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix2/github_8220_reused_thread_id
 // Needs: --context-bound 3 --data-races-check-only
-// RUN: --context-bound 3 --data-races-check-only --no-assertions --ub-pointer-check=false
+// RUN: --context-bound 3 --data-races-check-only --no-assertions --ub-pointer-check=false --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

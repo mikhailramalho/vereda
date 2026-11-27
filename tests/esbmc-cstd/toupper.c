@@ -16,4 +16,5 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/toupper
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

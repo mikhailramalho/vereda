@@ -5,7 +5,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc/40_total_stack_return_false
 // Needs: --total-stack-limit 95
-// RUN: -m64 --total-stack-limit 95
+// RUN: -m64 --total-stack-limit 95 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Total stack limit property was violated
 // EXPECT: ^VERIFICATION FAILED$

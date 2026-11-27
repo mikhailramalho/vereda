@@ -23,4 +23,5 @@ int main () {
   assert ((l->b->version) == 1);
 }
 // Imported from ESBMC regression/nonz3/01_cbmc_Pointer14
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

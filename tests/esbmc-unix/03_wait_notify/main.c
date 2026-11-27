@@ -96,6 +96,6 @@ int main(){
 // Imported from ESBMC regression/esbmc-unix/03_wait_notify
 // Needs: __ESBMC_yield
 // Needs: -I . --context-bound 6
-// RUN: -I . --context-bound 6
+// RUN: -I . --context-bound 6 --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

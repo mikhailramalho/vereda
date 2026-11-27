@@ -17,4 +17,5 @@ int main()
   assert(p==&y);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Global_Initialization
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

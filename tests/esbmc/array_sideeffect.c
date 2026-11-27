@@ -27,6 +27,7 @@ int main()
   VLA_size(0); // ERROR
 } 
 // Imported from ESBMC regression/esbmc/array_sideeffect
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

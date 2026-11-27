@@ -15,5 +15,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1713
-// RUN: -DXLAT_GRANULARITY_SIZE_SHIFT=7
+// RUN: -DXLAT_GRANULARITY_SIZE_SHIFT=7 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

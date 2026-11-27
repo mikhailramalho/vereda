@@ -45,7 +45,7 @@ int main(void) {
 }
 // Imported from ESBMC regression/esbmc-unix/03_icse_03
 // Needs: --context-bound 4
-// RUN: --context-bound 4
+// RUN: --context-bound 4 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

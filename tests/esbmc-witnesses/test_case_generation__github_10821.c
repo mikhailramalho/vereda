@@ -11,7 +11,7 @@ int main(void)
 }
 // Imported from ESBMC regression/witnesses/test_case_generation/github_10821
 // Needs: --generate-testcase CHECK_FILE testcase.xml contains <testcase coversError="true">\n<input>[0-9]+</input>\n<input>[0-9]+</input>\n<input>7</input>\n</testcase>
-// RUN: --generate-testcase
+// RUN: --generate-testcase --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

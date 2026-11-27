@@ -148,13 +148,26 @@ that mode.
 Adopted, after the BenchExec run: under incremental BMC, a fresh instance per
 solving phase of a resumed bound is opt-in, `--fresh-solver`; without it the
 resumed bounds share one instance as before this change. With a fixed bound
-(without `--incremental-bmc`), each solving phase renews the
+(`--unwind`, or `--no-incremental-bmc`), each solving phase renews the
 instance whenever the backend can (Bitwuzla), and the second phase renews
 instead of walking the program again, which the measurements above show only
 gaining. `--incremental-solver` keeps one shared instance everywhere, and
 conflicts with `--fresh-solver`. Choosing per bound between a renewed and a
 kept instance, by what the previous bound's solve cost, is the follow-up
 (#387) that would make the fresh instance worth turning on by default.
+
+In the same change incremental BMC became the default: without `--unwind`,
+Vereda checks bounds 1, 2, ... up to `--max-k-step` (50) as `--incremental-bmc`
+did, and `--no-incremental-bmc` gives the old default, unrolling each loop
+until its next iteration is unreachable. `--no-unwinding-assertions` and
+`--dump-smt-only` without `--unwind` keep the old default too, since
+incremental BMC cannot pick a bound without checking it or solving; with an
+explicit `--incremental-bmc` they are still errors. The k-step flags ask for
+incremental BMC and are errors under `--no-incremental-bmc` or `--unwind`.
+ESBMC's default checks one bound, so `tests/import_esbmc.py` adds
+`--no-incremental-bmc` to an imported test whose ESBMC flags give neither
+`--unwind` nor an incremental mode (`--incremental-bmc`, `--k-induction`,
+`--falsification`, `--termination`, ...).
 
 Left open: choosing per bound between a renewed and a kept instance (knuth,
 geo3); skip-const for `--incremental-solver`; renew for Z3 and cvc5 in camada,

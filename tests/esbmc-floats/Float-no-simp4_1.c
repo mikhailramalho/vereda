@@ -35,5 +35,6 @@ int main()
   assert(isfinite(d5));
 }
 // Imported from ESBMC regression/floats/Float-no-simp4_1
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

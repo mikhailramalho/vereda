@@ -12,6 +12,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9895_printf_expired
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: dereference failure: accessed expired variable pointer `buf'
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

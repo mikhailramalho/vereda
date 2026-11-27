@@ -28,5 +28,5 @@ void foo(void)
 }
 
 // Imported from ESBMC regression/esbmc/github_364_2
-// RUN: --entry foo
+// RUN: --entry foo --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

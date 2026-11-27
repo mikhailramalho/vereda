@@ -21,6 +21,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/time_timer_create
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

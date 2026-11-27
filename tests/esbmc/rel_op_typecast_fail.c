@@ -27,4 +27,5 @@ int main()
   i(&h);
 }
 // Imported from ESBMC regression/esbmc/rel_op_typecast_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

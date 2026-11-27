@@ -31,4 +31,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4715_irep2_native_body_expr_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

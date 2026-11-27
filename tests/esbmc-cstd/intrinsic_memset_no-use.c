@@ -16,4 +16,5 @@ int main()
   }
 }
 // Imported from ESBMC regression/cstd/intrinsic_memset_no-use
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

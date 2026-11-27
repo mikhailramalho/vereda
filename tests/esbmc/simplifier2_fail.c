@@ -7,4 +7,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/simplifier2_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

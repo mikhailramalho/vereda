@@ -84,4 +84,5 @@ int main(void) {
     return external_var.field60;
 }
 // Imported from ESBMC regression/esbmc/github_430
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,7 +10,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10913_two_inputs
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // EXPECT: ^\[Counterexamples - 4 witnesses\]$
 // EXPECT: enumeration stopped: UNSAT after 4 witnesses
 // EXPECT: ^VERIFICATION FAILED$

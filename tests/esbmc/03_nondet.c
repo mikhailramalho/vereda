@@ -16,4 +16,5 @@ int main()
   assert(c!=a*b);
 }
 // Imported from ESBMC regression/esbmc/03_nondet
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

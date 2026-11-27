@@ -10,4 +10,5 @@ int main(){
   assert(invalid_char_pt != x4);
 }
 // Imported from ESBMC regression/esbmc/github_1620
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

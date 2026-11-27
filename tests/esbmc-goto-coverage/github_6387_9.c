@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/github_6387_9
 // Needs: --assertion-coverage --witness-output-yaml w.yaml SEED_FILE base-k0-0-w.yaml SENTINEL_NOT_OVERWRITTEN CHECK_FILE base-k0-0-w.yaml contains SENTINEL_NOT_OVERWRITTEN
-// RUN: --multi-property --assertion-coverage --function target --witness-output-yaml w.yaml
+// RUN: --multi-property --assertion-coverage --function target --witness-output-yaml w.yaml --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: claim\(s\) outside the coverage instrumentation were violated
 // Vereda: verdict none

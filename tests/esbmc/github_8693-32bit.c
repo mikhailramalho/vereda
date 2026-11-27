@@ -20,7 +20,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8693-32bit
-// RUN: -m32 --multi-property
+// RUN: -m32 --multi-property --no-incremental-bmc
 // EXPECT: ^  PASSED +\[main\.assertion\.1\]
 // EXPECT: ^  PASSED +\[main\.assertion\.2\]
 // EXPECT: ^  FAILED +\[main\.object-out-of-bounds\.1\]

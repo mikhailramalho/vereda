@@ -23,6 +23,7 @@ int main(){
         pthread_join( t, NULL );
 }
 // Imported from ESBMC regression/esbmc-unix/02_rafkind01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

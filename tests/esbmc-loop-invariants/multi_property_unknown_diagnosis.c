@@ -39,6 +39,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/multi_property_unknown_diagnosis
 // Needs: __ESBMC_loop_invariant
 // Needs: --no-standard-checks --loop-invariant
-// RUN: --no-standard-checks --loop-invariant --multi-property --max-k-step 2
+// RUN: --no-standard-checks --loop-invariant --multi-property --max-k-step 2 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION UNKNOWN$

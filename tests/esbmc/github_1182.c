@@ -10,6 +10,7 @@ int main()
   arr[6] = 42;
 }
 // Imported from ESBMC regression/esbmc/github_1182
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

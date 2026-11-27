@@ -17,6 +17,6 @@ int main()
 }
 // Imported from ESBMC regression/z3/github_6154_reject_float_inc_fail
 // Needs: __ESBMC_forall
-// RUN: --solver z3
+// RUN: --solver z3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

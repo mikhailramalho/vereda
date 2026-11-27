@@ -22,4 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/isnormal_infinity
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

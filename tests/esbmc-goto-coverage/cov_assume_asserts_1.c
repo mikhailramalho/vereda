@@ -16,7 +16,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/cov_assume_asserts_1
 // Needs: --branch-coverage --cov-assume-asserts
-// RUN: --branch-coverage --cov-assume-asserts
+// RUN: --branch-coverage --cov-assume-asserts --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^Branches : 2
 // EXPECT: ^Reached : 0

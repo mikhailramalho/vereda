@@ -12,7 +12,7 @@ int main()
   x += 1;
 }
 // Imported from ESBMC regression/cstd/printf_3
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

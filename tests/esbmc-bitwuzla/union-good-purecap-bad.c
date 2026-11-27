@@ -19,6 +19,6 @@ void main(void)
   free(data.p0);
 }
 // Imported from ESBMC regression/bitwuzla/union-good-purecap-bad
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

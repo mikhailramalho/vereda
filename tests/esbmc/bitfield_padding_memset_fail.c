@@ -19,4 +19,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/bitfield_padding_memset_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

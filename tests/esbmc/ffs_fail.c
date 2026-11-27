@@ -21,4 +21,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/ffs_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

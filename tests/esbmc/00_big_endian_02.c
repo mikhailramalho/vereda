@@ -13,7 +13,7 @@ int main() {
 } 
 // Imported from ESBMC regression/esbmc/00_big_endian_02
 // Needs: --big-endian
-// RUN: --big-endian
+// RUN: --big-endian --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

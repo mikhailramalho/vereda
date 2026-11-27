@@ -17,4 +17,5 @@ int main()
   assert(s.c == 41023);
 }
 // Imported from ESBMC regression/esbmc/struct_extint_02
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

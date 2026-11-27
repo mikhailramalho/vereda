@@ -23,7 +23,7 @@ int main()
 // Imported from ESBMC regression/esbmc/github_11033_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --no-standard-checks
-// RUN: --loop-invariant-check --no-standard-checks
+// RUN: --loop-invariant-check --no-standard-checks --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  FAILED .*loop invariant base case

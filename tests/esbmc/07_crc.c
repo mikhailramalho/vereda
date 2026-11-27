@@ -100,5 +100,6 @@ int main()
   
 }
 // Imported from ESBMC regression/esbmc/07_crc
+// RUN: --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

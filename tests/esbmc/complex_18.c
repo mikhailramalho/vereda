@@ -13,6 +13,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/complex_18
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

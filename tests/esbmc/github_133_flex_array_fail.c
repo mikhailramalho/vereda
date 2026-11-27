@@ -21,6 +21,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_133_flex_array_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated: heap object$

@@ -13,4 +13,5 @@ int main()
   assert(b == a);
 }
 // Imported from ESBMC regression/esbmc/gcse_deref_store_kill_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

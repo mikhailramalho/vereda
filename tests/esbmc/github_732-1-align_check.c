@@ -37,6 +37,7 @@ int main() {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_732-1-align_check
+// RUN: --no-incremental-bmc
 // EXPECT: ^WARNING: not checking alignment .* packed struct .*s4.*$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^WARNING: not checking alignment .* packed struct .*s4.*$

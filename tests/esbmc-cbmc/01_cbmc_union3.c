@@ -11,4 +11,5 @@ int main(void)
   assert(my_func(x)==x);
 } 
 // Imported from ESBMC regression/cbmc/01_cbmc_union3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

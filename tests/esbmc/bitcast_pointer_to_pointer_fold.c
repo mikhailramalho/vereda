@@ -15,5 +15,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/bitcast_pointer_to_pointer_fold
 // Needs: __ESBMC_same_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

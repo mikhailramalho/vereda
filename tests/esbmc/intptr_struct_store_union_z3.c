@@ -41,5 +41,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_union_z3
-// RUN: --solver z3 --ub-pointer-check=false
+// RUN: --solver z3 --ub-pointer-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

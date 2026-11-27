@@ -15,7 +15,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval_symex_assert_clear_state
 // Needs: --interval-symex-assert
-// RUN: --interval-symex-assert
+// RUN: --interval-symex-assert --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

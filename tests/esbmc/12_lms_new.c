@@ -257,6 +257,6 @@ float lms(float x,float d,float *b,int l,
     return(y);
 }
 // Imported from ESBMC regression/esbmc/12_lms_new
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

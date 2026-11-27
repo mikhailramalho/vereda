@@ -15,4 +15,5 @@ L:
   return x;
 }
 // Imported from ESBMC regression/esbmc/gcse_goto_guard_stale
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

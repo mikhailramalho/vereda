@@ -23,4 +23,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/multidim_const_array_write_kept
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

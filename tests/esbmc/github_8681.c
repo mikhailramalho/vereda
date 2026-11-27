@@ -10,7 +10,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8681
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\s+PASSED\s+\[main\.array-bounds-violated\.1\]\s+line\s+9\s
 // EXPECT: ^\s+PASSED\s+\[main\.division-by-zero\.1\]\s+line\s+9\s
 // EXPECT: ^VERIFICATION SUCCESSFUL$

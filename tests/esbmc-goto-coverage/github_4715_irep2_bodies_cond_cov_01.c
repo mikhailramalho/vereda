@@ -19,4 +19,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/goto-coverage/github_4715_irep2_bodies_cond_cov_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

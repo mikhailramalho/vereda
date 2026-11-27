@@ -9,7 +9,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_654
 // Needs: --cex-output output
-// RUN: --cex-output output
+// RUN: --cex-output output --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

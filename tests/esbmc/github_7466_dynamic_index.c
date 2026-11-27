@@ -26,4 +26,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7466_dynamic_index
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

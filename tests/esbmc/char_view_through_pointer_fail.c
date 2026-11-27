@@ -8,4 +8,5 @@ int main(void) {
   return 10 / ((char *)&p->x == (char *)&p) + d;
 }
 // Imported from ESBMC regression/esbmc/char_view_through_pointer_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

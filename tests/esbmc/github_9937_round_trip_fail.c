@@ -9,5 +9,5 @@ int main()
   __VERIFIER_assert(u.p != arr + 100); // round trip
 }
 // Imported from ESBMC regression/esbmc/github_9937_round_trip_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -21,7 +21,7 @@ int main(void) {
 // Imported from ESBMC regression/esbmc/github_10853
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --witness-output-yaml
-// RUN: --loop-invariant-check --witness-output-yaml -
+// RUN: --loop-invariant-check --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)type: "loop_invariant"\s+location:\s+file_name: "[^"]*github_10853\.c"\s+line: 8\s+column: 3\s+function: "copy_bytes"\s+value: "i <= n && n <= 4"\s+format: "c_expression"

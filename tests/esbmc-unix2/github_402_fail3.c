@@ -25,7 +25,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/github_402_fail3
 // Needs: --no-por
-// RUN: --no-por
+// RUN: --no-por --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -43,5 +43,6 @@ int main() {
 
 // Imported from ESBMC regression/esbmc/overflow-result-all
 // Needs: __ESBMC_overflow_result_minus, __ESBMC_overflow_result_mult, __ESBMC_overflow_result_plus, __ESBMC_overflow_result_shl, __ESBMC_overflow_result_unary_minus
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

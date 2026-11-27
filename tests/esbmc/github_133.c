@@ -16,7 +16,7 @@ int main() {
   free(e);
 }
 // Imported from ESBMC regression/esbmc/github_133
-// RUN: --force-malloc-success --multi-property
+// RUN: --force-malloc-success --multi-property --no-incremental-bmc
 // EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+array bounds violated: array upper bound$
 // EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$

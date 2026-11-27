@@ -8,6 +8,7 @@ int main(void)
   return c[0];
 }
 // Imported from ESBMC regression/esbmc/github_7907_align_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: Incorrect alignment when accessing data object$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

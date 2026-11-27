@@ -15,4 +15,5 @@ int main()
     return 0;
 }
 // Imported from ESBMC regression/esbmc/with_arr_const3
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

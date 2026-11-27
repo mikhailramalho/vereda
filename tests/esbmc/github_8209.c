@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_8209
 // Needs: --interval-analysis --interval-analysis-wrapped --interval-analysis-arithmetic --interval-analysis-dump
-// RUN: --interval-analysis --interval-analysis-wrapped --interval-analysis-arithmetic --interval-analysis-dump
+// RUN: --interval-analysis --interval-analysis-wrapped --interval-analysis-arithmetic --interval-analysis-dump --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^2 <= c:github_8209\.c@[0-9]+@F@main@x <= 0$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

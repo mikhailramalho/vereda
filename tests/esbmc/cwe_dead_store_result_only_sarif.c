@@ -9,7 +9,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_store_result_only_sarif
 // Needs: --dead-store-check --sarif-output
-// RUN: --dead-store-check --sarif-output -
+// RUN: --dead-store-check --sarif-output - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: "level": "note"

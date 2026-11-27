@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_8683
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

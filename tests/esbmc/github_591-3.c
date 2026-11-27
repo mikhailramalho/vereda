@@ -12,6 +12,7 @@ int main()
   assert(*q == z);
 }
 // Imported from ESBMC regression/esbmc/github_591-3
+// RUN: --no-incremental-bmc
 // EXPECT: dereference failure: accessed expired variable pointer
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: dereference failure: accessed expired variable pointer

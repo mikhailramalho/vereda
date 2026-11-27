@@ -8,7 +8,7 @@ int main(argc, argv) char **argv;
 
 // Imported from ESBMC regression/esbmc/github_330_4
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check
+// RUN: --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

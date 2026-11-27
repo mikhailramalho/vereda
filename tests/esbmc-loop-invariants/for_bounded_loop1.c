@@ -22,6 +22,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/for_bounded_loop1
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check
+// RUN: --loop-invariant-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -42,6 +42,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_widen_contained
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

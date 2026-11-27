@@ -10,6 +10,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_tail_at_end_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

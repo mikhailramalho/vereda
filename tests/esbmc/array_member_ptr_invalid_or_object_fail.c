@@ -9,6 +9,7 @@ int main(void)
   return *q;
 }
 // Imported from ESBMC regression/esbmc/array_member_ptr_invalid_or_object_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  dereference failure
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure

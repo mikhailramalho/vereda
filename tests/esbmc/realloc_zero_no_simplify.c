@@ -12,4 +12,5 @@ int main()
   assert(q == NULL);
 }
 // Imported from ESBMC regression/esbmc/realloc_zero_no_simplify
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

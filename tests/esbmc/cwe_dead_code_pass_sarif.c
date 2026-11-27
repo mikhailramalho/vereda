@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_pass_sarif
 // Needs: --dead-code-check --sarif-output
-// RUN: --dead-code-check --sarif-output -
+// RUN: --dead-code-check --sarif-output - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: "version": "2.1.0"

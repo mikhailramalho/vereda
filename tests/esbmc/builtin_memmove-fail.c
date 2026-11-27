@@ -33,4 +33,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/esbmc/builtin_memmove-fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED

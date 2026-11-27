@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intptr_struct_store_merged
-// RUN: --ub-pointer-check=false
+// RUN: --ub-pointer-check=false --no-incremental-bmc
 // EXPECT: ^Symex completed in: [0-9.]+s \(39 assignments\)$
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^Symex completed in: [0-9.]+s \(39 assignments\)$

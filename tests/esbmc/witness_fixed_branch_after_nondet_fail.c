@@ -21,7 +21,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/witness_fixed_branch_after_nondet_fail
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)\A(?:(?!line: 8\n).)*value: "false"\n\s+location:\n\s+file_name: "[^"]*witness_fixed_branch_after_nondet_fail\.c"\n\s+line: 8\n(?:(?!line: 8\n).)*\Z

@@ -24,5 +24,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7311_exists
 // Needs: __ESBMC_exists
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

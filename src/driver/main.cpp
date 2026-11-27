@@ -95,13 +95,17 @@ static cl::opt<bool> vlaSizeCheck(
     cl::init(true));
 static cl::opt<bool> incrementalBMC(
     "incremental-bmc",
-    cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
-static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for --incremental-bmc"),
+    cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound (the "
+             "default without --unwind, --no-unwinding-assertions or --dump-smt-only)"));
+static cl::opt<bool> noIncrementalBMC(
+    "no-incremental-bmc",
+    cl::desc("Check one bound: unroll until the next iteration is unreachable, or to --unwind"));
+static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for incremental BMC"),
                                   cl::init(50));
 static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
-                                     cl::desc("No largest bound for --incremental-bmc: raise it "
+                                     cl::desc("No largest bound for incremental BMC: raise it "
                                               "until a verdict or the time limit"));
-static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremental-bmc by this"),
+static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of incremental BMC by this"),
                                cl::init(1));
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
@@ -684,11 +688,23 @@ static int run(int argc, char **argv) {
   const vereda::witness::WitnessModuleInfo *witnessInfoPtr =
       witnessInfo ? &*witnessInfo : nullptr;
 
+  if (incrementalBMC && noIncrementalBMC) {
+    errs() << argv[0] << ": --incremental-bmc conflicts with --no-incremental-bmc\n";
+    return ErrorExit;
+  }
+  // Incremental BMC is the default unless a bound is given or no bound can be
+  // picked: --no-unwinding-assertions does not check one, --dump-smt-only
+  // stops before solving. An explicit --incremental-bmc keeps their errors.
+  if (!incrementalBMC.getNumOccurrences())
+    incrementalBMC = !noIncrementalBMC && !unwind.getNumOccurrences() &&
+                     !noUnwindingAssertions && !dumpSMTOnly;
   if (!incrementalBMC) {
     cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
     for (cl::Option *o : boundFlags)
       if (o->getNumOccurrences()) {
-        errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
+        errs() << argv[0] << ": --" << o->ArgStr
+               << " needs incremental BMC, which --no-incremental-bmc, --unwind, "
+                  "--no-unwinding-assertions and --dump-smt-only turn off\n";
         return ErrorExit;
       }
     return bmc(*fn, unwind, witnessInfoPtr, &*module);

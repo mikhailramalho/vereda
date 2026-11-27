@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_code_reject_claim
 // Needs: --dead-code-check --claim 1
-// RUN: --dead-code-check --claim 1
+// RUN: --dead-code-check --claim 1 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --dead-code-check cannot be combined with --claim$
 // Vereda: verdict none

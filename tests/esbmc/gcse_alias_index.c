@@ -17,4 +17,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/gcse_alias_index
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

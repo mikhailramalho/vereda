@@ -116,7 +116,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix2/github_213_mutex_destroy_fail
 // Needs: --context-bound 2
-// RUN: --context-bound 2
+// RUN: --context-bound 2 --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

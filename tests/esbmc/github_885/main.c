@@ -7,7 +7,7 @@ void func1(int y)
   func2(y);
 }
 // Imported from ESBMC regression/esbmc/github_885
-// RUN: --entry func1
+// RUN: --entry func1 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \sarray (upper|lower) bound$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

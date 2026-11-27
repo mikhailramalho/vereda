@@ -7,4 +7,5 @@ int main()
 }
 
 // Imported from ESBMC regression/esbmc/time_01
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

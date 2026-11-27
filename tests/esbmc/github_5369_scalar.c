@@ -16,5 +16,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5369_scalar
-// RUN: --ub-pointer-check=false
+// RUN: --ub-pointer-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

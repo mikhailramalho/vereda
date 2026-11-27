@@ -27,7 +27,7 @@ int main() /* check_inverse */
 }
 // Imported from ESBMC regression/floats-regression/nn-tanh_5_unsafe
 // Needs: -I .
-// RUN: -I .
+// RUN: -I . --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

@@ -10,5 +10,5 @@ int main()
   __VERIFIER_assert(u.s.c[1] == 4); // byte written
 }
 // Imported from ESBMC regression/esbmc/github_9937_byte_keep
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

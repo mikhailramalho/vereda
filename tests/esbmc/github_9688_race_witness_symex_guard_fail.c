@@ -16,7 +16,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_9688_race_witness_symex_guard_fail
 // Needs: --data-races-check-only --witness-output-yaml
-// RUN: --data-races-check-only --witness-output-yaml -
+// RUN: --data-races-check-only --witness-output-yaml - --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)segment:\s+- waypoint:\s+type: "target"[^\n]*\n[^\n]*\n\s+location:[^\n]*\n[^\n]*\n\s+line: 5\b.*?- waypoint:\s+type: "target"[^\n]*\n[^\n]*\n\s+location:[^\n]*\n[^\n]*\n\s+line: 5\b
 // MODE: FUTURE

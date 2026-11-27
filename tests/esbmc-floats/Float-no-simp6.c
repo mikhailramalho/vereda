@@ -49,4 +49,5 @@ int main()
   cast();
 }
 // Imported from ESBMC regression/floats/Float-no-simp6
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

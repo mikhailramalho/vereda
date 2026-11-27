@@ -8,4 +8,5 @@ int main() {
   __VERIFIER_assert(x == N || x == N + 1);
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_stride_bound
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

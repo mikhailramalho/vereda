@@ -22,4 +22,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_member_loop_bound_overwrite
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

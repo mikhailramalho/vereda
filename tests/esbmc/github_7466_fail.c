@@ -22,7 +22,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7466_fail
-// RUN: --std gnu17
+// RUN: --std gnu17 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: line 21 +assertion

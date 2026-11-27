@@ -482,7 +482,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/03_microbenchmark
 // Needs: --context-bound 1
-// RUN: --context-bound 1
+// RUN: --context-bound 1 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

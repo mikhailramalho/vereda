@@ -26,7 +26,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/01_read_write
 // Needs: --context-bound 2 --no-por
-// RUN: --context-bound 2 --no-por
+// RUN: --context-bound 2 --no-por --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

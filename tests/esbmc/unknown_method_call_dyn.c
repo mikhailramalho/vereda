@@ -12,7 +12,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/unknown_method_call_dyn
 // Needs: --unknown-method-args-check
-// RUN: --force-malloc-success --unknown-method-args-check
+// RUN: --force-malloc-success --unknown-method-args-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

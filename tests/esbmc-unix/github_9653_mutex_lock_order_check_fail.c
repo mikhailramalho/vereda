@@ -26,7 +26,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc-unix/github_9653_mutex_lock_order_check_fail
 // Needs: --lock-order-check
-// RUN: --lock-order-check
+// RUN: --lock-order-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

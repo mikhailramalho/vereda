@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/memleak_reachable_via_freed
 // Needs: --memory-leak-check --no-reachable-memory-leak
-// RUN: --memory-leak-check --no-reachable-memory-leak
+// RUN: --memory-leak-check --no-reachable-memory-leak --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: forgotten memory: dynamic_2_array

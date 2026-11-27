@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_86
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check --force-malloc-success
+// RUN: --memory-leak-check --force-malloc-success --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

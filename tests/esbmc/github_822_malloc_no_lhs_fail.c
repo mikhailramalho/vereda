@@ -11,7 +11,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_822_malloc_no_lhs_fail
 // Needs: --memory-leak-check
-// RUN: --memory-leak-check
+// RUN: --memory-leak-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^  dereference failure: forgotten memory: dynamic_1_array$
 // EXPECT: ^VERIFICATION FAILED$

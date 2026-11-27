@@ -23,6 +23,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/race_guard_merge_clobber_int
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

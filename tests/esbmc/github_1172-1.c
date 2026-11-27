@@ -15,5 +15,6 @@ int main()
 	}
 }
 // Imported from ESBMC regression/esbmc/github_1172-1
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdivision by zero\b

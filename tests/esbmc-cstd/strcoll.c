@@ -14,6 +14,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/cstd/strcoll
+// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict FAILED

@@ -15,7 +15,7 @@ void f(int a)
 }
 // Imported from ESBMC regression/esbmc/interval_call_arity_mismatch_fail
 // Needs: --interval-analysis
-// RUN: --std c17 --interval-analysis
+// RUN: --std c17 --interval-analysis --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

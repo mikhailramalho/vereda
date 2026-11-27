@@ -12,7 +12,7 @@ void f(unsigned k, unsigned v)
 	assert(w == v);
 }
 // Imported from ESBMC regression/esbmc/github_1220-fail
-// RUN: --entry f --multi-property
+// RUN: --entry f --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: Incorrect alignment when accessing data object\b

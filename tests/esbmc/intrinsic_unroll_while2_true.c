@@ -14,4 +14,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/intrinsic_unroll_while2_true
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

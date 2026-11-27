@@ -28,6 +28,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct-member-model-value
+// RUN: --no-incremental-bmc
 // EXPECT: ^  x = \{ \.a=1, \.b=2 \}$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  x = \{ \.a=1, \.b=2 \}$

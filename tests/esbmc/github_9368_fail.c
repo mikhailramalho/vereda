@@ -12,7 +12,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9368_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^  dereference failure: array bounds violated: heap object$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  dereference failure: array bounds violated: heap object$

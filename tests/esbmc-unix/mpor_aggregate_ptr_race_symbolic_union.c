@@ -40,6 +40,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/mpor_aggregate_ptr_race_symbolic_union
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

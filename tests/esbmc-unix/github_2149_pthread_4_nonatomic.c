@@ -26,7 +26,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_2149_pthread_4_nonatomic
 // Needs: --context-bound 2 --ub-data-race-check
-// RUN: --context-bound 2 --ub-data-race-check
+// RUN: --context-bound 2 --ub-data-race-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: RACE_CHECK
 // MODE: FUTURE

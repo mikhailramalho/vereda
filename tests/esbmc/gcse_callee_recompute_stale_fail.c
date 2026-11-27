@@ -21,4 +21,5 @@ int main()
   assert(z == x);
 }
 // Imported from ESBMC regression/esbmc/gcse_callee_recompute_stale_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

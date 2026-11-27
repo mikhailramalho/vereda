@@ -14,7 +14,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10504_pass
 // Needs: --show-funccall-trace
-// RUN: --show-funccall-trace
+// RUN: --show-funccall-trace --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: (?s)\A(?!.*Function call trace:)

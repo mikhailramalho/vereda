@@ -46,7 +46,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10973_v_variants
 // Needs: --printf-check
-// RUN: --printf-check --multi-property
+// RUN: --printf-check --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Properties: \d+ checked, \d+ passed, 4 failed, \d+ not checked

@@ -58,5 +58,5 @@ int main()
     test_nondet_complete();
 }
 // Imported from ESBMC regression/cstd/intrinsic_memset_array_struct
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -8,5 +8,6 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_10812_init_object_literal
 // Needs: __ESBMC_init_object
+// RUN: --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$

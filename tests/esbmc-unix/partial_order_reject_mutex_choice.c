@@ -20,7 +20,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_reject_mutex_choice
 // Needs: --partial-order
-// RUN: --partial-order
+// RUN: --partial-order --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^ERROR: --partial-order needs a mutex that is a global known during symbolic execution, at file .*partial_order_reject_mutex_choice\.c line +9
 // EXPECT: \A(?![\s\S]*VERIFICATION)[\s\S]*\Z

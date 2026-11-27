@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7907_packed_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^.*dereference failure: Misaligned access to struct field$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

@@ -14,5 +14,5 @@ int main() {
     return 0;
 }
 // Imported from ESBMC regression/esbmc/with_arr_const_1
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

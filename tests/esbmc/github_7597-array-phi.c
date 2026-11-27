@@ -40,7 +40,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7597-array-phi
 // Needs: --no-standard-checks
-// RUN: --no-standard-checks
+// RUN: --no-standard-checks --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

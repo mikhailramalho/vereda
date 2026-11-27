@@ -14,6 +14,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_11027
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check --cex-output trace.cex
-// RUN: --loop-invariant-check --multi-property --cex-output trace.cex
+// RUN: --loop-invariant-check --multi-property --cex-output trace.cex --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

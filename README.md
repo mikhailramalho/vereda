@@ -10,7 +10,11 @@ the program.
 walks the IR from the entry function. As it walks, it unrolls loops and
 recursion and encodes each instruction as SMT terms through
 [camada](https://github.com/mikhailramalho/camada). The solver then either
-finds a counterexample or proves that none exists within the bound.
+finds a counterexample or proves that none exists within the bound. Without
+`--unwind`, Vereda checks bounds 1, 2, ... in turn (incremental BMC), resuming
+the walk where the last bound stopped, until the verdict no longer depends on
+the bound or bound 50 passes; `--no-incremental-bmc` instead unrolls each loop
+until its next iteration is unreachable.
 
 Supported today:
 
@@ -122,10 +126,11 @@ The main verifier flags:
 
 | Flag | Meaning |
 |------|---------|
-| `--unwind N` | Loop iterations and recursion depth (default: unroll until the next iteration is unreachable) |
+| `--unwind N` | Check one bound: loop iterations and recursion depth N (without it, Vereda checks bounds incrementally) |
 | `--no-unwinding-assertions` | Assume the bound instead of checking it |
 | `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
-| `--incremental-bmc`, `--max-k-step N` | Try bounds 1, 2, ... until the verdict does not depend on the bound |
+| `--incremental-bmc`, `--max-k-step N`, `--k-step N`, `--unlimited-k-steps` | Try bounds 1, 2, ... (by the step, up to 50 or N) until the verdict does not depend on the bound; the default without `--unwind`, `--no-unwinding-assertions` or `--dump-smt-only` |
+| `--no-incremental-bmc` | Check one bound: unroll until the next iteration is unreachable, or to `--unwind` |
 | `--show-library-states` | Show Rust standard-library states in counterexamples |
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |

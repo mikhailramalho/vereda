@@ -8,4 +8,5 @@ int main()
   assert(x == 1ULL << 63);
 }
 // Imported from ESBMC regression/esbmc/github_578_fail2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

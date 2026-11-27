@@ -12,4 +12,5 @@ int main()
     __VERIFIER_assert(a[x] == x); // a[x] == x
 }
 // Imported from ESBMC regression/esbmc/array_loop_summary_vla
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

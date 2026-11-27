@@ -16,4 +16,5 @@ int main(void)
   assert(s.x == 4); // the recovered pointer wrote 3, not 4
 }
 // Imported from ESBMC regression/esbmc/ptr_int_multiply_roundtrip_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

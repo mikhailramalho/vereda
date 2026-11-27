@@ -13,6 +13,6 @@ int main()
 }
 // Imported from ESBMC regression/bitwuzla/github_7024_addrof
 // Needs: __ESBMC_forall
-// RUN: --solver bitwuzla
+// RUN: --solver bitwuzla --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

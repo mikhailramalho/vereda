@@ -15,6 +15,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5565_fclose_double_free_fail
-// RUN: --force-malloc-success
+// RUN: --force-malloc-success --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: \bdereference failure: invalidated dynamic object freed\b

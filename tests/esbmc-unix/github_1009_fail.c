@@ -8,5 +8,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_1009_fail
-// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -15,6 +15,6 @@ int main() {
 // Imported from ESBMC regression/loop-invariants/do_while_goto_head_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant --max-k-step 12
+// RUN: --loop-invariant --max-k-step 12 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

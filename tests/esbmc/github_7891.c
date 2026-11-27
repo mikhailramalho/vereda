@@ -7,5 +7,5 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_7891
 // Needs: REQUIRES arch_x86
-// RUN: 
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -14,6 +14,6 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/parallel-solving/github_10103_smt_during_symex_multi_property
-// RUN: --multi-property
+// RUN: --multi-property --no-incremental-bmc
 // EXPECT: ^\[COUNTEREXAMPLE\]$
 // EXPECT: ^VERIFICATION FAILED$

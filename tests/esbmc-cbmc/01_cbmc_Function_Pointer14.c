@@ -22,4 +22,5 @@ int main()
   assert(global!=c);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Function_Pointer14
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

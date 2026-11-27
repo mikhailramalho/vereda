@@ -15,5 +15,5 @@ int main()
 #endif
 }
 // Imported from ESBMC regression/cstd/printf_nondet_dec
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -9,5 +9,5 @@ int main()
   assert(x != 20);
 }
 // Imported from ESBMC regression/cstd/printf_bug_4
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

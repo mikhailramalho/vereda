@@ -30,4 +30,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/sprintf_nondet_int_output
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

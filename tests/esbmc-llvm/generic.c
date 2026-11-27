@@ -41,4 +41,5 @@ int main(void) {
     printf("array of int is '%s'\n", typename(ai));
 }
 // Imported from ESBMC regression/llvm/generic
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

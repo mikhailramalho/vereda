@@ -9,5 +9,5 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/irep2_only_fma_mixed_widths_fail
 // Needs: REQUIRES wide_long_double
-// RUN:
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

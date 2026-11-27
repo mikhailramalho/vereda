@@ -73,7 +73,7 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/pragma_unroll_nested_dowhile_true
-// RUN: --no-unwinding-assertions
+// RUN: --no-unwinding-assertions --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: Applying #pragma unroll 3 to loop
 // EXPECT: Applying #pragma unroll 4 to loop

@@ -15,4 +15,5 @@ int main()
    assert(1 <= i1 && i1 <= 31);
 }
 // Imported from ESBMC regression/cbmc/01_cbmc_Goto4
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

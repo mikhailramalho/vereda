@@ -42,6 +42,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/github_3711_fail2
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check
+// RUN: --loop-invariant-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

@@ -6,7 +6,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cwe_dead_store
 // Needs: --dead-store-check
-// RUN: --dead-store-check
+// RUN: --dead-store-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: dead store: assignment to x never read

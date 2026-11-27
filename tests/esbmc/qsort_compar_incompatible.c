@@ -18,6 +18,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/qsort_compar_incompatible
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\s+function called through an incompatible type$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$

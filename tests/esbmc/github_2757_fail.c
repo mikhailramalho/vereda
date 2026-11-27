@@ -5,4 +5,5 @@ int main()
   assert(!signbit(d));
 }
 // Imported from ESBMC regression/esbmc/github_2757_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

@@ -12,5 +12,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/builtin_clzll_03
-// RUN: --ub-count-zero-check
+// RUN: --ub-count-zero-check --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

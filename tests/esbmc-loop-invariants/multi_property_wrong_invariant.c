@@ -35,6 +35,6 @@ int main(void)
 // Imported from ESBMC regression/loop-invariants/multi_property_wrong_invariant
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant
-// RUN: --loop-invariant --multi-property
+// RUN: --loop-invariant --multi-property --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

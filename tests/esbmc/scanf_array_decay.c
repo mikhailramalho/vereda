@@ -9,4 +9,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/scanf_array_decay
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

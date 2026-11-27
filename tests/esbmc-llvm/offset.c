@@ -24,5 +24,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/llvm/offset
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -10,6 +10,7 @@ int main ()
   return 0;
 }
 // Imported from ESBMC regression/cstd/strstr_bug
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // Vereda: ESBMC marks this KNOWNBUG; the program is correct (strncpy writes "sampl" over "simpl")

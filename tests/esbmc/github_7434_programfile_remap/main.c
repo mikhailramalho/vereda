@@ -7,7 +7,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_7434_programfile_remap
 // Needs: --witness-output-graphml --witness-programfile
-// RUN: --witness-output-graphml - --witness-programfile programfile.c
+// RUN: --witness-output-graphml - --witness-programfile programfile.c --no-incremental-bmc
 // FILES: programfile.c
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

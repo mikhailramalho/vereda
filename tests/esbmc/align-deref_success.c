@@ -18,5 +18,5 @@ int main(int argc, char **argv)
 	f(atoi(argv[1]), atoi(argv[2]));
 }
 // Imported from ESBMC regression/esbmc/align-deref_success
-// RUN: --entry f
+// RUN: --entry f --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

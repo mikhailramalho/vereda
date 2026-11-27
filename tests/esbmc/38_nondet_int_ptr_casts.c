@@ -18,5 +18,5 @@ main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/38_nondet_int_ptr_casts
-// RUN: -m32
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

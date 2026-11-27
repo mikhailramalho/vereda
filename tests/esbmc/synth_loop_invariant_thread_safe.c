@@ -35,7 +35,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/synth_loop_invariant_thread_safe
 // Needs: --synthesise-loop-invariants
-// RUN: --synthesise-loop-invariants
+// RUN: --synthesise-loop-invariants --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: \A(?![\s\S]*Synthesised loop invariants)[\s\S]*\Z
 // EXPECT: ^WARNING: --synthesise-loop-invariants: the program creates threads, and cutting a loop deletes the interleaving points its body carried\. Synthesising nothing rather than report a claim only violable through one of them as passed$

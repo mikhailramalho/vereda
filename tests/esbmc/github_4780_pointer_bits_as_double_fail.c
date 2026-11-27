@@ -13,4 +13,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4780_pointer_bits_as_double_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

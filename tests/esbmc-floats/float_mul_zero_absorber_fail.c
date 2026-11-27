@@ -11,4 +11,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/floats/float_mul_zero_absorber_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

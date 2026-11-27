@@ -14,7 +14,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/github_9914_or_condition_waypoint
 // Needs: --witness-output-yaml
-// RUN: --witness-output-yaml -
+// RUN: --witness-output-yaml - --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (?s)type: "branching"(?:(?!type:).)*?^\s+line: 10$

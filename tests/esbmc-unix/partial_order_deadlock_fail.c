@@ -22,7 +22,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/partial_order_deadlock_fail
 // Needs: --partial-order --deadlock-check
-// RUN: --partial-order --deadlock-check
+// RUN: --partial-order --deadlock-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: Deadlocked state

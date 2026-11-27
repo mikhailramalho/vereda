@@ -24,7 +24,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix2/pthread_cancel_disabled
 // Needs: --context-bound 3
-// RUN: --context-bound 3
+// RUN: --context-bound 3 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

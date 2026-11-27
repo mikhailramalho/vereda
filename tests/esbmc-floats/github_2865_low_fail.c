@@ -13,7 +13,7 @@ int main()
 }
 // Imported from ESBMC regression/floats/github_2865_low_fail
 // Needs: --fp-taylor-terms 6
-// RUN: --fp-taylor-terms 6
+// RUN: --fp-taylor-terms 6 --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

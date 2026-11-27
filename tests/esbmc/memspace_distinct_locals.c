@@ -14,4 +14,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/memspace_distinct_locals
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

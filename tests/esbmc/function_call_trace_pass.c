@@ -12,7 +12,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/function_call_trace_pass
 // Needs: --show-funccall-trace
-// RUN: --show-funccall-trace
+// RUN: --show-funccall-trace --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

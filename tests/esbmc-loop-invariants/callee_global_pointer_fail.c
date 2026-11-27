@@ -23,6 +23,6 @@ int main()
 // Imported from ESBMC regression/loop-invariants/callee_global_pointer_fail
 // Needs: __ESBMC_loop_invariant
 // Needs: --loop-invariant-check
-// RUN: --loop-invariant-check
+// RUN: --loop-invariant-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$

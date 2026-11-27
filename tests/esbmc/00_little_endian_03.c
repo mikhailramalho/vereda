@@ -12,4 +12,5 @@ int main() {
   assert(p[1]==1);
 } 
 // Imported from ESBMC regression/esbmc/00_little_endian_03
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

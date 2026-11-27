@@ -9,6 +9,7 @@ int main() {
 	
 }
 // Imported from ESBMC regression/cstd/intrinsic_memset_guard_false
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

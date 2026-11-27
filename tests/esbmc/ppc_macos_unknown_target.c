@@ -4,7 +4,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/ppc_macos_unknown_target
 // Needs: --ppc-macos
-// RUN: --ppc-macos
+// RUN: --ppc-macos --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: unknown target triple
 // EXPECT: ^ERROR: PARSING ERROR$

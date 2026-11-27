@@ -19,6 +19,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/floats/github_9350
+// RUN: --no-incremental-bmc
 // EXPECT: ^  a = 1\.250000e\+0f; //
 // EXPECT: ^  s = -7\.500000e-1f; //
 // EXPECT: ^  m = 2\.500000e-1f; //

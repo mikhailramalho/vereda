@@ -9,6 +9,7 @@ int main()
   return memcmp(a, b, n) != 0;
 }
 // Imported from ESBMC regression/esbmc/memcmp_symbolic_len_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^  FAILED .*dereference failure: memcmp length exceeds object bounds$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^  FAILED .*dereference failure: memcmp length exceeds object bounds$

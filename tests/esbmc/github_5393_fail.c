@@ -17,7 +17,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5393_fail
-// RUN: -m64
+// RUN: -m64 --no-incremental-bmc
 // EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+dereference failure: Access to object out of bounds$
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^\s*FAILED\s+\[.*\]\s+line\s+[0-9]+\s+dereference failure: Access to object out of bounds$

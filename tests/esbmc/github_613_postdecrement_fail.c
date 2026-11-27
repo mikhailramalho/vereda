@@ -13,4 +13,5 @@ int main()
 	assert(x == 42);
 }
 // Imported from ESBMC regression/esbmc/github_613_postdecrement_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$

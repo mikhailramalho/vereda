@@ -20,4 +20,5 @@ int main(void) {
   return 0;
 }
 // Imported from ESBMC regression/esbmc/struct_bitfields_20
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

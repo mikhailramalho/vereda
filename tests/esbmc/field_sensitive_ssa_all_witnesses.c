@@ -17,7 +17,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_all_witnesses
 // Needs: --all-witnesses
-// RUN: --all-witnesses
+// RUN: --all-witnesses --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^WARNING: --field-sensitive-ssa is ignored with --all-witnesses$
 // EXPECT: ^VERIFICATION FAILED$

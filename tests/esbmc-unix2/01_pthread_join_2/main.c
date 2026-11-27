@@ -61,6 +61,7 @@ main()
 	return 0;
 }
 // Imported from ESBMC regression/esbmc-unix2/01_pthread_join_2
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: (int \*)exit1 == \&a || (int \*)exit1 == \&b || (int \*)exit1 == \&c || (int \*)exit1 == \&d
 // EXPECT: (int \*)exit2 == \&a || (int \*)exit2 == \&b || (int \*)exit2 == \&c || (int \*)exit2 == \&d

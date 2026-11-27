@@ -13,7 +13,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/interval_dump_unbounded
 // Needs: --interval-analysis --interval-analysis-dump
-// RUN: --interval-analysis --interval-analysis-dump
+// RUN: --interval-analysis --interval-analysis-dump --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // EXPECT: ^200000 <= c:.*@main@i$

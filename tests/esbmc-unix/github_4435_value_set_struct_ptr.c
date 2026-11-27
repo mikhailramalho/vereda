@@ -47,5 +47,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4435_value_set_struct_ptr
-// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

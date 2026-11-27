@@ -27,5 +27,6 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/github_10798_struct_fail
 // Needs: __ESBMC_POINTER_OBJECT, __ESBMC_same_object
+// RUN: --no-incremental-bmc
 // MODE: KNOWNBUG
 // EXPECT: ^VERIFICATION FAILED$

@@ -19,7 +19,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc-unix/github_152_success3
 // Needs: --deadlock-check
-// RUN: --deadlock-check
+// RUN: --deadlock-check --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

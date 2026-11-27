@@ -11,6 +11,7 @@ int main() {
   (b++)->d.c;
 }
 // Imported from ESBMC regression/esbmc/github_159_postincrement_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE

@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/interval-simplify
 // Needs: --interval-analysis --interval-analysis-simplify
-// RUN: --interval-analysis --interval-analysis-simplify
+// RUN: --interval-analysis --interval-analysis-simplify --no-incremental-bmc
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict none

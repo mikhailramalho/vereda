@@ -49,7 +49,7 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/cswitch_skip_readonly_globals_indirect_ok
 // Needs: --ub-data-race-check --context-bound 3
-// RUN: --ub-data-race-check --context-bound 3
+// RUN: --ub-data-race-check --context-bound 3 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none

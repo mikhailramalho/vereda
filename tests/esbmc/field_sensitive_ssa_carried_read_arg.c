@@ -17,4 +17,5 @@ int main(void)
   return q->a - 1;
 }
 // Imported from ESBMC regression/esbmc/field_sensitive_ssa_carried_read_arg
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

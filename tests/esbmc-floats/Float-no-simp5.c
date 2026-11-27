@@ -16,4 +16,5 @@ int main()
   assert(a == b);
 }
 // Imported from ESBMC regression/floats/Float-no-simp5
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$

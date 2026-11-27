@@ -20,6 +20,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/nested_array_3d_row_read_trace_fail
+// RUN: --no-incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^\[COUNTEREXAMPLE\]$
 // EXPECT: ^  v = 4

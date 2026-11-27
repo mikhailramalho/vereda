@@ -8,7 +8,7 @@ int main()
 }
 // Imported from ESBMC regression/goto-coverage/compact_trace_1
 // Needs: --branch-coverage
-// RUN: --branch-coverage
+// RUN: --branch-coverage --no-incremental-bmc
 // EXPECT: \ba = 1\b
 // EXPECT: \bb = 2\b
 // EXPECT: ^COVERAGE ANALYSIS COMPLETE$
