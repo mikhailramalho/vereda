@@ -66,7 +66,7 @@ SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--ub-shift-check", "--ub-count-zero-check", "--ub-float-cast-overflow-check",
         "--ub-alignment-check", "--ub-uninit-check", "--unlimited-k-steps",
         "--no-summarize-array-loops", "--no-pointer-check", "--no-vla-size-check",
-        "--no-assertions", "--no-div-by-zero-check"}
+        "--no-assertions", "--no-div-by-zero-check", "--no-slice"}
 SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std"}
 RENAMED = {
     "--clz-zero-check": ["--ub-count-zero-check"],
@@ -115,7 +115,7 @@ IGNORED_WITH_VALUE = {
 }
 DROPPED = {"--summarize-array-loops", "--no-bounds-check",
            "--no-align-check", "--no-pointer-relation-check",
-           "--no-simplify", "--no-slice"} | IGNORED_FLAGS
+           "--no-simplify"} | IGNORED_FLAGS
 
 
 def translate(args, test_dir):

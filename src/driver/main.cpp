@@ -1,4 +1,5 @@
 // Stage driver: parses options, runs the stages, prints the verdict.
+#include "analysis/slice.h"
 #include "checks/checks.h"
 #include "encode/encoder.h"
 #include "ir/load.h"
@@ -50,6 +51,8 @@ static cl::opt<bool> noSummarizeArrayLoops(
     "no-summarize-array-loops",
     cl::desc("Unroll the counting loops that only write a[i], check or count, instead of "
              "replacing them by their effect"));
+static cl::opt<bool> noSlice("no-slice",
+                             cl::desc("Walk every instruction, also those no check depends on"));
 static cl::opt<bool> forceMallocSuccess("force-malloc-success",
                                         cl::desc("malloc never returns null"));
 static cl::opt<bool> noPointerCheck(
@@ -523,6 +526,11 @@ int main(int argc, char **argv) {
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;
+  }
+  if (!noSlice) {
+    unsigned removed = vereda::analysis::slice(**module, ubUninitCheck && property == Property::All,
+                                               !witnessFile.empty());
+    info() << "Slicing removed " << removed << " instructions\n";
   }
   info() << "Target: " << (*module)->getDataLayout().getPointerSizeInBits() << "-bit "
          << ((*module)->getDataLayout().isLittleEndian() ? "little" : "big") << "-endian "

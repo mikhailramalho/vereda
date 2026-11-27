@@ -56,7 +56,8 @@ with tempfile.TemporaryDirectory() as directory:
                           ' %p = getelementptr [256 x i32], ptr @a, i32 0, i32 %i\n'
                           ' store i32 %i, ptr %p\n %next = add i32 %i, 1\n'
                           ' br label %loop\nexit:\n ret i32 0\n}\n')
-        check([], 1, "Summarised 1 array loop(s)")
+        # The slice would drop the store into @a, which nothing reads.
+        check(["--no-slice"], 1, "Summarised 1 array loop(s)")
 
     # A similarly named function with the wrong arity is an ordinary call.
     source.write_text('declare void @_wassert(ptr)\ndefine i32 @main() {\n'

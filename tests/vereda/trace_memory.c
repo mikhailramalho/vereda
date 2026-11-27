@@ -2,7 +2,8 @@
 // an array element, a member, a two-dimensional element, an element at a
 // nondet index (with the index the model chose), and a local whose address
 // is taken. A parameter's binding to its argument is no assignment; a later
-// one is.
+// one is. No slice, which would drop the stores no check reads.
+// RUN: --no-slice
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^  g\[1\] = 5; //
 // EXPECT: ^  s\.y = 7; //
