@@ -73,7 +73,7 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
     return name.starts_with("llvm.ubsantrap")
                ? counted.traps
                : f->getIntrinsicID() == Intrinsic::prefetch || f->doesNotAccessMemory();
-  if (name == "reach_error" && counted.reachError)
+  if ((name == "reach_error" || name == "__vereda_error_label") && counted.reachError)
     return true;
   // A loop in the callee may not end, which would stop the loop being
   // summarised part way.

@@ -1524,6 +1524,16 @@ private:
       }
       throw Unsupported("intrinsic " + name.str());
     }
+    // --error-label: reaching the label fails as ESBMC's assert(false) there
+    // does, which goes on under --multi-property as an assertion does. Under
+    // unreach-call it is the error location the property names; where no
+    // check counts it, it is nothing.
+    if (name == "__vereda_error_label") {
+      if (opts.property != Property::UnreachCall && !(opts.assertions && counts(false)))
+        return guard;
+      assertion(c, guard, "error label", "");
+      return opts.multiProperty ? guard : t.boolean(false);
+    }
     if (opts.property == Property::UnreachCall && name == "reach_error") {
       assertion(c, guard, name.str(), "");
       return t.boolean(false);
@@ -1734,10 +1744,9 @@ private:
     // returns, not the end of the run.
     if (name == "reach_error" && opts.property == Property::Termination)
       return guard;
-    if (isAssertFail(name, c.arg_size()) || name == "reach_error" || name == "__VERIFIER_error" ||
-        name == "__vereda_error_label") {
+    if (isAssertFail(name, c.arg_size()) || name == "reach_error" || name == "__VERIFIER_error") {
       if (opts.assertions && counts(false))
-        assertion(c, guard, name == "__vereda_error_label" ? "error label" : name.str(), "");
+        assertion(c, guard, name.str(), "");
       return t.boolean(false);
     }
     if (name == "__VERIFIER_assert" || (name == "assert" && c.arg_size() == 1)) {
