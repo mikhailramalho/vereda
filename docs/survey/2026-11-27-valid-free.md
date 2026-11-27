@@ -108,7 +108,4 @@ non-dynamic, `deref_unmodelled_free_interior` the offset, and
 5-byte allocation, bytes past the object are nondet, so the guarded frees
 can run twice; ESBMC reports success.
 
-Follow-up issues: #... (model posix_memalign, aligned_alloc and memalign),
-#... (reuse a freed object's addresses), #... (model fclose as a free),
-#... (check frees under Rust's allocator shims), #... (accept the
-valid-memsafety property file once #29 and #32 land).
+Follow-up issues: #354, #355, #356, #357, #358, #359.
