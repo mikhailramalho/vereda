@@ -80,6 +80,10 @@ bool Loops::callOk(const CallBase &c, unsigned depth, bool reads) {
   if (!f->isDeclaration()) {
     if (depth >= 4 || f->isVarArg())
       return false;
+    for (unsigned i = 0; i < c.arg_size(); ++i)
+      if (c.isByValArgument(i) ||
+          (i < f->arg_size() && f->hasParamAttribute(i, Attribute::ByVal)))
+        return false;
     llvm::PointerIntPair<const Function *, 1, bool> key(f, reads);
     auto [it, inserted] = calleeOk.try_emplace(key, false);
     if (!inserted)
