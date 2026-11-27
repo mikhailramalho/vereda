@@ -246,11 +246,15 @@ static std::string checkFamilies(const Module &m) {
     for (const MDNode *n : md->operands())
       sanitizers.insert(cast<MDString>(n->getOperand(0))->getString().str());
   if (all || property == Property::NoOverflow)
-    for (const std::string &s : sanitizers)
-      on.push_back(StringSwitch<StringRef>(s)
-                       .Case("signed-integer-overflow", "signed-overflow")
-                       .Case("unsigned-integer-overflow", "unsigned-overflow")
-                       .Default(s));
+    for (const std::string &s : sanitizers) {
+      StringRef name = StringSwitch<StringRef>(s)
+                           .Case("signed-integer-overflow", "signed-overflow")
+                           .Case("unsigned-integer-overflow", "unsigned-overflow")
+                           .Case("integer-divide-by-zero", "div-by-zero")
+                           .Default(s);
+      if (!is_contained(on, name))
+        on.push_back(name);
+    }
   if (all && ubFloatCastOverflowCheck)
     on.push_back("float-cast-overflow");
   if (all && ubCountZeroCheck)

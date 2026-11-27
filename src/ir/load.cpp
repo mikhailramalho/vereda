@@ -389,7 +389,8 @@ static Instruction *guardedOperation(CallBase &call) {
 // [INFO] Checks line. It runs on the IR as loaded, before the passes reshape
 // it: an overflow trap is signed or unsigned by the overflow intrinsics in
 // the blocks that branch to it (with optimisation, clang shares one trap
-// block between the checks of a function).
+// block between the checks of a function), and a division trap checks a
+// divisor of zero or a signed overflow by what their branches compare.
 static void recordSanitizers(Module &m) {
   std::set<std::string> names;
   for (Function &f : m)
@@ -402,8 +403,24 @@ static void recordSanitizers(Module &m) {
       case 20: // ShiftOutOfBounds
         names.insert("shift");
         break;
-      case 3: // DivremOverflow
-        names.insert("signed-integer-overflow");
+      case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+        for (BasicBlock *pred : predecessors(c->getParent())) {
+          auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
+          SmallVector<Value *, 4> conditions;
+          if (br)
+            conditions.push_back(br->getCondition());
+          while (!conditions.empty()) {
+            auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+            if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+              if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+                names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+            } else if (cond && cond->getType()->isIntegerTy(1) &&
+                       (cond->getOpcode() == Instruction::And ||
+                        cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
+              conditions.append(cond->op_begin(), cond->op_end());
+            }
+          }
+        }
         break;
       case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
         for (BasicBlock *pred : predecessors(c->getParent()))

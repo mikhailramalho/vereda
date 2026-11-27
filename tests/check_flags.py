@@ -96,6 +96,19 @@ with tempfile.TemporaryDirectory() as directory:
                         str(source), "-o", str(ir)], check=True)
         assert re.search(r"preds = %\w+, %\w+\n.*@llvm\.ubsantrap", ir.read_text()), "no shared trap"
         check([binary, str(ir)], 1, "[INFO] Checks: " + defaults + ", " + families + "\n")
+    # A division trap checks a divisor of zero or INT_MIN / -1, by what its
+    # branch compares; div-by-zero, also the binary's own check, is listed once.
+    source.write_text("int main(int argc, char **argv) { return 100 / argc; }\n")
+    unflagged = "assertions, unwinding-assertions, pointer, vla-size, "
+    for sanitizer, status, flags, families in (
+            ("integer-divide-by-zero", 1, [], defaults),
+            ("integer-divide-by-zero", 1, ["--ub-div-by-zero-check=false"],
+             unflagged + "div-by-zero"),
+            ("signed-integer-overflow", 0, ["--ub-div-by-zero-check=false"],
+             unflagged + "signed-overflow")):
+        subprocess.run([clang, "-S", "-emit-llvm", "-fsanitize=" + sanitizer,
+                        "-fsanitize-trap=" + sanitizer, str(source), "-o", str(ir)], check=True)
+        check([binary, str(ir)] + flags, status, "[INFO] Checks: " + families + "\n")
     # This unused load/division result is removed by IR preparation without a check.
     source.write_text("int main(int n, char **argv) { int unused = 7 / n; return 0; }\n")
     for flags in ([], ["-m32"], ["--no-assertions"], ["--incremental-solver"], ["--incremental-bmc"]):
