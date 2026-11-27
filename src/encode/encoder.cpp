@@ -622,8 +622,22 @@ Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
     case Instruction::FSub: return bits(s.mkFPSub(a, b, even), ty);
     case Instruction::FMul: return bits(s.mkFPMul(a, b, even), ty);
     case Instruction::FDiv: return bits(s.mkFPDiv(a, b, even), ty);
-    default: // frem is C's fmod, which truncates; SMT's fp.rem rounds to nearest
-      throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
+    case Instruction::FRem: {
+      // fp.rem is IEEE remainder, whose quotient rounds to nearest; frem is
+      // C's fmod, whose quotient truncates. They differ where the remainder
+      // is nonzero and its sign is not x's: fmod's is then the remainder
+      // moved by |y| towards x's sign, an exact sum as fmod's result is
+      // representable.
+      camada::SMTExprRef r = s.mkFPRem(a, b), absY = s.mkFPAbs(b);
+      camada::SMTExprRef zero = fp(ConstantFP::getZero(ty));
+      camada::SMTExprRef xNeg = s.mkFPLt(a, zero);
+      camada::SMTExprRef fix =
+          s.mkAnd(s.mkNot(s.mkFPIsZero(r)), s.mkXor(xNeg, s.mkFPLt(r, zero)));
+      return bits(
+          s.mkIte(fix, s.mkIte(xNeg, s.mkFPSub(r, absY, even), s.mkFPAdd(r, absY, even)), r),
+          ty);
+    }
+    default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
     }
   }
   bool isBool = lhs->getType()->isIntegerTy(1);
