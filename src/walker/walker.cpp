@@ -2,6 +2,7 @@
 #include "util/assert.h"
 
 #include "analysis/loops.h"
+#include "analysis/writes.h"
 #include "ir/debug.h"
 #include "ir/sanitizer.h"
 #include "ir/source.h"
@@ -203,6 +204,12 @@ public:
   }
 
   bool resumable() const { return stopped.has_value(); }
+
+  // Walk the loop headed by header as Transitions into out (walker.h).
+  void iterate(const BasicBlock &header, std::vector<Transition> &out) {
+    iterated = &header;
+    transitions = &out;
+  }
 
   void finalizeStopped() {
     if (stopped && !stopped->immediate &&
@@ -848,6 +855,10 @@ private:
 
   void loop(Frame &frame, FunctionInfo &fi, Loop *l, unsigned start = 0) {
     BasicBlock *header = l->getHeader();
+    if (header == iterated) {
+      transition(frame, fi, l);
+      return;
+    }
     // The paths that reach an endless loop end there, as at unreachable,
     // and its header keeps the IR, debug info and loop numbers as they were.
     if (endless(l)) {
@@ -1060,6 +1071,57 @@ private:
     ++summaryCount;
     summarised.insert(l);
     return true;
+  }
+
+  // Walks one iteration of l from any state at its header and appends it to
+  // transitions (walker.h, Transition); the paths that leave l in it go on
+  // after l.
+  void transition(Frame &frame, FunctionInfo &fi, Loop *l) {
+    BasicBlock *header = l->getHeader();
+    auto in = frame.arrivals.find(header);
+    if (in == frame.arrivals.end() || in->second.empty())
+      return;
+    if (iterating) // through recursion
+      throw Unsupported("a loop transition inside its own iteration");
+    SmallVector<Arrival, 2> arrivals = std::move(in->second);
+    frame.arrivals.erase(in);
+    Term guard = anyGuard(arrivals);
+    Transition tr;
+    tr.preMem = merged(arrivals);
+    mem.setContext(guard);
+    for (const Value *o : analysis::writtenObjects(*l)) {
+      SmallPtrSet<const Value *, 8> visiting;
+      auto *a = dyn_cast<AllocaInst>(o);
+      if (!holdsNoPointers(o, visiting) || (a && !current(fi.li, a, l)))
+        throw Unsupported("a loop transition writing an object that may hold pointers");
+      mem.havoc(tr.preMem, a ? enc.bound(a) : enc.value(o));
+    }
+    for (PHINode &phi : header->phis()) {
+      if (containsPointer(phi.getType()))
+        throw Unsupported("a loop transition with a pointer phi");
+      tr.pre.push_back(enc.fresh(phi.getType(), "pre." + phi.getName().str()));
+    }
+    // The facts are about terms the loop does not change.
+    frame.arrivals[header].push_back(
+        {guard, SmallVector<Term, 2>(tr.pre.begin(), tr.pre.end()), tr.preMem, common(arrivals)});
+    iterating = &tr;
+    region(frame, fi, l);
+    iterating = nullptr;
+    SmallVector<Arrival, 2> back = std::move(frame.arrivals[header]);
+    frame.arrivals.erase(header);
+    tr.next = t.boolean(false);
+    tr.post = tr.pre;
+    tr.postMem = tr.preMem;
+    if (!back.empty()) {
+      tr.next = anyGuard(back);
+      tr.postMem = merged(back);
+      for (unsigned p = 0; p < tr.post.size(); ++p) {
+        tr.post[p] = back[0].phiValues[p];
+        for (unsigned i = 1; i < back.size(); ++i)
+          tr.post[p] = t.ite(back[i].guard, back[i].phiValues[p], tr.post[p]);
+      }
+    }
+    transitions->push_back(std::move(tr));
   }
 
   // Whether the term bound to i is its value as l is entered: i is outside
@@ -2072,6 +2134,8 @@ private:
     bool viaReachError = reachError || comment == "reach_error";
     trace.add(Step::Check, violated, reachError ? ir::location(*reachError) : loc,
               viaReachError ? "reach_error" : "", {}, false, it->second);
+    if (iterating)
+      iterating->checks.push_back({it->second, violated});
     if (!inserted) {
       checks[it->second].violated = t.lor(checks[it->second].violated, violated);
       return;
@@ -2479,6 +2543,10 @@ private:
   DenseMap<const SCEV *, Term> inputs;
   unsigned summaryCount = 0; // names each summary's fresh symbols
   SmallPtrSet<const Loop *, 8> summarised;
+  // The loop walked as transitions (iterate()), and the one being walked.
+  const BasicBlock *iterated = nullptr;
+  std::vector<Transition> *transitions = nullptr;
+  Transition *iterating = nullptr;
   // What a call without a body may write besides its arguments' objects:
   // errno, and the writable globals the program declares without defining,
   // except the models' stdin, stdout and stderr objects, whose contents no
@@ -2521,6 +2589,19 @@ Error walk(Function &entry, const Options &opts, encode::Encoder &enc, memory::M
     Walk w(*entry.getParent(), opts, enc, mem, checks, trace);
     w.entry(entry);
     w.report();
+  } catch (const Unsupported &e) {
+    return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
+  }
+  return Error::success();
+}
+
+Error transitions(Function &entry, const BasicBlock &header, const Options &opts,
+                  encode::Encoder &enc, memory::Memory &mem, checks::Checks &checks, Trace &trace,
+                  std::vector<Transition> &out) {
+  try {
+    Walk w(*entry.getParent(), opts, enc, mem, checks, trace);
+    w.iterate(header, out);
+    w.entry(entry);
   } catch (const Unsupported &e) {
     return createStringError(inconvertibleErrorCode(), "unsupported: %s", e.what());
   }
