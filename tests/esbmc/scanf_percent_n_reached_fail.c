@@ -14,4 +14,4 @@ int main()
 // Imported from ESBMC regression/esbmc/scanf_percent_n_reached_fail
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: FAILED\s+\[main.assertion.2\]
+// EXPECT: FAILED\s+\[main.assertion.\d+\]\s+line 11

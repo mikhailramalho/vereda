@@ -186,13 +186,18 @@ public:
   // Whether guard entails lit by its and/or structure alone: lit is a
   // conjunct of guard, or implied by both sides of a disjunction.
   bool entails(const Ref &guard, const Ref &lit);
-  // Calls f(x, c) for each term x that cond being true, or false when
-  // !holds, makes equal to a bitvector constant c: an x = c found through
-  // the conjuncts of cond, the disjuncts of its negation, and negations.
-  // Only Terms' own = counts, which is equality of the terms: never a
-  // float's fp.eq (+0 equals -0) nor anything opaque.
+  // Calls f(x, y) for each term x that cond being true, or false when
+  // !holds, makes equal to a bitvector y: an x = y found through the
+  // conjuncts of cond, the disjuncts of its negation, and negations. y is
+  // the constant when one side is; x is not a constant. An extension equal
+  // to a constant it can take also gives its operand that constant's low
+  // bits: zext(x) = 5 is x = 5. Only Terms' own = counts, which is equality
+  // of the terms: never a float's fp.eq (+0 equals -0) nor anything opaque.
   void equalities(const Ref &cond, bool holds,
-                  llvm::function_ref<void(const Ref &, const Ref &)> f) const;
+                  llvm::function_ref<void(const Ref &, const Ref &)> f);
+  // Whether e is the solver's own term, which Terms built no node for: a
+  // symbol, or an operation Terms does not model.
+  bool leaf(const Ref &e) const { return e && !e.entry() && !node(e); }
   // e as ite(c, x, y) with constant x and y.
   bool split(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // e as ite(c, x, y), whatever x and y are.
@@ -229,16 +234,28 @@ public:
       scratch.clear();
     return range(e, known, 0);
   }
-  // Whether cmp, an =, <, <= (unsigned or signed) or the negation of one,
-  // holds for every value the ranges of its sides take under known (1), for
-  // none (0), or neither (-1).
+  // Whether cmp, an =, <, <= (unsigned or signed), an overflow test or the
+  // negation of one, holds for every value the ranges of its sides take
+  // under known (1), for none (0), or neither (-1). An overflow test is
+  // settled only when it cannot hold.
   int decide(const Ref &cmp, Known known);
   // Calls set(x, b) for each term x that cond being true, or false when
   // !holds, bounds tighter than its range under known: x on one side of a
   // <, <= (unsigned or signed) or its negation, found as equalities finds
-  // an =, bounded by the range of the other side.
+  // an =, bounded by the range of the other side; x on one side of an =,
+  // bounded as the other side is; x on one side of a negated = with a
+  // constant c on the other, when c is an end of its range, which moves
+  // off c. A bound on an extension also bounds its operand.
   void narrow(const Ref &cond, bool holds, Known known,
               llvm::function_ref<void(const Ref &, const Bounds &)> set);
+  // e as known's path sees it: every comparison and overflow test decide
+  // settles there is its constant, an ite whose condition it settles is
+  // that side, and a read past a store whose index the read's is never
+  // equal to (or always is) reads below it (or the value stored), through
+  // not, and, or, ite, concat, extract and extensions, over at most a
+  // budget of nodes. Equal to e only where known's bounds hold, so it is
+  // never cached here; e itself when nothing folds.
+  Ref assuming(const Ref &e, Known known);
   // Symbol x is below limit, at least 1, wherever a term holding it is
   // read: the index of a summarised loop's iteration, whose terms count only
   // under its guard.
@@ -259,6 +276,11 @@ private:
   Ref read(Ref &arr, const llvm::APInt &i, unsigned &steps);
   // select without the cache below.
   Ref uncached(const Ref &array, const Ref &index);
+  // decide without clearing scratch, for queries under one known.
+  int decided(const Ref &cmp, Known known);
+  // One node of assuming's walk, memoised in memo, over budget nodes.
+  Ref assumed(const Ref &x, Known known, llvm::DenseMap<const void *, Ref> &memo,
+              unsigned &budget);
   enum class Op : uint8_t {
     Add, Sub, Mul, UDiv, SDiv, URem, SRem, Shl, LShr, AShr, BVAnd, BVOr, BVXor,
     BVNot, Concat, Extract, ZExt, SExt, Eq, Ult, Ule, Slt, Sle, And, Or, Xor,

@@ -2,7 +2,7 @@
 // not zero: each assertion below can fail.
 // RUN: --multi-property
 // EXPECT: FAILED +\[main.assertion.1\]
-// EXPECT: FAILED +\[main.assertion.3\]
+// EXPECT: FAILED +\[main\.assertion\.[0-9]+\] +line 16
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);
 extern int __VERIFIER_nondet_int(void);
