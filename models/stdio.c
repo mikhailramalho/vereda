@@ -28,6 +28,7 @@ static FILE *stream(void) { return __VERIFIER_nondet_int() ? malloc(sizeof(FILE)
 FILE *fopen(const char *path, const char *mode) { return stream(); }
 FILE *fdopen(int fd, const char *mode) { return stream(); }
 FILE *tmpfile(void) { return stream(); }
+FILE *popen(const char *command, const char *mode) { return stream(); }
 FILE *freopen(const char *path, const char *mode, FILE *s) {
   return __VERIFIER_nondet_int() ? s : NULL;
 }
@@ -141,4 +142,13 @@ int fclose(FILE *s) {
   if (s != &__vereda_stdin && s != &__vereda_stdout && s != &__vereda_stderr)
     free(s);
   return __VERIFIER_nondet_int() ? EOF : 0;
+}
+
+// POSIX pclose closes a popen stream and returns its command's exit status,
+// or -1. A popen stream is an allocation as fopen's is, so fclose frees it
+// too (POSIX leaves that unspecified), and closing it twice, by either, is a
+// double free.
+int pclose(FILE *s) {
+  free(s);
+  return __VERIFIER_nondet_int();
 }
