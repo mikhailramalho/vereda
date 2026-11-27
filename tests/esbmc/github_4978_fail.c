@@ -35,7 +35,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4978_fail
-// RUN: --overflow-check
+// RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: ^Violated property:$
 // EXPECT: ^.*arithmetic overflow on add$

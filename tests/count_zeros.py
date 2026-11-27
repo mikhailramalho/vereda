@@ -46,16 +46,16 @@ int main(void) {
         source.write_text(f"int main(int x, char **p) {{ int unused = __builtin_{builtin}(x); }}\n")
         for flags in ([flag], [flag, "--no-assertions"], [flag, "--incremental-solver"],
                       [flag, "--incremental-bmc"]):
-            out = check(command + [str(source)] + flags, 1, "main.count-zero.1")
-            assert "main.count-zero.2" not in out, out
+            out = check(command + [str(source)] + flags, 1, "main.assertion.1")
+            assert "main.assertion.2" not in out, out
         check(command + [str(source)], 0, "VERIFICATION SUCCESSFUL")
         check(command + [str(source), flag, flag + "=false"], 0, "VERIFICATION SUCCESSFUL")
         source.write_text(f"int main(void) {{ int unused = __builtin_{builtin}(0); }}\n")
-        check(command + [str(source), flag], 1, "main.count-zero.1")
+        check(command + [str(source), flag], 1, "main.assertion.1")
 
     # The source builtin is UB even when a later select masks its result.
     source.write_text("int main(int x, char **p) { int r = __builtin_ctz(x); return x ? r : 0; }\n")
-    check(command + [str(source), flag], 1, "main.count-zero.1")
+    check(command + [str(source), flag], 1, "main.assertion.1")
     # Defined fallbacks and ffs must accept zero despite poison-on-zero IR lowering.
     source.write_text('''
 extern unsigned __VERIFIER_nondet_uint(void);
@@ -89,7 +89,7 @@ define i32 @main(i{width} %x) {{
 }}
 ''')
                 check([binary, str(ir), flag], 1 if poison == "true" else 0,
-                      "main.count-zero.1" if poison == "true" else "VERIFICATION SUCCESSFUL")
+                      "main.assertion.1" if poison == "true" else "VERIFICATION SUCCESSFUL")
             # Keep the dynamic result live and validate the defined-zero value.
             ir.write_text(f'''declare i{width} @llvm.{intrinsic}.i{width}(i{width}, i1 immarg)
 declare void @__VERIFIER_assert(i1)
@@ -113,7 +113,7 @@ define i32 @main(i32 %x) {
  ret i32 0
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.count-zero.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
     ir.write_text('''declare <2 x i8> @llvm.ctlz.v2i8(<2 x i8>, i1 immarg)
 declare void @__VERIFIER_assert(i1)
 define i32 @main(i8 %x) {
@@ -135,7 +135,7 @@ define i32 @main(i8 %x) {
     source.write_text("extern void __VERIFIER_assert(int);\n"
                       "int main(void) { __VERIFIER_assert(0); int x = __builtin_clz(0); }\n")
     out = check(command + [str(source), flag, "--multi-property"], 1, "main.assertion.1")
-    assert "main.count-zero.1" in out, out
+    assert "main.assertion.2" in out and "clz/ctz of zero" in out, out
 
     # Excluded checks must not restrict the domain of another property.
     source.write_text('''extern unsigned __VERIFIER_nondet_uint(void);
@@ -148,7 +148,7 @@ int main(void) {
 ''')
     out = check(command + [str(source), flag, "--property", "unreach-call"],
                 1, "VERIFICATION FAILED")
-    assert "count-zero." not in out, out
+    assert "clz/ctz of zero" not in out, out
     source.write_text('''extern unsigned __VERIFIER_nondet_uint(void);
 int main(void) {
  unsigned x = __VERIFIER_nondet_uint();
@@ -156,7 +156,7 @@ int main(void) {
  if (x == 0) { int n = 2147483647; n += 1; }
 }
 ''')
-    check(command + [str(source), flag, "--property", "no-overflow", "--overflow-check"],
+    check(command + [str(source), flag, "--property", "no-overflow", "--ub-signed-overflow-check"],
           1, "VERIFICATION FAILED")
     ir.write_text('''declare i32 @llvm.cttz.i32(i32, i1 immarg)
 declare void @reach_error()
@@ -201,7 +201,7 @@ define i32 @main(i32 %x) {
  ret i32 %r
 }
 ''')
-    check([binary, str(ir), flag], 1, "main.count-zero.1")
+    check([binary, str(ir), flag], 1, "main.assertion.1")
     ir.write_text('''declare <vscale x 2 x i32> @llvm.cttz.nxv2i32(<vscale x 2 x i32>, i1 immarg)
 define i32 @main(<vscale x 2 x i32> %x) {
  %r = call <vscale x 2 x i32> @llvm.cttz.nxv2i32(<vscale x 2 x i32> %x, i1 true)

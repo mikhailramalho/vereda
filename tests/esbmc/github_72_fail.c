@@ -12,6 +12,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_72_fail
-// RUN: --no-pointer-check
+// RUN: --ub-pointer-check=false
 // EXPECT: \A(?![\s\S]*invalid_object\d*&\d+#\d+ ==)
 // EXPECT: ^VERIFICATION FAILED$

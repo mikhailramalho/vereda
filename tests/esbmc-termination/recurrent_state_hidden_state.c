@@ -21,7 +21,7 @@ int main(void)
 }
 // Imported from ESBMC regression/termination/recurrent_state_hidden_state
 // Needs: --termination --max-inductive-step 3
-// RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --no-pointer-check --no-bounds-check --no-assertions
+// RUN: --termination --k-step 2 --max-k-step 12 --max-inductive-step 3 --ub-pointer-check=false --no-bounds-check --no-assertions
 // MODE: FUTURE
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: verdict none

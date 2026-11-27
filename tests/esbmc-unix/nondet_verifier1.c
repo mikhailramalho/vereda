@@ -22,7 +22,7 @@ int main() {
 }
 // Imported from ESBMC regression/esbmc-unix/nondet_verifier1
 // Needs: --force-realloc-success --interval-analysis --error-label ERROR
-// RUN: --no-div-by-zero-check --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --unlimited-k-steps --no-vla-size-check -m64 --no-pointer-check --interval-analysis --no-bounds-check --error-label ERROR --incremental-bmc
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --force-realloc-success --no-align-check --k-step 2 --unlimited-k-steps --vla-size-check=false -m64 --ub-pointer-check=false --interval-analysis --no-bounds-check --error-label ERROR --incremental-bmc
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

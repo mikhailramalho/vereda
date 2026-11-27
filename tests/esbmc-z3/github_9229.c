@@ -8,6 +8,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/z3/github_9229
-// RUN: --unsigned-overflow-check --solver z3
+// RUN: --ub-signed-overflow-check --unsigned-overflow-check --ub-shift-check --solver z3
 // EXPECT: ^  SUCCESS .*line +7  arithmetic overflow on add$
 // EXPECT: ^VERIFICATION SUCCESSFUL$

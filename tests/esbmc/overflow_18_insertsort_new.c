@@ -85,5 +85,5 @@ int main()
 
 	
 // Imported from ESBMC regression/esbmc/overflow_18_insertsort_new
-// RUN: --unwind 34 --overflow-check
+// RUN: --unwind 34 --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION SUCCESSFUL$

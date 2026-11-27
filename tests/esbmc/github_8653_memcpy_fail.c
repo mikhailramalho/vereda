@@ -20,6 +20,6 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_8653_memcpy_fail
-// RUN: --no-pointer-check --multi-property
+// RUN: --ub-pointer-check=false --multi-property
 // EXPECT: ^Properties: 1 checked, \d+ passed, 1 failed, \d+ not checked$
 // EXPECT: ^VERIFICATION FAILED$

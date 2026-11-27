@@ -65,7 +65,7 @@ int main() {
 
 // Imported from ESBMC regression/esbmc-unix/github_308
 // Needs: --k-induction --max-inductive-step 3 --interval-analysis
-// RUN: --no-div-by-zero-check --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps -m32 --k-induction --max-inductive-step 3 --no-pointer-check --no-bounds-check --interval-analysis
+// RUN: --ub-div-by-zero-check=false --force-malloc-success --no-align-check --k-step 2 --unlimited-k-steps -m32 --k-induction --max-inductive-step 3 --ub-pointer-check=false --no-bounds-check --interval-analysis
 // EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
 // Vereda: verdict none

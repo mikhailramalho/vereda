@@ -37,7 +37,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_4434_thread_local
-// RUN: --no-pointer-check --no-div-by-zero-check --unwind 3
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --unwind 3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE

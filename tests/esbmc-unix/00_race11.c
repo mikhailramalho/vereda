@@ -28,8 +28,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/00_race11
-// Needs: --data-race-check
-// RUN: --data-race-check -Wno-error=implicit-function-declaration
+// Needs: --ub-data-race-check
+// RUN: --ub-data-race-check -Wno-error=implicit-function-declaration
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none
