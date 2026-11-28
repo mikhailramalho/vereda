@@ -14,6 +14,7 @@
 #include <llvm/ADT/StringSwitch.h>
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
 #include <llvm/Support/WithColor.h>
@@ -744,6 +745,9 @@ int main(int argc, char **argv) {
   // std::bad_alloc that escapes the solver, and encode::checked throws again
   // one that camada turned into an unknown answer (#399).
   std::set_new_handler(outOfMemory);
+  // LLVM's own allocation checks (report_bad_alloc_error) print "LLVM ERROR:
+  // out of memory" and abort unless a handler is installed (#480).
+  install_bad_alloc_error_handler([](void *, const char *, bool) { outOfMemory(); });
 #ifdef VEREDA_MIMALLOC
   mi_register_error([](int err, void *) {
     if (err == ENOMEM)
