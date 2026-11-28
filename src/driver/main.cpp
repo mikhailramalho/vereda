@@ -476,6 +476,31 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     else if (!(incrementalBMC && terms.isTrue(c.violated)))
       hasNonConstUnwind = true;
   }
+  // With no pending program checks, a known finite loop bound lets us
+  // extend the walk instead of solving just to decide whether to extend it.
+  // Only defer within the next doubled bound, and keep the last configured
+  // bound: its query may prove the cut unreachable.
+  if (incrementalBMC && !hasNonConstAssert && hasNonConstUnwind && !multiProperty) {
+    unsigned least = UINT_MAX;
+    bool bounded = true;
+    for (const vereda::checks::Check &c : checks) {
+      if (!c.isUnwinding() || terms.isFalse(c.violated))
+        continue;
+      if (c.unwindsAt <= bound) {
+        bounded = false;
+        break;
+      }
+      least = std::min(least, c.unwindsAt);
+    }
+    uint64_t next = uint64_t(bound) +
+                    ((uint64_t(least) - bound + kStep - 1) / kStep) * kStep;
+    if (bounded && least <= 2 * uint64_t(bound) &&
+        (unlimitedKSteps || next <= maxKStep)) {
+      info() << "Deferring unwinding-only solve until bound " << least << "\n";
+      *unwindsAt = least;
+      return BoundTooSmall;
+    }
+  }
   bool useIncremental = incrementalSolver || (state->resumable() && !renew);
   bool mayRewalk =
       !useIncremental && !renew && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
