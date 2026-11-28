@@ -34,12 +34,16 @@ WitnessModuleInfo extractModuleInfo(const Module &m) {
     Type *rt = f.getReturnType();
     if (rt->isPointerTy())
       ret.kind = WitnessModuleInfo::RetKind::Pointer;
+    else if (rt->isHalfTy())
+      ret.kind = WitnessModuleInfo::RetKind::Half;
     else if (rt->isFloatTy())
       ret.kind = WitnessModuleInfo::RetKind::Float;
     else if (rt->isDoubleTy())
       ret.kind = WitnessModuleInfo::RetKind::Double;
     else if (rt->isX86_FP80Ty())
       ret.kind = WitnessModuleInfo::RetKind::LongDouble;
+    else if (rt->isFP128Ty())
+      ret.kind = WitnessModuleInfo::RetKind::Float128;
     else if (rt->isIntegerTy())
       ret.kind = WitnessModuleInfo::RetKind::Integer;
     ret.hasSExt = f.hasRetAttribute(Attribute::SExt);
@@ -235,16 +239,16 @@ static std::string constraint(solver::Model &model, const walker::Trace &trace,
   // \result != 0 still keeps the waypoint at its call (#76).
   if (ret.kind == WitnessModuleInfo::RetKind::Pointer)
     return v.isZero() ? "\\result == 0" : "\\result != 0";
-  if (ret.kind == WitnessModuleInfo::RetKind::Float ||
-      ret.kind == WitnessModuleInfo::RetKind::Double ||
-      ret.kind == WitnessModuleInfo::RetKind::LongDouble) {
+  using Kind = WitnessModuleInfo::RetKind;
+  if (ret.kind == Kind::Half || ret.kind == Kind::Float || ret.kind == Kind::Double ||
+      ret.kind == Kind::LongDouble || ret.kind == Kind::Float128) {
     // No constant compares equal to a NaN, and an infinity is beyond the
     // largest finite value. The sign of a zero does not show: -0.0 == 0.0.
-    const fltSemantics &sem = ret.kind == WitnessModuleInfo::RetKind::Float
-                                  ? APFloat::IEEEsingle()
-                                  : ret.kind == WitnessModuleInfo::RetKind::Double
-                                        ? APFloat::IEEEdouble()
-                                        : APFloat::x87DoubleExtended();
+    const fltSemantics &sem = ret.kind == Kind::Half         ? APFloat::IEEEhalf()
+                              : ret.kind == Kind::Float      ? APFloat::IEEEsingle()
+                              : ret.kind == Kind::Double     ? APFloat::IEEEdouble()
+                              : ret.kind == Kind::LongDouble ? APFloat::x87DoubleExtended()
+                                                             : APFloat::IEEEquad();
     APInt bits = v;
     if (ret.kind == WitnessModuleInfo::RetKind::LongDouble && bits.getBitWidth() == 79) {
       // Native FP terms for x86_fp80 omit the explicit integer bit; restore it
@@ -257,7 +261,7 @@ static std::string constraint(solver::Model &model, const walker::Trace &trace,
     APFloat x(sem, bits);
     if (x.isNaN())
       return "";
-    const char *suffix = ret.kind == WitnessModuleInfo::RetKind::LongDouble ? "L" : "";
+    const char *suffix = ret.kind == Kind::LongDouble ? "L" : ret.kind == Kind::Float128 ? "Q" : "";
     if (x.isInfinity())
       return std::string("\\result ") + (x.isNegative() ? "< " : "> ") +
              hex(APFloat::getLargest(x.getSemantics(), x.isNegative())) + suffix;
