@@ -1356,16 +1356,27 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
     if (b.ulo > b.uhi || b.slo > b.shi || b == was || constant(e))
       return;
     set(e, b);
-    // zext(x) <= 9 is x <= 9, and sext(x) >= -3 is x >= -3 as signed numbers.
+    // zext(x) <= 9 is x <= 9, and sext(x) >= -3 is x >= -3 as signed numbers;
+    // zext(x) != 5 is x != 5, and sext(x) != -3 is x != -3.
     const Node *x = node(e);
     if (!x || (x->op != Op::ZExt && x->op != Op::SExt))
       return;
     Ref a = x->a;
+    unsigned aw = a.width();
     Bounds ba = now(a), na = ba;
     if (x->op == Op::ZExt)
       na.ulo = std::max(ba.ulo, b.ulo), na.uhi = std::min(ba.uhi, b.uhi);
     else
       na.slo = std::max(ba.slo, b.slo), na.shi = std::min(ba.shi, b.shi);
+    for (uint64_t v : b.excluded) {
+      int64_t s = toSigned(v, w);
+      bool fits = x->op == Op::ZExt ? v <= umax(aw) : smin(aw) <= s && s <= smax(aw);
+      uint64_t va = x->op == Op::ZExt ? v : toUnsigned(s, aw);
+      if (fits && na.ulo < va && va < na.uhi && na.slo < toSigned(va, aw) &&
+          toSigned(va, aw) < na.shi && !llvm::is_contained(na.excluded, va) &&
+          na.excluded.size() < MaxExcluded)
+        na.excluded.push_back(va);
+    }
     update(a, ba, na);
   };
   literals(cond, holds, [&](const Node &n, bool h) {
