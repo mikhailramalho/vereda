@@ -142,17 +142,19 @@ const Value *Loops::base(const Value *p, const Loop *l) {
   return a && !l->contains(a) ? a : nullptr;
 }
 
-// Whether l, which has loops inside, has nothing to walk: no store, no call
-// but intrinsics and no exit but its header's, and each loop inside has a
-// summary, so a count (its other exits end a path, so they would leave l
-// too). The walker then summarises l without walking the loops inside,
-// with the values SCEV gives its header after them (#504).
+// Whether l, which has loops inside, has nothing to walk: no store, no
+// load (whose checks a summary would drop, and which may set an inner
+// loop's count), no call but intrinsics and no exit but its header's, and
+// each loop inside has a summary, so a count (its other exits end a path,
+// so they would leave l too). The walker then summarises l without
+// walking the loops inside, with the values SCEV gives its header after
+// them (#504).
 bool Loops::countsOnly(const Loop *l) {
   if (l->getExitingBlock() != l->getHeader())
     return false;
   for (BasicBlock *bb : l->blocks())
     for (Instruction &inst : *bb)
-      if (isa<StoreInst>(inst) || (isa<CallBase>(inst) && !isa<IntrinsicInst>(inst)))
+      if (isa<StoreInst, LoadInst>(inst) || (isa<CallBase>(inst) && !isa<IntrinsicInst>(inst)))
         return false;
   return all_of(l->getSubLoops(), [&](const Loop *sub) { return summary(sub); });
 }
