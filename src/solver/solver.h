@@ -12,6 +12,13 @@ namespace vereda::solver {
 // incremental set, Bitwuzla uses bv-cnf-scope=permanent for assumption reuse.
 llvm::Expected<camada::SMTSolverRef> create(camada::SolverKind kind, bool incremental = false);
 
+// Makes a Bitwuzla abort (an internal error, a failed check of its own)
+// throw vereda::Unsupported with encode::SolverAborted and Bitwuzla's
+// message, which the run ends on as UNKNOWN, instead of camada's handler
+// ending the process. The callback is per thread, and camada installs its
+// own with every Bitwuzla context, so create() calls this after each.
+void throwOnAbort();
+
 enum class Status { NotChecked, Holds, Fails };
 
 struct Verdict {

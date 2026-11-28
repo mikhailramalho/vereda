@@ -14,6 +14,7 @@
 // and solverTerm then makes the solver's term for it. Most constants fold
 // away without ever getting one.
 #pragma once
+#include "util/unsupported.h"
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
@@ -435,13 +436,23 @@ private:
   bool walkDone = false;
 };
 
-// r, a check's answer from s, except that a std::bad_alloc thrown inside the
-// check, which camada turns into an unknown answer, is thrown again: memory
-// ran out, and the next query would run on a solver left half updated (#399).
-// With mimalloc, its error hook ends the run at the failing allocation first.
+// How the exception solver::create's abort callback throws begins: the
+// solver aborted on an internal error, and is not to be used again (#412).
+inline constexpr llvm::StringLiteral SolverAborted("solver aborted: ");
+
+// r, a check's answer from s, except that a std::bad_alloc or a solver abort
+// thrown inside the check, which camada turns into an unknown answer, is
+// thrown again: the next query would run on a solver left half updated
+// (#399, #412). With mimalloc, its error hook ends the run at the failing
+// allocation first.
 inline camada::CheckResult checked(camada::SMTSolver &s, camada::CheckResult r) {
-  if (r == camada::CheckResult::UNKNOWN && s.reasonUnknownDetail() == "std::bad_alloc")
+  if (r != camada::CheckResult::UNKNOWN)
+    return r;
+  std::string detail = s.reasonUnknownDetail();
+  if (detail == "std::bad_alloc")
     throw std::bad_alloc();
+  if (llvm::StringRef(detail).starts_with(SolverAborted))
+    throw Unsupported(detail);
   return r;
 }
 
