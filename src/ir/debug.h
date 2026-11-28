@@ -177,7 +177,8 @@ inline const llvm::DIType *stripTypedefs(const llvm::DIType *ty) {
 // bytes at byte offset off writes, as C spells it ("[2][0].x"), and whether
 // that scalar is unsigned. None when no single scalar of that size is there:
 // a bitfield (its store writes the whole unit), a partial or spanning write,
-// an array whose length is not constant. A union member is the first whose
+// an array whose length is not constant but in its outermost dimension (a
+// VLA's, which no index needs). A union member is the first whose
 // size the store matches: members of one size cannot be told apart, as clang
 // addresses them all through the first.
 inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size,
@@ -193,9 +194,9 @@ inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t of
       for (llvm::DINode *n : c->getElements())
         if (auto *r = llvm::dyn_cast<llvm::DISubrange>(n)) {
           auto *count = llvm::dyn_cast_if_present<llvm::ConstantInt *>(r->getCount());
-          if (!count) // a variable-length or open dimension
+          if (!count && !counts.empty()) // a variable-length inner dimension
             return std::nullopt;
-          counts.push_back(count->getZExtValue());
+          counts.push_back(count ? count->getZExtValue() : 0);
         }
       if (!stride || counts.empty())
         return std::nullopt;
