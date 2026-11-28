@@ -17,6 +17,3 @@ int main(void)
 // RUN: --unwind 20 --unwindsetname compute_sum:0:3
 // EXPECT: ^  unwinding assertion loop \d+$
 // EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict none
-// Needs: --unwindsetname compute_sum:0:3
