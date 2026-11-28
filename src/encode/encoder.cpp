@@ -297,15 +297,38 @@ SMTSortRef Encoder::fpSort(Type *ty, camada::FPEncoding encoding) {
   return s.mkFPSort(expBits, precision - 1, encoding);
 }
 
-camada::SMTExprRef Encoder::fp(const Value *v) {
-  Type *ty = v->getType();
-  SMTSortRef sort = fpSort(ty);
-  Term x = value(v);
+camada::SMTExprRef Encoder::fp(const Value *v) { return fp(value(v), v->getType()); }
+
+camada::SMTExprRef Encoder::fp(Term x, Type *ty) {
   if (useNative(ty))
     return t.solverTerm(x);
   if (ty->isX86_FP80Ty())
     x = fp80ToIEEE79(x);
-  return s.mkBVToIEEEFP(t.solverTerm(x), sort);
+  return s.mkBVToIEEEFP(t.solverTerm(x), fpSort(ty));
+}
+
+Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty), even = rm(camada::RM::ROUND_TO_EVEN, ty);
+  switch (opcode) {
+  case Instruction::FAdd: return bits(s.mkFPAdd(x, y, even), ty);
+  case Instruction::FSub: return bits(s.mkFPSub(x, y, even), ty);
+  default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
+  }
+}
+
+Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty, bool nsz) {
+  bool min = id == Intrinsic::minnum || id == Intrinsic::minimum || id == Intrinsic::minimumnum;
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty);
+  Term first = t.fromSolver(min ? s.mkFPLe(x, y) : s.mkFPGe(x, y));
+  Term nanA = t.fromSolver(s.mkFPIsNaN(x)), nanB = t.fromSolver(s.mkFPIsNaN(y));
+  // Of two zeros, min takes a when a is -0, max when a is +0; under nsz either.
+  Term zeros = t.land(t.fromSolver(s.mkFPIsZero(x)), t.fromSolver(s.mkFPIsZero(y)));
+  Term negA = signBit(a, ty);
+  Term zeroA = nsz ? fresh(Type::getInt1Ty(ty->getContext()), "nsz") : min ? negA : t.lnot(negA);
+  Term takeA = t.ite(zeros, zeroA, first);
+  // minimum/maximum give the NaN operand, the others the other operand.
+  bool nanOut = id == Intrinsic::maximum || id == Intrinsic::minimum;
+  return t.ite(nanA, nanOut ? a : b, t.ite(nanB, nanOut ? b : a, t.ite(takeA, a, b)));
 }
 
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
@@ -383,8 +406,10 @@ Term Encoder::folded(const APFloat &r, Type *ty) {
   return r.isNaN() ? Term() : floatValue(r, ty);
 }
 
-Term Encoder::signBit(const Value *v) {
-  Term b = toBits(value(v), v->getType());
+Term Encoder::signBit(const Value *v) { return signBit(value(v), v->getType()); }
+
+Term Encoder::signBit(Term x, Type *ty) {
+  Term b = toBits(x, ty);
   unsigned w = b.width();
   return t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
 }
@@ -845,20 +870,23 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::nearbyint:
   case Intrinsic::roundeven: r = integral(camada::RM::ROUND_TO_EVEN); break;
   case Intrinsic::minnum:
-  case Intrinsic::maxnum: { // a NaN operand gives the other; a signed zero either
-    if (auto x = constFloat(arg(0)), y = constFloat(arg(1)); x && y) {
-      APFloat::cmpResult cmp = x->compare(*y);
-      bool first = cmp == APFloat::cmpEqual ||
-                   cmp == (id == Intrinsic::minnum ? APFloat::cmpLessThan : APFloat::cmpGreaterThan);
-      r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
+  case Intrinsic::maxnum: { // a NaN operand gives the other; -0 below +0, or either under nsz
+    bool nsz = c.hasNoSignedZeros();
+    if (auto x = constFloat(arg(0)), y = constFloat(arg(1));
+        x && y && !(nsz && x->isZero() && y->isZero() && x->isNegative() != y->isNegative())) {
+      APFloat m = id == Intrinsic::minnum ? minnum(*x, *y) : maxnum(*x, *y);
+      r = value(arg(m.bitwiseIsEqual(*x) ? 0 : 1));
       break;
     }
-    camada::SMTExprRef a = fp(arg(0)), b = fp(arg(1));
-    Term first = t.fromSolver(id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b));
-    r = t.ite(t.fromSolver(s.mkFPIsNaN(a)), value(arg(1)),
-              t.ite(t.lor(t.fromSolver(s.mkFPIsNaN(b)), first), value(arg(0)), value(arg(1))));
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType(), nsz);
     break;
   }
+  case Intrinsic::minimum:
+  case Intrinsic::maximum:
+  case Intrinsic::minimumnum:
+  case Intrinsic::maximumnum:
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
+    break;
   case Intrinsic::is_fpclass:
     // Natively either NaN class is any NaN, as fpClass has it; with fp2bv
     // fpClass reads the constant's bits and folds.
