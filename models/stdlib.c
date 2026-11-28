@@ -1,4 +1,5 @@
-// Models of <stdlib.h> functions, written from the C standard (C17 7.22).
+// Models of <stdlib.h> functions, written from the C standard (C17 7.22),
+// and of POSIX and glibc functions that allocate their result.
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -12,6 +13,11 @@ size_t __vereda_object_size(const void *p);
 // The walker's checks of free(p), without the free.
 void __vereda_check_free(void *p);
 void *memalign(size_t, size_t);
+int __VERIFIER_nondet_int(void);
+unsigned long __VERIFIER_nondet_ulong(void);
+void __VERIFIER_assume(int);
+// Gives the whole object p points into nondet contents (the walker does).
+void __vereda_havoc(void *p);
 
 // A new object with the old contents up to the smaller size, as glibc
 // does; realloc(p, 0) frees p and returns null, as glibc does. On failure
@@ -34,8 +40,53 @@ void *realloc(void *p, size_t n) {
   return q;
 }
 
-int __VERIFIER_nondet_int(void);
-void __VERIFIER_assume(int);
+// reallocarray (glibc 2.26, POSIX 2024): realloc of n * size bytes, but
+// null with errno ENOMEM where the product overflows, p left as it was.
+void *reallocarray(void *p, size_t n, size_t size) {
+  size_t bytes;
+  if (__builtin_mul_overflow(n, size, &bytes)) {
+    errno = ENOMEM;
+    return NULL;
+  }
+  return realloc(p, bytes);
+}
+
+// realpath (POSIX): the absolute path of path, len characters and a NUL,
+// in resolved, which must hold PATH_MAX bytes, or with a null resolved in
+// a new object of len + 1 bytes, as glibc allocates. getcwd (POSIX): the
+// working directory's, in buf of size bytes, null with ERANGE where it
+// does not fit and EINVAL for a size of 0; with a null buf glibc
+// allocates size bytes, or len + 1 for a size of 0. The characters are
+// not modelled. Either may fail (ENOENT, EACCES, ...), and errno may
+// change at any call (POSIX 2.3).
+char *realpath(const char *path, char *resolved) {
+  errno = __VERIFIER_nondet_int();
+  size_t len = __VERIFIER_nondet_ulong();
+  if (!len || len >= PATH_MAX)
+    return NULL;
+  if (!resolved && !(resolved = malloc(len + 1)))
+    return NULL;
+  __vereda_havoc(resolved);
+  resolved[len] = 0;
+  return resolved;
+}
+
+char *getcwd(char *buf, size_t size) {
+  errno = __VERIFIER_nondet_int();
+  size_t len = __VERIFIER_nondet_ulong();
+  if (!len || len >= PATH_MAX || (buf && !size) || (size && len >= size))
+    return NULL;
+  if (!buf && !(buf = malloc(size ? size : len + 1)))
+    return NULL;
+  __vereda_havoc(buf);
+  buf[len] = 0;
+  return buf;
+}
+
+// glibc's: realpath(path, NULL), and getcwd(NULL, 0) unless $PWD names the
+// working directory, which gives the same allocation.
+char *canonicalize_file_name(const char *path) { return realpath(path, NULL); }
+char *get_current_dir_name(void) { return getcwd(NULL, 0); }
 
 // Any value from 0 to RAND_MAX (C17 7.22.2.1), so srand needs no model.
 int rand(void) {
