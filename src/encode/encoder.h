@@ -12,9 +12,10 @@
 // Operations round to nearest, ties to even, as C does by default, and on
 // constant operands fold with APFloat under the same rounding, so a value
 // computed from constants alone is a constant; a NaN result does not fold,
-// since its bits are the encoding's. A vector of integers or
+// since its bits are the encoding's. A vector of integers, pointers or
 // floats is one bitvector with element 0 in the low bits, as memory lays it
-// out; the scalarizer leaves vectors only where they cross calls.
+// out (an i1 element is one bit), and a bitcast to or from one keeps the
+// bits; the scalarizer leaves vectors only where they cross calls.
 #pragma once
 #include "encode/terms.h"
 #include "memory/memory.h"
@@ -115,6 +116,7 @@ public:
   Term resize(Term v, unsigned width, bool isSigned);
 
 private:
+  unsigned vectorElementWidth(llvm::Type *ty);
   unsigned packedWidth(llvm::Type *ty);
   Term toField(Term v, llvm::Type *ty);
   Term fromField(Term bits, llvm::Type *ty);
