@@ -1,5 +1,5 @@
 // Exceed the known-byte cache so first reads must traverse flushed stores.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 extern void __VERIFIER_assert(int);
 #define N 270000

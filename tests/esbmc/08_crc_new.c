@@ -124,5 +124,6 @@ int main(void)
 
 
 // Imported from ESBMC regression/esbmc/08_crc_new
+// RUN:
 // MODE: THOROUGH
 // EXPECT: ^VERIFICATION SUCCESSFUL$

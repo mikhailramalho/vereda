@@ -31,4 +31,5 @@ int main() {
 }
 
 // Imported from ESBMC regression/esbmc/github_1630_2
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

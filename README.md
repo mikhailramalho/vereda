@@ -10,7 +10,11 @@ the program.
 walks the IR from the entry function. As it walks, it unrolls loops and
 recursion and encodes each instruction as SMT terms through
 [camada](https://github.com/mikhailramalho/camada). The solver then either
-finds a counterexample or proves that none exists within the bound.
+finds a counterexample or proves that none exists within the bound. Without
+`--unwind`, Vereda checks bounds 1, 2, ... in turn (incremental BMC), resuming
+the walk where the last bound stopped, until the verdict no longer depends on
+the bound or bound 384 passes; `--no-incremental-bmc` instead unrolls each loop
+until its next iteration is unreachable.
 
 Supported today:
 
@@ -124,11 +128,12 @@ The main verifier flags:
 
 | Flag | Meaning |
 |------|---------|
-| `--unwind N` | Loop iterations and recursion depth (default: unroll until the next iteration is unreachable) |
+| `--unwind N` | Check one bound: loop iterations and recursion depth N (without explicit global or per-loop bounds, Vereda checks bounds incrementally) |
 | `--unwindsetname F:I:N,...` | Unwind loop `I` of function `F` `N` times instead of `--unwind`, as ESBMC's flag; loops number from 0 in each function in the order of their back edges, an inner loop before the loop around it, as ESBMC counts them and as their unwinding assertions say, and `F` may be clang's USR (`c:@F@F#`) |
-| `--no-unwinding-assertions` | Assume the bound instead of checking it |
+| `--no-unwinding-assertions` | Assume loops and recursion end within the bound instead of checking it (unsound: a violation past the bound is missed, so SUCCESSFUL no longer means the program is safe); incremental BMC still uses the unwinding assertions to pick the bound, as ESBMC does |
 | `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
-| `--incremental-bmc`, `--max-k-step N` | Try bounds 1, 2, ... until the verdict does not depend on the bound |
+| `--incremental-bmc`, `--max-k-step N`, `--k-step N`, `--unlimited-k-steps` | Try bounds 1, 2, ... (by the step, up to 384 or N) until the verdict does not depend on the bound; the default without `--unwind` |
+| `--no-incremental-bmc` | Check one bound: unroll until the next iteration is unreachable, or to `--unwind` |
 | `--show-library-states` | Show Rust standard-library states in counterexamples |
 | `--multi-property` | Check every property instead of stopping at the first violation |
 | `--witness FILE` | Write the first counterexample that reaches `reach_error` as an SV-COMP violation witness (YAML 2.0); `-` is standard output |
@@ -149,9 +154,10 @@ The main verifier flags:
 | `--deadlock-check` | Request deadlock checking; currently errors because it is not implemented |
 | `--vla-size-check` | Report stack allocations above `PTRDIFF_MAX`, an implementation limit rather than undefined behaviour (default on; `=false` disables; their paths still end at the allocation) |
 | `--solver bitwuzla\|z3\|cvc5` | SMT solver |
-| `--incremental-solver` | Keep one incremental solver across checks (with `bv-cnf-scope=permanent` on Bitwuzla) instead of fresh non-incremental solves |
+| `--incremental-solver` | Keep one incremental solver across checks and bounds (with `bv-cnf-scope=permanent` on Bitwuzla) instead of a fresh one per solving phase |
+| `--fresh-solver` | Force a fresh Bitwuzla instance for the first solve and each solving phase of resumed incremental-BMC bounds |
 | `--dump-ir-only`, `--dump-ir-too` | Print the IR after the pass list, then stop or verify |
-| `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve |
+| `--dump-smt-only`, `--dump-smt-too` | Print the formula as SMT-LIB, then stop or solve; under incremental BMC, each bound's formula after a `; bound k` line (`--dump-smt-only` goes on until the walk finishes every loop, or to the largest bound, `--max-k-step`, even under `--unlimited-k-steps`) |
 | `--dump-dir D` | Write the dumps to files in `D` instead of printing them |
 
 Assertions, the current pointer checks, integer division/remainder-by-zero checks,

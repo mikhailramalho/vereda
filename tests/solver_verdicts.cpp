@@ -30,9 +30,16 @@ struct Faulty : camada::BitwuzlaSolver {
 // Bitwuzla that counts its checkSatAssuming calls.
 struct Counting : camada::BitwuzlaSolver {
   static inline unsigned calls = 0;
+  unsigned renewals = 0;
+  bool unknown = false;
   camada::CheckResult checkSatAssumingImpl(const std::vector<camada::SMTExprRef> &a) override {
     ++calls;
-    return camada::BitwuzlaSolver::checkSatAssumingImpl(a);
+    return unknown ? camada::CheckResult::UNKNOWN
+                   : camada::BitwuzlaSolver::checkSatAssumingImpl(a);
+  }
+  void renewImpl() override {
+    ++renewals;
+    camada::BitwuzlaSolver::renewImpl();
   }
 };
 
@@ -61,6 +68,36 @@ Verdict decide(Query &q, bool all, std::unique_ptr<Query> &fresh) {
 } // namespace
 
 int main() {
+  // Only marked queries suppress automatic renewal, including an incomplete
+  // search. Forced and later-phase renewal discard that state, while keeping
+  // global constraints and all existing term handles valid.
+  for (auto answer : {camada::CheckResult::SAT, camada::CheckResult::UNSAT,
+                      camada::CheckResult::UNKNOWN}) {
+    Counting s;
+    encode::Terms t(s);
+    auto x = t.symbol("x", s.mkBVSort(32));
+    auto seven = t.eq(x, t.bv(7, 32)), eight = t.eq(x, t.bv(8, 32));
+    t.addConstraint(seven);
+    t.renew(/*force=*/false);
+    assert(s.renewals == 1);
+    assert(s.checkSatAssuming({t.solverTerm(seven)}) == camada::CheckResult::SAT);
+    t.renew(/*force=*/false);
+    assert(s.renewals == 2);
+    s.unknown = answer == camada::CheckResult::UNKNOWN;
+    t.preserveQueryState();
+    auto query = answer == camada::CheckResult::UNSAT ? eight : seven;
+    assert(s.checkSatAssuming({t.solverTerm(query)}) == answer);
+    t.releaseWalkTables();
+    t.renew(/*force=*/false);
+    assert(s.renewals == 2);
+    t.renew();
+    assert(s.renewals == 3);
+    t.renew(/*force=*/false);
+    assert(s.renewals == 4);
+    s.unknown = false;
+    assert(s.checkSatAssuming({t.solverTerm(eight)}) == camada::CheckResult::UNSAT);
+  }
+
   // The assertion fails; the unwinding phase, on a fresh solver, answers
   // unknown. The failure stands and the unwinding assertion is not checked.
   {

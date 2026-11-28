@@ -11,4 +11,5 @@ int main(void)
   assert(sp == 6);
 }
 // Imported from ESBMC regression/cstd/isspace
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

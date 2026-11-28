@@ -64,7 +64,10 @@ static cl::opt<std::string> unwindSetName(
 // --unwindsetname's bounds by function and loop number.
 static std::map<std::pair<std::string, unsigned>, unsigned> loopBounds;
 static cl::opt<bool> noUnwindingAssertions(
-    "no-unwinding-assertions", cl::desc("Assume the unwinding bound instead of checking it"));
+    "no-unwinding-assertions",
+    cl::desc("Assume loops and recursion end within the bound instead of checking it "
+             "(unsound: a violation past the bound is missed). Incremental BMC still uses "
+             "the unwinding assertions to pick the bound, as ESBMC does"));
 static cl::opt<bool> noSummarizeArrayLoops(
     "no-summarize-array-loops",
     cl::desc("Unroll the counting loops that only write a[i], check or count, instead of "
@@ -123,21 +126,31 @@ static cl::opt<bool> vlaSizeCheck(
     cl::init(true));
 static cl::opt<bool> incrementalBMC(
     "incremental-bmc",
-    cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound"));
-static cl::opt<unsigned> maxKStep("max-k-step", cl::desc("Largest bound for --incremental-bmc"),
-                                  cl::init(50));
+    cl::desc("Check bounds 1, 2, ... until the verdict does not depend on the bound (the "
+             "default without --unwind)"));
+static cl::opt<bool> noIncrementalBMC(
+    "no-incremental-bmc",
+    cl::desc("Check one bound: unroll until the next iteration is unreachable, or to --unwind"));
+static cl::opt<unsigned> maxKStep("max-k-step",
+                                  cl::desc("Largest bound for incremental BMC (default 384)"),
+                                  cl::init(384));
 static cl::opt<bool> unlimitedKSteps("unlimited-k-steps",
-                                     cl::desc("No largest bound for --incremental-bmc: raise it "
-                                              "until a verdict or the time limit"));
-static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of --incremental-bmc by this"),
+                                     cl::desc("No largest bound for incremental BMC: raise it "
+                                              "until a verdict or the time limit; "
+                                              "--dump-smt-only still stops at --max-k-step"));
+static cl::opt<unsigned> kStep("k-step", cl::desc("Raise the bound of incremental BMC by this"),
                                cl::init(1));
 static cl::opt<bool> multiProperty("multi-property",
                                    cl::desc("Check every property instead of stopping at the "
                                             "first violation"));
 static cl::opt<bool> incrementalSolver(
     "incremental-solver",
-    cl::desc("Keep one incremental solver across checks (with bv-cnf-scope=permanent on Bitwuzla) "
-             "instead of fresh non-incremental solves"));
+    cl::desc("Keep one incremental solver across checks and bounds (with "
+             "bv-cnf-scope=permanent on Bitwuzla) instead of a fresh one per solving phase"));
+static cl::opt<bool> freshSolver(
+    "fresh-solver",
+    cl::desc("Force a fresh Bitwuzla instance before solving, including resumed "
+             "incremental-BMC bounds"));
 static cl::opt<bool> showLibraryStates(
     "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
@@ -355,6 +368,11 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     }
   }
   camada::SMTSolver &solver = *state->solver;
+  // Later solving phases need fresh instances to discard earlier properties.
+  // The first phase keeps marked walk-query state unless --fresh-solver asks
+  // to discard it (#452). Across incremental-BMC bounds, renewing is opt-in.
+  bool renew = !incrementalSolver && (!incrementalBMC || freshSolver) &&
+               solver.supports(camada::SolverFeature::Renew);
   progress((state->resumable() ? "Resuming " : "Walking ") + entry);
   vereda::util::Stopwatch walkTime;
   auto &terms = state->terms;
@@ -373,7 +391,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     auto &enc = *state->encoder;
     auto &memory = *state->memory;
     vereda::walker::Options walkOpts{bound,
-                                     !noUnwindingAssertions,
+                                     !noUnwindingAssertions || incrementalBMC,
                                      forceMallocSuccess,
                                      property,
                                      !incrementalBMC,
@@ -419,10 +437,28 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     solver.dump(formula);
     solver.pop();
     std::string name = incrementalBMC ? "formula-k" + std::to_string(bound) + ".smt2" : "formula.smt2";
-    if (!dump(name, [&](raw_ostream &os) { os << formula; }))
+    if (!dump(name, [&](raw_ostream &os) {
+          if (incrementalBMC)
+            os << "; bound " << bound << "\n";
+          os << formula;
+        }))
       return finish(ErrorExit);
-    if (dumpSMTOnly)
-      return finish(0);
+    if (dumpSMTOnly) {
+      // Without solving, incremental BMC goes on to the next bound until the
+      // walk finishes every loop, which leaves no unwinding check open. It
+      // skips only the bounds every open loop's known trip count rules out.
+      unsigned least = 0;
+      bool open = false;
+      for (const vereda::checks::Check &c : checks)
+        if (c.isUnwinding() && !terms.isFalse(c.violated)) {
+          least = open ? std::min(least, c.unwindsAt) : c.unwindsAt;
+          open = true;
+        }
+      if (!incrementalBMC || !open)
+        return finish(0);
+      *unwindsAt = least;
+      return BoundTooSmall;
+    }
   }
 
   if (!state->resumable())
@@ -440,8 +476,34 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     else if (!(incrementalBMC && terms.isTrue(c.violated)))
       hasNonConstUnwind = true;
   }
-  bool useIncremental = incrementalSolver || state->resumable();
-  bool mayRewalk = !useIncremental && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
+  // With no pending program checks, a known finite loop bound lets us
+  // extend the walk instead of solving just to decide whether to extend it.
+  // Only defer within the next doubled bound, and keep the last configured
+  // bound: its query may prove the cut unreachable.
+  if (incrementalBMC && !hasNonConstAssert && hasNonConstUnwind && !multiProperty) {
+    unsigned least = UINT_MAX;
+    bool bounded = true;
+    for (const vereda::checks::Check &c : checks) {
+      if (!c.isUnwinding() || terms.isFalse(c.violated))
+        continue;
+      if (c.unwindsAt <= bound) {
+        bounded = false;
+        break;
+      }
+      least = std::min(least, c.unwindsAt);
+    }
+    uint64_t next = uint64_t(bound) +
+                    ((uint64_t(least) - bound + kStep - 1) / kStep) * kStep;
+    if (bounded && least <= 2 * uint64_t(bound) &&
+        (unlimitedKSteps || next <= maxKStep)) {
+      info() << "Deferring unwinding-only solve until bound " << least << "\n";
+      *unwindsAt = least;
+      return BoundTooSmall;
+    }
+  }
+  bool useIncremental = incrementalSolver || (state->resumable() && !renew);
+  bool mayRewalk =
+      !useIncremental && !renew && (multiProperty || (hasNonConstAssert && hasNonConstUnwind));
   if (releaseModule && !mayRewalk)
     releaseModule->reset();
 
@@ -492,6 +554,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   };
   std::unique_ptr<BMCState> freshState;
   bool initialSolverUsed = false;
+  if (renew)
+    terms.renew(/*force=*/freshSolver);
   vereda::solver::Verdict verdict =
       useIncremental
           ? vereda::solver::decide(terms, checks, multiProperty, incrementalBMC,
@@ -501,6 +565,10 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
           : vereda::solver::decideNonIncremental(
                 terms, checks, multiProperty, incrementalBMC,
                 [&]() -> std::pair<vereda::encode::Terms *, const vereda::checks::Checks *> {
+                  if (renew) {
+                    terms.renew();
+                    return {&terms, &checks};
+                  }
                   freshState.reset();
                   Expected<camada::SMTSolverRef> created =
                       vereda::solver::create(solverKind, /*incremental=*/false);
@@ -514,7 +582,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                     return {nullptr, nullptr};
                   }
                   vereda::walker::Options rewalkOpts{bound,
-                                                     !noUnwindingAssertions,
+                                                     !noUnwindingAssertions || incrementalBMC,
                                                      forceMallocSuccess,
                                                      property,
                                                      /*showIterations=*/false,
@@ -558,8 +626,13 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   if (incrementalBMC && verdict.check && !bug) {
     info() << "Bound " << bound << " too small: " << verdict.check->comment << "\n";
     *unwindsAt = verdict.check->unwindsAt;
-    if (!incrementalSolver && initialSolverUsed)
-      state.reset();
+    // The solver holds the last phase's query; a resumed walk needs it without.
+    if (initialSolverUsed) {
+      if (state->resumable())
+        terms.renew();
+      else
+        state.reset();
+    }
     return BoundTooSmall;
   }
 
@@ -622,6 +695,10 @@ static int run(int argc, char **argv) {
       errs() << "vereda: " << flag << " is not implemented\n";
       return ErrorExit;
     }
+  }
+  if (freshSolver && incrementalSolver) {
+    errs() << "vereda: --fresh-solver conflicts with --incremental-solver\n";
+    return ErrorExit;
   }
   if (noUnwindingAssertions && property == Property::Termination) {
     errs() << "vereda: --no-unwinding-assertions conflicts with --property termination\n";
@@ -721,11 +798,19 @@ static int run(int argc, char **argv) {
   const vereda::witness::WitnessModuleInfo *witnessInfoPtr =
       witnessInfo ? &*witnessInfo : nullptr;
 
+  if (incrementalBMC && noIncrementalBMC) {
+    errs() << argv[0] << ": --incremental-bmc conflicts with --no-incremental-bmc\n";
+    return ErrorExit;
+  }
+  // Explicit global or per-loop bounds select plain BMC by default.
+  if (!incrementalBMC.getNumOccurrences())
+    incrementalBMC = !noIncrementalBMC && !unwind.getNumOccurrences() && loopBounds.empty();
   if (!incrementalBMC) {
     cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
     for (cl::Option *o : boundFlags)
       if (o->getNumOccurrences()) {
-        errs() << argv[0] << ": --" << o->ArgStr << " needs --incremental-bmc\n";
+        errs() << argv[0] << ": --" << o->ArgStr
+               << " needs incremental BMC, which --no-incremental-bmc and --unwind turn off\n";
         return ErrorExit;
       }
     return bmc(*fn, unwind, witnessInfoPtr, &*module);
@@ -734,14 +819,14 @@ static int run(int argc, char **argv) {
     errs() << argv[0] << ": --k-step must be at least 1\n";
     return ErrorExit;
   }
-  if (dumpSMTOnly) {
-    errs() << argv[0] << ": --dump-smt-only stops before the solver picks the bound; use --unwind\n";
-    return ErrorExit;
-  }
-  if (unwind || noUnwindingAssertions || !loopBounds.empty()) {
+  if (unwind || !loopBounds.empty()) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }
+  // --dump-smt-only solves nothing, so no verdict would end an unlimited run
+  // on a loop that never finishes: it stops at the largest bound instead.
+  if (dumpSMTOnly)
+    unlimitedKSteps = false;
   // When bound k cuts a loop whose maximum trip count SCEV knows, the bounds
   // below the one that unwinds it only add iterations of that loop, and a bug
   // one of them finds, every larger bound finds too. Those bounds are skipped,
@@ -759,6 +844,11 @@ static int run(int argc, char **argv) {
     progress("Checking bound k = " + std::to_string(k));
     if (int r = bmc(*fn, k, witnessInfoPtr, nullptr, &unwindsAt, &retained); r != BoundTooSmall)
       return r;
+  }
+  if (dumpSMTOnly) {
+    info() << "Stopped at bound " << walked << " (--max-k-step " << maxKStep
+           << ") with loops still open\n";
+    return finish(0);
   }
   return finish(unknown("no verdict up to bound " + std::to_string(maxKStep)));
 }

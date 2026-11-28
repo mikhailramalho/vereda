@@ -746,8 +746,18 @@ SKIPPED_TESTS = {
 
 # Imported tests kept with local edits (such as smaller bounds) so a rerun
 # skips them without overwriting or deleting the checked-in copy.
+LOOP_PAST_LARGEST_BOUND = ("its unsummarized run has a 100,000-iteration loop, past "
+                           "incremental BMC's largest bound, so it runs with --no-incremental-bmc")
 PRESERVED_TESTS = {
+    "esbmc/github_7597-chain-bound": LOOP_PAST_LARGEST_BOUND,
+    "esbmc/github_7597-chain-bound_fail": LOOP_PAST_LARGEST_BOUND,
+    "esbmc/github_7597-chain-dropped": LOOP_PAST_LARGEST_BOUND,
+    "esbmc/github_7597-chain-dropped_fail": LOOP_PAST_LARGEST_BOUND,
+    "esbmc/intrinsic_unroll_for_multivar_fail": "tests a pragma bound in plain BMC mode",
+    "esbmc/intrinsic_unroll_unwind_assertion_fail": "tests a pragma bound in plain BMC mode",
     "cstd/scanf-false-3": "uses --max-k-step 3 locally so it does not spend ~45 s reaching bound 50",
+    "esbmc/array_loop_summary_decrement": LOOP_PAST_LARGEST_BOUND,
+    "esbmc/array_loop_summary_decrement_fail": LOOP_PAST_LARGEST_BOUND,
     "z3/github_9222_formula": "checks Vereda's own SMT dump of the overflow checks, "
                               "which the dump-only rule would drop",
 }

@@ -2,7 +2,7 @@
 // iteration, and past 1024 only at powers of two (#383): the inner loop,
 // walked three times, prints its iterations once, and the long loop prints
 // 1024 and 2048 but none between them.
-// RUN: --no-summarize-array-loops
+// RUN: --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^\[PROGRESS\] Unwinding loop 0 iteration 4\s
 // EXPECT-NOT: (?s)(Unwinding loop 0 iteration \d+\s).*\1
 // EXPECT: ^\[PROGRESS\] Unwinding loop 2 iteration 1024\s

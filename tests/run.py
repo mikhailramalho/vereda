@@ -88,7 +88,7 @@ def out_of_memory(out):
 
 def numbers(out):
     """(walk seconds, solve seconds, peak MB) from a run's output, each None
-    when the output does not give it. --incremental-bmc walks and solves
+    when the output does not give it. Incremental BMC walks and solves
     once per bound, so the times add up."""
     walks = [(float(t), int(m)) for t, m in WALK.findall(out)]
     solves = [(float(t), int(m)) for t, m in SOLVE.findall(out)]
@@ -192,7 +192,7 @@ def changed(desc, out, cmd, now=None):
 
 
 # The most a run may write to any file, its output included. A loop unrolled
-# without --unwind prints a line per iteration; when nothing slows the walk
+# under --no-incremental-bmc without --unwind prints a line per iteration; when nothing slows the walk
 # down that is gigabytes a minute, which held in memory took CI's runner
 # down. The run is stopped (SIGXFSZ) at the limit and counts as timed out: it
 # would have run to the time limit anyway.

@@ -267,12 +267,17 @@ def main():
         entry, prop, required = read_property(args.property_file)
         sanitize.update(required)
         rest += ["--entry", entry, "--property", prop]
-        # As ESBMC's SV-COMP runs (esbmc-wrapper.py): no largest bound, so the
-        # time limit ends the run, and a step of 2. A step of 8 answered more
-        # of the tasks that stopped at bound 50 but skipped the small bounds
-        # where others fail (docs/survey/2026-11-24-k-step-2.md).
-        if "--incremental-bmc" in rest and not {"--max-k-step", "--unlimited-k-steps"} & set(rest):
-            rest += ["--unlimited-k-steps"] + ([] if "--k-step" in rest else ["--k-step", "2"])
+        # Incremental BMC is the binary's default unless a flag in off is
+        # given. Under it, as ESBMC's SV-COMP runs (esbmc-wrapper.py): no
+        # largest bound, so the time limit ends the run, and a step of 2. A
+        # step of 8 answered more of the tasks that stopped at bound 50 but
+        # skipped the small bounds where others fail
+        # (docs/survey/2026-11-24-k-step-2.md).
+        names = {a.partition("=")[0] for a in rest}
+        off = {"--no-incremental-bmc", "--unwind", "--unwindsetname"}
+        incremental = "--incremental-bmc" in names or not off & names
+        if incremental and not {"--max-k-step", "--unlimited-k-steps"} & names:
+            rest += ["--unlimited-k-steps"] + ([] if "--k-step" in names else ["--k-step", "2"])
     if sanitize:
         flags += [f + ",".join(sorted(sanitize)) for f in ("-fsanitize=", "-fsanitize-trap=")]
         # Since clang 22, a trap's location is line 0 of an artificial

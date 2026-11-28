@@ -18,3 +18,4 @@ int main()
 // EXPECT: Applying #pragma unroll 3 to loop
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: verdict FAILED
+// RUN: --no-incremental-bmc

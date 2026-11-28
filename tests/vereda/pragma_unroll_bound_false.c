@@ -12,3 +12,4 @@ int main(void) {
   __VERIFIER_assert(a[2] == 3);
   return 0;
 }
+// RUN: --no-incremental-bmc

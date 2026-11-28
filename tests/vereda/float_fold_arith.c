@@ -2,6 +2,7 @@
 // guard folds, as an integer loop's does (loop_const.c). fma() on constants
 // rounds once, a * b + c rounds twice (vereda.py turns contraction off), and
 // square roots fold correctly rounded.
+// RUN: --no-incremental-bmc
 // EXPECT: ^\[PROGRESS\] Unwinding loop 0 iteration 30
 // EXPECT-NOT: iteration 31
 // EXPECT: ^VERIFICATION SUCCESSFUL$

@@ -39,7 +39,8 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool sk
 // Non-incremental mode: asserts each phase's disjunction directly and calls
 // check() without assumptions or push/pop. When a further query is needed
 // (unwinding assertions after assertions held, or remaining checks under all),
-// freshWalk supplies a fresh solver, terms and checks for the same walk.
+// freshWalk supplies a fresh solver, terms and checks for the same walk (the
+// same terms on a renewed solver, or those of a new walk).
 // Sets solverUsed if at least one check() call was made on the initial solver.
 Verdict decideNonIncremental(
     encode::Terms &t, const checks::Checks &checks, bool all, bool skipUnwindModel,

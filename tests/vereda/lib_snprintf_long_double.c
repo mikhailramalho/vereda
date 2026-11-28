@@ -1,8 +1,9 @@
 // snprintf takes a long double for %Lf and the argument after it from the
 // right place (#305): %n stores the count, 1 for '<' and between 1 and
 // 4933 + 6 + 2 characters for the number.
-// RUN: -m64
-// RUN: -m32
+// The modeled formatting loop can exceed the default incremental bound.
+// RUN: -m64 --no-incremental-bmc
+// RUN: -m32 --no-incremental-bmc
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdio.h>
 extern long double __VERIFIER_nondet_longdouble(void);

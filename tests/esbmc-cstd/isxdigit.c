@@ -10,4 +10,5 @@ int main(void)
   assert(hex == 22);
 }
 // Imported from ESBMC regression/cstd/isxdigit
+// RUN:
 // EXPECT: ^VERIFICATION SUCCESSFUL$

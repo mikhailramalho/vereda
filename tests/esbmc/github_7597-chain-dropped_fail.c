@@ -18,7 +18,7 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7597-chain-dropped_fail
-// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false --no-summarize-array-loops
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false --no-summarize-array-loops --no-incremental-bmc
 // EXPECT: ^WARNING: constant propagation gave up on a `with` chain past 1024 symbolic updates
 // EXPECT: ^VERIFICATION FAILED$
 // Vereda: unmet EXPECT: ^WARNING: constant propagation gave up on a `with` chain past 1024 symbolic updates
