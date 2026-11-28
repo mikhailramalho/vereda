@@ -76,6 +76,3 @@ int main(void)
 // Imported from ESBMC regression/floats/github_807
 // RUN: --fp2bv
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

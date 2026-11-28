@@ -1,7 +1,7 @@
-// Vereda rounds every float operation to nearest, ties to even, and keeps
-// no rounding mode (fesetround has no body), so constants fold under that
-// mode too: the folded quotient, sum and conversion here have the same bits
-// as the ones the solver computes from a value it only knows by assumption.
+// After fesetround(FE_UPWARD) every float operation rounds up, one on
+// constants as well as one on a value known only by assumption, so the
+// quotient, sum and conversion here have the same bits either way, those a
+// native run built with -frounding-math gives (#301).
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <fenv.h>
@@ -22,8 +22,9 @@ int main(void) {
   double one;
   memcpy(&one, &u, sizeof one);
   __VERIFIER_assert(bits(in[0] / in[1]) == bits(one / in[1]));
-  __VERIFIER_assert(bits(in[2] + in[0]) == bits(in[2] + one)); // a tie, to even
+  __VERIFIER_assert(bits(in[2] + in[0]) == bits(in[2] + one)); // a tie, up
   __VERIFIER_assert((float)in[3] == (float)(in[3] * one));
-  __VERIFIER_assert(in[0] / in[1] == 0x1.5555555555555p-2 && in[2] + in[0] == 0x1p53);
+  __VERIFIER_assert(in[0] / in[1] == 0x1.5555555555556p-2 &&
+                    in[2] + in[0] == 0x1.0000000000001p53);
   return 0;
 }

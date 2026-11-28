@@ -18,6 +18,3 @@ int main()
 }
 // Imported from ESBMC regression/esbmc/compound_assign_float_rhs
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

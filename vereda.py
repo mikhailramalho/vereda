@@ -159,6 +159,12 @@ def physical_lines(source, tmp):
     return copy, ["-fdebug-prefix-map=" + copy + "=" + source]
 
 
+def mentions(path, word):
+    """Whether the text of the file at path holds word."""
+    with open(path, encoding="utf-8", errors="replace") as f:
+        return word in f.read()
+
+
 def compile_and_link(args, flags, inputs, tmp, run):
     """Compiles C with clang and Rust with rustc, and links several modules with
     llvm-link. Returns the IR file to verify, or None on failure."""
@@ -294,6 +300,13 @@ def main():
         return subprocess.call([binary, "--version"])
     if not inputs:
         fail("vereda.py: no input file (.c .i .rs .ll .bc)")
+    # A C source that sets the rounding mode is compiled with -frounding-math,
+    # so that clang keeps its floating-point operations as constrained
+    # intrinsics, which round as fesetround last set (models/fenv.c), instead
+    # of folding them to nearest. A plain text scan suffices: a source that
+    # only names fesetround loses some folding, nothing else.
+    if any(i.endswith((".c", ".i")) and mentions(i, "fesetround") for i in inputs):
+        flags.append("-frounding-math")
     if any(i.endswith(".rs") for i in inputs):
         if args.std is not None:
             fail("vereda.py: --std selects a C language standard and does not apply to Rust")

@@ -62,6 +62,3 @@ int main (int argc, char **argv) {
 }
 // Imported from ESBMC regression/floats/Float-no-simp9
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

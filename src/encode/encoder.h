@@ -24,6 +24,7 @@
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/FloatingPointMode.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Operator.h>
@@ -109,6 +110,10 @@ public:
   // Encodes the arithmetic intrinsics (llvm.*.with.overflow), binding the
   // result. Returns false for any other intrinsic.
   bool intrinsic(llvm::CallBase &c);
+  // The value of __vereda_rounding (models/fenv.c), an FE_ mode, for the
+  // next constrained operation with dynamic rounding; null rounds to
+  // nearest. The walker reads it from memory before such an operation.
+  void setRounding(Term mode) { dynamicRounding = mode; }
   // v != 0 as a Bool term, for assume and assert arguments and branch conditions.
   Term isTrue(const llvm::Value *v);
   // An integer term (Bool for i1) as a bitvector of width bits, extending by
@@ -116,6 +121,7 @@ public:
   Term resize(Term v, unsigned width, bool isSigned);
 
 private:
+  Term dynamicRounding; // see setRounding
   unsigned vectorElementWidth(llvm::Type *ty);
   unsigned packedWidth(llvm::Type *ty);
   Term toField(Term v, llvm::Type *ty);
@@ -151,6 +157,9 @@ private:
   Term signBit(const llvm::Value *v); // true when v's sign bit is set
   Term signBit(Term x, llvm::Type *ty); // same, for a term
   camada::SMTExprRef rm(camada::RM mode, llvm::Type *ty);
+  // The rounding a constrained intrinsic's argument names, for ty.
+  camada::SMTExprRef roundingFor(std::optional<llvm::RoundingMode> mode, llvm::Type *ty);
+  bool constrained(llvm::CallBase &c);
   Term fcmp(llvm::CmpInst::Predicate p, const llvm::Value *a, const llvm::Value *b);
   // Whether the float with these bits is in one of the classes of mask, as
   // llvm.is.fpclass takes it.
