@@ -26,6 +26,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Operator.h>
+#include <llvm/IR/PatternMatch.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
@@ -386,6 +387,36 @@ static Instruction *guardedOperation(CallBase &call) {
   return nullptr;
 }
 
+// Whether trap, clang's check of a negation, guards abs, labs or llabs: its
+// branch tests the overflow of 0 - x, whose result a select on x < 0 takes
+// and x the other arm, as clang builds them.
+static bool guardsAbs(const CallBase &trap) {
+  const BasicBlock *pred = trap.getParent()->getSinglePredecessor();
+  auto *br = pred ? dyn_cast<CondBrInst>(pred->getTerminator()) : nullptr;
+  Value *ok = nullptr;
+  if (!br || !match(br->getCondition(), PatternMatch::m_Not(PatternMatch::m_Value(ok))))
+    return false;
+  auto *bit = dyn_cast<ExtractValueInst>(ok);
+  auto *sub = bit ? dyn_cast<IntrinsicInst>(bit->getAggregateOperand()) : nullptr;
+  if (!sub || sub->getIntrinsicID() != Intrinsic::ssub_with_overflow)
+    return false;
+  Value *x = sub->getArgOperand(1);
+  for (User *u : sub->users()) {
+    auto *neg = dyn_cast<ExtractValueInst>(u);
+    if (!neg || neg->getIndices()[0] != 0)
+      continue;
+    for (User *s : neg->users()) {
+      auto *sel = dyn_cast<SelectInst>(s);
+      auto *cmp = sel ? dyn_cast<ICmpInst>(sel->getCondition()) : nullptr;
+      auto *zero = cmp ? dyn_cast<ConstantInt>(cmp->getOperand(1)) : nullptr;
+      if (zero && zero->isZero() && cmp->getPredicate() == ICmpInst::ICMP_SLT &&
+          cmp->getOperand(0) == x && sel->getTrueValue() == neg && sel->getFalseValue() == x)
+        return true;
+    }
+  }
+  return false;
+}
+
 // The sanitizers, as -fsanitize= names them, that the branch from pred
 // into trap, a call to llvm.ubsantrap, checks.
 static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
@@ -508,11 +539,15 @@ static void nameSanitizerChecks(Module &m) {
               callee->getName() == "__ubsan_handle_float_cast_overflow_abort")
             calls.push_back(c);
   for (CallBase *c : calls) {
+    StringRef callee = c->getCalledFunction()->getName();
+    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
+    if (code && code->equalsInt(13) && guardsAbs(*c)) { // NegateOverflow
+      nameCheck(*c, "arithmetic overflow on abs");
+      continue;
+    }
     Instruction *op = guardedOperation(*c);
     if (!op)
       continue;
-    StringRef callee = c->getCalledFunction()->getName();
-    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
     switch (op->getOpcode()) {
     case Instruction::SDiv:
     case Instruction::SRem:
