@@ -879,11 +879,23 @@ private:
       frame.arrivals.erase(header);
       return;
     }
-    if (!start && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
+    // #pragma unroll N (ESBMC's __ESBMC_unroll(N - 1)) bounds the loop as
+    // ESBMC's --unwindset does, over --unwindsetname and --unwind, and a bare
+    // #pragma unroll lifts the bound; ESBMC unrolls such a loop, it does not
+    // summarise it (#74). Not under --incremental-bmc (opts.pragmaBounds).
+    std::optional<int> pragma;
+    if (opts.pragmaBounds) {
+      pragma = getOptionalIntLoopAttribute(l, "llvm.loop.unroll.count");
+      if (!pragma && getBooleanLoopAttribute(l, "llvm.loop.unroll.enable"))
+        pragma = 0;
+    }
+    if (!start && !pragma && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
     auto set = opts.loopBounds.find({header->getParent()->getName().str(), number});
-    unsigned unwind = set != opts.loopBounds.end() ? set->second : opts.unwind;
+    unsigned unwind = pragma                         ? *pragma
+                      : set != opts.loopBounds.end() ? set->second
+                                                     : opts.unwind;
     // When SCEV knows the loop takes its back edge a small constant number of
     // times, folding alone normally ends the unrolling; asking the solver on
     // each iteration up to that bound only wastes queries when the entry guard
