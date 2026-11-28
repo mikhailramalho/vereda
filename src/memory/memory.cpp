@@ -1432,7 +1432,7 @@ Term Memory::load(State &st, Term p, Type *ty) {
     unsigned width = ty->getPrimitiveSizeInBits();
     return width < bits.width() ? t.extract(bits, width - 1, 0) : bits;
   };
-  // Fold loads from a known object whose symbolic offset is bounded to a small
+  // Fold loads from a known object whose symbolic offset is bounded to a
   // finite domain of known bytes (before prepare() flushes st.known): when all
   // candidates hold the same value (e.g. a pointer table pointing to one
   // object), return it directly; for a small table of distinct pointers, keep
@@ -1443,9 +1443,11 @@ Term Memory::load(State &st, Term p, Type *ty) {
       encode::Terms::Known bounds = known ? encode::Terms::Known(known) : encode::Terms::Known{};
       if (std::optional<encode::Terms::Range> r = t.range(off, bounds)) {
         constexpr uint64_t MaxFoldDomain = 16;
+        // Larger uniform domains need no choice tree; bound their byte lookups.
+        constexpr uint64_t MaxFoldBytes = MinSeparate;
         constexpr uint64_t MaxPtrChoices = 8;
         uint64_t count = r->lo == r->hi ? 1 : (r->hi - r->lo) / r->stride + 1;
-        if (count >= 1 && count <= MaxFoldDomain) {
+        if (count >= 1 && (count <= MaxFoldDomain || count <= MaxFoldBytes / n)) {
           uint64_t objId = id->getZExtValue();
           bool allKnown = true;
           for (uint64_t i = 0; i < count && allKnown; ++i) {
@@ -1458,7 +1460,7 @@ Term Memory::load(State &st, Term p, Type *ty) {
           }
           if (allKnown) {
             SmallVector<std::pair<State::Cell, Term>, 16> raw;
-            raw.reserve(count);
+            raw.reserve(std::min(count, MaxFoldDomain));
             bool allSame = true;
             for (uint64_t i = 0; i < count; ++i) {
               uint64_t pos = r->lo + i * r->stride;
@@ -1469,7 +1471,10 @@ Term Memory::load(State &st, Term p, Type *ty) {
               if (i > 0 && (bits != raw[0].second ||
                             (ty->isPointerTy() && first.prov != raw[0].first.prov)))
                 allSame = false;
-              raw.emplace_back(first, bits);
+              if (!allSame && count > MaxFoldDomain)
+                break;
+              if (i < MaxFoldDomain)
+                raw.emplace_back(first, bits);
             }
             if (allSame)
               return finishLoad(raw[0].first, raw[0].second);
@@ -1510,8 +1515,7 @@ Term Memory::load(State &st, Term p, Type *ty) {
   return finishLoad(first, bits);
 }
 
-// Whole-object fills use a constant array. Even small globals need this:
-// a symbolic read of their byte stores can require one solver lemma per byte.
+// Large whole-object fills use a constant array instead of byte stores.
 bool Memory::fillObject(State &st, Term p, Term byte, uint64_t n) {
   Term c, x, y;
   if (t.split(p, c, x, y)) { // a malloc result: the context may pick a side
@@ -1521,8 +1525,7 @@ bool Memory::fillObject(State &st, Term p, Term byte, uint64_t n) {
     p = pick ? x : y;
   }
   std::optional<Key> k = key(p);
-  if ((n < MinSeparate && !initialising) || !k || k->first == 0 ||
-      k->first >= objects.size() || k->second != 0)
+  if (n < MinSeparate || !k || k->first == 0 || k->first >= objects.size() || k->second != 0)
     return false;
   const APInt *size = t.constant(objects[k->first].size);
   if (!size || *size != n)

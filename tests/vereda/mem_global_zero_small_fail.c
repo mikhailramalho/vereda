@@ -1,4 +1,4 @@
-// A write through an alias must override the zeroed global's constant array.
+// A write through an alias must override the initial zero bytes.
 // RUN: -m32
 // RUN: -m64
 // EXPECT: ^VERIFICATION FAILED$
