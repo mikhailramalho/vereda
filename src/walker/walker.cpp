@@ -360,8 +360,8 @@ private:
   // read as a value, as when clang copies a struct with padding or members
   // not yet set by loading it as an integer (C17 6.2.6.1p6); the walker
   // carries their initialisation to where they are stored, and checks them
-  // when they are loaded again. Any other use checks at the load, as does a
-  // value not used at all.
+  // when they are loaded again. Any other use checks at the load; a value
+  // not used at all is not checked.
   bool copyOnly(const Value *v) {
     if (!isa<LoadInst, Argument, CallBase>(v) || v->use_empty())
       return false;
@@ -2360,7 +2360,9 @@ private:
       if (opts.uninitCheck && copyOnly(l)) {
         uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
         shadows[l] = mem.initBytes(st, p, bytes);
-      } else {
+      } else if (!l->use_empty()) {
+        // A read whose value nothing uses, volatile or atomic included, is
+        // no use of it: MemorySanitizer reports none (#375).
         checkInitRead(p, l->getPointerOperand(), l->getType());
       }
       // What the path's facts settle in the value read, as an icmp's.
