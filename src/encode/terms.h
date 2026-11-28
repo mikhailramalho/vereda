@@ -412,7 +412,9 @@ private:
     sscratch.clear();
   }
   // How many low bits of e, a sum or product, are known to be zero.
-  unsigned zeros(const Ref &e, unsigned depth = 0);
+  unsigned zeros(const Ref &e);
+  // zeros' results for sums and products, kept as ranges are.
+  llvm::DenseMap<const void *, unsigned> zeroBits;
   llvm::DenseMap<const void *, std::pair<Ref, uint64_t>> bounds;
   llvm::DenseMap<const void *, std::optional<Range>> ranges;
   // srange's results, kept as range's are: on every path in sranges, under
