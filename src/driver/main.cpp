@@ -740,9 +740,9 @@ int main(int argc, char **argv) {
   // and the next query runs on a solver left half updated and crashes.
   // operator new calls the new-handler, but Bitwuzla allocates its nodes with
   // calloc and throws std::bad_alloc itself (#384); mimalloc's error hook sees
-  // that failure first. The catch covers a std::bad_alloc that escapes the
-  // solver in a build with glibc's malloc; one thrown inside a solver check
-  // there still becomes an unknown answer.
+  // that failure first. In a build with glibc's malloc, the catch takes a
+  // std::bad_alloc that escapes the solver, and encode::checked throws again
+  // one that camada turned into an unknown answer (#399).
   std::set_new_handler(outOfMemory);
 #ifdef VEREDA_MIMALLOC
   mi_register_error([](int err, void *) {

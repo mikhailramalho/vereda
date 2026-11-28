@@ -1295,7 +1295,8 @@ private:
     } else if (satGuards.contains(id)) {
       return false;
     }
-    bool unsat = s.checkSatAssuming({t.solverTerm(guard)}) == camada::CheckResult::UNSAT;
+    bool unsat = encode::checked(s, s.checkSatAssuming({t.solverTerm(guard)})) ==
+                 camada::CheckResult::UNSAT;
     if (unsat)
       unsatGuards.insert(id);
     else
@@ -2261,7 +2262,7 @@ private:
   std::optional<uint64_t> single(Term v, Term guard) {
     if (const APInt *c = t.constant(v))
       return c->getLimitedValue();
-    camada::CheckResult feasible = s.checkSatAssuming({t.solverTerm(guard)});
+    camada::CheckResult feasible = encode::checked(s, s.checkSatAssuming({t.solverTerm(guard)}));
     if (feasible == camada::CheckResult::UNSAT)
       return 0; // the path is infeasible
     if (feasible != camada::CheckResult::SAT)
@@ -2270,7 +2271,7 @@ private:
     if (!model)
       return std::nullopt;
     Term other = t.lnot(t.eq(v, t.bv(model.value(), v.width())));
-    if (s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(other)}) !=
+    if (encode::checked(s, s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(other)})) !=
         camada::CheckResult::UNSAT)
       return std::nullopt;
     return model.value();
@@ -2599,7 +2600,8 @@ private:
       bound = std::min(bound, (*size - *off).getZExtValue());
     }
     Term over = t.ugt(n, t.bv(bound, n.width()));
-    if (s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(over)}) != camada::CheckResult::UNSAT)
+    if (encode::checked(s, s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(over)})) !=
+        camada::CheckResult::UNSAT)
       return std::nullopt;
     return bound;
   }
