@@ -2085,9 +2085,10 @@ private:
   // caller leaves them, which is what clang's va_arg code in the callee
   // reads. On x86-64 the first six integers and pointers go in general
   // registers and the first eight floats and doubles in SSE registers, which
-  // the callee's prologue saves to its register save area; the rest, and
-  // byval aggregates, go on the stack in slots of 8 bytes. On i386 all go on
-  // the stack in slots of 4. Clang has already split a small struct into such
+  // the callee's prologue saves to its register save area; the rest, byval
+  // aggregates and long doubles go on the stack in slots of 8 bytes, a long
+  // double in 16 aligned to 16. On i386 all go on the stack in slots of 4, a
+  // long double in 12. Clang has already split a small struct into such
   // pieces, or made it byval when the registers it needs are taken, so the IR
   // arguments can be placed one by one. Only the variadic ones are written:
   // va_arg never reads a named one.
@@ -2104,24 +2105,25 @@ private:
     SmallVector<std::pair<bool, uint64_t>, 8> where;
     for (unsigned i = 0; i < c.arg_size(); ++i) {
       Type *ty = c.getArgOperand(i)->getType();
-      bool byval = c.isByValArgument(i), isFP = ty->isFloatTy() || ty->isDoubleTy();
+      bool byval = c.isByValArgument(i), isFP = ty->isFloatTy() || ty->isDoubleTy(),
+           ld = ty->isX86_FP80Ty();
       if (c.paramHasAttr(i, Attribute::InReg) || c.paramHasAttr(i, Attribute::InAlloca) ||
           c.paramHasAttr(i, Attribute::Preallocated) || c.paramHasAttr(i, Attribute::Nest) ||
-          !(byval || isFP || ty->isPointerTy() ||
+          !(byval || isFP || ld || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
                           " at " + ir::location(c).display());
       if (x64 && !byval && isFP && fp < 176) {
         where.push_back({true, fp});
         fp += 16;
-      } else if (x64 && !byval && !isFP && gp < 48) {
+      } else if (x64 && !byval && !isFP && !ld && gp < 48) {
         where.push_back({true, gp});
         gp += 8;
       } else {
         uint64_t size =
             byval ? dl.getTypeAllocSize(c.getParamByValType(i)) : dl.getTypeStoreSize(ty);
-        uint64_t align =
-            byval ? std::max<uint64_t>(slot, c.getParamAlign(i).valueOrOne().value()) : slot;
+        uint64_t align = std::max<uint64_t>(slot, byval ? c.getParamAlign(i).valueOrOne().value()
+                                                       : dl.getABITypeAlign(ty).value());
         where.push_back({false, alignTo(onStack, align)});
         onStack = alignTo(where.back().second + size, slot);
       }
