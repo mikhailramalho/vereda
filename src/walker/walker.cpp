@@ -2098,7 +2098,10 @@ private:
   // the callee's prologue saves to its register save area; the rest, byval
   // aggregates and long doubles go on the stack in slots of 8 bytes, each
   // aligned to its type, a long double in 16. On i386 all go on the stack in
-  // slots of 4, a long double in 12. Clang has already split a small struct
+  // slots of 4, each aligned to its type, a long double in 12. The stack area
+  // is aligned to 16, or to the largest alignment of an argument in it (32 for
+  // a 32-byte vector on i386), as clang's va_arg code assumes when it rounds
+  // a pointer up to that alignment. Clang has already split a small struct
   // into such pieces, or made it byval when the registers it needs are
   // taken, so the IR arguments can be placed one by one. Only the variadic
   // ones are written: va_arg never reads a named one.
@@ -2109,7 +2112,7 @@ private:
                         ir::location(c).display());
     const DataLayout &dl = mem.layout();
     unsigned bits = mem.pointerBits(), slot = x64 ? 8 : 4, gp = 0, fp = 48;
-    uint64_t onStack = 0, named = 0;
+    uint64_t onStack = 0, named = 0, areaAlign = 16;
     VarArgs va{&callee, {}, {}, gp, fp};
     // Per argument: in the register save area or on the stack, and where.
     SmallVector<std::pair<bool, uint64_t>, 8> where;
@@ -2117,12 +2120,13 @@ private:
       Type *ty = c.getArgOperand(i)->getType();
       bool byval = c.isByValArgument(i), ld = ty->isX86_FP80Ty(),
            wide = x64 && ty->isIntegerTy(128),
+           vector = isa<FixedVectorType>(ty) && (ty->getScalarType()->isIntegerTy() ||
+                                                 ty->getScalarType()->isIEEELikeFPTy()),
            sse = ty->isFloatTy() || ty->isDoubleTy() ||
-                 (isa<FixedVectorType>(ty) && dl.getTypeStoreSize(ty) <= 16 &&
-                  (ty->getScalarType()->isIntegerTy() || ty->getScalarType()->isIEEELikeFPTy()));
+                 (vector && dl.getTypeStoreSize(ty) <= 16);
       if (c.paramHasAttr(i, Attribute::InReg) || c.paramHasAttr(i, Attribute::InAlloca) ||
           c.paramHasAttr(i, Attribute::Preallocated) || c.paramHasAttr(i, Attribute::Nest) ||
-          !(byval || sse || ld || wide || ty->isPointerTy() ||
+          !(byval || sse || ld || wide || (vector && !x64) || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
                           " at " + ir::location(c).display());
@@ -2140,6 +2144,7 @@ private:
                                                        : dl.getABITypeAlign(ty).value());
         where.push_back({false, alignTo(onStack, align)});
         onStack = alignTo(where.back().second + size, slot);
+        areaAlign = std::max(areaAlign, align);
       }
       if (i < callee.arg_size()) {
         va.gp = gp;
@@ -2147,9 +2152,7 @@ private:
         named = onStack;
       }
     }
-    // The stack starts 16-byte aligned at a call, which clang's va_arg code
-    // relies on for an over-aligned byval argument.
-    Term stackArea = mem.allocate(t.bv(onStack, bits), 16, guard);
+    Term stackArea = mem.allocate(t.bv(onStack, bits), areaAlign, guard);
     va.stack = mem.advance(stackArea, t.bv(named, bits));
     if (x64)
       va.regs = mem.allocate(t.bv(176, bits), 16, guard);
