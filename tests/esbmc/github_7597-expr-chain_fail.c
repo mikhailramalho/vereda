@@ -45,8 +45,5 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_7597-expr-chain_fail
-// Needs: --no-standard-checks
-// RUN: --no-standard-checks
-// MODE: FUTURE
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

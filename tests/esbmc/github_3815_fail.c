@@ -22,8 +22,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_3815_fail
-// Needs: --no-standard-checks
-// RUN: --no-standard-checks --multi-property --unwind 3 --no-unwinding-assertions
-// MODE: FUTURE
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false --multi-property --unwind 3 --no-unwinding-assertions
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

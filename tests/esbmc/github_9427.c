@@ -11,8 +11,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_9427
-// Needs: --no-standard-checks
-// RUN: -m64 --no-standard-checks
+// RUN: -m64 --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false
 // EXPECT: ^VERIFICATION SUCCESSFUL$
+// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
-// Vereda: verdict none
+// Vereda: verdict FAILED
