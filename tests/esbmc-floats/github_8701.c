@@ -14,6 +14,3 @@ int main(void)
 // Imported from ESBMC regression/floats/github_8701
 // RUN: --multi-property
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

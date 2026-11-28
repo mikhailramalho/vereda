@@ -6,6 +6,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/Support/raw_ostream.h>
 #include <cmath>
@@ -425,6 +426,120 @@ Term Encoder::signBit(Term x, Type *ty) {
 
 camada::SMTExprRef Encoder::rm(camada::RM mode, Type *ty) {
   return s.mkRM(mode, fpEncodingOf(ty));
+}
+
+camada::SMTExprRef Encoder::roundingFor(std::optional<RoundingMode> mode, Type *ty) {
+  switch (mode.value_or(RoundingMode::Dynamic)) {
+  case RoundingMode::TowardZero: return rm(camada::RM::ROUND_TO_ZERO, ty);
+  case RoundingMode::TowardNegative: return rm(camada::RM::ROUND_TO_MINUS_INF, ty);
+  case RoundingMode::TowardPositive: return rm(camada::RM::ROUND_TO_PLUS_INF, ty);
+  case RoundingMode::NearestTiesToAway: return rm(camada::RM::ROUND_TO_AWAY, ty);
+  case RoundingMode::Dynamic: break;
+  default: return rm(camada::RM::ROUND_TO_EVEN, ty);
+  }
+  if (!dynamicRounding)
+    return rm(camada::RM::ROUND_TO_EVEN, ty);
+  // x86 glibc's FE_ values, which models/fenv.c stores; any other value
+  // rounds toward zero, as ESBMC's rounding-mode ite does.
+  auto is = [&](uint64_t fe) {
+    return t.solverTerm(t.eq(dynamicRounding, t.bv(fe, dynamicRounding.width())));
+  };
+  return s.mkIte(is(0), rm(camada::RM::ROUND_TO_EVEN, ty),
+                 s.mkIte(is(0x400), rm(camada::RM::ROUND_TO_MINUS_INF, ty),
+                         s.mkIte(is(0x800), rm(camada::RM::ROUND_TO_PLUS_INF, ty),
+                                 rm(camada::RM::ROUND_TO_ZERO, ty))));
+}
+
+// An llvm.experimental.constrained intrinsic, as clang emits each
+// floating-point operation under -frounding-math: the operation, rounded as
+// its rounding argument says, where dynamic means __vereda_rounding's value
+// (setRounding). The exception-behaviour argument is ignored: Vereda keeps
+// no floating-point exception flags, and no operation here traps.
+bool Encoder::constrained(CallBase &c) {
+  auto *op = dyn_cast<ConstrainedFPIntrinsic>(&c);
+  if (!op)
+    return false;
+  auto arg = [&](unsigned i) { return c.getArgOperand(i); };
+  Type *ty = c.getType();
+  auto mode = [&] { return roundingFor(op->getRoundingMode(), ty); };
+  auto integral = [&](camada::SMTExprRef m) {
+    return bits(s.mkFPToIntegral(fp(arg(0)), m), ty);
+  };
+  Term r;
+  switch (op->getIntrinsicID()) {
+  case Intrinsic::experimental_constrained_fadd:
+    r = bits(s.mkFPAdd(fp(arg(0)), fp(arg(1)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_fsub:
+    r = bits(s.mkFPSub(fp(arg(0)), fp(arg(1)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_fmul:
+    r = bits(s.mkFPMul(fp(arg(0)), fp(arg(1)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_fdiv:
+    r = bits(s.mkFPDiv(fp(arg(0)), fp(arg(1)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_frem: // exact, as fmod
+    r = binary(Instruction::FRem, arg(0), arg(1));
+    break;
+  case Intrinsic::experimental_constrained_fma:
+  case Intrinsic::experimental_constrained_fmuladd:
+    r = bits(s.mkFPFMA(fp(arg(0)), fp(arg(1)), fp(arg(2)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_sqrt:
+    r = bits(s.mkFPSqrt(fp(arg(0)), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_rint:
+  case Intrinsic::experimental_constrained_nearbyint: r = integral(mode()); break;
+  case Intrinsic::experimental_constrained_floor:
+    r = integral(rm(camada::RM::ROUND_TO_MINUS_INF, ty));
+    break;
+  case Intrinsic::experimental_constrained_ceil:
+    r = integral(rm(camada::RM::ROUND_TO_PLUS_INF, ty));
+    break;
+  case Intrinsic::experimental_constrained_trunc:
+    r = integral(rm(camada::RM::ROUND_TO_ZERO, ty));
+    break;
+  case Intrinsic::experimental_constrained_round:
+    r = integral(rm(camada::RM::ROUND_TO_AWAY, ty));
+    break;
+  case Intrinsic::experimental_constrained_roundeven:
+    r = integral(rm(camada::RM::ROUND_TO_EVEN, ty));
+    break;
+  case Intrinsic::experimental_constrained_fptrunc:
+    if (useNative(arg(0)->getType()) != useNative(ty)) // long double: as castTo, RNE only
+      throw Unsupported("intrinsic " + c.getCalledFunction()->getName().str());
+    r = bits(s.mkFPToFP(fp(arg(0)), fpSort(ty), mode()), ty);
+    break;
+  case Intrinsic::experimental_constrained_fpext: // exact
+    r = castTo(Instruction::FPExt, arg(0), ty);
+    break;
+  case Intrinsic::experimental_constrained_sitofp:
+  case Intrinsic::experimental_constrained_uitofp: {
+    if (arg(0)->getType()->isIntegerTy(1) || !arg(0)->getType()->isIntegerTy())
+      throw Unsupported("intrinsic " + c.getCalledFunction()->getName().str());
+    camada::SMTExprRef x = t.solverTerm(value(arg(0)));
+    r = bits(op->getIntrinsicID() == Intrinsic::experimental_constrained_sitofp
+                 ? s.mkSBVToFP(x, fpSort(ty), mode())
+                 : s.mkUBVToFP(x, fpSort(ty), mode()),
+             ty);
+    break;
+  }
+  case Intrinsic::experimental_constrained_fptosi: // toward zero, whatever the mode
+    r = castTo(Instruction::FPToSI, arg(0), ty);
+    break;
+  case Intrinsic::experimental_constrained_fptoui:
+    r = castTo(Instruction::FPToUI, arg(0), ty);
+    break;
+  case Intrinsic::experimental_constrained_fcmp:
+  case Intrinsic::experimental_constrained_fcmps:
+    r = fcmp(cast<ConstrainedFPCmpIntrinsic>(op)->getPredicate(), arg(0), arg(1));
+    break;
+  default:
+    throw Unsupported("intrinsic " + c.getCalledFunction()->getName().str());
+  }
+  bind(&c, r);
+  return true;
 }
 
 Term Encoder::fpClass(const Term &x, Type *ty, unsigned mask) {
@@ -926,7 +1041,7 @@ bool Encoder::fpIntrinsic(CallBase &c) {
 
 bool Encoder::intrinsic(CallBase &c) {
   Function *f = c.getCalledFunction();
-  if (fpIntrinsic(c))
+  if (fpIntrinsic(c) || constrained(c))
     return true;
   // What InstCombine could not fold, the back end lowers to "unknown", as
   // LowerConstantIntrinsics does: objectsize -1 (0 for its minimum), and
