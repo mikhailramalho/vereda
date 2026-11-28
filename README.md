@@ -178,7 +178,7 @@ one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
 ```
 [RESULTS]
 loop_unwind_false.c, function main
-  FAILED       [main.unwind.0]  line 10  unwinding assertion loop 0
+  FAILED       [main.assertion.1]  line 10  unwinding assertion loop 0
 
 Properties: 1 checked, 0 passed, 1 failed, 0 not checked
 

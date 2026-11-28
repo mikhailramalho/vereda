@@ -1,7 +1,7 @@
 // An unwinding assertion failing under --incremental-solver leaves the
 // division-by-zero check, which held in the first phase, checked.
 // RUN: --incremental-solver --unwind 2
-// EXPECT: FAILED +\[main\.unwind\.0\]
+// EXPECT: FAILED +\[main\.assertion\.1\]
 // EXPECT: SUCCESS +\[main\.division-by-zero\.1\]
 // EXPECT: ^Properties: 2 checked, 1 passed, 1 failed, 0 not checked$
 // EXPECT: ^VERIFICATION FAILED$

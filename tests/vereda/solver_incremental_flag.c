@@ -2,7 +2,7 @@
 // RUN: --incremental-solver --multi-property --no-summarize-array-loops --unwind 2
 // EXPECT: FAILED +\[main\.assertion\.1\]
 // EXPECT: SUCCESS +\[main\.assertion\.2\]
-// EXPECT: FAILED +\[main\.unwind\.0\]
+// EXPECT: FAILED +\[main\.assertion\.3\] +line 14
 // EXPECT: ^VERIFICATION FAILED$
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);

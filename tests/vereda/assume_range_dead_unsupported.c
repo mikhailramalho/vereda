@@ -1,6 +1,6 @@
 // RUN: --unwind 2
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.unwind\.0\]
+// EXPECT: ^  FAILED +\[main\.assertion\.1\]
 // The paths that go on past the first loop under --unwind 2 have argc 0 or
 // 1, so the second loop's test 1 < argc folds and its body, a call the
 // walker refuses (threads are not modelled), is never walked (#120); a walk
