@@ -586,6 +586,20 @@ Ref Terms::extract(const Ref &a, unsigned hi, unsigned lo) {
     return r;
   if (const Node *n = node(a)) {
     switch (n->op) {
+    case Op::Ite: {
+      // A field that is constant on both sides of a choice of structs, as
+      // the pointer of { ptr, i64 } joined where only the i64 is not: the
+      // pointer stays a choice of known objects, not one read from memory.
+      // Not through a side that is a choice too, which would walk a chain
+      // of joins again at every extract.
+      const Node *b = node(n->b), *c = node(n->c);
+      if ((b && b->op == Op::Ite) || (c && c->op == Op::Ite))
+        break;
+      Ref x = extract(n->b, hi, lo), y = extract(n->c, hi, lo);
+      if (constant(x) && constant(y))
+        return ite(n->a, x, y);
+      break;
+    }
     case Op::Extract:
       return extract(n->a, hi + n->y, lo + n->y);
     case Op::Concat: {

@@ -2633,23 +2633,10 @@ private:
   // fails (C17 7.22.3.5p3). The checks are ESBMC's pointer checks on free,
   // off with --ub-pointer-check=false. The path goes on only where the free is
   // valid, so a later free does not report the same object again; a free
-  // whose checks do not count still releases, but prunes nothing. Neither
-  // is checked under Rust's allocator shims: the standard library functions
-  // without a body that Rust programs call havoc the memory holding their
-  // pointers, and safe Rust frees each allocation once.
+  // whose checks do not count still releases, but prunes nothing.
   Term free(CallBase &c, Term guard, memory::State &st, bool release) {
     Term p = enc.value(c.getArgOperand(0));
-    bool rust = any_of(stack, [](Function *f) { return f->getName().starts_with("__rust_"); });
-    // Unchecked, a Rust free leaves valid-free nothing to decide (#357).
-    if (rust && opts.pointerCheck && !t.isFalse(guard)) {
-      if (opts.property == Property::ValidFree)
-        throw Unsupported("free under Rust's allocator is not checked (#357)");
-      if (opts.property == Property::All && !warnedRustFree) {
-        warnedRustFree = true;
-        util::warning("frees under Rust's allocator are not checked (#357)");
-      }
-    }
-    if (opts.pointerCheck && !rust &&
+    if (opts.pointerCheck &&
         (opts.property == Property::All || opts.property == Property::ValidFree)) {
       const Instruction &at = c.getDebugLoc() || !site ? c : *site;
       memory::Memory::InvalidFree bad = mem.invalidFree(st, p);
@@ -2770,7 +2757,6 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
-  bool warnedRustFree = false; // once per run: realloc's model checks, then frees
   DenseSet<const void *> unsatGuards;
   DenseSet<const void *> satGuards;
   uint64_t satEpoch = 0;
