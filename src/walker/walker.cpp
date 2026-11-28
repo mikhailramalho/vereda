@@ -2084,14 +2084,15 @@ private:
   // Lays out the arguments of c, a call to the variadic callee, where the
   // caller leaves them, which is what clang's va_arg code in the callee
   // reads. On x86-64 the first six integers and pointers go in general
-  // registers and the first eight floats and doubles in SSE registers, which
+  // registers (an i128 in two, while two are free) and the first eight
+  // floats, doubles and vectors of up to 16 bytes in SSE registers, which
   // the callee's prologue saves to its register save area; the rest, byval
-  // aggregates and long doubles go on the stack in slots of 8 bytes, a long
-  // double in 16 aligned to 16. On i386 all go on the stack in slots of 4, a
-  // long double in 12. Clang has already split a small struct into such
-  // pieces, or made it byval when the registers it needs are taken, so the IR
-  // arguments can be placed one by one. Only the variadic ones are written:
-  // va_arg never reads a named one.
+  // aggregates and long doubles go on the stack in slots of 8 bytes, each
+  // aligned to its type, a long double in 16. On i386 all go on the stack in
+  // slots of 4, a long double in 12. Clang has already split a small struct
+  // into such pieces, or made it byval when the registers it needs are
+  // taken, so the IR arguments can be placed one by one. Only the variadic
+  // ones are written: va_arg never reads a named one.
   VarArgs passVarArgs(CallBase &c, Function &callee, Term guard, memory::State &st) {
     bool x64 = isX86_64(c);
     if (c.getCallingConv() != CallingConv::C)
@@ -2105,20 +2106,24 @@ private:
     SmallVector<std::pair<bool, uint64_t>, 8> where;
     for (unsigned i = 0; i < c.arg_size(); ++i) {
       Type *ty = c.getArgOperand(i)->getType();
-      bool byval = c.isByValArgument(i), isFP = ty->isFloatTy() || ty->isDoubleTy(),
-           ld = ty->isX86_FP80Ty();
+      bool byval = c.isByValArgument(i), ld = ty->isX86_FP80Ty(),
+           wide = x64 && ty->isIntegerTy(128),
+           sse = ty->isFloatTy() || ty->isDoubleTy() ||
+                 (isa<FixedVectorType>(ty) && dl.getTypeStoreSize(ty) <= 16 &&
+                  (ty->getScalarType()->isIntegerTy() || ty->getScalarType()->isIEEELikeFPTy()));
       if (c.paramHasAttr(i, Attribute::InReg) || c.paramHasAttr(i, Attribute::InAlloca) ||
           c.paramHasAttr(i, Attribute::Preallocated) || c.paramHasAttr(i, Attribute::Nest) ||
-          !(byval || isFP || ld || ty->isPointerTy() ||
+          !(byval || sse || ld || wide || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
                           " at " + ir::location(c).display());
-      if (x64 && !byval && isFP && fp < 176) {
+      unsigned gpSize = wide ? 16 : 8;
+      if (x64 && !byval && sse && fp < 176) {
         where.push_back({true, fp});
         fp += 16;
-      } else if (x64 && !byval && !isFP && !ld && gp < 48) {
+      } else if (x64 && !byval && !sse && !ld && gp + gpSize <= 48) {
         where.push_back({true, gp});
-        gp += 8;
+        gp += gpSize;
       } else {
         uint64_t size =
             byval ? dl.getTypeAllocSize(c.getParamByValType(i)) : dl.getTypeStoreSize(ty);
@@ -2145,6 +2150,9 @@ private:
           mem.advance(where[i].first ? va.regs : stackArea, t.bv(where[i].second, bits));
       if (c.isByValArgument(i))
         mem.copy(st, at, enc.value(arg), dl.getTypeAllocSize(c.getParamByValType(i)));
+      else if (arg->getType()->isVectorTy()) // its elements' bits, the first lowest
+        mem.store(st, at, enc.value(arg),
+                  IntegerType::get(c.getContext(), dl.getTypeStoreSizeInBits(arg->getType())));
       else
         mem.store(st, at, enc.toBits(enc.value(arg), arg->getType()), arg->getType());
     }
