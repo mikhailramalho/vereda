@@ -2,10 +2,10 @@
 // one that fails, the unwound loop included.
 // RUN: --no-summarize-array-loops --unwind 2 --multi-property
 // EXPECT: (\[COUNTEREXAMPLE\][\s\S]*){3}
-// EXPECT: FAILED +\[main\.unwind\.0\]
-// EXPECT: FAILED +\[main\.assertion\.1\]
-// EXPECT: SUCCESS +\[main\.assertion\.2\]
-// EXPECT: FAILED +\[main\.assertion\.3\]
+// EXPECT: FAILED +\[main\.assertion\.1\] +line 16  unwinding assertion loop 0$
+// EXPECT: FAILED +\[main\.assertion\.2\] +line 18
+// EXPECT: SUCCESS +\[main\.assertion\.3\] +line 19
+// EXPECT: FAILED +\[main\.assertion\.4\] +line 20
 // EXPECT: Properties: 4 checked, \d+ passed, 3 failed, \d+ not checked
 // EXPECT: VERIFICATION FAILED
 extern void __VERIFIER_assert(int);
