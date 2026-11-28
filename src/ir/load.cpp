@@ -1716,6 +1716,30 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool coun
   return Error::success();
 }
 
+// When the program calls atexit, the models' __vereda_atexit_run, which
+// calls the handlers it registered, runs before each call of exit and each
+// return of the entry function (C17 7.22.4.4p3, 5.1.2.2.3). _Exit, abort and
+// quick_exit run none. Before linkModels, which then brings in both models.
+static void runAtexitHandlers(Module &m, StringRef entry) {
+  Function *atexit = m.getFunction("atexit"), *f = m.getFunction(entry);
+  if (!atexit || !atexit->isDeclaration() || atexit->use_empty() || !f || f->isDeclaration())
+    return;
+  FunctionCallee run =
+      m.getOrInsertFunction("__vereda_atexit_run", Type::getVoidTy(m.getContext()));
+  SmallVector<Instruction *, 4> at;
+  for (Function &g : m)
+    for (Instruction &i : instructions(g)) {
+      auto *c = dyn_cast<CallInst>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if ((callee && callee->isDeclaration() && callee->getName() == "exit") ||
+          (&g == f && isa<ReturnInst>(i)))
+        at.push_back(&i);
+    }
+  for (Instruction *i : at)
+    CallInst::Create(run, "", i->getIterator())->setDebugLoc(i->getDebugLoc());
+}
+
+
 // Rust's C main passes the source main to std::rt::lang_start. Verify that
 // function directly rather than the unavailable runtime's startup machinery.
 static void lowerRustMain(Module &m) {
@@ -2094,6 +2118,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
+  runAtexitHandlers(*module, entry);
   if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
                            alignmentCheck))
     return std::move(e);
