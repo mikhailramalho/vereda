@@ -217,12 +217,15 @@ public:
   bool arithmetic(const Ref &e);
 
   // What a path's conditions bound a term of at most 64 bits to: its least
-  // and greatest value as an unsigned and as a signed number.
+  // and greatest value as an unsigned and as a signed number, and up to
+  // MaxExcluded values inside them that it is not (as unsigned numbers).
   struct Bounds {
     uint64_t ulo, uhi;
     int64_t slo, shi;
+    llvm::SmallVector<uint64_t, 2> excluded = {};
     bool operator==(const Bounds &) const = default;
   };
+  static constexpr unsigned MaxExcluded = 8;
   // The bounds a path knows a term by, if any (encoder.h keeps them).
   using Known = llvm::function_ref<std::optional<Bounds>(const Ref &)>;
   // The values a term of at most 64 bits may take: lo + stride * i for
@@ -249,8 +252,9 @@ public:
   // <, <= (unsigned or signed) or its negation, found as equalities finds
   // an =, bounded by the range of the other side; x on one side of an =,
   // bounded as the other side is; x on one side of a negated = with a
-  // constant c on the other, when c is an end of its range, which moves
-  // off c. A bound on an extension also bounds its operand.
+  // constant c on the other, which moves off c when c is an end of its
+  // range and is excluded otherwise. A bound on an extension also bounds
+  // its operand.
   void narrow(const Ref &cond, bool holds, Known known,
               llvm::function_ref<void(const Ref &, const Bounds &)> set);
   // e as known's path sees it: every comparison and overflow test decide

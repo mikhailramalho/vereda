@@ -180,11 +180,22 @@ void Encoder::learn(const Term &cond, Facts &into) {
 
 std::optional<Encoder::Fact> Encoder::join(const Fact &a, const Fact &b) {
   Fact r{a.equal == b.equal ? a.equal : Term(), std::nullopt};
-  if (a.bounds && b.bounds)
+  if (a.bounds && b.bounds) {
     r.bounds = Terms::Bounds{std::min(a.bounds->ulo, b.bounds->ulo),
                              std::max(a.bounds->uhi, b.bounds->uhi),
                              std::min(a.bounds->slo, b.bounds->slo),
                              std::max(a.bounds->shi, b.bounds->shi)};
+    // A value each side excludes, or leaves outside its bounds, stays out.
+    auto out = [](const Terms::Bounds &s, uint64_t v) {
+      return v < s.ulo || v > s.uhi || llvm::is_contained(s.excluded, v);
+    };
+    for (const Terms::Bounds *s : {&*a.bounds, &*b.bounds})
+      for (uint64_t v : s->excluded)
+        if (out(*a.bounds, v) && out(*b.bounds, v) &&
+            !llvm::is_contained(r.bounds->excluded, v) &&
+            r.bounds->excluded.size() < Terms::MaxExcluded)
+          r.bounds->excluded.push_back(v);
+  }
   if (!r.equal && !r.bounds)
     return std::nullopt;
   return r;

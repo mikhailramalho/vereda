@@ -1283,6 +1283,12 @@ int Terms::decided(const Ref &cmp, Known known) {
     return order(n->a, n->b, n->op == Op::Ule || n->op == Op::Sle,
                  n->op == Op::Slt || n->op == Op::Sle, known);
   case Op::Eq: { // unequal when the ranges, or the signed ones, are apart
+    // A constant the path excludes from the other side.
+    for (auto [x, c] : {std::pair(n->a, n->b), std::pair(n->b, n->a)})
+      if (const APInt *v = constant(c); v && v->getBitWidth() <= 64 && known)
+        if (std::optional<Bounds> f = known(x);
+            f && llvm::is_contained(f->excluded, v->getZExtValue()))
+          return 0;
     std::optional<Range> x = rangeOf(n->a, known), y = rangeOf(n->b, known);
     if (x && y && (x->hi < y->lo || y->hi < x->lo))
       return 0;
@@ -1328,6 +1334,8 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
       b.ulo = r->lo, b.uhi = r->hi;
     if (auto s = srange(e, known))
       b.slo = s->first, b.shi = s->second;
+    if (std::optional<Bounds> f = known(e))
+      b.excluded = f->excluded;
     return b;
   };
   // Gives e the bounds b, when they are tighter than was and hold some
@@ -1375,7 +1383,8 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         update(n.b, bb, both);
         return;
       }
-      // x != c, where c is an end of x's bounds, moves that end off c.
+      // x != c, where c is an end of x's bounds, moves that end off c;
+      // inside them, c is excluded.
       auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
         if (c.ulo != c.uhi || c.slo != c.shi)
           return;
@@ -1388,6 +1397,9 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
           ++nb.slo;
         else if (b.slo != b.shi && b.shi == c.slo)
           --nb.shi;
+        if (nb.ulo < c.ulo && c.ulo < nb.uhi && !llvm::is_contained(nb.excluded, c.ulo) &&
+            nb.excluded.size() < MaxExcluded)
+          nb.excluded.push_back(c.ulo);
         update(x, b, nb);
       };
       off(n.a, ba, bb);
