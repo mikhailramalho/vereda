@@ -1049,7 +1049,7 @@ private:
     SmallVector<Arrival, 2> arrivals = std::move(in->second);
     frame.arrivals.erase(header);
     Term guard = anyGuard(arrivals);
-    memory::State st = merged(arrivals);
+    memory::State st = merged(arrivals, guard);
     // The iteration's facts hold only in it, and the loop may not run.
     encode::Encoder::Facts facts = common(arrivals), inside = facts;
     Term inRange = t.ult(k, trips), body = t.land(guard, inRange);
@@ -1105,7 +1105,7 @@ private:
     frame.arrivals.erase(in);
     Term guard = anyGuard(arrivals);
     Transition tr;
-    tr.preMem = merged(arrivals);
+    tr.preMem = merged(arrivals, guard);
     mem.setContext(guard);
     for (const Value *o : analysis::writtenObjects(*l)) {
       SmallPtrSet<const Value *, 8> visiting;
@@ -1151,11 +1151,11 @@ private:
     tr.postMem = tr.preMem;
     if (!back.empty()) {
       tr.next = anyGuard(back);
-      tr.postMem = merged(back);
+      tr.postMem = merged(back, tr.next);
       for (unsigned p = 0; p < tr.post.size(); ++p) {
         tr.post[p] = back[0].phiValues[p];
         for (unsigned i = 1; i < back.size(); ++i)
-          tr.post[p] = t.ite(back[i].guard, back[i].phiValues[p], tr.post[p]);
+          tr.post[p] = t.ite(t.past(back[i].guard, tr.next), back[i].phiValues[p], tr.post[p]);
       }
     }
     transitions->push_back(std::move(tr));
@@ -1310,10 +1310,10 @@ private:
     return g;
   }
 
-  memory::State merged(const SmallVectorImpl<Arrival> &arrivals) {
+  memory::State merged(const SmallVectorImpl<Arrival> &arrivals, const Term &guard) {
     memory::State st = arrivals[0].mem;
     for (unsigned i = 1; i < arrivals.size(); ++i)
-      st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
+      st = mem.ite(t.past(arrivals[i].guard, guard), arrivals[i].mem, st);
     return st;
   }
 
@@ -1325,7 +1325,7 @@ private:
     frame.arrivals.erase(it);
     Term guard = anyGuard(arrivals);
     enc.facts = common(arrivals);
-    memory::State st = merged(arrivals);
+    memory::State st = merged(arrivals, guard);
 
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
