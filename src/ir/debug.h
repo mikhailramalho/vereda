@@ -79,8 +79,9 @@ inline SourceLoc location(const llvm::Instruction &inst) {
   return location(inst.getDebugLoc(), inst.getFunction()->getName());
 }
 
-inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size,
-                                             bool &isUnsigned);
+inline std::optional<std::string>
+memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size, bool &isUnsigned,
+           llvm::function_ref<std::optional<uint64_t>(const llvm::DIVariable *)> length = {});
 
 // A #dbg_value record that assigns one whole value to a source variable, or
 // to the member of one that a fragment covers (name is then its path).
@@ -199,11 +200,13 @@ inline const llvm::DIType *stripTypedefs(const llvm::DIType *ty) {
 // that scalar is unsigned. None when no single scalar of that size is there:
 // a bitfield (its store writes the whole unit), a partial or spanning write,
 // an array whose length is not constant but in its outermost dimension (a
-// VLA's, which no index needs). A union member is the first whose
+// VLA's, which no index needs) or in one length gives the run's length of.
+// A union member is the first whose
 // size the store matches: members of one size cannot be told apart, as clang
 // addresses them all through the first.
-inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size,
-                                             bool &isUnsigned) {
+inline std::optional<std::string>
+memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size, bool &isUnsigned,
+           llvm::function_ref<std::optional<uint64_t>(const llvm::DIVariable *)> length) {
   std::string path;
   isUnsigned = false;
   for (ty = stripTypedefs(ty); ty; ty = stripTypedefs(ty)) {
@@ -215,9 +218,14 @@ inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t of
       for (llvm::DINode *n : c->getElements())
         if (auto *r = llvm::dyn_cast<llvm::DISubrange>(n)) {
           auto *count = llvm::dyn_cast_if_present<llvm::ConstantInt *>(r->getCount());
-          if (!count && !counts.empty()) // a variable-length inner dimension
+          auto *var = llvm::dyn_cast_if_present<llvm::DIVariable *>(r->getCount());
+          std::optional<uint64_t> n = count ? count->getZExtValue()
+                                      : counts.empty() ? 0 // no index needs it
+                                      : var && length ? length(var)
+                                                      : std::nullopt;
+          if (!n || (!*n && !counts.empty())) // an inner length not known
             return std::nullopt;
-          counts.push_back(count ? count->getZExtValue() : 0);
+          counts.push_back(*n);
         }
       if (!stride || counts.empty())
         return std::nullopt;
