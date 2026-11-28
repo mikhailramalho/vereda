@@ -191,6 +191,22 @@ char *strndup(const char *s, size_t n) {
   return d;
 }
 
+size_t wcslen(const wchar_t *s) {
+  size_t n = 0;
+  while (s[n])
+    ++n;
+  return n;
+}
+
+// wcsdup (POSIX): strdup for a wide string.
+wchar_t *wcsdup(const wchar_t *s) {
+  size_t n = (wcslen(s) + 1) * sizeof(wchar_t);
+  wchar_t *d = malloc(n);
+  if (!d)
+    return NULL;
+  return memcpy(d, s, n);
+}
+
 char *index(const char *s, int c) { return strchr(s, c); }
 
 char *rindex(const char *s, int c) { return strrchr(s, c); }
