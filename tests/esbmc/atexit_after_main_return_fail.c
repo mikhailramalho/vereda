@@ -22,6 +22,3 @@ int main(void)
 }
 // Imported from ESBMC regression/esbmc/atexit_after_main_return_fail
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
-// MODE: FUTURE
-// Vereda: verdict SUCCESSFUL

@@ -198,3 +198,23 @@ long long strtoll(const char *s, char **end, int base) { return strto(s, end, ba
 unsigned long long strtoull(const char *s, char **end, int base) {
   return strto(s, end, base, ULLONG_MAX, 0);
 }
+
+// C17 7.22.4.2: atexit registers f, called without arguments when the
+// program ends normally; at least 32 registrations must succeed. glibc takes
+// any number, here 32, and a 33rd fails. ir calls __vereda_atexit_run before
+// each exit and at each return of the entry function (7.22.4.4p3, 5.1.2.2.3);
+// it calls them last first, and one a handler registers runs next, as glibc.
+static void (*atexit_handlers[32])(void);
+static unsigned atexit_count;
+
+int atexit(void (*f)(void)) {
+  if (atexit_count == 32)
+    return -1;
+  atexit_handlers[atexit_count++] = f;
+  return 0;
+}
+
+void __vereda_atexit_run(void) {
+  while (atexit_count)
+    atexit_handlers[--atexit_count]();
+}
