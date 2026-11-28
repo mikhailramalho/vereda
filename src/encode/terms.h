@@ -270,9 +270,10 @@ private:
   struct Node;
   // f(lit, holds) for each literal of cond (a node that is not a not, an
   // and, an or nor a Bool ite with a constant arm), as cond being true, or
-  // false when !holds, makes it hold or fail, over at most budget nodes.
-  void literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
-                unsigned &budget) const;
+  // false when !holds, makes it hold or fail, over at most 64 nodes, each
+  // walked once, nearer the top first.
+  void literals(const Ref &cond, bool holds,
+                llvm::function_ref<void(const Node &, bool)> f) const;
   // The value at constant index i of arr, past stores at other constant
   // indices, which arr moves over, and through joins whose two sides hold
   // the same value there (as a stream pointer does after a branch that
