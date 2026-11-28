@@ -1,8 +1,9 @@
 ; The combined division trap of ubsan_div_split_overflow, built from
 ; ubsan_div_zero_only.c: (a & 255) / b, which never overflows. With
 ; --ub-signed-overflow-check=false only the divisor's part reaches the trap,
-; and it is violated (#446).
+; and it is violated (#446): a division by zero (#514).
 ; RUN: --ub-signed-overflow-check=false
+; EXPECT: ^  FAILED +\[main\.division-by-zero\.1\]  line 0  division by zero$
 ; EXPECT: ^VERIFICATION FAILED$
 ; ModuleID = 'ubsan_div_zero_only.c'
 source_filename = "ubsan_div_zero_only.c"

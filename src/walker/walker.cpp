@@ -1554,11 +1554,15 @@ private:
       }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
-        if (counts(true)) {
-          std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+        std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+        // A division trap that checks only the divisor, as the check
+        // __ubsan_handle_divrem_overflow_abort makes below.
+        bool zero = comment == ir::DivisionByZero;
+        if (counts(!zero)) {
           StringRef s(comment);
           assertion(c, guard, comment, "", nullptr,
-                    s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
+                    zero ? checks::Property::DivisionByZero
+                    : s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
                     : s.starts_with("undefined behavior on shift") ? checks::Property::Shift
                                                                   : checks::Property::Assertion);
         }
