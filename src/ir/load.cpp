@@ -1739,7 +1739,6 @@ static void runAtexitHandlers(Module &m, StringRef entry) {
     CallInst::Create(run, "", i->getIterator())->setDebugLoc(i->getDebugLoc());
 }
 
-
 // Rust's C main passes the source main to std::rt::lang_start. Verify that
 // function directly rather than the unavailable runtime's startup machinery.
 static void lowerRustMain(Module &m) {
