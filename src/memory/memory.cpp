@@ -1510,8 +1510,8 @@ Term Memory::load(State &st, Term p, Type *ty) {
   return finishLoad(first, bits);
 }
 
-// One array store per byte, so a large zeroed global or memset is
-// a long store chain. A range store or a constant base would fix it.
+// Whole-object fills use a constant array. Even small globals need this:
+// a symbolic read of their byte stores can require one solver lemma per byte.
 bool Memory::fillObject(State &st, Term p, Term byte, uint64_t n) {
   Term c, x, y;
   if (t.split(p, c, x, y)) { // a malloc result: the context may pick a side
@@ -1521,7 +1521,8 @@ bool Memory::fillObject(State &st, Term p, Term byte, uint64_t n) {
     p = pick ? x : y;
   }
   std::optional<Key> k = key(p);
-  if (n < MinSeparate || !k || k->first == 0 || k->first >= objects.size() || k->second != 0)
+  if ((n < MinSeparate && !initialising) || !k || k->first == 0 ||
+      k->first >= objects.size() || k->second != 0)
     return false;
   const APInt *size = t.constant(objects[k->first].size);
   if (!size || *size != n)
