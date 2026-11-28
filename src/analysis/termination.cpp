@@ -25,7 +25,7 @@ struct Prover {
   Termination result{};
 
   void visit(Function &f);
-  static void boundInclusive(Loop &l);
+  static void boundInclusive(Loop &l, const DominatorTree &dt);
   void call(CallBase &c);
   static void note(std::string &why, const Twine &reason) {
     if (why.empty())
@@ -86,12 +86,14 @@ void Prover::call(CallBase &c) {
 }
 
 // SCEV counts a loop that runs while i <= n only when n's range excludes the
-// maximum, and it takes no range from a guard (#362). Where the branch into
-// the preheader implies n != max, i <= n is i < n + 1 without a wrap, which
-// SCEV counts; the exit test is rewritten so (and i > n as i >= n + 1), in
-// place, so a walk that follows sees the same loop. Only the branch that
-// ends in the preheader is consulted.
-void Prover::boundInclusive(Loop &l) {
+// maximum, and it takes no range from a guard (#362). Where a guard implies
+// n != max, i <= n is i < n + 1 without a wrap, which SCEV counts; the exit
+// test is rewritten so (and i > n as i >= n + 1), in place, so a walk that
+// follows sees the same loop. The guard is the branch into the preheader or
+// into a block that dominates it, found by walking up the dominator tree
+// (#481): isImpliedByDomCondition looks only at a block's single
+// predecessor.
+void Prover::boundInclusive(Loop &l, const DominatorTree &dt) {
   BasicBlock *pre = l.getLoopPreheader();
   if (!pre)
     return;
@@ -112,8 +114,12 @@ void Prover::boundInclusive(Loop &l) {
       continue;
     unsigned w = n->getType()->getIntegerBitWidth();
     APInt max = ICmpInst::isSigned(pred) ? APInt::getSignedMaxValue(w) : APInt::getMaxValue(w);
-    if (isImpliedByDomCondition(ICmpInst::ICMP_NE, n, ConstantInt::get(n->getType(), max),
-                                pre->getTerminator(), pre->getDataLayout()) != true)
+    Constant *maxc = ConstantInt::get(n->getType(), max);
+    const DomTreeNode *d = dt.getNode(pre);
+    while (d && isImpliedByDomCondition(ICmpInst::ICMP_NE, n, maxc, d->getBlock()->getTerminator(),
+                                        pre->getDataLayout()) != true)
+      d = d->getIDom();
+    if (!d)
       continue;
     cmp->setOperand(1, BinaryOperator::CreateAdd(n, ConstantInt::get(n->getType(), 1), "",
                                                  pre->getTerminator()->getIterator()));
@@ -136,7 +142,7 @@ void Prover::visit(Function &f) {
     note(result.unseen, "irreducible control flow in " + demangle(f.getName()));
   Loops loops(f, dt, li, tlii, {}, false);
   for (Loop *l : li.getLoopsInPreorder())
-    boundInclusive(*l);
+    boundInclusive(*l, dt);
   for (Loop *l : li.getLoopsInPreorder())
     if (isa<SCEVCouldNotCompute>(loops.scev().getSymbolicMaxBackedgeTakenCount(l)))
       note(result.unbounded, "SCEV cannot bound the loop at " +
