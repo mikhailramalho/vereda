@@ -5,6 +5,7 @@
 
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/Analysis/CFG.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/IntrinsicInst.h>
@@ -24,6 +25,7 @@ struct Prover {
   Termination result{};
 
   void visit(Function &f);
+  static void boundInclusive(Loop &l);
   void call(CallBase &c);
   static void note(std::string &why, const Twine &reason) {
     if (why.empty())
@@ -83,6 +85,42 @@ void Prover::call(CallBase &c) {
                             ", which may call a function whose address is taken");
 }
 
+// SCEV counts a loop that runs while i <= n only when n's range excludes the
+// maximum, and it takes no range from a guard (#362). Where the branch into
+// the preheader implies n != max, i <= n is i < n + 1 without a wrap, which
+// SCEV counts; the exit test is rewritten so (and i > n as i >= n + 1), in
+// place, so a walk that follows sees the same loop. Only the branch that
+// ends in the preheader is consulted.
+void Prover::boundInclusive(Loop &l) {
+  BasicBlock *pre = l.getLoopPreheader();
+  if (!pre)
+    return;
+  SmallVector<BasicBlock *> exiting;
+  l.getExitingBlocks(exiting);
+  for (BasicBlock *b : exiting) {
+    auto *br = dyn_cast<CondBrInst>(b->getTerminator());
+    auto *cmp = br ? dyn_cast<ICmpInst>(br->getCondition()) : nullptr;
+    if (!cmp || !cmp->getOperand(0)->getType()->isIntegerTy())
+      continue;
+    if (l.isLoopInvariant(cmp->getOperand(0)) && !l.isLoopInvariant(cmp->getOperand(1)))
+      cmp->swapOperands();
+    Value *n = cmp->getOperand(1);
+    ICmpInst::Predicate pred = cmp->getPredicate();
+    if (!l.isLoopInvariant(n) || !is_contained({ICmpInst::ICMP_SGT, ICmpInst::ICMP_SLE,
+                                                ICmpInst::ICMP_UGT, ICmpInst::ICMP_ULE},
+                                               pred))
+      continue;
+    unsigned w = n->getType()->getIntegerBitWidth();
+    APInt max = ICmpInst::isSigned(pred) ? APInt::getSignedMaxValue(w) : APInt::getMaxValue(w);
+    if (isImpliedByDomCondition(ICmpInst::ICMP_NE, n, ConstantInt::get(n->getType(), max),
+                                pre->getTerminator(), pre->getDataLayout()) != true)
+      continue;
+    cmp->setOperand(1, BinaryOperator::CreateAdd(n, ConstantInt::get(n->getType(), 1), "",
+                                                 pre->getTerminator()->getIterator()));
+    cmp->setPredicate(ICmpInst::getFlippedStrictnessPredicate(pred));
+  }
+}
+
 void Prover::visit(Function &f) {
   if (auto it = visited.find(&f); it != visited.end()) {
     if (!it->second)
@@ -97,6 +135,8 @@ void Prover::visit(Function &f) {
   if (containsIrreducibleCFG<BasicBlock *>(rpot, li))
     note(result.unseen, "irreducible control flow in " + demangle(f.getName()));
   Loops loops(f, dt, li, tlii, {}, false);
+  for (Loop *l : li.getLoopsInPreorder())
+    boundInclusive(*l);
   for (Loop *l : li.getLoopsInPreorder())
     if (isa<SCEVCouldNotCompute>(loops.scev().getSymbolicMaxBackedgeTakenCount(l)))
       note(result.unbounded, "SCEV cannot bound the loop at " +
