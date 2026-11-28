@@ -238,7 +238,10 @@ public:
   // points into an object that reaches it; a pointer made from an integer
   // (an address, or bytes nothing wrote) is not followed. Each object
   // written may then hold a pointer to any exposed object it got a pointer
-  // into and to any object reached.
+  // into and to any object reached. An object reached is written only
+  // where some object reached holds a pointer to it, and a written object
+  // may point to it only there, as far as a stored pointer's provenance has
+  // at most MaxReachCondition nodes; past that, on every path (#505).
   void havocCall(State &st, llvm::ArrayRef<encode::Term> written,
                  llvm::ArrayRef<encode::Term> read, bool reach);
   // Where free(p) is undefined in st (C17 7.22.3.3p2), by ESBMC's reasons:
@@ -255,6 +258,9 @@ public:
   encode::Term outside() { return advance(null(), t.bv(1, ptrBits)); }
   static constexpr uint64_t MaxBytes = 1 << 20;
   static constexpr uint64_t MinSeparate = 1024;
+  // Nodes of a stored pointer's provenance up to which havocCall follows
+  // it only where it points to an object (#505).
+  static constexpr unsigned MaxReachCondition = 16;
 
 private:
   encode::Term fieldPointer(encode::Term p, unsigned bytes = 1);
@@ -293,9 +299,9 @@ private:
   encode::Term into(encode::Term obj, uint64_t o);
   void havocObject(State &st, uint64_t o, encode::Term prov);
   // For each object of st that may hold a pointer, the objects other than
-  // null it may point to: from its known bytes' provenance and the stores in
-  // the arrays that hold its bytes.
-  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> pointers(const State &st);
+  // null it may point to, each with where it does: from its known bytes'
+  // provenance and the stores in the arrays that hold its bytes.
+  llvm::DenseMap<uint64_t, llvm::DenseMap<uint64_t, encode::Term>> pointers(const State &st);
   // Moves the known bytes of object, or all known bytes, into the arrays.
   void flush(State &st, std::optional<uint64_t> object = std::nullopt);
   void flushObject(State &st, uint64_t object);

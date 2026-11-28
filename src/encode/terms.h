@@ -271,6 +271,8 @@ public:
   // read: the index of a summarised loop's iteration, whose terms count only
   // under its guard.
   void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.id(), x, limit); }
+  // Whether e has at most cap distinct nodes, leaves included.
+  bool within(const Ref &e, unsigned cap) const;
 
 private:
   struct Node;
