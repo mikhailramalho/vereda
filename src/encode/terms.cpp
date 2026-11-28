@@ -167,9 +167,6 @@ bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth, unsigned &
 
 void Terms::equalities(const Ref &cond, bool holds,
                        llvm::function_ref<void(const Ref &, const Ref &)> f) {
-  // Conditions share subterms, so a walk without a bound can take
-  // exponential time; equalities sit near the top.
-  unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     if (n.op != Op::Eq || !h || !n.a.isBV())
       return;
@@ -190,34 +187,48 @@ void Terms::equalities(const Ref &cond, bool holds,
       c = bv(v.trunc(w));
       f(x, c);
     }
-  }, budget);
+  });
 }
 
-void Terms::literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
-                     unsigned &budget) const {
-  const Node *n = node(cond);
-  if (!n || !budget)
-    return;
-  --budget;
-  switch (n->op) {
-  case Op::Not: literals(n->a, !holds, f, budget); return;
-  case Op::And:
-  case Op::Or:
-    if ((n->op == Op::And) == holds) { // both sides hold, or both fail
-      literals(n->a, holds, f, budget);
-      literals(n->b, holds, f, budget);
+void Terms::literals(const Ref &cond, bool holds,
+                     llvm::function_ref<void(const Node &, bool)> f) const {
+  // Breadth first, each term with each sign once: a subterm shared by
+  // several paths costs one node of the budget, and the sides of an and
+  // share the budget instead of the left one using it all.
+  llvm::SmallVector<std::pair<Ref, bool>, 16> queue;
+  llvm::DenseSet<std::pair<const void *, unsigned>> seen;
+  auto push = [&](const Ref &x, bool h) {
+    if (seen.insert({x.id(), h}).second)
+      queue.emplace_back(x, h);
+  };
+  push(cond, holds);
+  unsigned budget = 64;
+  for (size_t i = 0; i < queue.size() && budget; ++i) {
+    auto [x, h] = queue[i];
+    const Node *n = node(x);
+    if (!n)
+      continue;
+    --budget;
+    switch (n->op) {
+    case Op::Not: push(n->a, !h); break;
+    case Op::And:
+    case Op::Or:
+      if ((n->op == Op::And) == h) { // both sides hold, or both fail
+        push(n->a, h);
+        push(n->b, h);
+      }
+      break;
+    case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
+      if (constant(n->b) && constant(n->b)->isZero() == h) {
+        push(n->a, false);
+        push(n->c, h);
+      } else if (constant(n->c) && constant(n->c)->isZero() == h) {
+        push(n->a, true);
+        push(n->b, h);
+      }
+      break;
+    default: f(*n, h); break;
     }
-    return;
-  case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
-    if (constant(n->b) && constant(n->b)->isZero() == holds) {
-      literals(n->a, false, f, budget);
-      literals(n->c, holds, f, budget);
-    } else if (constant(n->c) && constant(n->c)->isZero() == holds) {
-      literals(n->a, true, f, budget);
-      literals(n->b, holds, f, budget);
-    }
-    return;
-  default: f(*n, holds); return;
   }
 }
 
@@ -1348,7 +1359,6 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
       na.slo = std::max(ba.slo, b.slo), na.shi = std::min(ba.shi, b.shi);
     update(a, ba, na);
   };
-  unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     bool sign = n.op == Op::Slt || n.op == Op::Sle;
     if ((!sign && n.op != Op::Ult && n.op != Op::Ule && n.op != Op::Eq) || !n.a.isBV() ||
@@ -1403,7 +1413,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
     }
     update(x, bx, nx);
     update(y, by, ny);
-  }, budget);
+  });
 }
 
 Ref Terms::assumed(const Ref &x, Known known, llvm::DenseMap<const void *, Ref> &memo,
