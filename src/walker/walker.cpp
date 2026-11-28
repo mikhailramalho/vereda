@@ -166,6 +166,13 @@ struct ActiveCall {
   const CallState *state;
 };
 
+// Floats a counterexample prints as values: half, float, double, x86 long
+// double and fp128 (a bfloat's 16 bits would read as a half's).
+static bool printedFloat(Type *ty) {
+  return ty->isHalfTy() || ty->isFloatTy() || ty->isDoubleTy() || ty->isX86_FP80Ty() ||
+         ty->isFP128Ty();
+}
+
 class Walk {
 public:
   Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
@@ -1323,8 +1330,11 @@ private:
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
       Term r = arrivals[0].phiValues[p];
+      // Each arrival's guard past the block's, which holds wherever the
+      // phi is read: the whole path guard would repeat in the value, and
+      // learning from it would walk the earlier conditions again (#453).
       for (unsigned i = 1; i < arrivals.size(); ++i)
-        r = t.ite(arrivals[i].guard, arrivals[i].phiValues[p], r);
+        r = t.ite(t.past(arrivals[i].guard, guard), arrivals[i].phiValues[p], r);
       enc.bind(&phi, r);
       ++p;
     }
@@ -1338,7 +1348,8 @@ private:
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
-            trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned);
+            trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned, 0, nullptr, {},
+                      a->value->getType()->isFloatingPointTy());
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
@@ -1362,7 +1373,8 @@ private:
   // LCSSA does not route debug uses, so a record can name a value from a
   // block not walked in this pass; the trace skips it.
   Term traceValue(const Value *v) {
-    if (!v->getType()->isIntegerTy())
+    Type *ty = v->getType();
+    if (!ty->isIntegerTy() && !printedFloat(ty))
       return {};
     if (isa<Instruction>(v) || isa<Argument>(v))
       return enc.bound(v);
@@ -1418,8 +1430,17 @@ private:
           for (unsigned i = 0; i < 2; ++i)
             if (site->taken[i] && !t.isFalse(taken[i]))
               trace.add(Step::Branch, taken[i], site->loc, *site->taken[i] ? "true" : "false");
-      arrive(frame, bb, br->getSuccessor(0), taken[0], st, c);
-      arrive(frame, bb, br->getSuccessor(1), taken[1], st, t.lnot(c));
+      // Under --multi-property a path goes on past a failed sanitizer check,
+      // as past a failed assertion, with the value the instruction computes.
+      Term edge[2] = {c, t.lnot(c)};
+      if (opts.multiProperty)
+        for (unsigned i = 0; i < 2; ++i)
+          if (failsCheck(*br->getSuccessor(i))) {
+            taken[1 - i] = guard;
+            edge[1 - i] = Term();
+          }
+      arrive(frame, bb, br->getSuccessor(0), taken[0], st, edge[0]);
+      arrive(frame, bb, br->getSuccessor(1), taken[1], st, edge[1]);
     } else if (auto *sw = dyn_cast<SwitchInst>(&term)) {
       Term cond = enc.value(sw->getCondition());
       if (const APInt *v = t.constant(cond)) {
@@ -1724,6 +1745,8 @@ private:
       assertion(c, t.land(guard, t.lnot(holds)),
                 "dereference failure: Incorrect alignment when accessing data object", "",
                 nullptr, checks::Property::Alignment);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -1746,6 +1769,8 @@ private:
                 isDiv ? checks::Property::DivisionByZero
                       : isCount ? checks::Property::CountZero
                                 : checks::Property::FloatCastOverflow);
+      if (opts.multiProperty) // goes on past a failure, as an assertion does
+        return guard;
       enc.learn(holds, enc.facts);
       return t.land(guard, holds);
     }
@@ -2144,6 +2169,28 @@ private:
     mem.store(st, mem.advance(ap, t.bv(16, bits)), va.regs, ptr);
   }
 
+  // Whether every path from bb fails a sanitizer check that counts and ends
+  // there: clang's trap or handler block, or the branch nameSanitizerChecks
+  // puts before the two halves of a shl's check. __builtin_assume(false)
+  // shares the builtin handler, so that one is left out.
+  bool failsCheck(const BasicBlock &bb) const {
+    auto trap = [&](const BasicBlock &b) {
+      const Instruction *end = b.getTerminator();
+      auto *c = isa<UnreachableInst>(end) ? dyn_cast_or_null<CallBase>(end->getPrevNode())
+                                          : nullptr;
+      Function *f = c ? c->getCalledFunction() : nullptr;
+      if (!f)
+        return false;
+      if (f->getName() == "llvm.ubsantrap")
+        return counts(true);
+      return (f->getName() == "__ubsan_handle_float_cast_overflow_abort" ||
+              f->getName() == "__ubsan_handle_divrem_overflow_abort") &&
+             counts(false);
+    };
+    auto *br = dyn_cast<CondBrInst>(bb.getTerminator());
+    return br ? trap(*br->getSuccessor(0)) && trap(*br->getSuccessor(1)) : trap(bb);
+  }
+
   // Whether a failed assertion, or sanitizer check, violates the property
   // asked for. Under unreach-call only reach_error does, handled at the call.
   bool counts(bool sanitizer) const {
@@ -2326,18 +2373,20 @@ private:
       Value *v = w->getValueOperand();
       Term p = enc.value(w->getPointerOperand());
       writes(*w, guard, p);
-      mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
+      Term bits = enc.toBits(enc.value(v), v->getType());
+      mem.store(st, p, bits, v->getType());
       if (auto it = shadows.find(v); it != shadows.end())
         mem.setInitBytes(st, p, it->second);
       if (summary && w == summary->store)
-        summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
+        summary->stored = {guard, bits};
       // A source store into a named variable kept in memory (a global, an
       // array, a local whose address is taken) is an assignment to show.
       Type *ty = v->getType();
-      if (w->getDebugLoc() && ty->isIntegerTy() && !ty->isIntegerTy(1))
+      bool isFloat = printedFloat(ty);
+      if (w->getDebugLoc() && ((ty->isIntegerTy() && !ty->isIntegerTy(1)) || isFloat))
         if (auto *var = namedObject(w->getPointerOperand()))
-          trace.add(Step::Assignment, guard, ir::location(*w), var->first, enc.value(v), false, 0,
-                    var->second, mem.offset(p));
+          trace.add(Step::Assignment, guard, ir::location(*w), var->first, bits, false, 0,
+                    var->second, mem.offset(p), isFloat);
       return true;
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {
@@ -2349,19 +2398,22 @@ private:
     }
     if (auto *cx = dyn_cast<AtomicCmpXchgInst>(&inst)) {
       Type *ty = cx->getNewValOperand()->getType();
-      if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) && !ty->isPointerTy())
+      if (!ty->isIntegerTy() && !ty->isPointerTy())
         throw Unsupported("instruction " + encode::describe(&inst));
       Term p = enc.value(cx->getPointerOperand());
       checkInitRead(p, cx->getPointerOperand(), ty);
       Term old = mem.load(st, p, ty), expected = enc.value(cx->getCompareOperand());
-      // Pointers compare as icmp eq compares them.
-      Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(old, expected);
+      // Pointers compare as icmp eq compares them; i1 compares as BV1.
+      bool isBool = ty->isIntegerTy(1);
+      Term oldBV = isBool ? t.ite(old, t.bv(1, 1), t.bv(0, 1)) : old;
+      Term expBV = isBool ? t.ite(expected, t.bv(1, 1), t.bv(0, 1)) : expected;
+      Term ok = ty->isPointerTy() ? mem.equal(old, expected) : t.eq(oldBV, expBV);
       if (cx->isWeak()) // may fail even when equal
         ok = t.land(ok, enc.fresh(Type::getInt1Ty(inst.getContext()), "cmpxchg_weak"));
       writes(inst, t.land(guard, ok), p);
       mem.store(st, p, t.ite(ok, enc.value(cx->getNewValOperand()), old), ty);
       // {old, success}: a packed struct holds field 0 in the low bits.
-      enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), old));
+      enc.bind(cx, t.concat(t.ite(ok, t.bv(1, 1), t.bv(0, 1)), isBool ? oldBV : old));
       return true;
     }
     return isa<FenceInst>(inst);
@@ -2393,15 +2445,26 @@ private:
   }
 
   // Loads the old value, stores the operation's result and binds the old
-  // value, as one thread sees an atomic read-modify-write.
+  // value, as one thread sees an atomic read-modify-write. Supports floats
+  // (xchg, fadd, fsub, fmax, fmin, fmaximum, fminimum, fmaximumnum,
+  // fminimumnum) and i1 (every integer operation, converted to BV1).
   void atomicRMW(AtomicRMWInst &rmw, memory::State &st) {
     Type *ty = rmw.getType();
     AtomicRMWInst::BinOp op = rmw.getOperation();
-    if (!(ty->isIntegerTy() && !ty->isIntegerTy(1)) &&
-        !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
+    bool isFloat = ty->isFloatingPointTy(), isBool = ty->isIntegerTy(1);
+    if (isFloat ? op != AtomicRMWInst::Xchg && op != AtomicRMWInst::FAdd &&
+                      op != AtomicRMWInst::FSub && op != AtomicRMWInst::FMax &&
+                      op != AtomicRMWInst::FMin && op != AtomicRMWInst::FMaximum &&
+                      op != AtomicRMWInst::FMinimum && op != AtomicRMWInst::FMaximumNum &&
+                      op != AtomicRMWInst::FMinimumNum
+                : !ty->isIntegerTy() && !(ty->isPointerTy() && op == AtomicRMWInst::Xchg))
       throw Unsupported("instruction " + encode::describe(&rmw));
     Term p = enc.value(rmw.getPointerOperand());
-    Term old = mem.load(st, p, ty), v = enc.value(rmw.getValOperand());
+    Term old = enc.fromBits(mem.load(st, p, ty), ty), v = enc.value(rmw.getValOperand());
+    if (isBool) {
+      old = t.ite(old, t.bv(1, 1), t.bv(0, 1));
+      v = t.ite(v, t.bv(1, 1), t.bv(0, 1));
+    }
     unsigned w = ty->isIntegerTy() ? ty->getIntegerBitWidth() : 0;
     auto one = [&] { return t.bv(1, w); };
     Term r;
@@ -2423,9 +2486,21 @@ private:
       break;
     case AtomicRMWInst::USubCond: r = t.ite(t.uge(old, v), t.sub(old, v), old); break;
     case AtomicRMWInst::USubSat: r = t.ite(t.uge(old, v), t.sub(old, v), t.bv(0, w)); break;
+    case AtomicRMWInst::FAdd: r = enc.fpBinary(Instruction::FAdd, old, v, ty); break;
+    case AtomicRMWInst::FSub: r = enc.fpBinary(Instruction::FSub, old, v, ty); break;
+    case AtomicRMWInst::FMax: r = enc.fpMinMax(Intrinsic::maxnum, old, v, ty); break;
+    case AtomicRMWInst::FMin: r = enc.fpMinMax(Intrinsic::minnum, old, v, ty); break;
+    case AtomicRMWInst::FMaximum: r = enc.fpMinMax(Intrinsic::maximum, old, v, ty); break;
+    case AtomicRMWInst::FMinimum: r = enc.fpMinMax(Intrinsic::minimum, old, v, ty); break;
+    case AtomicRMWInst::FMaximumNum: r = enc.fpMinMax(Intrinsic::maximumnum, old, v, ty); break;
+    case AtomicRMWInst::FMinimumNum: r = enc.fpMinMax(Intrinsic::minimumnum, old, v, ty); break;
     default: throw Unsupported("instruction " + encode::describe(&rmw));
     }
-    mem.store(st, p, r, ty);
+    if (isBool) {
+      r = t.eq(r, t.bv(1, 1));
+      old = t.eq(old, t.bv(1, 1));
+    }
+    mem.store(st, p, enc.toBits(r, ty), ty);
     enc.bind(&rmw, old);
   }
 

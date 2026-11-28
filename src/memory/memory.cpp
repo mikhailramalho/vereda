@@ -375,6 +375,15 @@ Term Memory::fromAddress(Term a, unsigned &budget,
       if (d >= 0)
         within = t.boolean(d);
     }
+    // An object smaller than its alignment stays in one block, including one past.
+    // Compare that block and its low bits instead of range-testing a full subtraction.
+    if (const APInt *size = t.constant(o.size);
+        size && o.align > 1 && llvm::isPowerOf2_64(o.align) && size->ult(o.align) &&
+        llvm::Log2_64(o.align) < ptrBits && !t.isTrue(within) && !t.isFalse(within)) {
+      unsigned low = llvm::Log2_64(o.align);
+      within = t.land(t.eq(t.extract(a, ptrBits - 1, low), t.extract(o.base, ptrBits - 1, low)),
+                      t.ule(t.extract(a, low - 1, 0), t.bv(size->getZExtValue(), low)));
+    }
     Term inside = t.land(o.exists, within);
     if (t.isTrue(inside) || (context && t.entails(context, inside))) {
       Term r = ptr(t.bv(id, ObjBits), x);
@@ -1342,6 +1351,13 @@ void Memory::storeBytes(State &st, Term p, Term bits, Term prov) {
 }
 
 void Memory::store(State &st, Term p, Term v, Type *ty) {
+  // A vector of i1 is its bits, element i in bit i, stored as an integer of
+  // its store size, as a bitcast to an integer has it.
+  if (auto *vt = dyn_cast<FixedVectorType>(ty); vt && vt->getElementType()->isIntegerTy(1)) {
+    Type *it = IntegerType::get(ty->getContext(), storeBits(dl, ty));
+    store(st, p, t.zext(v, storeBits(dl, ty) - v.width()), it);
+    return;
+  }
   if (trackInit)
     writeInitBytes(st, p, storeBits(dl, ty) / 8, t.boolean(true));
   Term mapped = fieldPointer(p, storeBits(dl, ty) / 8);
@@ -1377,6 +1393,10 @@ void Memory::store(State &st, Term p, Term v, Type *ty) {
 }
 
 Term Memory::load(State &st, Term p, Type *ty) {
+  if (auto *vt = dyn_cast<FixedVectorType>(ty); vt && vt->getElementType()->isIntegerTy(1)) {
+    Term v = load(st, p, IntegerType::get(ty->getContext(), storeBits(dl, ty)));
+    return t.extract(v, vt->getNumElements() - 1, 0);
+  }
   if (!ty->isIntegerTy() && !ty->isPointerTy() && !ty->isFloatingPointTy())
     throw Unsupported("load of a non-integer value");
   Term mapped = fieldPointer(p, storeBits(dl, ty) / 8);
@@ -2546,12 +2566,22 @@ void Memory::storeConstant(State &st, Term p, const Constant *c,
     return;
   }
   // A vector's elements go where the scalarizer's element pointers read
-  // them, one alloc size apart; vectors of i1 pack bits and are not handled.
+  // them, one alloc size apart.
   if (auto *vt = dyn_cast<FixedVectorType>(ty);
       vt && dl.getTypeSizeInBits(vt->getElementType()) % 8 == 0) {
     uint64_t stride = dl.getTypeAllocSize(vt->getElementType());
     for (unsigned i = 0; i < vt->getNumElements(); ++i)
       storeConstant(st, bytePtr(p, i * stride), c->getAggregateElement(i), valueOf);
+    return;
+  }
+  // A vector of i1 packs its elements, element i in bit i, as store has it.
+  if (auto *vt = dyn_cast<FixedVectorType>(ty); vt && vt->getElementType()->isIntegerTy(1)) {
+    Term bits;
+    for (unsigned i = 0; i < vt->getNumElements(); ++i) {
+      Term bit = t.ite(valueOf(c->getAggregateElement(i)), t.bv(1, 1), t.bv(0, 1));
+      bits = bits ? t.concat(bit, bits) : bit;
+    }
+    store(st, p, bits, ty);
     return;
   }
   throw Unsupported("global initialiser of this type");

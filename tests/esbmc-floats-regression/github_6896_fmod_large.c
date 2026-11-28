@@ -24,6 +24,3 @@ int main(void)
 }
 // Imported from ESBMC regression/floats-regression/github_6896_fmod_large
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED

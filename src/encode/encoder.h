@@ -12,9 +12,10 @@
 // Operations round to nearest, ties to even, as C does by default, and on
 // constant operands fold with APFloat under the same rounding, so a value
 // computed from constants alone is a constant; a NaN result does not fold,
-// since its bits are the encoding's. A vector of integers or
+// since its bits are the encoding's. A vector of integers, pointers or
 // floats is one bitvector with element 0 in the low bits, as memory lays it
-// out; the scalarizer leaves vectors only where they cross calls.
+// out (an i1 element is one bit), and a bitcast to or from one keeps the
+// bits; the scalarizer leaves vectors only where they cross calls.
 #pragma once
 #include "encode/terms.h"
 #include "memory/memory.h"
@@ -91,6 +92,14 @@ public:
   // except for floats in the solver's theory.
   Term toBits(Term v, llvm::Type *ty);
   Term fromBits(Term bits, llvm::Type *ty);
+  // a + b (opcode FAdd) or a - b (FSub) on two values of the floating-point
+  // type ty, rounded to nearest even as the instructions round.
+  Term fpBinary(unsigned opcode, Term a, Term b, llvm::Type *ty);
+  // minnum/maxnum and minimumnum/maximumnum (a NaN operand gives the other)
+  // or minimum/maximum (a NaN operand gives NaN) of two values of the
+  // floating-point type ty, ordering -0 below +0; id is the intrinsic's.
+  // With nsz (minnum/maxnum only) two zeros give either, chosen freely.
+  Term fpMinMax(unsigned id, Term a, Term b, llvm::Type *ty, bool nsz = false);
   // A fresh unconstrained term of v's type, named after its origin (nondet
   // calls, arguments); for a pointer, a fresh address converted to one.
   Term fresh(llvm::Type *ty, const std::string &name);
@@ -107,6 +116,7 @@ public:
   Term resize(Term v, unsigned width, bool isSigned);
 
 private:
+  unsigned vectorElementWidth(llvm::Type *ty);
   unsigned packedWidth(llvm::Type *ty);
   Term toField(Term v, llvm::Type *ty);
   Term fromField(Term bits, llvm::Type *ty);
@@ -120,7 +130,12 @@ private:
   camada::SMTSortRef fpSort(llvm::Type *ty, camada::FPEncoding encoding);
   // v as a float of the theory or encoding, for camada's operations on floats.
   camada::SMTExprRef fp(const llvm::Value *v);
+  camada::SMTExprRef fp(Term x, llvm::Type *ty); // as above, for a value's term
   Term bits(const camada::SMTExprRef &fp, llvm::Type *ty); // an operation's result as a value
+  // x, a value of type ty in that type's encoding, as a float in camada's
+  // bit-vector encoding; and such a float back as a value of type ty.
+  camada::SMTExprRef bvFloat(Term x, llvm::Type *ty);
+  Term fromBVFloat(const camada::SMTExprRef &f, llvm::Type *ty);
   Term fp80ToIEEE79(Term bv80);
   Term ieee79ToFP80(Term bv79);
   bool native() const { return fpEncoding == camada::FPEncoding::Native; }
@@ -134,6 +149,7 @@ private:
     return useNative(ty) ? camada::FPEncoding::Native : camada::FPEncoding::BV;
   }
   Term signBit(const llvm::Value *v); // true when v's sign bit is set
+  Term signBit(Term x, llvm::Type *ty); // same, for a term
   camada::SMTExprRef rm(camada::RM mode, llvm::Type *ty);
   Term fcmp(llvm::CmpInst::Predicate p, const llvm::Value *a, const llvm::Value *b);
   // Whether the float with these bits is in one of the classes of mask, as

@@ -311,6 +311,10 @@ def main():
     if any(f.startswith("-fsanitize=") for f in flags) and any(i.endswith(IR_EXTS) for i in inputs):
         fail("vereda.py: clang compiles the overflow checks in, so they need C inputs, "
              "not .ll or .bc")
+    # The traps are already compiled into IR: the binary leaves out the
+    # kinds turned off.
+    if any(i.endswith(IR_EXTS) for i in inputs):
+        forwarded += [f"{flag}={'true' if on else 'false'}" for flag, on in checks.items()]
 
     # Clang can fold a literal zero division before emitting IR. The binary
     # validates property names; inspect its selection here only for instrumentation.

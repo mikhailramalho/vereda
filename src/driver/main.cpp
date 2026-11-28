@@ -86,6 +86,25 @@ static cl::opt<bool> ubAlignmentCheck(
     "ub-alignment-check", cl::desc("Check alignment of typed memory accesses"));
 static cl::opt<bool> ubUninitCheck(
     "ub-uninit-check", cl::desc("Check reads of uninitialised local values and memory"));
+static cl::opt<bool> ubSignedOverflowCheck(
+    "ub-signed-overflow-check",
+    cl::desc("Check the signed overflow traps compiled into the IR (default on; =false leaves "
+             "them out; vereda.py compiles them in for C)"),
+    cl::init(true));
+static cl::opt<bool> unsignedOverflowCheck(
+    "unsigned-overflow-check",
+    cl::desc("Check the unsigned overflow traps compiled into the IR (default on; =false leaves "
+             "them out; vereda.py compiles them in for C)"),
+    cl::init(true));
+static cl::opt<bool> ubShiftCheck(
+    "ub-shift-check",
+    cl::desc("Check the shift traps compiled into the IR (default on; =false leaves them out; "
+             "vereda.py compiles them in for C)"),
+    cl::init(true));
+static cl::opt<bool> overflowCheck(
+    "overflow-check",
+    cl::desc("Both overflow flags; of it and either one's own flag, the later decides"),
+    cl::init(true));
 static cl::opt<bool> memoryLeakCheck(
     "memory-leak-check", cl::desc("Check for memory leaks (not implemented)"));
 static cl::opt<bool> ubDataRaceCheck(
@@ -233,6 +252,15 @@ static int finish(int code) {
 // What bmc() returns under --incremental-bmc when a loop or recursion needs
 // a larger bound.
 static const int BoundTooSmall = -1;
+
+// Whether the sanitizer traps of a kind are checked: own, or both when
+// that came later; true unless the deciding flag is =false.
+static bool trapsChecked(const cl::opt<bool> &own, const cl::opt<bool> *both = nullptr) {
+  if (both && both->getNumOccurrences() &&
+      (!own.getNumOccurrences() || both->getPosition() > own.getPosition()))
+    return *both;
+  return own;
+}
 
 // The checks this run counts, each named after the flag that controls it,
 // for an [INFO] line that gives the verdict its scope. A property counts
@@ -658,13 +686,21 @@ static int run(int argc, char **argv) {
   LLVMContext ctx;
   // The library models sit next to the binary.
   std::string self = sys::fs::getMainExecutable(argv[0], reinterpret_cast<void *>(&printVersion));
+  // The sanitizer traps on IR input that a flag turned off.
+  std::set<std::string> unchecked;
+  if (!trapsChecked(ubSignedOverflowCheck, &overflowCheck))
+    unchecked.insert("signed-integer-overflow");
+  if (!trapsChecked(unsignedOverflowCheck, &overflowCheck))
+    unchecked.insert("unsigned-integer-overflow");
+  if (!trapsChecked(ubShiftCheck))
+    unchecked.insert("shift");
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
                        ubDivByZeroCheck && property == Property::All,
                        ubCountZeroCheck && property == Property::All,
                        ubFloatCastOverflowCheck && property == Property::All,
                        ubAlignmentCheck && property == Property::All,
-                       ubUninitCheck && property == Property::All, errorLabel);
+                       ubUninitCheck && property == Property::All, errorLabel, unchecked);
   if (!module) {
     errs() << argv[0] << ": " << toString(module.takeError()) << "\n";
     return ErrorExit;

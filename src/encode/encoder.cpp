@@ -38,16 +38,14 @@ static const fltSemantics *ieee(Type *ty) {
   return &ty->getFltSemantics();
 }
 
-// The element width of a vector of integers (not i1) or IEEE floats; 0 for
-// anything else.
-static unsigned vectorElementWidth(Type *ty) {
+// The element width of a vector of integers (i1 as one bit), pointers or
+// IEEE floats; 0 for anything else.
+unsigned Encoder::vectorElementWidth(Type *ty) {
   auto *vt = dyn_cast<FixedVectorType>(ty);
   if (!vt)
     return 0;
   Type *e = vt->getElementType();
-  if ((e->isIntegerTy() && !e->isIntegerTy(1)) || ieee(e))
-    return e->getPrimitiveSizeInBits();
-  return 0;
+  return e->isIntegerTy() || e->isPointerTy() || ieee(e) ? packedWidth(e) : 0;
 }
 
 // The width of ty's bits as a field of a packed struct: an integer (i1 as
@@ -297,15 +295,38 @@ SMTSortRef Encoder::fpSort(Type *ty, camada::FPEncoding encoding) {
   return s.mkFPSort(expBits, precision - 1, encoding);
 }
 
-camada::SMTExprRef Encoder::fp(const Value *v) {
-  Type *ty = v->getType();
-  SMTSortRef sort = fpSort(ty);
-  Term x = value(v);
+camada::SMTExprRef Encoder::fp(const Value *v) { return fp(value(v), v->getType()); }
+
+camada::SMTExprRef Encoder::fp(Term x, Type *ty) {
   if (useNative(ty))
     return t.solverTerm(x);
   if (ty->isX86_FP80Ty())
     x = fp80ToIEEE79(x);
-  return s.mkBVToIEEEFP(t.solverTerm(x), sort);
+  return s.mkBVToIEEEFP(t.solverTerm(x), fpSort(ty));
+}
+
+Term Encoder::fpBinary(unsigned opcode, Term a, Term b, Type *ty) {
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty), even = rm(camada::RM::ROUND_TO_EVEN, ty);
+  switch (opcode) {
+  case Instruction::FAdd: return bits(s.mkFPAdd(x, y, even), ty);
+  case Instruction::FSub: return bits(s.mkFPSub(x, y, even), ty);
+  default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
+  }
+}
+
+Term Encoder::fpMinMax(unsigned id, Term a, Term b, Type *ty, bool nsz) {
+  bool min = id == Intrinsic::minnum || id == Intrinsic::minimum || id == Intrinsic::minimumnum;
+  camada::SMTExprRef x = fp(a, ty), y = fp(b, ty);
+  Term first = t.fromSolver(min ? s.mkFPLe(x, y) : s.mkFPGe(x, y));
+  Term nanA = t.fromSolver(s.mkFPIsNaN(x)), nanB = t.fromSolver(s.mkFPIsNaN(y));
+  // Of two zeros, min takes a when a is -0, max when a is +0; under nsz either.
+  Term zeros = t.land(t.fromSolver(s.mkFPIsZero(x)), t.fromSolver(s.mkFPIsZero(y)));
+  Term negA = signBit(a, ty);
+  Term zeroA = nsz ? fresh(Type::getInt1Ty(ty->getContext()), "nsz") : min ? negA : t.lnot(negA);
+  Term takeA = t.ite(zeros, zeroA, first);
+  // minimum/maximum give the NaN operand, the others the other operand.
+  bool nanOut = id == Intrinsic::maximum || id == Intrinsic::minimum;
+  return t.ite(nanA, nanOut ? a : b, t.ite(nanB, nanOut ? b : a, t.ite(takeA, a, b)));
 }
 
 Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
@@ -313,6 +334,18 @@ Term Encoder::bits(const camada::SMTExprRef &f, Type *ty) {
     return t.fromSolver(f);
   Term b = t.fromSolver(s.mkIEEEFPToBV(f));
   return ty->isX86_FP80Ty() ? ieee79ToFP80(b) : b;
+}
+
+camada::SMTExprRef Encoder::bvFloat(Term x, Type *ty) {
+  Term b = toBits(x, ty);
+  if (ty->isX86_FP80Ty())
+    b = fp80ToIEEE79(b);
+  return s.mkBVToIEEEFP(t.solverTerm(b), fpSort(ty, camada::FPEncoding::BV));
+}
+
+Term Encoder::fromBVFloat(const camada::SMTExprRef &f, Type *ty) {
+  Term b = t.fromSolver(s.mkIEEEFPToBV(f));
+  return fromBits(ty->isX86_FP80Ty() ? ieee79ToFP80(b) : b, ty);
 }
 
 Term Encoder::toBits(Term v, Type *ty) {
@@ -371,8 +404,10 @@ Term Encoder::folded(const APFloat &r, Type *ty) {
   return r.isNaN() ? Term() : floatValue(r, ty);
 }
 
-Term Encoder::signBit(const Value *v) {
-  Term b = toBits(value(v), v->getType());
+Term Encoder::signBit(const Value *v) { return signBit(value(v), v->getType()); }
+
+Term Encoder::signBit(Term x, Type *ty) {
+  Term b = toBits(x, ty);
   unsigned w = b.width();
   return t.eq(t.extract(b, w - 1, w - 1), t.bv(1, 1));
 }
@@ -519,23 +554,24 @@ Term Encoder::castTo(unsigned opcode, const Value *op, Type *dst) {
       // Converting between a native FP format and a BV-encoded one (x86_fp80 /
       // bfloat): do the conversion in camada's BV FP encoding so both sides
       // share one encoding.
-      Term srcBits = toBits(a, src);
-      if (src->isX86_FP80Ty())
-        srcBits = fp80ToIEEE79(srcBits);
-      camada::SMTExprRef from =
-          s.mkBVToIEEEFP(t.solverTerm(srcBits), fpSort(src, camada::FPEncoding::BV));
-      camada::SMTExprRef conv =
-          s.mkFPToFP(from, fpSort(dst, camada::FPEncoding::BV),
-                     s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV));
-      Term dstBits = t.fromSolver(s.mkIEEEFPToBV(conv));
-      if (dst->isX86_FP80Ty())
-        dstBits = ieee79ToFP80(dstBits);
-      return fromBits(dstBits, dst);
+      return fromBVFloat(s.mkFPToFP(bvFloat(a, src), fpSort(dst, camada::FPEncoding::BV),
+                                    s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV)),
+                         dst);
     }
     return bits(s.mkFPToFP(fp(op), fpSort(dst), rm(camada::RM::ROUND_TO_EVEN, dst)), dst);
   default:
     break;
   }
+  // A bitcast to or from a vector keeps the bits, lane 0 lowest, as memory
+  // lays them out on a little-endian target.
+  if (opcode == Instruction::BitCast && (src->isVectorTy() || dst->isVectorTy())) {
+    unsigned width = packedWidth(src);
+    if (!width || width != packedWidth(dst))
+      throw Unsupported("cast bitcast from " + describe(op));
+    Term bits = src->isVectorTy() ? a : toField(a, src);
+    return dst->isVectorTy() ? bits : fromField(bits, dst);
+  }
+
   // A bitcast between a float and an integer, or another float, of the same
   // width keeps the bits.
   if (opcode == Instruction::BitCast && !src->isPointerTy() &&
@@ -622,8 +658,32 @@ Term Encoder::binary(unsigned opcode, const Value *lhs, const Value *rhs) {
     case Instruction::FSub: return bits(s.mkFPSub(a, b, even), ty);
     case Instruction::FMul: return bits(s.mkFPMul(a, b, even), ty);
     case Instruction::FDiv: return bits(s.mkFPDiv(a, b, even), ty);
-    default: // frem is C's fmod, which truncates; SMT's fp.rem rounds to nearest
-      throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
+    case Instruction::FRem: {
+      // fp.rem is IEEE remainder, whose quotient rounds to nearest; frem is
+      // C's fmod, whose quotient truncates. They differ where the remainder
+      // is nonzero and its sign is not x's: fmod's is then the remainder
+      // moved by |y| towards x's sign, an exact sum as fmod's result is
+      // representable.
+      // Natively, Bitwuzla's fp.rem and this adjustment are slow on
+      // unconstrained operands (#445), so both are computed in camada's
+      // bit-vector encoding, as ESBMC does fp.rem.
+      bool bv = useNative(ty);
+      camada::SMTExprRef x = bv ? bvFloat(value(lhs), ty) : a;
+      camada::SMTExprRef y = bv ? bvFloat(value(rhs), ty) : b;
+      camada::SMTExprRef e =
+          bv ? s.mkRM(camada::RM::ROUND_TO_EVEN, camada::FPEncoding::BV) : even;
+      camada::SMTExprRef r = s.mkFPRem(x, y), absY = s.mkFPAbs(y);
+      camada::SMTExprRef zero =
+          bv ? bvFloat(fromBits(t.bv(0, ty->getPrimitiveSizeInBits()), ty), ty)
+             : fp(ConstantFP::getZero(ty));
+      camada::SMTExprRef xNeg = s.mkFPLt(x, zero);
+      camada::SMTExprRef fix =
+          s.mkAnd(s.mkNot(s.mkFPIsZero(r)), s.mkXor(xNeg, s.mkFPLt(r, zero)));
+      camada::SMTExprRef res =
+          s.mkIte(fix, s.mkIte(xNeg, s.mkFPSub(r, absY, e), s.mkFPAdd(r, absY, e)), r);
+      return bv ? fromBVFloat(res, ty) : bits(res, ty);
+    }
+    default: throw Unsupported(std::string("instruction ") + Instruction::getOpcodeName(opcode));
     }
   }
   bool isBool = lhs->getType()->isIntegerTy(1);
@@ -726,9 +786,9 @@ void Encoder::encode(Instruction &inst) {
     Term v = value(vec);
     Type *elem = cast<FixedVectorType>(vec->getType())->getElementType();
     if (isa<ExtractElementInst>(inst)) {
-      r = fromBits(t.extract(v, low + w - 1, low), elem);
+      r = fromField(t.extract(v, low + w - 1, low), elem);
     } else {
-      r = replaceBits(v, low, toBits(value(inst.getOperand(1)), elem));
+      r = replaceBits(v, low, toField(value(inst.getOperand(1)), elem));
     }
   } else if (isa<ExtractValueInst>(inst) || isa<InsertValueInst>(inst)) {
     // The field's bits within the packed struct, at its indices.
@@ -818,20 +878,23 @@ bool Encoder::fpIntrinsic(CallBase &c) {
   case Intrinsic::nearbyint:
   case Intrinsic::roundeven: r = integral(camada::RM::ROUND_TO_EVEN); break;
   case Intrinsic::minnum:
-  case Intrinsic::maxnum: { // a NaN operand gives the other; a signed zero either
-    if (auto x = constFloat(arg(0)), y = constFloat(arg(1)); x && y) {
-      APFloat::cmpResult cmp = x->compare(*y);
-      bool first = cmp == APFloat::cmpEqual ||
-                   cmp == (id == Intrinsic::minnum ? APFloat::cmpLessThan : APFloat::cmpGreaterThan);
-      r = value(arg(!x->isNaN() && (y->isNaN() || first) ? 0 : 1));
+  case Intrinsic::maxnum: { // a NaN operand gives the other; -0 below +0, or either under nsz
+    bool nsz = c.hasNoSignedZeros();
+    if (auto x = constFloat(arg(0)), y = constFloat(arg(1));
+        x && y && !(nsz && x->isZero() && y->isZero() && x->isNegative() != y->isNegative())) {
+      APFloat m = id == Intrinsic::minnum ? minnum(*x, *y) : maxnum(*x, *y);
+      r = value(arg(m.bitwiseIsEqual(*x) ? 0 : 1));
       break;
     }
-    camada::SMTExprRef a = fp(arg(0)), b = fp(arg(1));
-    Term first = t.fromSolver(id == Intrinsic::minnum ? s.mkFPLe(a, b) : s.mkFPGe(a, b));
-    r = t.ite(t.fromSolver(s.mkFPIsNaN(a)), value(arg(1)),
-              t.ite(t.lor(t.fromSolver(s.mkFPIsNaN(b)), first), value(arg(0)), value(arg(1))));
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType(), nsz);
     break;
   }
+  case Intrinsic::minimum:
+  case Intrinsic::maximum:
+  case Intrinsic::minimumnum:
+  case Intrinsic::maximumnum:
+    r = fpMinMax(id, value(arg(0)), value(arg(1)), arg(0)->getType());
+    break;
   case Intrinsic::is_fpclass:
     // Natively either NaN class is any NaN, as fpClass has it; with fp2bv
     // fpClass reads the constant's bits and folds.

@@ -217,6 +217,8 @@ public:
   bool choice(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // One choice in an address sum, distributed over its additions.
   bool sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth = 0);
+  // g past p: c when g is land(p, c), as guards grow; else g.
+  Ref past(const Ref &g, const Ref &p) const;
   // e as add(a, b) or sub(a, b).
   bool isAdd(const Ref &e, Ref &a, Ref &b) const;
   bool isSub(const Ref &e, Ref &a, Ref &b) const;
@@ -247,8 +249,8 @@ public:
   };
   std::optional<Range> range(const Ref &e, Known known = {}) {
     if (known)
-      scratch.clear();
-    return range(e, known, 0);
+      clearScratch();
+    return rangeOf(e, known);
   }
   // Whether cmp, an =, <, <= (unsigned or signed), an overflow test or the
   // negation of one, holds for every value the ranges of its sides take
@@ -400,10 +402,13 @@ private:
   // Per array and constant index, what select gave: a read walks up to 256
   // stores, and a load of an element reads it once per byte.
   llvm::DenseMap<std::pair<const void *, const void *>, Ref> selects;
-  // range, with each term also narrowed to the bounds known gives it. Such
-  // a range holds only on known's path, so it is not kept, and nothing
+  // rangeOf: range, with each term also narrowed to the bounds known gives it.
+  // Such a range holds only on known's path, so it is not kept, and nothing
   // folds by it but decide.
-  std::optional<Range> range(const Ref &e, Known known, unsigned depth);
+  std::optional<Range> rangeOf(const Ref &e, Known known);
+  // The shape of e, a node, after those of the operands shape reads,
+  // each cached in ranges, or scratch under known, as it is found.
+  std::optional<Range> shapes(const Ref &e, Known known);
   // Whether a < b, or a <= b, holds for every value range (or srange, if
   // sign) gives them (1), for none (0), or neither (-1).
   int order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known = {});
@@ -411,16 +416,25 @@ private:
   // when that does not cross the sign bit, the bounds known gives it, and
   // the operand it sign-extends; null when there are none (a path no
   // execution takes) or e is wider than 64 bits.
-  std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known, unsigned depth);
+  std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known);
   // The range of n, a term of width bits, from its operands' (range's work).
-  std::optional<Range> shape(const Node &n, unsigned width, Known known, unsigned depth);
+  std::optional<Range> shape(const Node &n, unsigned width, Known known);
   // range's results for one query under known, cleared per query (a
   // DenseMap shrinks when it clears, so a large query leaves no cost).
   llvm::DenseMap<const void *, std::optional<Range>> scratch;
+  void clearScratch() {
+    scratch.clear();
+    sscratch.clear();
+  }
   // How many low bits of e, a sum or product, are known to be zero.
-  unsigned zeros(const Ref &e, unsigned depth = 0);
+  unsigned zeros(const Ref &e);
+  // zeros' results for sums and products, kept as ranges are.
+  llvm::DenseMap<const void *, unsigned> zeroBits;
   llvm::DenseMap<const void *, std::pair<Ref, uint64_t>> bounds;
   llvm::DenseMap<const void *, std::optional<Range>> ranges;
+  // srange's results, kept as range's are: on every path in sranges, under
+  // one query's known in sscratch, cleared with scratch.
+  llvm::DenseMap<const void *, std::optional<std::pair<int64_t, int64_t>>> sranges, sscratch;
   // Per symbol, the terms found not to contain it (unique_ptr keeps each
   // set stable across recursive substitute calls).
   llvm::DenseMap<const void *, std::unique_ptr<llvm::DenseSet<const void *>>> freeOf;

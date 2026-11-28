@@ -1,10 +1,20 @@
 #include "witness/counterexample.h"
 
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/SmallString.h>
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/Support/WithColor.h>
+
+// glibc before 2.41 declares its *f128 functions for GCC only (clang counts
+// as GCC 4.2); the function is there all the same.
+#if !__HAVE_FLOAT128
+extern "C" int strfromf128(char *, size_t, const char *, __float128);
+#endif
 
 using namespace llvm;
 
@@ -15,25 +25,57 @@ namespace {
 // identical: checking this before formatting avoids string allocations on
 // unchanged values at merge points and loop headers.
 struct LastValue {
-  enum Kind : uint8_t { Unset, Unknown, Bool, Int64, UInt64, Wide } kind = Unset;
+  enum Kind : uint8_t { Unset, Unknown, Bool, Int64, UInt64, Wide, Float } kind = Unset;
   const void *termId = nullptr;
   bool isUnsigned = false;
   uint64_t val = 0;
-  std::string wide; // > 64-bit binary string, only when kind == Wide
+  std::string wide; // the bits, only when kind is Wide (binary) or Float (hex)
 };
 } // namespace
 
 static void writeGroupedBits(raw_ostream &os, const APInt &v) {
   unsigned w = v.getBitWidth();
-  char buf[72]; // at most 64 bits + 7 spaces
+  char buf[144]; // at most 128 bits + 15 spaces
   size_t len = 0;
-  uint64_t raw = v.getZExtValue();
   for (unsigned i = w; i-- > 0;) {
     if (len && (i + 1) % 8 == 0)
       buf[len++] = ' ';
-    buf[len++] = ((raw >> i) & 1) ? '1' : '0';
+    buf[len++] = v[i] ? '1' : '0';
   }
   WithColor(os, raw_ostream::BRIGHT_BLACK) << " // " << StringRef(buf, len);
+}
+
+// A half, float, double, x86 long double or fp128 as ESBMC prints a float,
+// as a C constant: %.6e with the exponent unpadded, a suffix (f for a float,
+// L for a long double, Q for an fp128 as GCC and clang read __float128, none
+// for a half), +INFINITY, -NAN and so on. Every format converts exactly to
+// binary128, which glibc's strfromf128 rounds exactly (APFloat's toString
+// truncates before it rounds to the digits asked for and gets the last digit
+// wrong now and then).
+static void writeFloat(raw_ostream &os, const APInt &v) {
+  unsigned w = v.getBitWidth();
+  APFloat f(w == 16   ? APFloat::IEEEhalf()
+            : w == 32 ? APFloat::IEEEsingle()
+            : w == 64 ? APFloat::IEEEdouble()
+            : w == 80 ? APFloat::x87DoubleExtended()
+                      : APFloat::IEEEquad(),
+            v);
+  const char *sign = f.isNegative() ? "-" : "+";
+  if (f.isInfinity() || f.isNaN()) {
+    os << sign << (f.isNaN() ? "NAN" : "INFINITY");
+    return;
+  }
+  bool lost;
+  f.convert(APFloat::IEEEquad(), APFloat::rmNearestTiesToEven, &lost);
+  APInt bits = f.bitcastToAPInt();
+  __float128 q;
+  std::memcpy(&q, bits.getRawData(), sizeof q);
+  char buf[48];
+  strfromf128(buf, sizeof buf, "%.6e", q);
+  auto [digits, exponent] = StringRef(buf).split('e');
+  int e = std::atoi(exponent.data());
+  os << digits << 'e' << (e < 0 ? '-' : '+') << std::abs(e)
+     << (w == 32 ? "f" : w == 80 ? "L" : w == 128 ? "Q" : "");
 }
 
 void printCounterexample(solver::Model &model, const walker::Trace &trace,
@@ -120,6 +162,11 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     } else if (step.value.isBool()) {
       kind = LastValue::Bool;
       val = v->isOne();
+    } else if (step.isFloat && (v->getBitWidth() == 16 || v->getBitWidth() == 32 ||
+                                v->getBitWidth() == 64 || v->getBitWidth() == 80 ||
+                                v->getBitWidth() == 128)) {
+      kind = LastValue::Float;
+      wideBits = toString(*v, 16, false);
     } else if (v->getBitWidth() > 64) {
       kind = LastValue::Wide;
       wideBits.reserve(v->getBitWidth());
@@ -135,7 +182,8 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     }
 
     bool same = prev.kind == kind &&
-                (kind == LastValue::Wide ? prev.wide == wideBits : prev.val == val);
+                (kind == LastValue::Wide || kind == LastValue::Float ? prev.wide == wideBits
+                                                                     : prev.val == val);
     if (same) {
       prev.termId = step.value.id();
       prev.isUnsigned = isUnsigned;
@@ -145,7 +193,7 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     prev.termId = step.value.id();
     prev.isUnsigned = isUnsigned;
     prev.val = val;
-    if (kind == LastValue::Wide)
+    if (kind == LastValue::Wide || kind == LastValue::Float)
       prev.wide = std::move(wideBits);
     else
       prev.wide.clear();
@@ -159,6 +207,12 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
       break;
     case LastValue::Bool:
       os << text << " = " << (val ? "true;" : "false;");
+      break;
+    case LastValue::Float:
+      os << text << " = ";
+      writeFloat(os, *v);
+      os << ";";
+      writeGroupedBits(os, *v);
       break;
     case LastValue::Wide:
       os << text << " = 0b" << prev.wide;

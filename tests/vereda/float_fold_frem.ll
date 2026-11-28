@@ -1,7 +1,7 @@
 ; frem is C's fmod, exact and truncating, unlike SMT's fp.rem: on constants
 ; it folds with APFloat, keeping the dividend's sign (-4 rem 2 is -0) and
-; subnormals; on other values it stays unsupported. The operands are loaded
-; from globals so that InstCombine leaves the frem to Vereda.
+; subnormals (tests/vereda/fmod_*.c cover other values). The operands are
+; loaded from globals so that InstCombine leaves the frem to Vereda.
 ; EXPECT: ^VERIFICATION SUCCESSFUL$
 @x = global [6 x double] [double 5.5, double -5.5, double -4.0, double 1.0e308, double 0x0000000000000001, double 0.1]
 @y = global [6 x double] [double 2.0, double 2.0, double 2.0, double 3.0, double 1.0, double 0.03]
