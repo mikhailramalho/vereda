@@ -24,6 +24,7 @@
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Intrinsics.h>
 #include <algorithm>
@@ -1547,6 +1548,13 @@ private:
     auto tag = [&] { return name.str() + "@" + ir::location(c).str(); };
 
     if (callee->isIntrinsic()) {
+      // A constrained operation with dynamic rounding rounds as fesetround
+      // last set (models/fenv.c), or to nearest where nothing calls it.
+      if (auto *op = dyn_cast<ConstrainedFPIntrinsic>(&c);
+          op && op->getRoundingMode() == RoundingMode::Dynamic) {
+        const GlobalVariable *g = c.getModule()->getNamedGlobal("__vereda_rounding");
+        enc.setRounding(g ? mem.load(st, mem.global(g), g->getValueType()) : Term());
+      }
       if (enc.intrinsic(c) || memoryFunction(c, name, guard, st))
         return guard;
       if (name.starts_with("llvm.lifetime") || name.starts_with("llvm.dbg") ||

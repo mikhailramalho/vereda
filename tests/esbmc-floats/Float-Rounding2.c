@@ -38,6 +38,3 @@ int main()
 #endif
 // Imported from ESBMC regression/floats/Float-Rounding2
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// Vereda: unmet EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict FAILED
