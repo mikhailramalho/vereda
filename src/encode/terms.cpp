@@ -1343,8 +1343,10 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
   std::function<void(const Ref &, const Bounds &, Bounds)> update =
       [&](const Ref &e, const Bounds &was, Bounds b) {
     unsigned w = e.width();
+    auto excluded = [&](uint64_t v) { return llvm::is_contained(b.excluded, v); };
     // Each order bounds the other on one side of the sign bit; twice
-    // carries a bound across both ways.
+    // carries a bound across both ways. An end on an excluded value moves
+    // past it, and past the next if that is excluded too.
     for (int i = 0; i < 2; ++i) {
       if (b.ulo > b.uhi || b.slo > b.shi)
         return;
@@ -1352,7 +1354,21 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         b.slo = std::max(b.slo, toSigned(b.ulo, w)), b.shi = std::min(b.shi, toSigned(b.uhi, w));
       if ((b.slo < 0) == (b.shi < 0))
         b.ulo = std::max(b.ulo, toUnsigned(b.slo, w)), b.uhi = std::min(b.uhi, toUnsigned(b.shi, w));
+      while (b.ulo < b.uhi && excluded(b.ulo))
+        ++b.ulo;
+      while (b.ulo < b.uhi && excluded(b.uhi))
+        --b.uhi;
+      while (b.slo < b.shi && excluded(toUnsigned(b.slo, w)))
+        ++b.slo;
+      while (b.slo < b.shi && excluded(toUnsigned(b.shi, w)))
+        --b.shi;
     }
+    // Only values strictly inside the bounds stay excluded, at most MaxExcluded.
+    llvm::erase_if(b.excluded, [&](uint64_t v) {
+      return v <= b.ulo || b.uhi <= v || toSigned(v, w) <= b.slo || b.shi <= toSigned(v, w);
+    });
+    if (b.excluded.size() > MaxExcluded)
+      b.excluded.resize(MaxExcluded);
     if (b.ulo > b.uhi || b.slo > b.shi || b == was || constant(e))
       return;
     set(e, b);
@@ -1394,37 +1410,13 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         update(n.b, bb, both);
         return;
       }
-      // x != c, where c is an end of x's bounds, moves that end off c,
-      // and past the excluded values it lands on, which are dropped;
-      // inside them, c is excluded.
+      // x != c excludes c; update moves an end that is c off it, and keeps
+      // c only when it is inside the bounds.
       auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
         if (c.ulo != c.uhi || c.slo != c.shi)
           return;
         Bounds nb = b;
-        auto excluded = [&](uint64_t v) { return llvm::is_contained(nb.excluded, v); };
-        if (b.ulo != b.uhi && b.ulo == c.ulo) {
-          ++nb.ulo;
-          while (nb.ulo < nb.uhi && excluded(nb.ulo))
-            ++nb.ulo;
-        } else if (b.ulo != b.uhi && b.uhi == c.ulo) {
-          --nb.uhi;
-          while (nb.ulo < nb.uhi && excluded(nb.uhi))
-            --nb.uhi;
-        }
-        if (b.slo != b.shi && b.slo == c.slo) {
-          ++nb.slo;
-          while (nb.slo < nb.shi && excluded(toUnsigned(nb.slo, w)))
-            ++nb.slo;
-        } else if (b.slo != b.shi && b.shi == c.slo) {
-          --nb.shi;
-          while (nb.slo < nb.shi && excluded(toUnsigned(nb.shi, w)))
-            --nb.shi;
-        }
-        auto inside = [&](uint64_t v) {
-          return nb.ulo < v && v < nb.uhi && nb.slo < toSigned(v, w) && toSigned(v, w) < nb.shi;
-        };
-        llvm::erase_if(nb.excluded, [&](uint64_t v) { return !inside(v); });
-        if (inside(c.ulo) && !excluded(c.ulo) && nb.excluded.size() < MaxExcluded)
+        if (!llvm::is_contained(nb.excluded, c.ulo))
           nb.excluded.push_back(c.ulo);
         update(x, b, nb);
       };
