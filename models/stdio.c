@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/uio.h>
+#include <wchar.h>
 
 int __VERIFIER_nondet_int(void);
 long __VERIFIER_nondet_long(void);
@@ -140,6 +141,28 @@ FILE *open_memstream(char **ptr, size_t *size) {
   *size = __VERIFIER_nondet_ulong();
   s->_IO_buf_base = b;
   s->_IO_buf_end = (char *)size;
+  return s;
+}
+
+// open_wmemstream (POSIX): the same with a buffer of wide characters, which
+// *size counts.
+FILE *open_wmemstream(wchar_t **ptr, size_t *size) {
+  return open_memstream((char **)ptr, size);
+}
+
+// tempnam (POSIX): a new object holding a file name of len characters and a
+// NUL, as glibc allocates it, or null where no name can be made. The
+// characters are not modelled, and errno may change at any call (POSIX 2.3).
+char *tempnam(const char *dir, const char *pfx) {
+  errno = __VERIFIER_nondet_int();
+  size_t len = __VERIFIER_nondet_ulong();
+  if (!len || len >= FILENAME_MAX)
+    return NULL;
+  char *s = malloc(len + 1);
+  if (!s)
+    return NULL;
+  __vereda_havoc(s);
+  s[len] = 0;
   return s;
 }
 
