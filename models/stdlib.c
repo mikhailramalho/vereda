@@ -1,8 +1,11 @@
 // Models of <stdlib.h> functions, written from the C standard (C17 7.22),
 // and of POSIX and glibc functions that allocate their result.
+#include <dirent.h>
 #include <errno.h>
+#include <glob.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdlib.h>
 
 void *malloc(size_t);
@@ -87,6 +90,157 @@ char *getcwd(char *buf, size_t size) {
 // working directory, which gives the same allocation.
 char *canonicalize_file_name(const char *path) { return realpath(path, NULL); }
 char *get_current_dir_name(void) { return getcwd(NULL, 0); }
+
+// scandir (POSIX): reads n entries of dir, each into a new object, keeps
+// those filter accepts (all with a null filter) in a new array stored in
+// *namelist, sorted with compar where given, and frees the others; -1
+// where dir cannot be read or memory runs out, everything freed, as glibc
+// does. The entries' contents are not modelled.
+int scandir(const char *dir, struct dirent ***namelist,
+            int (*filter)(const struct dirent *),
+            int (*compar)(const struct dirent **, const struct dirent **)) {
+  errno = __VERIFIER_nondet_int();
+  int n = __VERIFIER_nondet_int();
+  if (n < 0)
+    return -1;
+  struct dirent **v = NULL;
+  if (n && !(v = calloc(n, sizeof *v)))
+    return -1;
+  int k = 0;
+  for (int i = 0; i < n; ++i) {
+    struct dirent *d = malloc(sizeof *d);
+    if (!d) {
+      while (k)
+        free(v[--k]);
+      free(v);
+      return -1;
+    }
+    __vereda_havoc(d);
+    if (!filter || filter(d))
+      v[k++] = d;
+    else
+      free(d);
+  }
+  if (compar)
+    qsort(v, k, sizeof *v, (int (*)(const void *, const void *))compar);
+  *namelist = v;
+  return k;
+}
+
+// glob (POSIX): adds n names matching pattern, each in a new object, to
+// gl_pathv after gl_offs null pointers (GLOB_DOOFFS) and, with GLOB_APPEND,
+// the names of earlier calls, and ends it with a null pointer. It fails
+// with GLOB_NOSPACE, with GLOB_ABORTED where a directory cannot be read and
+// errfunc returns nonzero or GLOB_ERR is set, and with GLOB_NOMATCH where
+// nothing matches, unless GLOB_NOCHECK makes the pattern the one name; the
+// names added before a failure stay, as POSIX allows. The names are not
+// modelled. globfree frees what glob allocated, as glibc's does.
+int glob(const char *pattern, int flags, int (*errfunc)(const char *, int), glob_t *g) {
+  if (!(flags & GLOB_DOOFFS))
+    g->gl_offs = 0;
+  if (!(flags & GLOB_APPEND)) {
+    g->gl_pathc = 0;
+    g->gl_pathv = NULL;
+  }
+  size_t n = __VERIFIER_nondet_ulong();
+  int r = 0;
+  if (__VERIFIER_nondet_int() &&
+      ((errfunc && errfunc(pattern, __VERIFIER_nondet_int())) || (flags & GLOB_ERR)))
+    r = GLOB_ABORTED;
+  else if (!n && (flags & GLOB_NOCHECK))
+    n = 1;
+  else if (!n)
+    r = GLOB_NOMATCH;
+  if (!n && (g->gl_pathv || !(flags & GLOB_DOOFFS)))
+    return r;
+  size_t old = g->gl_offs + g->gl_pathc, max = SIZE_MAX / sizeof(char *);
+  if (old >= max || n >= max - old)
+    return GLOB_NOSPACE;
+  char **v = g->gl_pathv ? realloc(g->gl_pathv, (old + n + 1) * sizeof *v)
+                         : calloc(old + n + 1, sizeof *v);
+  if (!v)
+    return GLOB_NOSPACE;
+  g->gl_pathv = v;
+  v[old] = NULL;
+  for (size_t i = 0; i < n; ++i) {
+    size_t len = __VERIFIER_nondet_ulong();
+    __VERIFIER_assume(len < PATH_MAX);
+    char *s = malloc(len + 1);
+    if (!s)
+      return GLOB_NOSPACE;
+    __vereda_havoc(s);
+    s[len] = 0;
+    v[old + i] = s;
+    v[old + i + 1] = NULL;
+    ++g->gl_pathc;
+  }
+  return r;
+}
+
+void globfree(glob_t *g) {
+  if (!g->gl_pathv)
+    return;
+  for (size_t i = 0; i < g->gl_pathc; ++i)
+    free(g->gl_pathv[g->gl_offs + i]);
+  free(g->gl_pathv);
+  g->gl_pathv = NULL;
+}
+
+// getaddrinfo (POSIX): a list of one or more addresses in *res, each in a
+// new object that holds its socket address too, the first with a canonical
+// name in an object of its own under AI_CANONNAME, as glibc allocates them
+// for freeaddrinfo; or an EAI_ code (negative in glibc), EAI_NONAME where
+// node and service are both null and EAI_BADFLAGS for AI_CANONNAME without
+// a node. The fields are not modelled.
+int getaddrinfo(const char *node, const char *service, const struct addrinfo *hints,
+                struct addrinfo **res) {
+  if (!node && !service)
+    return EAI_NONAME;
+  int canon = hints && (hints->ai_flags & AI_CANONNAME);
+  if (canon && !node)
+    return EAI_BADFLAGS;
+  int e = __VERIFIER_nondet_int();
+  if (e) {
+    __VERIFIER_assume(e < 0);
+    return e;
+  }
+  struct addrinfo *head = NULL, **p = &head;
+  do {
+    struct addrinfo *a = malloc(sizeof *a + sizeof(struct sockaddr_storage));
+    if (!a) {
+      freeaddrinfo(head);
+      return EAI_MEMORY;
+    }
+    __vereda_havoc(a);
+    __VERIFIER_assume(a->ai_addrlen <= sizeof(struct sockaddr_storage));
+    a->ai_addr = (struct sockaddr *)(a + 1);
+    a->ai_canonname = NULL;
+    a->ai_next = NULL;
+    *p = a;
+    p = &a->ai_next;
+  } while (__VERIFIER_nondet_int());
+  if (canon) {
+    size_t len = __VERIFIER_nondet_ulong();
+    __VERIFIER_assume(len < NI_MAXHOST);
+    if (!(head->ai_canonname = malloc(len + 1))) {
+      freeaddrinfo(head);
+      return EAI_MEMORY;
+    }
+    __vereda_havoc(head->ai_canonname);
+    head->ai_canonname[len] = 0;
+  }
+  *res = head;
+  return 0;
+}
+
+void freeaddrinfo(struct addrinfo *ai) {
+  while (ai) {
+    struct addrinfo *p = ai;
+    ai = ai->ai_next;
+    free(p->ai_canonname);
+    free(p);
+  }
+}
 
 // Any value from 0 to RAND_MAX (C17 7.22.2.1), so srand needs no model.
 int rand(void) {
