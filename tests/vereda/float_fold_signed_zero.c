@@ -14,7 +14,7 @@ int main(void) {
   __VERIFIER_assert(!signbit(pz) && signbit(nz) && signbit(tiny));
   __VERIFIER_assert(copysign(in[1], nz) == -1.0 && copysign(in[1], pz) == 1.0);
   __VERIFIER_assert(signbit(nz + nz) && !signbit(nz + pz) && !signbit(pz - pz));
-  __VERIFIER_assert(signbit(fmin(nz, pz)) && !signbit(fmin(pz, nz))); // the first of equals
+  __VERIFIER_assert(fmin(nz, pz) == 0 && signbit(fmin(nz, nz))); // nsz: either of two zeros
   __VERIFIER_assert(signbit((float)nz) && signbit(sqrt(nz)) && !signbit(fabs(nz)));
   double s = 0;
   for (int i = 0; i < 2; ++i) // a join of -0 and +0 is neither
