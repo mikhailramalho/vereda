@@ -3,7 +3,8 @@
 // chain that uses each term twice 30 deep is settled in linear time, under
 // a path's bounds a sum decides without leaving those bounds behind, and
 // sums 40 deep, past any fixed depth of 32, are bounded on every path when
-// first queried at their top and under a path's bounds.
+// first queried at their top and under a path's bounds, signed and unsigned,
+// and a level inside such a sum keeps its range after a query at the top.
 #undef NDEBUG
 #include "encode/terms.h"
 #include "solver/solver.h"
@@ -80,5 +81,35 @@ int main() {
   assert(t.decide(t.slt(v, t.bv(401, 32)), knownV) == 1);
   assert(t.decide(t.slt(v, t.bv(400, 32)), knownV) == -1);
   assert(t.decide(t.slt(v, t.bv(401, 32)), {}) == -1);
+
+  // 40 bytes zero-extended, summed with no query in between, sum to at most
+  // 10200; asked after the top, the sum of the first 20 is at most 5100.
+  Term up = t.zext(t.symbol("e0", byte), 24), half;
+  for (int i = 1; i < 40; ++i) {
+    up = t.add(up, t.zext(t.symbol("e" + std::to_string(i), byte), 24));
+    if (i == 19)
+      half = up;
+  }
+  assert(t.isTrue(t.ult(up, t.bv(10201, 32))));
+  assert(!t.isTrue(t.ult(up, t.bv(10200, 32))));
+  assert(t.isTrue(t.ult(half, t.bv(5101, 32))));
+  assert(!t.isTrue(t.ult(half, t.bv(5100, 32))));
+
+  // Under bounds [0, 10] for each of 40 words, their sum is below 401.
+  Term u = t.symbol("u0", word);
+  std::vector<Term> us{u};
+  for (int i = 1; i < 40; ++i) {
+    us.push_back(t.symbol("u" + std::to_string(i), word));
+    u = t.add(u, us.back());
+  }
+  auto knownU = [&](const Term &x) -> std::optional<Terms::Bounds> {
+    for (const Term &y : us)
+      if (x == y)
+        return Terms::Bounds{0, 10, 0, 10};
+    return std::nullopt;
+  };
+  assert(t.decide(t.ult(u, t.bv(401, 32)), knownU) == 1);
+  assert(t.decide(t.ult(u, t.bv(400, 32)), knownU) == -1);
+  assert(t.decide(t.ult(u, t.bv(401, 32)), {}) == -1);
   return 0;
 }

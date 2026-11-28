@@ -235,7 +235,7 @@ public:
   std::optional<Range> range(const Ref &e, Known known = {}) {
     if (known)
       clearScratch();
-    return range(e, known, 0);
+    return rangeOf(e, known);
   }
   // Whether cmp, an =, <, <= (unsigned or signed), an overflow test or the
   // negation of one, holds for every value the ranges of its sides take
@@ -387,10 +387,13 @@ private:
   // Per array and constant index, what select gave: a read walks up to 256
   // stores, and a load of an element reads it once per byte.
   llvm::DenseMap<std::pair<const void *, const void *>, Ref> selects;
-  // range, with each term also narrowed to the bounds known gives it. Such
-  // a range holds only on known's path, so it is not kept, and nothing
+  // rangeOf: range, with each term also narrowed to the bounds known gives it.
+  // Such a range holds only on known's path, so it is not kept, and nothing
   // folds by it but decide.
-  std::optional<Range> range(const Ref &e, Known known, unsigned depth);
+  std::optional<Range> rangeOf(const Ref &e, Known known);
+  // The shape of e, a node, after those of the operands shape reads,
+  // each cached in ranges, or scratch under known, as it is found.
+  std::optional<Range> shapes(const Ref &e, Known known);
   // Whether a < b, or a <= b, holds for every value range (or srange, if
   // sign) gives them (1), for none (0), or neither (-1).
   int order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known known = {});
@@ -400,7 +403,7 @@ private:
   // execution takes) or e is wider than 64 bits.
   std::optional<std::pair<int64_t, int64_t>> srange(const Ref &e, Known known);
   // The range of n, a term of width bits, from its operands' (range's work).
-  std::optional<Range> shape(const Node &n, unsigned width, Known known, unsigned depth);
+  std::optional<Range> shape(const Node &n, unsigned width, Known known);
   // range's results for one query under known, cleared per query (a
   // DenseMap shrinks when it clears, so a large query leaves no cost).
   llvm::DenseMap<const void *, std::optional<Range>> scratch;

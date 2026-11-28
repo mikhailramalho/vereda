@@ -1037,7 +1037,7 @@ static uint64_t toUnsigned(int64_t v, unsigned w) { return uint64_t(v) & umax(w)
 // the unsigned and the signed order agree.
 static bool oneSide(uint64_t lo, uint64_t hi, unsigned w) { return lo >> (w - 1) == hi >> (w - 1); }
 
-std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned depth) {
+std::optional<Terms::Range> Terms::rangeOf(const Ref &e, Known known) {
   if (!e.isBV() || e.width() > 64)
     return std::nullopt;
   if (const APInt *c = constant(e))
@@ -1045,14 +1045,8 @@ std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned dep
   std::optional<Range> r;
   if (auto b = bounds.find(e.id()); b != bounds.end())
     r = Range{0, b->second.second - 1, 1};
-  // A deep term (a long ite chain) is left unknown.
-  else if (const Node *n = node(e); n && depth <= 32) {
-    auto &cache = known ? scratch : ranges;
-    if (auto it = cache.find(e.id()); it != cache.end())
-      r = it->second;
-    else
-      cache.try_emplace(e.id(), r = shape(*n, e.width(), known, depth));
-  }
+  else if (node(e))
+    r = shapes(e, known);
   std::optional<Bounds> f = known ? known(e) : std::nullopt;
   if (!f)
     return r;
@@ -1071,8 +1065,34 @@ std::optional<Terms::Range> Terms::range(const Ref &e, Known known, unsigned dep
   return Range{uint64_t(lo), uint64_t(hi), lo == hi ? 0 : r->stride};
 }
 
-std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known known,
-                                         unsigned depth) {
+// Iterative, as a sum can be deeper than the stack.
+std::optional<Terms::Range> Terms::shapes(const Ref &e, Known known) {
+  auto &cache = known ? scratch : ranges;
+  llvm::SmallVector<Ref, 32> stack{e};
+  while (!stack.empty()) {
+    Ref x = stack.back();
+    if (cache.count(x.id())) {
+      stack.pop_back();
+      continue;
+    }
+    const Node *n = node(x);
+    bool two = n->op == Op::Add || n->op == Op::Sub || n->op == Op::Mul || n->op == Op::Concat;
+    bool one = two || n->op == Op::Shl || n->op == Op::LShr || n->op == Op::Extract ||
+               n->op == Op::ZExt || n->op == Op::SExt;
+    size_t before = stack.size();
+    for (const Ref &k : {one ? n->a : Ref(), two ? n->b : Ref()})
+      if (k && k.isBV() && k.width() <= 64 && node(k) && !bounds.count(k.id()) &&
+          !cache.count(k.id()))
+        stack.push_back(k);
+    if (stack.size() != before)
+      continue;
+    stack.pop_back();
+    cache.try_emplace(x.id(), shape(*n, x.width(), known));
+  }
+  return cache.lookup(e.id());
+}
+
+std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known known) {
   using U = unsigned __int128;
   U max = (U(1) << width) - 1;
   // lo + stride * i up to hi, with hi moved down onto that lattice, so
@@ -1083,7 +1103,7 @@ std::optional<Terms::Range> Terms::shape(const Node &n, unsigned width, Known kn
     hi = stride ? lo + (hi - lo) / stride * stride : lo;
     return Range{uint64_t(lo), uint64_t(hi), hi == lo ? 0 : uint64_t(stride)};
   };
-  auto get = [&](const Ref &x) { return range(x, known, depth + 1); };
+  auto get = [&](const Ref &x) { return rangeOf(x, known); };
   // x >> by, exact when the stride is a multiple of 2^by.
   auto right = [&](const Range &v, uint64_t by) {
     uint64_t s = by >= 64 || v.stride % (uint64_t(1) << by) ? 1 : v.stride >> by;
@@ -1188,7 +1208,7 @@ std::optional<std::pair<int64_t, int64_t>> Terms::srange(const Ref &e, Known kno
       lo = std::max(lo, l);
       hi = std::min(hi, h);
     };
-    if (std::optional<Range> r = range(x, known, 0); r && oneSide(r->lo, r->hi, w))
+    if (std::optional<Range> r = rangeOf(x, known); r && oneSide(r->lo, r->hi, w))
       meet(toSigned(r->lo, w), toSigned(r->hi, w));
     if (std::optional<Bounds> f = known ? known(x) : std::nullopt)
       meet(f->slo, f->shi);
@@ -1221,7 +1241,7 @@ int Terms::order(const Ref &a, const Ref &b, bool orEqual, bool sign, Known know
     auto x = srange(a, known), y = x ? srange(b, known) : std::nullopt;
     return x && y ? settle(x->first, x->second, y->first, y->second) : -1;
   }
-  std::optional<Range> x = range(a, known, 0), y = x ? range(b, known, 0) : std::nullopt;
+  std::optional<Range> x = rangeOf(a, known), y = x ? rangeOf(b, known) : std::nullopt;
   return x && y ? settle(x->lo, x->hi, y->lo, y->hi) : -1;
 }
 
@@ -1246,7 +1266,7 @@ int Terms::decided(const Ref &cmp, Known known) {
     return order(n->a, n->b, n->op == Op::Ule || n->op == Op::Sle,
                  n->op == Op::Slt || n->op == Op::Sle, known);
   case Op::Eq: { // unequal when the ranges, or the signed ones, are apart
-    std::optional<Range> x = range(n->a, known, 0), y = range(n->b, known, 0);
+    std::optional<Range> x = rangeOf(n->a, known), y = rangeOf(n->b, known);
     if (x && y && (x->hi < y->lo || y->hi < x->lo))
       return 0;
     if (x && y && x->lo == x->hi && y->lo == y->hi) // one value each, the same
@@ -1260,7 +1280,7 @@ int Terms::decided(const Ref &cmp, Known known) {
   case Op::USubO:
   case Op::UMulO: { // no overflow when the result's extremes fit
     using U = unsigned __int128;
-    std::optional<Range> x = range(n->a, known, 0), y = x ? range(n->b, known, 0) : std::nullopt;
+    std::optional<Range> x = rangeOf(n->a, known), y = x ? rangeOf(n->b, known) : std::nullopt;
     if (!x || !y)
       return -1;
     if (n->op == Op::USubO)
@@ -1287,7 +1307,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
     unsigned w = e.width();
     Bounds b{0, umax(w), smin(w), smax(w)};
     clearScratch(); // set may have moved a bound since the last query
-    if (std::optional<Range> r = range(e, known, 0))
+    if (std::optional<Range> r = rangeOf(e, known))
       b.ulo = r->lo, b.uhi = r->hi;
     if (auto s = srange(e, known))
       b.slo = s->first, b.shi = s->second;
