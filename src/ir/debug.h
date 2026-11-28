@@ -79,7 +79,11 @@ inline SourceLoc location(const llvm::Instruction &inst) {
   return location(inst.getDebugLoc(), inst.getFunction()->getName());
 }
 
-// A #dbg_value record that assigns one whole value to a source variable.
+inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t off, uint64_t size,
+                                             bool &isUnsigned);
+
+// A #dbg_value record that assigns one whole value to a source variable, or
+// to the member of one that a fragment covers (name is then its path).
 struct DbgAssign {
   std::string name;
   const llvm::Value *value;
@@ -89,8 +93,13 @@ struct DbgAssign {
 
 inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
   auto *dvr = llvm::dyn_cast<llvm::DbgVariableRecord>(&rec);
-  if (!dvr || !dvr->isDbgValue() || dvr->hasArgList() || dvr->getNumVariableLocationOps() != 1 ||
-      dvr->getExpression()->getNumElements() != 0)
+  if (!dvr || !dvr->isDbgValue() || dvr->hasArgList() || dvr->getNumVariableLocationOps() != 1)
+    return std::nullopt;
+  // Nothing but a fragment, as SROA leaves for each member of an aggregate
+  // it splits (#311).
+  std::optional<llvm::DIExpression::FragmentInfo> fragment =
+      dvr->getExpression()->getFragmentInfo();
+  if (dvr->getExpression()->getNumElements() != (fragment ? 3 : 0))
     return std::nullopt;
   const llvm::Value *v = dvr->getVariableLocationOp(0);
   if (!v)
@@ -105,10 +114,22 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
       arg->getParent() == dvr->getFunction())
     return std::nullopt;
   bool isUnsigned = false;
-  if (auto *basic = llvm::dyn_cast_or_null<llvm::DIBasicType>(dvr->getVariable()->getType()))
+  std::string name = dvr->getVariable()->getName().str();
+  if (fragment) { // the member the fragment covers, as a store to it shows
+    if (fragment->OffsetInBits % 8 || fragment->SizeInBits % 8)
+      return std::nullopt;
+    std::optional<std::string> path = memberPath(dvr->getVariable()->getType(),
+                                                 fragment->OffsetInBits / 8,
+                                                 fragment->SizeInBits / 8, isUnsigned);
+    if (!path)
+      return std::nullopt;
+    name += *path;
+  } else if (auto *basic =
+                 llvm::dyn_cast_or_null<llvm::DIBasicType>(dvr->getVariable()->getType())) {
     isUnsigned = basic->getEncoding() == llvm::dwarf::DW_ATE_unsigned ||
                  basic->getEncoding() == llvm::dwarf::DW_ATE_unsigned_char ||
                  basic->getEncoding() == llvm::dwarf::DW_ATE_boolean;
+  }
   // mem2reg leaves many records at line 0; the declaration is the next best place.
   const llvm::DILocalVariable *var = dvr->getVariable();
   llvm::StringRef function = dvr->getFunction()->getName();
@@ -116,7 +137,7 @@ inline std::optional<DbgAssign> dbgAssign(const llvm::DbgRecord &rec) {
                       ? location(dvr->getDebugLoc(), function)
                       : SourceLoc{fileName(var->getFile(), var->getScope()), var->getLine(), 0,
                                   function.str()};
-  return DbgAssign{var->getName().str(), v, isUnsigned, std::move(loc)};
+  return DbgAssign{std::move(name), v, isUnsigned, std::move(loc)};
 }
 
 // A conditional branch clang made for the condition of an if, while or for
