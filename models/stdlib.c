@@ -125,7 +125,7 @@ void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
 }
 
 // C17 7.22.5.2, as an insertion sort. Elements are swapped a byte at a
-// time: the walker cannot copy a symbolic size with memcpy.
+// time, which needs no buffer of an element's size.
 void qsort(void *base, size_t nmemb, size_t size,
            int (*compar)(const void *, const void *)) {
   char *b = base;

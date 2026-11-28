@@ -57,10 +57,9 @@ FILE *freopen64(const char *path, const char *mode, FILE *s) {
 // grows when it holds no more than len bytes. The characters are not
 // modelled: the object gets nondet contents before it grows, as glibc fills
 // it first. It grows as models/stdlib.c's realloc does, into a new object
-// with the old one freed, but without the copy: the contents are nondet
-// either way, and a copy of symbolic size would be unsupported. A read that
-// finds the end of the stream or an error first returns -1. errno may change
-// at any call (POSIX 2.3).
+// with the old one freed, but without the copy, since the contents are
+// nondet either way. A read that finds the end of the stream or an error
+// first returns -1. errno may change at any call (POSIX 2.3).
 ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
   errno = __VERIFIER_nondet_int();
   if (!*lineptr || !*n) {
