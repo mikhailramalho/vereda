@@ -191,6 +191,23 @@ void Terms::equalities(const Ref &cond, bool holds,
   });
 }
 
+bool Terms::within(const Ref &e, unsigned cap) const {
+  llvm::SmallVector<Ref, 16> work{e};
+  llvm::DenseSet<const void *> seen;
+  while (!work.empty()) {
+    Ref x = work.pop_back_val();
+    if (!seen.insert(x.id()).second)
+      continue;
+    if (seen.size() > cap)
+      return false;
+    if (const Node *n = node(x))
+      for (const Ref &op : {n->a, n->b, n->c})
+        if (op)
+          work.push_back(op);
+  }
+  return true;
+}
+
 void Terms::literals(const Ref &cond, bool holds,
                      llvm::function_ref<void(const Node &, bool)> f) const {
   // Breadth first, each term with each sign once: a subterm shared by

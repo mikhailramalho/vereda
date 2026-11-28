@@ -1779,60 +1779,74 @@ void Memory::havocCall(State &st, llvm::ArrayRef<Term> written,
   ps.insert(ps.end(), read.begin(), read.end());
   // For each pointer, the objects it may point into, and each object
   // reached through stored pointers from where it points, in st as the
-  // call finds it, with the objects of the pointer it is reached from.
+  // call finds it, with where the call reaches it: where the pointer
+  // points into a root it is reached from and an object reached holds a
+  // pointer to it (#505).
   std::vector<std::vector<uint64_t>> roots(ps.size());
-  std::vector<llvm::MapVector<uint64_t, std::vector<uint64_t>>> from(ps.size());
-  // The objects the call may hold a pointer to: those it gets a pointer
-  // into, exposed (it can store no other: the rest were passed where
-  // LLVM says nothing is captured), and those reached.
-  llvm::SetVector<uint64_t> held;
-  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
+  std::vector<llvm::MapVector<uint64_t, Term>> from(ps.size());
+  // The objects the call may hold a pointer to, with where: those it gets
+  // a pointer into, exposed (it can store no other: the rest were passed
+  // where LLVM says nothing is captured), and those reached.
+  llvm::MapVector<uint64_t, Term> held;
+  auto hold = [&](uint64_t x, const Term &where) {
+    auto [it, inserted] = held.insert({x, where});
+    if (!inserted)
+      it->second = t.lor(it->second, where);
+  };
+  llvm::DenseMap<uint64_t, llvm::DenseMap<uint64_t, Term>> to;
   if (reach)
     to = pointers(st);
   for (size_t i = 0; i < ps.size(); ++i) {
     if (t.isTrue(t.eq(ps[i], null())))
       continue;
     roots[i] = candidates(ps[i]);
+    llvm::MapVector<uint64_t, std::pair<Term, Term>> reached; // x: roots, edges
     for (uint64_t r : roots[i]) {
       if (r < objects.size() && objects[r].exposed)
-        held.insert(r);
+        hold(r, t.boolean(true));
+      Term root = t.eq(object(ps[i]), t.bv(r, ObjBits));
       llvm::SmallVector<uint64_t, 8> work{r};
       llvm::DenseSet<uint64_t> seen;
       while (!work.empty()) {
         auto it = to.find(work.pop_back_val());
         if (it == to.end())
           continue;
-        for (uint64_t x : it->second)
+        for (const auto &[x, cond] : it->second) {
+          auto [w, first] = reached.insert({x, {t.boolean(false), t.boolean(false)}});
+          w->second.second = t.lor(w->second.second, cond);
           if (seen.insert(x).second) {
-            from[i][x].push_back(r);
-            held.insert(x);
+            w->second.first = t.lor(w->second.first, root);
             work.push_back(x);
           }
+        }
       }
     }
+    for (const auto &[x, conds] : reached) {
+      Term in = t.land(roots[i].size() == 1 ? t.boolean(true) : conds.first, conds.second);
+      from[i].insert({x, in});
+      hold(x, in);
+    }
   }
-  // Every object written may then hold a pointer to any of them, so that a
-  // later call reaches them again.
+  // Every object written may then hold a pointer to any of them, where the
+  // call holds one, so that a later call reaches them again.
   Term prov = t.bv(IntProvenance, ObjBits);
   std::string id = std::to_string(fresh++);
-  for (uint64_t x : held)
-    prov = t.ite(t.symbol("havoc_provenance#" + id + "." + std::to_string(x), s.mkBoolSort()),
+  for (const auto &[x, where] : held)
+    prov = t.ite(t.land(where, t.symbol("havoc_provenance#" + id + "." + std::to_string(x),
+                                        s.mkBoolSort())),
                  t.bv(x, ObjBits), prov);
   for (size_t i = 0; i < ps.size(); ++i) {
     if (i < written.size())
       havocWith(st, ps[i], std::nullopt, prov, false);
-    for (const auto &[x, rs] : from[i]) {
+    for (const auto &[x, in] : from[i]) {
       if (objects[x].constant)
         continue;
-      if (rs.size() == roots[i].size()) {
+      if (t.isTrue(in)) {
         havocObject(st, x, prov);
         continue;
       }
       State a = st;
       havocObject(a, x, prov);
-      Term in = t.boolean(false);
-      for (uint64_t r : rs)
-        in = t.lor(in, t.eq(object(ps[i]), t.bv(r, ObjBits)));
       st = ite(in, a, st);
     }
   }
@@ -1918,8 +1932,8 @@ void Memory::havocObject(State &st, uint64_t o, Term prov) {
                            shift ? t.bv(IntProvenance, ObjBits) : t.constArray(index, prov)});
 }
 
-llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State &st) {
-  llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> to;
+llvm::DenseMap<uint64_t, llvm::DenseMap<uint64_t, Term>> Memory::pointers(const State &st) {
+  llvm::DenseMap<uint64_t, llvm::DenseMap<uint64_t, Term>> to;
   Term intProv = t.bv(IntProvenance, ObjBits);
   // A pointer read from memory may point to every exposed object, which
   // goes to an object once: each byte of a pointer copied may have a
@@ -1932,6 +1946,11 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
   // The objects a byte of provenance prov may point to, for each object in,
   // with each provenance looked up once.
   llvm::DenseMap<const void *, std::pair<std::vector<uint64_t>, bool>> targets;
+  auto edge = [&](uint64_t o, uint64_t x, const Term &cond) {
+    auto [it, inserted] = to[o].try_emplace(x, cond);
+    if (!inserted)
+      it->second = t.lor(it->second, cond);
+  };
   auto add = [&](llvm::ArrayRef<uint64_t> in, const Term &prov) {
     auto [it, inserted] = targets.try_emplace(prov.id());
     auto &[xs, read] = it->second;
@@ -1939,13 +1958,18 @@ llvm::DenseMap<uint64_t, llvm::DenseSet<uint64_t>> Memory::pointers(const State 
       for (uint64_t x : candidates(prov, false, &read))
         if (x && x < objects.size()) // not null, nor an integer's
           xs.push_back(x);
+    // Where a byte of prov points to x, while that stays small: a larger
+    // condition costs more to build and solve than the havoc it spares
+    // (#505).
+    bool small = t.within(prov, MaxReachCondition);
     for (uint64_t o : in) {
       if (auto owner = fieldOwners.find(o); owner != fieldOwners.end())
         o = owner->second;
-      if (!xs.empty())
-        to[o].insert(xs.begin(), xs.end());
+      for (uint64_t x : xs)
+        edge(o, x, small ? into(prov, x) : t.boolean(true));
       if (read && !exposed.empty() && holdsRead.insert(o).second)
-        to[o].insert(exposed.begin(), exposed.end());
+        for (uint64_t x : exposed)
+          edge(o, x, t.boolean(true));
     }
   };
   // A pointer's bytes share one provenance: add each once per object.
