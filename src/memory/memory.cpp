@@ -375,6 +375,15 @@ Term Memory::fromAddress(Term a, unsigned &budget,
       if (d >= 0)
         within = t.boolean(d);
     }
+    // An object smaller than its alignment stays in one block, including one past.
+    // Compare that block and its low bits instead of range-testing a full subtraction.
+    if (const APInt *size = t.constant(o.size);
+        size && o.align > 1 && llvm::isPowerOf2_64(o.align) && size->ult(o.align) &&
+        llvm::Log2_64(o.align) < ptrBits && !t.isTrue(within) && !t.isFalse(within)) {
+      unsigned low = llvm::Log2_64(o.align);
+      within = t.land(t.eq(t.extract(a, ptrBits - 1, low), t.extract(o.base, ptrBits - 1, low)),
+                      t.ule(t.extract(a, low - 1, 0), t.bv(size->getZExtValue(), low)));
+    }
     Term inside = t.land(o.exists, within);
     if (t.isTrue(inside) || (context && t.entails(context, inside))) {
       Term r = ptr(t.bv(id, ObjBits), x);
