@@ -1024,8 +1024,18 @@ private:
     // at a nondet index (survey 2026-11-23-array-loop-summaries).
     if (const APInt *n = t.constant(trips); !sum.store && n && n->ule(UnrolledChecks))
       return false;
-    Term k = t.symbol("loop_index#" + std::to_string(summaryCount),
-                            s.mkBVSort(trips.width()));
+    // With no store, no call (every check is one) and no exit but the
+    // header's, an iteration has nothing to walk: the loop is only its
+    // header's values after the last one.
+    bool walk = sum.store || l->getExitingBlock() != header ||
+                any_of(l->blocks(), [](BasicBlock *bb) {
+                  return any_of(*bb, [](Instruction &i) {
+                    return isa<CallBase>(i) && !isa<IntrinsicInst>(i);
+                  });
+                });
+    Term k = walk ? t.symbol("loop_index#" + std::to_string(summaryCount),
+                             s.mkBVSort(trips.width()))
+                  : Term();
     // The header's phis in iteration k and after the last one, and the
     // values the exit takes from the header.
     SmallVector<Term, 2> first;
@@ -1034,7 +1044,8 @@ private:
       return se.isSCEVable(v->getType()) ? evaluate(frame, fi, se.getSCEV(v), l, n) : Term();
     };
     for (PHINode &phi : header->phis()) {
-      first.push_back(at(&phi, k));
+      if (walk)
+        first.push_back(at(&phi, k));
       last.push_back({&phi, at(&phi, trips)});
     }
     for (PHINode &phi : sum.exit->phis())
@@ -1057,13 +1068,17 @@ private:
     memory::State st = merged(arrivals, guard);
     // The iteration's facts hold only in it, and the loop may not run.
     encode::Encoder::Facts facts = common(arrivals), inside = facts;
-    Term inRange = t.ult(k, trips), body = t.land(guard, inRange);
-    enc.learn(inRange, inside); // k < trips holds in the iteration
-    // Built after body, which keeps k < trips: every term with k counts only
-    // under body, or as an element the loop wrote, n < trips, once
-    // substitute puts n for k; there, terms fold as if it held.
-    if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
-      t.bound(k, n->getZExtValue());
+    Term body = t.boolean(false);
+    if (walk) {
+      Term inRange = t.ult(k, trips);
+      body = t.land(guard, inRange);
+      enc.learn(inRange, inside); // k < trips holds in the iteration
+      // Built after body, which keeps k < trips: every term with k counts
+      // only under body, or as an element the loop wrote, n < trips, once
+      // substitute puts n for k; there, terms fold as if it held.
+      if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
+        t.bound(k, n->getZExtValue());
+    }
     if (!t.isFalse(body)) {
       frame.arrivals[header].push_back({body, first, st, inside});
       summary = Summarising{l, k, sum.store, {}, 0};
