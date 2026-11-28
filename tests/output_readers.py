@@ -64,6 +64,8 @@ for esbmc, vereda in (
     assert import_esbmc.translate(esbmc, ".") == (vereda, [], []), esbmc
 assert import_esbmc.translate("--error-label ERROR --unwind 1", ".") == (
     ["--error-label", "ERROR", "--unwind", "1"], [], [])
+assert import_esbmc.translate("--unwindsetname c:@F@f#:0:11 --unwindset 3:11", ".") == (
+    ["--unwindsetname", "c:@F@f#:0:11"], [], ["--unwindset", "3:11"])
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 
@@ -231,7 +233,7 @@ for name in ("array_loop_summary_decrement", "array_loop_summary_decrement_fail"
         runs = [line.partition(":")[2].strip() for line in lines if line.startswith("// RUN:")]
         assert runs == [flags, (flags + " --no-summarize-array-loops").strip()], runs
 
-for flag in ('--unwindset f:0:3', '--unwindsetname loop:4', '--data-races-check', '--no-standard-check'):
+for flag in ('--unwindset f:0:3', '--data-races-check', '--no-standard-check'):
     lines = import_esbmc.header('suite/semantic', 'CORE', flag, [], '.', [])
     assert '// MODE: FUTURE' in lines, lines
     assert any(line.startswith('// Needs:') for line in lines), lines

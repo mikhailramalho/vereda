@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <new>
 #include <cerrno>
+#include <map>
 #include <numeric>
 #include <set>
 
@@ -55,6 +56,13 @@ static cl::opt<unsigned> unwind("unwind",
                                 cl::desc("Loop iterations and recursion depth (default: "
                                          "unroll until the next iteration is unreachable)"),
                                 cl::init(0));
+static cl::opt<std::string> unwindSetName(
+    "unwindsetname", cl::value_desc("name:idx:nr,..."),
+    cl::desc("Unwind loop idx (from 0 in each function, as the unwinding assertions number "
+             "them) of function name nr times instead of --unwind; name may be clang's USR "
+             "(c:@F@name#)"));
+// --unwindsetname's bounds by function and loop number.
+static std::map<std::pair<std::string, unsigned>, unsigned> loopBounds;
 static cl::opt<bool> noUnwindingAssertions(
     "no-unwinding-assertions", cl::desc("Assume the unwinding bound instead of checking it"));
 static cl::opt<bool> noSummarizeArrayLoops(
@@ -376,7 +384,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !noAssertions,
                                      multiProperty,
                                      checkUninit,
-                                     boundedLimit};
+                                     boundedLimit,
+                                     loopBounds};
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
                                                                checks, trace);
@@ -515,7 +524,8 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      !noAssertions,
                                                      multiProperty,
                                                      checkUninit,
-                                                     boundedLimit};
+                                                     boundedLimit,
+                                                     loopBounds};
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
                                                      freshState->trace)) {
@@ -623,6 +633,20 @@ static int run(int argc, char **argv) {
     errs() << "vereda: --ub-pointer-check=false conflicts with --property valid-free\n";
     return ErrorExit;
   }
+  SmallVector<StringRef, 4> sets;
+  StringRef(unwindSetName).split(sets, ',', -1, false);
+  for (StringRef set : sets) {
+    auto [rest, nr] = set.rsplit(':');
+    auto [name, idx] = rest.rsplit(':');
+    unsigned number, bound;
+    if (name.empty() || idx.getAsInteger(10, number) || nr.getAsInteger(10, bound)) {
+      errs() << "vereda: --unwindsetname: bad entry " << set << "\n";
+      return ErrorExit;
+    }
+    name = name.substr(name.rfind('@') + 1); // c:@F@name# or file.c@name
+    name.consume_back("#");
+    loopBounds[{name.str(), number}] = bound;
+  }
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {
     errs() << argv[0] << ": --dump-dir needs a --dump-* flag\n";
     return ErrorExit;
@@ -710,7 +734,7 @@ static int run(int argc, char **argv) {
     errs() << argv[0] << ": --dump-smt-only stops before the solver picks the bound; use --unwind\n";
     return ErrorExit;
   }
-  if (unwind || noUnwindingAssertions) {
+  if (unwind || noUnwindingAssertions || !loopBounds.empty()) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }

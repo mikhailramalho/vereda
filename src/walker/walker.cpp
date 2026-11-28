@@ -879,13 +879,15 @@ private:
     if (!start && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
+    auto set = opts.loopBounds.find({header->getParent()->getName().str(), number});
+    unsigned unwind = set != opts.loopBounds.end() ? set->second : opts.unwind;
     // When SCEV knows the loop takes its back edge a small constant number of
     // times, folding alone normally ends the unrolling; asking the solver on
     // each iteration up to that bound only wastes queries when the entry guard
     // is symbolic. Past the bound, unreachable() still runs in case folding
     // did not settle the exit condition.
     uint64_t knownBackedges = 0;
-    if (!opts.unwind)
+    if (!unwind)
       if (auto *n = dyn_cast<SCEVConstant>(
               loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
         if (n->getAPInt().ule(SmallConstantLoop))
@@ -907,7 +909,7 @@ private:
         entryGuard = anyGuard(it->second);
       if (i > 0) {
         Term reached = anyGuard(it->second);
-        if (opts.unwind && i >= opts.unwind) {
+        if (unwind && i >= unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
           bool checkpointable = canCheckpoint(reached);
           bool immediateCheckpoint = checkpointable && stack.size() == 1 &&
@@ -957,7 +959,7 @@ private:
         // cannot count them. Defer repeated queries on their unchanged guard.
         bool unchanged = i <= SmallConstantLoop && reached == entryGuard;
         bool withinBounded = maxBackedges && i <= maxBackedges;
-        if (!opts.unwind && i > knownBackedges && !unchanged && !withinBounded &&
+        if (!unwind && i > knownBackedges && !unchanged && !withinBounded &&
             unreachable(reached)) {
           it->second.clear();
           return;
