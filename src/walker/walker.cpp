@@ -1928,7 +1928,7 @@ private:
   Term enter(Frame &caller, CallBase &c, Function &callee, Term guard, memory::State &st) {
     unsigned depth = std::count(stack.begin(), stack.end(), &callee);
     if (depth > 0) {
-      bool cut = false;
+      bool cut = false, past = false;
       if (opts.unwind && depth >= opts.unwind) {
         unsigned &number = recursionNumber[&c];
         if (!number)
@@ -1939,13 +1939,17 @@ private:
           truncatedInner = true;
         unwound(Unwound::Recursion, number, ir::location(c), guard, &c);
         cut = true;
+        // Under --multi-property the path goes on past the call, as ESBMC's
+        // does: the result is free and the callee's effects are skipped.
+        // Under --incremental-bmc a larger bound walks the call instead.
+        past = opts.multiProperty && opts.unwindingAssertions && !incremental;
       } else if (!opts.unwind && unreachable(guard)) {
         cut = true;
       }
-      if (cut) { // no path continues; the result only has to be bound
+      if (cut) {
         if (!c.getType()->isVoidTy())
           enc.bind(&c, enc.fresh(c.getType(), "unwound"));
-        return t.boolean(false);
+        return past ? guard : t.boolean(false);
       }
     }
 
