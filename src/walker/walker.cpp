@@ -166,6 +166,13 @@ struct ActiveCall {
   const CallState *state;
 };
 
+// Floats a counterexample prints as values: half, float, double, x86 long
+// double and fp128 (a bfloat's 16 bits would read as a half's).
+static bool printedFloat(Type *ty) {
+  return ty->isHalfTy() || ty->isFloatTy() || ty->isDoubleTy() || ty->isX86_FP80Ty() ||
+         ty->isFP128Ty();
+}
+
 class Walk {
 public:
   Walk(const Module &m, const Options &opts, encode::Encoder &enc, memory::Memory &mem,
@@ -1338,7 +1345,8 @@ private:
       for (const DbgRecord &rec : inst.getDbgRecordRange())
         if (std::optional<ir::DbgAssign> a = ir::dbgAssign(rec))
           if (Term v = traceValue(a->value))
-            trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned);
+            trace.add(Step::Assignment, guard, a->loc, a->name, v, a->isUnsigned, 0, nullptr, {},
+                      a->value->getType()->isFloatingPointTy());
       if (isa<PHINode>(inst))
         continue;
       if (inst.isTerminator())
@@ -1362,7 +1370,8 @@ private:
   // LCSSA does not route debug uses, so a record can name a value from a
   // block not walked in this pass; the trace skips it.
   Term traceValue(const Value *v) {
-    if (!v->getType()->isIntegerTy())
+    Type *ty = v->getType();
+    if (!ty->isIntegerTy() && !printedFloat(ty))
       return {};
     if (isa<Instruction>(v) || isa<Argument>(v))
       return enc.bound(v);
@@ -2359,18 +2368,20 @@ private:
       Value *v = w->getValueOperand();
       Term p = enc.value(w->getPointerOperand());
       writes(*w, guard, p);
-      mem.store(st, p, enc.toBits(enc.value(v), v->getType()), v->getType());
+      Term bits = enc.toBits(enc.value(v), v->getType());
+      mem.store(st, p, bits, v->getType());
       if (auto it = shadows.find(v); it != shadows.end())
         mem.setInitBytes(st, p, it->second);
       if (summary && w == summary->store)
-        summary->stored = {guard, enc.toBits(enc.value(v), v->getType())};
+        summary->stored = {guard, bits};
       // A source store into a named variable kept in memory (a global, an
       // array, a local whose address is taken) is an assignment to show.
       Type *ty = v->getType();
-      if (w->getDebugLoc() && ty->isIntegerTy() && !ty->isIntegerTy(1))
+      bool isFloat = printedFloat(ty);
+      if (w->getDebugLoc() && ((ty->isIntegerTy() && !ty->isIntegerTy(1)) || isFloat))
         if (auto *var = namedObject(w->getPointerOperand()))
-          trace.add(Step::Assignment, guard, ir::location(*w), var->first, enc.value(v), false, 0,
-                    var->second, mem.offset(p));
+          trace.add(Step::Assignment, guard, ir::location(*w), var->first, bits, false, 0,
+                    var->second, mem.offset(p), isFloat);
       return true;
     }
     if (auto *rmw = dyn_cast<AtomicRMWInst>(&inst)) {

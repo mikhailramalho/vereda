@@ -25,6 +25,3 @@ int main(void)
 // EXPECT: ^  d = 5\.000000e-1f; //
 // EXPECT: ^  e = 2\.250000e\+0; //
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: unmet EXPECT: ^  a = 1\.250000e\+0f \(
-// MODE: FUTURE
-// Vereda: verdict FAILED

@@ -23,7 +23,9 @@ namespace vereda::witness {
 // module is freed ahead of solving: compile-unit file paths, pointer
 // bitwidth, and each nondet declaration's return type and sign attributes.
 struct WitnessModuleInfo {
-  enum class RetKind : uint8_t { Other, Pointer, Float, Double, LongDouble, Integer };
+  enum class RetKind : uint8_t {
+    Other, Pointer, Half, Float, Double, LongDouble, Float128, Integer
+  };
   struct NondetRet {
     RetKind kind = RetKind::Other;
     bool hasSExt = false;

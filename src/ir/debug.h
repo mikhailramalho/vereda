@@ -238,10 +238,13 @@ inline std::optional<std::string> memberPath(const llvm::DIType *ty, uint64_t of
       ty = member->getBaseType();
       continue;
     }
-    // A scalar: the store must write all of it.
-    if (off != 0 || ty->getSizeInBits() != size * 8)
+    // A scalar: the store must write all of it, except that an x86 long
+    // double's 10 bytes fill the 12 or 16 of its type.
+    auto *b = llvm::dyn_cast<llvm::DIBasicType>(ty);
+    bool x87 = b && b->getEncoding() == llvm::dwarf::DW_ATE_float && size == 10;
+    if (off != 0 || (ty->getSizeInBits() != size * 8 && !x87))
       return std::nullopt;
-    if (auto *b = llvm::dyn_cast<llvm::DIBasicType>(ty))
+    if (b)
       isUnsigned = b->getEncoding() == llvm::dwarf::DW_ATE_unsigned ||
                    b->getEncoding() == llvm::dwarf::DW_ATE_unsigned_char ||
                    b->getEncoding() == llvm::dwarf::DW_ATE_boolean;
