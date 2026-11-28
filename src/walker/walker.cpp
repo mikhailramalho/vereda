@@ -56,11 +56,14 @@ struct FunctionInfo {
     for (BasicBlock *bb : rpo) {
       Loop *in = li.getLoopFor(bb);
       regionBlocks[in].push_back(bb);
-      if (in && in->getHeader() == bb) {
-        loopNumber[in] = loopNumber.size();
+      if (in && in->getHeader() == bb)
         regionBlocks[in->getParentLoop()].push_back(bb);
-      }
     }
+    // ESBMC numbers a function's loops in the order of their back edges: an
+    // inner loop before the loop around it, siblings in program order.
+    SmallVector<Loop *, 4> preorder = li.getLoopsInReverseSiblingPreorder();
+    for (Loop *l : reverse(preorder))
+      loopNumber[l] = loopNumber.size();
   }
 
   DominatorTree dt;
