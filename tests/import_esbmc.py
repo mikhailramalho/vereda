@@ -578,7 +578,9 @@ def rewrite_unroll(text):
     when the next code is a loop, as the pragma must be; a call anywhere
     else is left alone. ESBMC reads clang's #pragma unroll M as the loop's
     unwinding bound and implements __ESBMC_unroll(N) as that bound with
-    M = N + 1 (loop_unroll.cpp), so the two mean the same to it."""
+    M = N + 1 (loop_unroll.cpp), so the two mean the same to it: the body
+    runs at most N times, then the unwinding assertion. The walker bounds
+    the loop by the pragma as ESBMC does (#74)."""
     # Comments and literals blanked out, newlines kept, so offsets match.
     code = "".join(c if is_code else re.sub(r"[^\n]", " ", c) for is_code, c in segments(text))
     out, i = [], 0
