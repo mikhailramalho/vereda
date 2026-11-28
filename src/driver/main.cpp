@@ -386,6 +386,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      checkUninit,
                                      boundedLimit,
                                      loopBounds};
+    walkOpts.pragmaBounds = !incrementalBMC;
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
                                                                checks, trace);
@@ -526,6 +527,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      checkUninit,
                                                      boundedLimit,
                                                      loopBounds};
+                  rewalkOpts.pragmaBounds = !incrementalBMC;
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
                                                      freshState->trace)) {

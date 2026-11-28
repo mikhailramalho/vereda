@@ -59,6 +59,9 @@ struct Options {
   // --unwindsetname: the bound of some loops, by function and loop number,
   // in place of unwind.
   std::map<std::pair<std::string, unsigned>, unsigned> loopBounds;
+  // A #pragma unroll bounds its loop. Off under --incremental-bmc, whose
+  // bound grows from walk to walk and a fixed one would never let it end.
+  bool pragmaBounds = true;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and
