@@ -1,4 +1,5 @@
 #include "ir/load.h"
+#include "ir/sanitizer.h"
 #include "util/assert.h"
 
 #include <llvm/ADT/DepthFirstIterator.h>
@@ -584,12 +585,22 @@ static void nameSanitizerChecks(Module &m) {
       continue;
     switch (op->getOpcode()) {
     case Instruction::SDiv:
-    case Instruction::SRem:
-      if (callee == "__ubsan_handle_divrem_overflow_abort" ||
-          (code && code->equalsInt(3))) // DivremOverflow
+    case Instruction::SRem: {
+      if (callee != "__ubsan_handle_divrem_overflow_abort" &&
+          !(code && code->equalsInt(3))) // DivremOverflow
+        break;
+      // A trap whose branches check only the divisor is a division by zero.
+      std::set<std::string> names;
+      if (code)
+        for (BasicBlock *pred : predecessors(c->getParent()))
+          trapSanitizers(*c, pred, names);
+      if (names.size() == 1 && names.count("integer-divide-by-zero"))
+        nameCheck(*c, DivisionByZero);
+      else
         nameCheck(*c, std::string("arithmetic overflow on ") +
                           (op->getOpcode() == Instruction::SDiv ? "div" : "modulus"));
       break;
+    }
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr: {
