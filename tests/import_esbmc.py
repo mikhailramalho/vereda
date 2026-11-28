@@ -78,6 +78,10 @@ OVERFLOW = {
     "--unsigned-overflow-check": [SIGNED, "--unsigned-overflow-check", SHIFT],
     "--ub-shift-check": [SIGNED, SHIFT],
 }
+# ESBMC's --no-standard-checks also turns off its bounds, alignment,
+# pointer-relation and scanf checks, which Vereda does not have.
+NO_STANDARD = ["--ub-pointer-check=false", "--ub-div-by-zero-check=false",
+               "--vla-size-check=false"]
 RENAMED = {
     "--unlimited-k-step": ["--unlimited-k-steps"],
     "--no-unwinding-assertion": ["--no-unwinding-assertions"],
@@ -89,11 +93,11 @@ RENAMED = {
     "--i386-macos": ["-m32"],
     "--no-pointer-check": ["--ub-pointer-check=false"],
     "--no-vla-size-check": ["--vla-size-check=false"],
+    "--no-standard-checks": NO_STANDARD, "--no-standard-check": NO_STANDARD,
     "--bitwuzla": ["--solver", "bitwuzla"], "--z3": ["--solver", "z3"],
     "--cvc": ["--solver", "cvc5"], "--cvc5": ["--solver", "cvc5"],
 }
-UNSUPPORTED_ALIASES = {"--data-races-check": "--ub-data-race-check",
-                       "--no-standard-check": "--no-standard-checks"}
+UNSUPPORTED_ALIASES = {"--data-races-check": "--ub-data-race-check"}
 RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal

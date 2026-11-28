@@ -10,8 +10,5 @@ int main()
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_5998-symmetry-breaking_float_fail
-// Needs: --no-standard-checks
-// RUN: --multi-property --no-standard-checks
-// MODE: FUTURE
+// RUN: --multi-property --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none

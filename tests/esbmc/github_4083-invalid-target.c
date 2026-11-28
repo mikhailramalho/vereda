@@ -11,8 +11,8 @@ L1:
   return 0;
 }
 // Imported from ESBMC regression/esbmc/github_4083-invalid-target
-// Needs: --no-standard-checks
-// RUN: --no-standard-checks
-// MODE: FUTURE
+// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false
 // EXPECT: ^VERIFICATION FAILED$
-// Vereda: verdict none
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
+// MODE: FUTURE
+// Vereda: verdict UNKNOWN
