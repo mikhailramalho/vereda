@@ -4,7 +4,7 @@
 // RUN: --no-unwinding-assertions --no-summarize-array-loops --max-k-step 10
 // RUN: --no-unwinding-assertions --no-summarize-array-loops --incremental-bmc
 // EXPECT: ^\[PROGRESS\] Checking bound k = 4$
-// EXPECT: FAILED +\[main\.assertion\.1\]
+// EXPECT: FAILED +\[main\.assertion\.2\]
 // EXPECT-NOT: \[main\.unwind
 // EXPECT: ^VERIFICATION FAILED$
 extern void __VERIFIER_assert(int);

@@ -2,7 +2,7 @@
 // asking each check under an assumption, and still finds a bug past bound 1.
 // RUN: --incremental-solver --no-summarize-array-loops --incremental-bmc --max-k-step 10
 // EXPECT: \[PROGRESS\] Resuming main
-// EXPECT: FAILED +\[main\.assertion\.1\]
+// EXPECT: FAILED +\[main\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);

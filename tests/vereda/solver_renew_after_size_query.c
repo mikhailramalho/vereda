@@ -3,7 +3,7 @@
 // RUN: --unwind 1
 // RUN: --unwind 1 --fresh-solver
 // EXPECT: SUCCESS +\[main.assertion.1\]
-// EXPECT: FAILED +\[main.unwind.0\]
+// EXPECT: FAILED +\[main.assertion.2\].*unwinding assertion loop 0
 // EXPECT: ^VERIFICATION FAILED$
 #include <string.h>
 extern unsigned __VERIFIER_nondet_uint(void);
