@@ -1383,22 +1383,37 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         update(n.b, bb, both);
         return;
       }
-      // x != c, where c is an end of x's bounds, moves that end off c;
+      // x != c, where c is an end of x's bounds, moves that end off c,
+      // and past the excluded values it lands on, which are dropped;
       // inside them, c is excluded.
       auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
         if (c.ulo != c.uhi || c.slo != c.shi)
           return;
         Bounds nb = b;
-        if (b.ulo != b.uhi && b.ulo == c.ulo)
+        auto excluded = [&](uint64_t v) { return llvm::is_contained(nb.excluded, v); };
+        if (b.ulo != b.uhi && b.ulo == c.ulo) {
           ++nb.ulo;
-        else if (b.ulo != b.uhi && b.uhi == c.ulo)
+          while (nb.ulo < nb.uhi && excluded(nb.ulo))
+            ++nb.ulo;
+        } else if (b.ulo != b.uhi && b.uhi == c.ulo) {
           --nb.uhi;
-        if (b.slo != b.shi && b.slo == c.slo)
+          while (nb.ulo < nb.uhi && excluded(nb.uhi))
+            --nb.uhi;
+        }
+        if (b.slo != b.shi && b.slo == c.slo) {
           ++nb.slo;
-        else if (b.slo != b.shi && b.shi == c.slo)
+          while (nb.slo < nb.shi && excluded(toUnsigned(nb.slo, w)))
+            ++nb.slo;
+        } else if (b.slo != b.shi && b.shi == c.slo) {
           --nb.shi;
-        if (nb.ulo < c.ulo && c.ulo < nb.uhi && !llvm::is_contained(nb.excluded, c.ulo) &&
-            nb.excluded.size() < MaxExcluded)
+          while (nb.slo < nb.shi && excluded(toUnsigned(nb.shi, w)))
+            --nb.shi;
+        }
+        auto inside = [&](uint64_t v) {
+          return nb.ulo < v && v < nb.uhi && nb.slo < toSigned(v, w) && toSigned(v, w) < nb.shi;
+        };
+        llvm::erase_if(nb.excluded, [&](uint64_t v) { return !inside(v); });
+        if (inside(c.ulo) && !excluded(c.ulo) && nb.excluded.size() < MaxExcluded)
           nb.excluded.push_back(c.ulo);
         update(x, b, nb);
       };
