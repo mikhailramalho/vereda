@@ -120,7 +120,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool sk
 
     auto checkIndividuallyPhase = [&](ArrayRef<Group> rem) -> bool {
       for (const Group &g : rem) {
-        switch (s.checkSatAssuming({g.expr})) {
+        switch (encode::checked(s, s.checkSatAssuming({g.expr}))) {
         case camada::CheckResult::SAT:
           if (!all) {
             reportFirst(g.indices[0]);
@@ -174,7 +174,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool sk
       exprs.reserve(groups.size());
       for (const Group &g : groups)
         exprs.push_back(g.expr);
-      switch (s.checkSatAssuming({disjunction(s, exprs)})) {
+      switch (encode::checked(s, s.checkSatAssuming({disjunction(s, exprs)}))) {
       case camada::CheckResult::UNSAT:
         for (const Group &g : groups)
           for (size_t idx : g.indices)
@@ -330,7 +330,7 @@ Verdict decideNonIncremental(
       if (curT == &t)
         solverUsed = true;
 
-      switch (s.check()) {
+      switch (encode::checked(s, s.check())) {
       case camada::CheckResult::UNSAT:
         for (size_t idx : pending)
           v.status[idx] = Status::Holds;
@@ -351,7 +351,7 @@ Verdict decideNonIncremental(
             ArrayRef<Group> lower = phase.take_front(first - phase.begin());
             s.push();
             s.addConstraint(disjunction(s, exprs(lower)));
-            camada::CheckResult earlierResult = s.check();
+            camada::CheckResult earlierResult = encode::checked(s, s.check());
             if (earlierResult != camada::CheckResult::SAT) {
               // Unsatisfiable: the disjunction already asserted covers lower,
               // so none of those groups can fail anywhere; unknown says nothing.
@@ -361,7 +361,7 @@ Verdict decideNonIncremental(
                     v.status[idx] = Status::Holds;
               s.pop();
               s.addConstraint(first->expr);
-              if (s.check() != camada::CheckResult::SAT)
+              if (encode::checked(s, s.check()) != camada::CheckResult::SAT)
                 return unknown(first->indices[0],
                                "solver answered unknown: " + s.reasonUnknownDetail());
               break;

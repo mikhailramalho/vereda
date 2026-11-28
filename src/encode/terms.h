@@ -27,6 +27,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <new>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -433,5 +434,15 @@ private:
   uint64_t epoch = 0;
   bool walkDone = false;
 };
+
+// r, a check's answer from s, except that a std::bad_alloc thrown inside the
+// check, which camada turns into an unknown answer, is thrown again: memory
+// ran out, and the next query would run on a solver left half updated (#399).
+// With mimalloc, its error hook ends the run at the failing allocation first.
+inline camada::CheckResult checked(camada::SMTSolver &s, camada::CheckResult r) {
+  if (r == camada::CheckResult::UNKNOWN && s.reasonUnknownDetail() == "std::bad_alloc")
+    throw std::bad_alloc();
+  return r;
+}
 
 } // namespace vereda::encode
