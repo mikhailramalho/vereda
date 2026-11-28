@@ -842,6 +842,18 @@ static void lowerCalls(Module &m) {
     return;
   SmallVector<Function *, 16> addressTaken;
   bool collectedAddressTaken = false;
+  // The handlers the models' __vereda_atexit_run calls are what atexit was
+  // given. When every use of atexit is a call that names a function, those
+  // functions are the handler call's only targets (#479).
+  SmallSetVector<Function *, 4> handlers;
+  Function *atexit = m.getFunction("atexit");
+  bool named = atexit && all_of(atexit->users(), [&](User *u) {
+                 auto *c = dyn_cast<CallInst>(u);
+                 auto *f = c && c->getCalledOperand() == atexit
+                               ? dyn_cast<Function>(c->getArgOperand(0)->stripPointerCasts())
+                               : nullptr;
+                 return f && (handlers.insert(f), true);
+               });
   for (CallInst *c : calls) {
     IRBuilder<> b(c);
     if (auto *f = dyn_cast<Function>(c->getCalledOperand()->stripPointerCasts())) {
@@ -878,7 +890,9 @@ static void lowerCalls(Module &m) {
         result->addIncoming(r ? r : PoisonValue::get(c->getType()), b.GetInsertBlock());
     };
     LLVMContext &ctx = m.getContext();
-    for (Function *f : addressTaken) {
+    bool onlyHandlers = named && head->getParent()->getName() == "__vereda_atexit_run" &&
+                        all_of(handlers, [&](Function *f) { return compatible(*c, *f, dl); });
+    for (Function *f : onlyHandlers ? handlers.getArrayRef() : ArrayRef<Function *>(addressTaken)) {
       if (!compatible(*c, *f, dl))
         continue;
       BasicBlock *call = BasicBlock::Create(ctx, "call." + f->getName(), head->getParent(), tail);
@@ -887,11 +901,15 @@ static void lowerCalls(Module &m) {
       branch(*f, call);
       b.SetInsertPoint(next);
     }
-    Function *&none = unknown[c->getFunctionType()];
-    if (!none)
-      none = Function::Create(c->getFunctionType(), GlobalValue::ExternalLinkage,
-                              "__vereda_unknown_target", m);
-    branch(*none, b.GetInsertBlock());
+    if (onlyHandlers) {
+      b.CreateUnreachable();
+    } else {
+      Function *&none = unknown[c->getFunctionType()];
+      if (!none)
+        none = Function::Create(c->getFunctionType(), GlobalValue::ExternalLinkage,
+                                "__vereda_unknown_target", m);
+      branch(*none, b.GetInsertBlock());
+    }
     if (result)
       c->replaceAllUsesWith(result);
     c->eraseFromParent();
