@@ -91,12 +91,17 @@ public:
     s.addConstraint(constraints.back());
     ++epoch;
   }
-  // Swaps the solver's instance for a fresh one over the same terms
-  // (camada's renew()) and asserts every global constraint on it again.
-  void renew() {
+  // Some walk queries leave search state the final solve benefits from (#452).
+  void preserveQueryState() { keepQueries = true; }
+  // Swaps the solver's instance for a fresh one over the same terms and
+  // reasserts global constraints. Without force, honors preserveQueryState().
+  void renew(bool force = true) {
+    if (!force && keepQueries)
+      return;
     s.renew();
     for (const camada::SMTExprRef &c : constraints)
       s.addConstraint(c);
+    keepQueries = false;
   }
   // Releases the hash-consing, folding and range caches once the walk is
   // done; only constant entries and solverTerm() remain valid afterwards.
@@ -422,6 +427,7 @@ private:
   std::vector<camada::SMTExprRef> constraints; // what addConstraint asserted
   uint64_t epoch = 0;
   bool walkDone = false;
+  bool keepQueries = false;
 };
 
 } // namespace vereda::encode

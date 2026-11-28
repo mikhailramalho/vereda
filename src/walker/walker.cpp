@@ -2214,6 +2214,8 @@ private:
   std::optional<uint64_t> single(Term v, Term guard) {
     if (const APInt *c = t.constant(v))
       return c->getLimitedValue();
+    // Symbolic memory-size queries can train the final solve (#452).
+    t.preserveQueryState();
     camada::CheckResult feasible = s.checkSatAssuming({t.solverTerm(guard)});
     if (feasible == camada::CheckResult::UNSAT)
       return 0; // the path is infeasible
@@ -2522,6 +2524,7 @@ private:
       bound = std::min(bound, (*size - *off).getZExtValue());
     }
     Term over = t.ugt(n, t.bv(bound, n.width()));
+    t.preserveQueryState();
     if (s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(over)}) != camada::CheckResult::UNSAT)
       return std::nullopt;
     return bound;

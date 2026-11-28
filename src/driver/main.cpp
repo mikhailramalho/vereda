@@ -121,8 +121,8 @@ static cl::opt<bool> incrementalSolver(
              "bv-cnf-scope=permanent on Bitwuzla) instead of a fresh one per solving phase"));
 static cl::opt<bool> freshSolver(
     "fresh-solver",
-    cl::desc("Under incremental BMC, solve each phase of a resumed bound on a fresh instance "
-             "(Bitwuzla) instead of the one kept across bounds"));
+    cl::desc("Force a fresh Bitwuzla instance before solving, including resumed "
+             "incremental-BMC bounds"));
 static cl::opt<bool> showLibraryStates(
     "show-library-states", cl::desc("Show Rust standard-library states in counterexamples"));
 static cl::opt<bool> fp2bv("fp2bv",
@@ -331,12 +331,9 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
     }
   }
   camada::SMTSolver &solver = *state->solver;
-  // Each solving phase gets a fresh instance over the same terms: Bitwuzla
-  // preprocesses fully only on an instance's first query, and the walker's
-  // feasibility queries and earlier bounds leave state behind. Across the
-  // bounds of incremental BMC that wins on some tasks and loses on those the
-  // kept instance's learning helps, so there it takes --fresh-solver
-  // (docs/survey/2026-11-27-fresh-solver-per-phase.md).
+  // Later solving phases need fresh instances to discard earlier properties.
+  // The first phase keeps marked walk-query state unless --fresh-solver asks
+  // to discard it (#452). Across incremental-BMC bounds, renewing is opt-in.
   bool renew = !incrementalSolver && (!incrementalBMC || freshSolver) &&
                solver.supports(camada::SolverFeature::Renew);
   progress((state->resumable() ? "Resuming " : "Walking ") + entry);
@@ -494,7 +491,7 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
   std::unique_ptr<BMCState> freshState;
   bool initialSolverUsed = false;
   if (renew)
-    terms.renew();
+    terms.renew(/*force=*/freshSolver);
   vereda::solver::Verdict verdict =
       useIncremental
           ? vereda::solver::decide(terms, checks, multiProperty, incrementalBMC,
