@@ -13,6 +13,3 @@ int main()
 // RUN: --ub-signed-overflow-check --ub-shift-check --ub-float-cast-overflow-check
 // EXPECT: ^VERIFICATION FAILED$
 // EXPECT: arithmetic overflow on abs
-// Vereda: unmet EXPECT: arithmetic overflow on abs
-// MODE: FUTURE
-// Vereda: verdict FAILED
