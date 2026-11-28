@@ -24,6 +24,6 @@ int main()
 // RUN: --unwind 1 --unwindsetname g:0:3 --multi-property
 // EXPECT: FAILED +\[g\.assertion\.2\]
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: FAILED +\[g\.assertion\.2\]
 // MODE: FUTURE
-// Vereda: verdict none
-// Needs: --unwindsetname g:0:3
+// Vereda: verdict FAILED
