@@ -1751,16 +1751,26 @@ std::vector<std::pair<const GlobalVariable *, Term>> Memory::readOnly(Term p) {
   return r;
 }
 
+// Each choice once: the choices that joins share make a DAG, which a walk
+// as a tree would visit exponentially often (#509).
 Term Memory::into(Term obj, uint64_t o) {
-  Term c, x, y;
-  // As candidates() walks it.
-  if (obj.width() != ObjBits && !t.choice(obj, c, x, y))
-    obj = object(obj);
-  if (fromInteger.count(obj.id()))
-    return t.boolean(false);
-  if (t.choice(obj, c, x, y))
-    return t.ite(c, into(x, o), into(y, o));
-  return t.eq(obj, t.bv(o, ObjBits));
+  llvm::DenseMap<const void *, Term> memo;
+  std::function<Term(Term)> walk = [&](Term e) {
+    Term c, x, y;
+    // As candidates() walks it.
+    if (e.width() != ObjBits && !t.choice(e, c, x, y))
+      e = object(e);
+    if (fromInteger.count(e.id()))
+      return t.boolean(false);
+    if (!t.choice(e, c, x, y))
+      return t.eq(e, t.bv(o, ObjBits));
+    if (Term r = memo.lookup(e.id()))
+      return r;
+    Term r = t.ite(c, walk(x), walk(y));
+    memo[e.id()] = r;
+    return r;
+  };
+  return walk(obj);
 }
 
 void Memory::havocCall(State &st, llvm::ArrayRef<Term> written,
