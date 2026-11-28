@@ -801,12 +801,14 @@ private:
     }
   }
 
-  // Whether no path leaves l and nothing it does can be seen: each edge out
-  // of it is a branch on a constant that never takes it, and no instruction
-  // in it has a side effect or calls anything but an intrinsic without one.
-  // A check is a call or an edge out of l (to an assert's, a trap's or an
-  // unreachable's block), so l has none. ESBMC turns such a loop,
-  // `while (1);`, into assume(0).
+  // Whether no path leaves l and it checks nothing: each edge out of it is a
+  // branch on a constant that never takes it, and it calls nothing but
+  // intrinsics without side effects. A check is a call or an edge out of l
+  // (to an assert's, a trap's or an unreachable's block), so l has none, and
+  // nothing after l is reached: ending the paths into it is sound whatever
+  // it stores, so the verdict does not depend on whether the passes deleted
+  // a store (#373). ESBMC turns only an empty loop, `while (1);`, into
+  // assume(0), and unrolls one that stores.
   static bool endless(const Loop *l) {
     for (BasicBlock *bb : l->blocks()) {
       auto *br = dyn_cast<CondBrInst>(bb->getTerminator());
@@ -815,7 +817,7 @@ private:
         if (!l->contains(succ) && (!c || br->getSuccessor(c->isZero()) == succ))
           return false;
       for (Instruction &i : *bb)
-        if (i.mayHaveSideEffects() || (isa<CallBase>(i) && !isa<IntrinsicInst>(i)))
+        if (isa<CallBase>(i) && (!isa<IntrinsicInst>(i) || i.mayHaveSideEffects()))
           return false;
     }
     return true;
