@@ -784,5 +784,7 @@ int main(int argc, char **argv) {
     return run(argc, argv);
   } catch (const std::bad_alloc &) {
     outOfMemory();
+  } catch (const vereda::Unsupported &e) { // a solver abort (solver::throwOnAbort)
+    return unknown(e.what());
   }
 }

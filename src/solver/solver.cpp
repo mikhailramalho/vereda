@@ -24,19 +24,32 @@ namespace {
 // answer: each defines a fresh variable from its inputs. Measured in
 // docs/survey/2026-11-23-what-the-decrement-test-s-solve-depends-on.md.
 struct Bitwuzla : camada::BitwuzlaSolver {
-  Bitwuzla() { reset(); } // configureOptions applies only from here on
+  bool incremental;
+  explicit Bitwuzla(bool incremental) : incremental(incremental) {
+    reset(); // configureOptions applies only from here on
+    throwOnAbort();
+  }
   void configureOptions(BitwuzlaOptions *o) override {
-    bitwuzla_set_option_mode(o, BITWUZLA_OPT_BV_CNF_SCOPE, "permanent");
+    if (incremental)
+      bitwuzla_set_option_mode(o, BITWUZLA_OPT_BV_CNF_SCOPE, "permanent");
   }
 };
 } // namespace
+
+void throwOnAbort() {
+  bitwuzla_set_abort_callback(+[](const char *msg) {
+    throw Unsupported((encode::SolverAborted + StringRef(msg).rtrim()).str());
+  });
+}
+#else
+void throwOnAbort() {}
 #endif
 
 Expected<camada::SMTSolverRef> create(camada::SolverKind kind, bool incremental) {
   switch (kind) {
 #if CAMADA_HAVE_BITWUZLA
   case camada::SolverKind::Bitwuzla:
-    return incremental ? camada::SMTSolverRef(new Bitwuzla()) : camada::createBitwuzlaSolver();
+    return camada::SMTSolverRef(new Bitwuzla(incremental));
 #endif
 #if CAMADA_HAVE_Z3
   case camada::SolverKind::Z3:
