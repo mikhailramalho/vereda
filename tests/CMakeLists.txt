@@ -66,6 +66,10 @@ if(TARGET libvereda)
   target_link_libraries(vereda-condition-literals PRIVATE libvereda)
   add_test(NAME vereda/condition_literals COMMAND vereda-condition-literals)
   set_tests_properties(vereda/condition_literals PROPERTIES LABELS vereda TIMEOUT 60)
+  add_executable(vereda-trailing-zeros trailing_zeros.cpp)
+  target_link_libraries(vereda-trailing-zeros PRIVATE libvereda)
+  add_test(NAME vereda/trailing_zeros COMMAND vereda-trailing-zeros)
+  set_tests_properties(vereda/trailing_zeros PROPERTIES LABELS vereda TIMEOUT 60)
   add_test(NAME vereda/banner
     COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/banner.py"
             "${CMAKE_SOURCE_DIR}/vereda.py" $<TARGET_FILE:vereda> "${LLVM_TOOLS_BINARY_DIR}/clang")
