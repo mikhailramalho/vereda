@@ -155,13 +155,14 @@ with tempfile.TemporaryDirectory() as directory:
             (["--overflow-check=false"], 0, "")):
         check([binary, str(ir)] + flags, status, "[INFO] Checks: " + defaults + families + "\n")
     # A division trap checks a divisor of zero or INT_MIN / -1, by what its
-    # branch compares; div-by-zero, also the binary's own check, is listed once.
+    # branch compares; div-by-zero, also the binary's own check, is listed once,
+    # and --ub-div-by-zero-check=false leaves its trap out (#446).
     source.write_text("int main(int argc, char **argv) { return 100 / argc; }\n")
     unflagged = "assertions, unwinding-assertions, pointer, vla-size, "
     for sanitizer, status, flags, families in (
             ("integer-divide-by-zero", 1, [], defaults),
-            ("integer-divide-by-zero", 1, ["--ub-div-by-zero-check=false"],
-             unflagged + "div-by-zero"),
+            ("integer-divide-by-zero", 0, ["--ub-div-by-zero-check=false"],
+             unflagged.rstrip(", ")),
             ("signed-integer-overflow", 0, ["--ub-div-by-zero-check=false"],
              unflagged + "signed-overflow")):
         subprocess.run([clang, "-S", "-emit-llvm", "-fsanitize=" + sanitizer,

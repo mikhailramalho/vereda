@@ -417,6 +417,43 @@ static bool guardsAbs(const CallBase &trap) {
   return false;
 }
 
+// The kinds a division trap's branch condition checks: a divisor compared
+// with 0, or INT_MIN / -1, through ands, ors and selects.
+static void divremKinds(Value *v, std::set<std::string> &names) {
+  SmallVector<Value *, 4> conditions{v};
+  while (!conditions.empty()) {
+    auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+    if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+      if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+        names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+    } else if (cond && cond->getType()->isIntegerTy(1) &&
+               (cond->getOpcode() == Instruction::And || cond->getOpcode() == Instruction::Or ||
+                isa<SelectInst>(cond))) {
+      conditions.append(cond->op_begin(), cond->op_end());
+    }
+  }
+}
+
+// cond, the condition under which a division passes its trap, without the
+// conjuncts that check only kinds in off (#446). Null when none is left.
+static Value *keptDivremCondition(Value *cond, const std::set<std::string> &off) {
+  auto *i = dyn_cast<BinaryOperator>(cond);
+  if (!i || i->getOpcode() != Instruction::And) {
+    std::set<std::string> names;
+    divremKinds(cond, names);
+    bool dropped = !names.empty() &&
+                   all_of(names, [&](const std::string &n) { return off.count(n); });
+    return dropped ? nullptr : cond;
+  }
+  Value *x = i->getOperand(0), *y = i->getOperand(1);
+  Value *a = keptDivremCondition(x, off), *b = keptDivremCondition(y, off);
+  if (a == x && b == y)
+    return cond;
+  if (!a || !b)
+    return a ? a : b;
+  return BinaryOperator::CreateAnd(a, b, "", i->getIterator());
+}
+
 // The sanitizers, as -fsanitize= names them, that the branch from pred
 // into trap, a call to llvm.ubsantrap, checks.
 static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
@@ -426,24 +463,10 @@ static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
   case 20: // ShiftOutOfBounds
     names.insert("shift");
     break;
-  case 3: { // DivremOverflow: a divisor of zero, or INT_MIN / -1
-    auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
-    SmallVector<Value *, 4> conditions;
-    if (br)
-      conditions.push_back(br->getCondition());
-    while (!conditions.empty()) {
-      auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
-      if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
-        if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
-          names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
-      } else if (cond && cond->getType()->isIntegerTy(1) &&
-                 (cond->getOpcode() == Instruction::And ||
-                  cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
-        conditions.append(cond->op_begin(), cond->op_end());
-      }
-    }
+  case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+    if (auto *br = dyn_cast<CondBrInst>(pred->getTerminator()))
+      divremKinds(br->getCondition(), names);
     break;
-  }
   case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
     for (Instruction &p : *pred)
       if (auto *ii = dyn_cast<IntrinsicInst>(&p))
@@ -467,11 +490,13 @@ static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
 
 // Leaves out the sanitizer checks of the kinds in off: a branch into a
 // trap that checks only those kinds goes straight to its other successor.
-// One that also checks a kind still on keeps the trap.
+// A division trap's branch that also checks a kind still on, and passes on
+// an and of checks, keeps only the conjuncts of kinds still on; any other
+// such branch keeps the trap.
 static void dropSanitizerChecks(Module &m, const std::set<std::string> &off) {
   if (off.empty())
     return;
-  SmallVector<std::pair<BasicBlock *, BasicBlock *>, 8> drop; // {pred, trap block}
+  SmallVector<std::pair<BasicBlock *, BasicBlock *>, 8> drop, split; // {pred, trap block}
   for (Function &f : m)
     for (Instruction &i : instructions(f)) {
       auto *c = dyn_cast<CallBase>(&i);
@@ -481,11 +506,20 @@ static void dropSanitizerChecks(Module &m, const std::set<std::string> &off) {
       for (BasicBlock *pred : predecessors(c->getParent())) {
         std::set<std::string> names;
         trapSanitizers(*c, pred, names);
-        if (isa<CondBrInst>(pred->getTerminator()) && !names.empty() &&
-            all_of(names, [&](const std::string &n) { return off.count(n); }))
+        if (!isa<CondBrInst>(pred->getTerminator()) || names.empty())
+          continue;
+        auto isOff = [&](const std::string &n) { return off.count(n) > 0; };
+        if (all_of(names, isOff))
           drop.push_back({pred, c->getParent()});
+        else if (any_of(names, isOff) && cast<ConstantInt>(c->getArgOperand(0))->equalsInt(3) &&
+                 cast<CondBrInst>(pred->getTerminator())->getSuccessor(1) == c->getParent())
+          split.push_back({pred, c->getParent()});
       }
     }
+  for (auto [pred, trap] : split) {
+    auto *br = cast<CondBrInst>(pred->getTerminator());
+    br->setCondition(keptDivremCondition(br->getCondition(), off));
+  }
   for (auto [pred, trap] : drop) {
     auto *br = cast<CondBrInst>(pred->getTerminator());
     BasicBlock *other = br->getSuccessor(br->getSuccessor(0) == trap ? 1 : 0);

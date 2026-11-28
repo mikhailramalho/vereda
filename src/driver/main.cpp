@@ -667,6 +667,8 @@ static int run(int argc, char **argv) {
     unchecked.insert("unsigned-integer-overflow");
   if (!trapsChecked(ubShiftCheck))
     unchecked.insert("shift");
+  if (!ubDivByZeroCheck)
+    unchecked.insert("integer-divide-by-zero");
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
                        ubDivByZeroCheck && property == Property::All,
