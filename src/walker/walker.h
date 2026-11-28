@@ -7,6 +7,7 @@
 #include "walker/trace.h"
 #include <llvm/IR/Function.h>
 #include <llvm/Support/Error.h>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -55,6 +56,12 @@ struct Options {
   // loop unrolls to completion in one walk (and skips per-iteration solver
   // feasibility queries), 0 when explicit --unwind N is active.
   unsigned maxBoundedUnroll = 0;
+  // --unwindsetname: the bound of some loops, by function and loop number,
+  // in place of unwind.
+  std::map<std::pair<std::string, unsigned>, unsigned> loopBounds;
+  // A #pragma unroll bounds its loop. Off under --incremental-bmc, whose
+  // bound grows from walk to walk and a fixed one would never let it end.
+  bool pragmaBounds = true;
 };
 
 // Walks entry and everything it calls, binding values in the encoder and

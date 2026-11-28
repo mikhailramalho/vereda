@@ -64,7 +64,8 @@ import run  # pylint: disable=wrong-import-position
 SAME = {"--no-unwinding-assertions", "--incremental-bmc", "--multi-property",
         "--force-malloc-success", "--fp2bv", "--unlimited-k-steps",
         "--no-summarize-array-loops", "--no-assertions"}
-SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std", "--error-label"}
+SAME_WITH_VALUE = {"--unwind", "--max-k-step", "--k-step", "--std", "--error-label",
+                   "--unwindsetname"}
 # ESBMC's overflow flags -> Vereda's checks, as ESBMC's goto_checkt turns them
 # on: overflow_check checks signed operations under any of the three and
 # unsigned ones only under --unsigned-overflow-check, shift_check runs under
@@ -77,6 +78,10 @@ OVERFLOW = {
     "--unsigned-overflow-check": [SIGNED, "--unsigned-overflow-check", SHIFT],
     "--ub-shift-check": [SIGNED, SHIFT],
 }
+# ESBMC's --no-standard-checks also turns off its bounds, alignment,
+# pointer-relation and scanf checks, which Vereda does not have.
+NO_STANDARD = ["--ub-pointer-check=false", "--ub-div-by-zero-check=false",
+               "--vla-size-check=false"]
 RENAMED = {
     "--unlimited-k-step": ["--unlimited-k-steps"],
     "--no-unwinding-assertion": ["--no-unwinding-assertions"],
@@ -88,11 +93,11 @@ RENAMED = {
     "--i386-macos": ["-m32"],
     "--no-pointer-check": ["--ub-pointer-check=false"],
     "--no-vla-size-check": ["--vla-size-check=false"],
+    "--no-standard-checks": NO_STANDARD, "--no-standard-check": NO_STANDARD,
     "--bitwuzla": ["--solver", "bitwuzla"], "--z3": ["--solver", "z3"],
     "--cvc": ["--solver", "cvc5"], "--cvc5": ["--solver", "cvc5"],
 }
-UNSUPPORTED_ALIASES = {"--data-races-check": "--ub-data-race-check",
-                       "--no-standard-check": "--no-standard-checks"}
+UNSUPPORTED_ALIASES = {"--data-races-check": "--ub-data-race-check"}
 RENAMED_WITH_VALUE = {"--function": "--entry", "--func": "--entry"}
 # Checks and tuning Vereda does not have, so turning them off changes nothing,
 # --summarize-array-loops, which Vereda does by default. Ignore ESBMC's internal
@@ -573,7 +578,9 @@ def rewrite_unroll(text):
     when the next code is a loop, as the pragma must be; a call anywhere
     else is left alone. ESBMC reads clang's #pragma unroll M as the loop's
     unwinding bound and implements __ESBMC_unroll(N) as that bound with
-    M = N + 1 (loop_unroll.cpp), so the two mean the same to it."""
+    M = N + 1 (loop_unroll.cpp), so the two mean the same to it: the body
+    runs at most N times, then the unwinding assertion. The walker bounds
+    the loop by the pragma as ESBMC does (#74)."""
     # Comments and literals blanked out, newlines kept, so offsets match.
     code = "".join(c if is_code else re.sub(r"[^\n]", " ", c) for is_code, c in segments(text))
     out, i = [], 0

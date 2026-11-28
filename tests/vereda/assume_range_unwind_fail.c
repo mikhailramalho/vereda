@@ -1,6 +1,6 @@
 // RUN: --unwind 5
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.unwind\.0\]
+// EXPECT: ^  FAILED +\[main\.assertion\.1\]
 // With n <= 10 the loop may still run past a bound of 5: the range stops
 // it at 10 iterations, not earlier, so the unwinding assertion fails (#120).
 extern int __VERIFIER_nondet_int(void);

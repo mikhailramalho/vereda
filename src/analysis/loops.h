@@ -53,6 +53,7 @@ public:
 
 private:
   std::optional<Summary> match(const llvm::Loop *l);
+  bool countsOnly(const llvm::Loop *l);
   bool callOk(const llvm::CallBase &c, unsigned depth, bool reads);
   bool sideEffectFree(const llvm::Instruction &inst, unsigned depth, bool reads);
   const llvm::Value *base(const llvm::Value *pointer, const llvm::Loop *l);

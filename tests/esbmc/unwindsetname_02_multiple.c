@@ -51,6 +51,3 @@ int main() {
 // Imported from ESBMC regression/esbmc/unwindsetname_02_multiple
 // RUN: --unwindsetname func_ten:0:11,func_five:0:6,func_three:0:4 --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none
-// Needs: --unwindsetname func_ten:0:11,func_five:0:6,func_three:0:4

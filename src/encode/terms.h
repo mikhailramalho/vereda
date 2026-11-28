@@ -14,6 +14,7 @@
 // and solverTerm then makes the solver's term for it. Most constants fold
 // away without ever getting one.
 #pragma once
+#include "util/unsupported.h"
 #include <camada/camada.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
@@ -27,6 +28,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <new>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -230,12 +232,15 @@ public:
   bool arithmetic(const Ref &e);
 
   // What a path's conditions bound a term of at most 64 bits to: its least
-  // and greatest value as an unsigned and as a signed number.
+  // and greatest value as an unsigned and as a signed number, and up to
+  // MaxExcluded values inside them that it is not (as unsigned numbers).
   struct Bounds {
     uint64_t ulo, uhi;
     int64_t slo, shi;
+    llvm::SmallVector<uint64_t, 2> excluded = {};
     bool operator==(const Bounds &) const = default;
   };
+  static constexpr unsigned MaxExcluded = 8;
   // The bounds a path knows a term by, if any (encoder.h keeps them).
   using Known = llvm::function_ref<std::optional<Bounds>(const Ref &)>;
   // The values a term of at most 64 bits may take: lo + stride * i for
@@ -262,8 +267,9 @@ public:
   // <, <= (unsigned or signed) or its negation, found as equalities finds
   // an =, bounded by the range of the other side; x on one side of an =,
   // bounded as the other side is; x on one side of a negated = with a
-  // constant c on the other, when c is an end of its range, which moves
-  // off c. A bound on an extension also bounds its operand.
+  // constant c on the other, which moves off c when c is an end of its
+  // range and is excluded otherwise. A bound on an extension also bounds
+  // its operand.
   void narrow(const Ref &cond, bool holds, Known known,
               llvm::function_ref<void(const Ref &, const Bounds &)> set);
   // e as known's path sees it: every comparison and overflow test decide
@@ -278,14 +284,17 @@ public:
   // read: the index of a summarised loop's iteration, whose terms count only
   // under its guard.
   void bound(const Ref &x, uint64_t limit) { bounds.try_emplace(x.id(), x, limit); }
+  // Whether e has at most cap distinct nodes, leaves included.
+  bool within(const Ref &e, unsigned cap) const;
 
 private:
   struct Node;
   // f(lit, holds) for each literal of cond (a node that is not a not, an
   // and, an or nor a Bool ite with a constant arm), as cond being true, or
-  // false when !holds, makes it hold or fail, over at most budget nodes.
-  void literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
-                unsigned &budget) const;
+  // false when !holds, makes it hold or fail, over at most 64 nodes, each
+  // walked once, nearer the top first.
+  void literals(const Ref &cond, bool holds,
+                llvm::function_ref<void(const Node &, bool)> f) const;
   // The value at constant index i of arr, past stores at other constant
   // indices, which arr moves over, and through joins whose two sides hold
   // the same value there (as a stream pointer does after a branch that
@@ -443,5 +452,25 @@ private:
   bool walkDone = false;
   bool keepQueries = false;
 };
+
+// How the exception solver::create's abort callback throws begins: the
+// solver aborted on an internal error, and is not to be used again (#412).
+inline constexpr llvm::StringLiteral SolverAborted("solver aborted: ");
+
+// r, a check's answer from s, except that a std::bad_alloc or a solver abort
+// thrown inside the check, which camada turns into an unknown answer, is
+// thrown again: the next query would run on a solver left half updated
+// (#399, #412). With mimalloc, its error hook ends the run at the failing
+// allocation first.
+inline camada::CheckResult checked(camada::SMTSolver &s, camada::CheckResult r) {
+  if (r != camada::CheckResult::UNKNOWN)
+    return r;
+  std::string detail = s.reasonUnknownDetail();
+  if (detail == "std::bad_alloc")
+    throw std::bad_alloc();
+  if (llvm::StringRef(detail).starts_with(SolverAborted))
+    throw Unsupported(detail);
+  return r;
+}
 
 } // namespace vereda::encode

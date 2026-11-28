@@ -14,6 +14,7 @@
 #include <llvm/ADT/StringSwitch.h>
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
 #include <llvm/Support/WithColor.h>
@@ -23,6 +24,7 @@
 #include <cstdlib>
 #include <new>
 #include <cerrno>
+#include <map>
 #include <numeric>
 #include <set>
 
@@ -54,6 +56,13 @@ static cl::opt<unsigned> unwind("unwind",
                                 cl::desc("Loop iterations and recursion depth (default: "
                                          "unroll until the next iteration is unreachable)"),
                                 cl::init(0));
+static cl::opt<std::string> unwindSetName(
+    "unwindsetname", cl::value_desc("name:idx:nr,..."),
+    cl::desc("Unwind loop idx (from 0 in each function, as the unwinding assertions number "
+             "them) of function name nr times instead of --unwind; name may be clang's USR "
+             "(c:@F@name#)"));
+// --unwindsetname's bounds by function and loop number.
+static std::map<std::pair<std::string, unsigned>, unsigned> loopBounds;
 static cl::opt<bool> noUnwindingAssertions(
     "no-unwinding-assertions",
     cl::desc("Assume loops and recursion end within the bound instead of checking it "
@@ -393,7 +402,9 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                      !noAssertions,
                                      multiProperty,
                                      checkUninit,
-                                     boundedLimit};
+                                     boundedLimit,
+                                     loopBounds};
+    walkOpts.pragmaBounds = !incrementalBMC;
     if (retained && !state->walk)
       state->walk = std::make_unique<vereda::walker::Incremental>(fn, walkOpts, enc, memory,
                                                                checks, trace);
@@ -557,7 +568,9 @@ static int bmc(Function &fn, unsigned bound, const vereda::witness::WitnessModul
                                                      !noAssertions,
                                                      multiProperty,
                                                      checkUninit,
-                                                     boundedLimit};
+                                                     boundedLimit,
+                                                     loopBounds};
+                  rewalkOpts.pragmaBounds = !incrementalBMC;
                   if (Error e = vereda::walker::walk(fn, rewalkOpts, *freshState->encoder,
                                                      *freshState->memory, freshState->checks,
                                                      freshState->trace)) {
@@ -674,6 +687,20 @@ static int run(int argc, char **argv) {
     errs() << "vereda: --ub-pointer-check=false conflicts with --property valid-free\n";
     return ErrorExit;
   }
+  SmallVector<StringRef, 4> sets;
+  StringRef(unwindSetName).split(sets, ',', -1, false);
+  for (StringRef set : sets) {
+    auto [rest, nr] = set.rsplit(':');
+    auto [name, idx] = rest.rsplit(':');
+    unsigned number, bound;
+    if (name.empty() || idx.getAsInteger(10, number) || nr.getAsInteger(10, bound)) {
+      errs() << "vereda: --unwindsetname: bad entry " << set << "\n";
+      return ErrorExit;
+    }
+    name = name.substr(name.rfind('@') + 1); // c:@F@name# or file.c@name
+    name.consume_back("#");
+    loopBounds[{name.str(), number}] = bound;
+  }
   if (dumpDir.getNumOccurrences() && !dumpIROnly && !dumpIRToo && !dumpSMTOnly && !dumpSMTToo) {
     errs() << argv[0] << ": --dump-dir needs a --dump-* flag\n";
     return ErrorExit;
@@ -694,6 +721,8 @@ static int run(int argc, char **argv) {
     unchecked.insert("unsigned-integer-overflow");
   if (!trapsChecked(ubShiftCheck))
     unchecked.insert("shift");
+  if (!ubDivByZeroCheck)
+    unchecked.insert("integer-divide-by-zero");
   Expected<std::unique_ptr<Module>> module =
       vereda::ir::load(inputFile, ctx, sys::path::parent_path(self), entry,
                        ubDivByZeroCheck && property == Property::All,
@@ -748,9 +777,9 @@ static int run(int argc, char **argv) {
     errs() << argv[0] << ": --incremental-bmc conflicts with --no-incremental-bmc\n";
     return ErrorExit;
   }
-  // Incremental BMC is the default unless --unwind gives the bound.
+  // Explicit global or per-loop bounds select plain BMC by default.
   if (!incrementalBMC.getNumOccurrences())
-    incrementalBMC = !noIncrementalBMC && !unwind.getNumOccurrences();
+    incrementalBMC = !noIncrementalBMC && !unwind.getNumOccurrences() && loopBounds.empty();
   if (!incrementalBMC) {
     cl::Option *boundFlags[] = {&maxKStep, &unlimitedKSteps, &kStep};
     for (cl::Option *o : boundFlags)
@@ -765,7 +794,7 @@ static int run(int argc, char **argv) {
     errs() << argv[0] << ": --k-step must be at least 1\n";
     return ErrorExit;
   }
-  if (unwind) {
+  if (unwind || !loopBounds.empty()) {
     errs() << argv[0] << ": --incremental-bmc chooses the bound and checks it\n";
     return ErrorExit;
   }
@@ -805,10 +834,13 @@ int main(int argc, char **argv) {
   // and the next query runs on a solver left half updated and crashes.
   // operator new calls the new-handler, but Bitwuzla allocates its nodes with
   // calloc and throws std::bad_alloc itself (#384); mimalloc's error hook sees
-  // that failure first. The catch covers a std::bad_alloc that escapes the
-  // solver in a build with glibc's malloc; one thrown inside a solver check
-  // there still becomes an unknown answer.
+  // that failure first. In a build with glibc's malloc, the catch takes a
+  // std::bad_alloc that escapes the solver, and encode::checked throws again
+  // one that camada turned into an unknown answer (#399).
   std::set_new_handler(outOfMemory);
+  // LLVM's own allocation checks (report_bad_alloc_error) print "LLVM ERROR:
+  // out of memory" and abort unless a handler is installed (#480).
+  install_bad_alloc_error_handler([](void *, const char *, bool) { outOfMemory(); });
 #ifdef VEREDA_MIMALLOC
   mi_register_error([](int err, void *) {
     if (err == ENOMEM)
@@ -819,5 +851,7 @@ int main(int argc, char **argv) {
     return run(argc, argv);
   } catch (const std::bad_alloc &) {
     outOfMemory();
+  } catch (const vereda::Unsupported &e) { // a solver abort (solver::throwOnAbort)
+    return unknown(e.what());
   }
 }

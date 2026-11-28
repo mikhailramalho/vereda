@@ -24,19 +24,32 @@ namespace {
 // answer: each defines a fresh variable from its inputs. Measured in
 // docs/survey/2026-11-23-what-the-decrement-test-s-solve-depends-on.md.
 struct Bitwuzla : camada::BitwuzlaSolver {
-  Bitwuzla() { reset(); } // configureOptions applies only from here on
+  bool incremental;
+  explicit Bitwuzla(bool incremental) : incremental(incremental) {
+    reset(); // configureOptions applies only from here on
+    throwOnAbort();
+  }
   void configureOptions(BitwuzlaOptions *o) override {
-    bitwuzla_set_option_mode(o, BITWUZLA_OPT_BV_CNF_SCOPE, "permanent");
+    if (incremental)
+      bitwuzla_set_option_mode(o, BITWUZLA_OPT_BV_CNF_SCOPE, "permanent");
   }
 };
 } // namespace
+
+void throwOnAbort() {
+  bitwuzla_set_abort_callback(+[](const char *msg) {
+    throw Unsupported((encode::SolverAborted + StringRef(msg).rtrim()).str());
+  });
+}
+#else
+void throwOnAbort() {}
 #endif
 
 Expected<camada::SMTSolverRef> create(camada::SolverKind kind, bool incremental) {
   switch (kind) {
 #if CAMADA_HAVE_BITWUZLA
   case camada::SolverKind::Bitwuzla:
-    return incremental ? camada::SMTSolverRef(new Bitwuzla()) : camada::createBitwuzlaSolver();
+    return camada::SMTSolverRef(new Bitwuzla(incremental));
 #endif
 #if CAMADA_HAVE_Z3
   case camada::SolverKind::Z3:
@@ -120,7 +133,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool sk
 
     auto checkIndividuallyPhase = [&](ArrayRef<Group> rem) -> bool {
       for (const Group &g : rem) {
-        switch (s.checkSatAssuming({g.expr})) {
+        switch (encode::checked(s, s.checkSatAssuming({g.expr}))) {
         case camada::CheckResult::SAT:
           if (!all) {
             reportFirst(g.indices[0]);
@@ -174,7 +187,7 @@ Verdict decide(encode::Terms &t, const checks::Checks &checks, bool all, bool sk
       exprs.reserve(groups.size());
       for (const Group &g : groups)
         exprs.push_back(g.expr);
-      switch (s.checkSatAssuming({disjunction(s, exprs)})) {
+      switch (encode::checked(s, s.checkSatAssuming({disjunction(s, exprs)}))) {
       case camada::CheckResult::UNSAT:
         for (const Group &g : groups)
           for (size_t idx : g.indices)
@@ -330,7 +343,7 @@ Verdict decideNonIncremental(
       if (curT == &t)
         solverUsed = true;
 
-      switch (s.check()) {
+      switch (encode::checked(s, s.check())) {
       case camada::CheckResult::UNSAT:
         for (size_t idx : pending)
           v.status[idx] = Status::Holds;
@@ -351,7 +364,7 @@ Verdict decideNonIncremental(
             ArrayRef<Group> lower = phase.take_front(first - phase.begin());
             s.push();
             s.addConstraint(disjunction(s, exprs(lower)));
-            camada::CheckResult earlierResult = s.check();
+            camada::CheckResult earlierResult = encode::checked(s, s.check());
             if (earlierResult != camada::CheckResult::SAT) {
               // Unsatisfiable: the disjunction already asserted covers lower,
               // so none of those groups can fail anywhere; unknown says nothing.
@@ -361,7 +374,7 @@ Verdict decideNonIncremental(
                     v.status[idx] = Status::Holds;
               s.pop();
               s.addConstraint(first->expr);
-              if (s.check() != camada::CheckResult::SAT)
+              if (encode::checked(s, s.check()) != camada::CheckResult::SAT)
                 return unknown(first->indices[0],
                                "solver answered unknown: " + s.reasonUnknownDetail());
               break;

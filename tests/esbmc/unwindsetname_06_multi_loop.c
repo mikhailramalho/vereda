@@ -33,6 +33,3 @@ int main() {
 // Imported from ESBMC regression/esbmc/unwindsetname_06_multi_loop
 // RUN: --unwindsetname multi_loop:0:6,multi_loop:1:4 --solver z3
 // EXPECT: ^VERIFICATION SUCCESSFUL$
-// MODE: FUTURE
-// Vereda: verdict none
-// Needs: --unwindsetname multi_loop:0:6,multi_loop:1:4

@@ -178,10 +178,7 @@ char *strdup(const char *s) {
   char *d = malloc(n + 1);
   if (!d)
     return NULL;
-  // Copy string character by character to avoid memcpy with symbolic size
-  for (size_t i = 0; i <= n; ++i)
-    d[i] = s[i];
-  return d;
+  return memcpy(d, s, n + 1);
 }
 
 char *strndup(const char *s, size_t n) {
@@ -189,11 +186,25 @@ char *strndup(const char *s, size_t n) {
   char *d = malloc(m + 1);
   if (!d)
     return NULL;
-  // Copy string character by character to avoid memcpy with symbolic size
-  for (size_t i = 0; i < m; ++i)
-    d[i] = s[i];
+  memcpy(d, s, m);
   d[m] = 0;
   return d;
+}
+
+size_t wcslen(const wchar_t *s) {
+  size_t n = 0;
+  while (s[n])
+    ++n;
+  return n;
+}
+
+// wcsdup (POSIX): strdup for a wide string.
+wchar_t *wcsdup(const wchar_t *s) {
+  size_t n = (wcslen(s) + 1) * sizeof(wchar_t);
+  wchar_t *d = malloc(n);
+  if (!d)
+    return NULL;
+  return memcpy(d, s, n);
 }
 
 char *index(const char *s, int c) { return strchr(s, c); }

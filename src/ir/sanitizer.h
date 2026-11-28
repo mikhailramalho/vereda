@@ -81,6 +81,10 @@ inline std::string sanitizerCheck(unsigned code) {
   return "sanitizer check " + std::to_string(code);
 }
 
+// ESBMC's comment for a division by zero, which load() gives a division
+// trap that checks only the divisor (#514), as the walker's own check.
+inline constexpr const char *DivisionByZero = "division by zero";
+
 // ESBMC's comment for a sanitizer check, which load() attaches as vereda.check
 // metadata where it finds the operation the check guards, else fallback.
 inline std::string checkComment(const llvm::Instruction &check, std::string fallback) {

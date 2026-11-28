@@ -19,8 +19,9 @@ assert import_esbmc.translate('--data-races-check=false', '.') == (
     [], [], ['--ub-data-race-check=false'])
 assert import_esbmc.translate('--func work --unlimited-k-step --no-unwinding-assertion '
                              '--no-standard-check', '.') == (
-    ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions'],
-    [], ['--no-standard-checks'])
+    ['--entry', 'work', '--unlimited-k-steps', '--no-unwinding-assertions',
+     '--ub-pointer-check=false', '--ub-div-by-zero-check=false', '--vla-size-check=false'],
+    [], [])
 for flag in ('--cheri hybrid', '--goto2lean', '--ts-pdr', '--neurosym',
              '--bitwuzllob',
              '--smtlib --smtlib-oneshot-prog fake-solver.sh',
@@ -51,6 +52,8 @@ for esbmc, vereda in (
         ("--uninitialised-vars-check", ["--ub-uninit-check"]),
         ("--no-pointer-check --no-vla-size-check",
          ["--ub-pointer-check=false", "--vla-size-check=false"]),
+        ("--no-standard-checks", ["--ub-pointer-check=false", "--ub-div-by-zero-check=false",
+                                  "--vla-size-check=false"]),
         ("--overflow-check", ["--ub-signed-overflow-check", "--ub-shift-check",
                               "--ub-float-cast-overflow-check"]),
         ("--no-fp-conversion-check --overflow-check --no-fp-overflow-check",
@@ -64,6 +67,8 @@ for esbmc, vereda in (
     assert import_esbmc.translate(esbmc, ".") == (vereda, [], []), esbmc
 assert import_esbmc.translate("--error-label ERROR --unwind 1", ".") == (
     ["--error-label", "ERROR", "--unwind", "1"], [], [])
+assert import_esbmc.translate("--unwindsetname c:@F@f#:0:11 --unwindset 3:11", ".") == (
+    ["--unwindsetname", "c:@F@f#:0:11"], [], ["--unwindset", "3:11"])
 for flag in ("--memory-leak-check", "--deadlock-check"):
     assert import_esbmc.translate(flag, ".") == ([], [], [flag])
 
@@ -231,10 +236,16 @@ for name in ("array_loop_summary_decrement", "array_loop_summary_decrement_fail"
         runs = [line.partition(":")[2].strip() for line in lines if line.startswith("// RUN:")]
         assert runs == [flags, (flags + " --no-summarize-array-loops").strip()], runs
 
-for flag in ('--unwindset f:0:3', '--unwindsetname loop:4', '--data-races-check', '--no-standard-check'):
+for flag in ('--unwindset f:0:3', '--data-races-check'):
     lines = import_esbmc.header('suite/semantic', 'CORE', flag, [], '.', [])
     assert '// MODE: FUTURE' in lines, lines
     assert any(line.startswith('// Needs:') for line in lines), lines
+# A FUTURE test's RUN line has --no-standard-checks translated too.
+lines = import_esbmc.header('suite/standard', 'CORE', '--no-standard-checks --k-induction',
+                            [], '.', [])
+assert '// Needs: --k-induction' in lines, lines
+assert ('// RUN: --ub-pointer-check=false --ub-div-by-zero-check=false '
+        '--vla-size-check=false --k-induction') in lines, lines
 assert import_esbmc.translate('--cvc5 -D__builtin_unreachable()', '.') == (
     ['--solver', 'cvc5', '-D__builtin_unreachable()'], [], [])
 for args, expected in (('--gcse --z3', '--solver z3'),

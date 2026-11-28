@@ -26,4 +26,4 @@ int main() {
 // EXPECT: ^VERIFICATION SUCCESSFUL$
 // MODE: FUTURE
 // Vereda: verdict none
-// Needs: --unwindsetname test_priority:0:4 --unwindset 3:11
+// Needs: --unwindset 3:11

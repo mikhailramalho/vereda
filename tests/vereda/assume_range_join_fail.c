@@ -1,10 +1,10 @@
 // RUN: --unwind 15 --multi-property
 // EXPECT: ^VERIFICATION FAILED$
-// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 21
-// EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 22
-// EXPECT: ^  FAILED +\[main\.assertion\.3\] +line 26
-// EXPECT: ^  FAILED +\[main\.unwind\.0\]
-// EXPECT: ^  FAILED +\[main\.unwind\.1\]
+// EXPECT: ^  FAILED +\[main\.assertion\.1\] +line 19  unwinding assertion loop 0$
+// EXPECT: ^  FAILED +\[main\.assertion\.2\] +line 21
+// EXPECT: ^  FAILED +\[main\.assertion\.3\] +line 22
+// EXPECT: ^  FAILED +\[main\.assertion\.4\] +line 26
+// EXPECT: ^  FAILED +\[main\.assertion\.5\] +line 27  unwinding assertion loop 1$
 // Ranges hold only on the path that learned them (#120): n <= 10 on the
 // path through the assumption only, so after the join the loop runs past
 // 10 iterations, and past the bound; a branch narrows m on one side only.

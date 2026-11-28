@@ -2,7 +2,7 @@
 // No loop statement places the loop, so it is at a jump back to the head
 // FixIrreducible adds, here a's i++ falling into b (ESBMC: the if, line 18).
 // RUN: --unwind 5
-// EXPECT: ^  FAILED       \[main\.unwind\.0\]  line 15  unwinding assertion loop 0$
+// EXPECT: ^  FAILED       \[main\.assertion\.1\]  line 15  unwinding assertion loop 0$
 // EXPECT: ^VERIFICATION FAILED$
 extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);

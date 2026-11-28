@@ -128,7 +128,8 @@ The main verifier flags:
 
 | Flag | Meaning |
 |------|---------|
-| `--unwind N` | Check one bound: loop iterations and recursion depth N (without it, Vereda checks bounds incrementally) |
+| `--unwind N` | Check one bound: loop iterations and recursion depth N (without explicit global or per-loop bounds, Vereda checks bounds incrementally) |
+| `--unwindsetname F:I:N,...` | Unwind loop `I` of function `F` `N` times instead of `--unwind`, as ESBMC's flag; loops number from 0 in each function in the order of their back edges, an inner loop before the loop around it, as ESBMC counts them and as their unwinding assertions say, and `F` may be clang's USR (`c:@F@F#`) |
 | `--no-unwinding-assertions` | Assume loops and recursion end within the bound instead of checking it (unsound: a violation past the bound is missed, so SUCCESSFUL no longer means the program is safe); incremental BMC still uses the unwinding assertions to pick the bound, as ESBMC does |
 | `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
 | `--incremental-bmc`, `--max-k-step N`, `--k-step N`, `--unlimited-k-steps` | Try bounds 1, 2, ... (by the step, up to 384 or N) until the verdict does not depend on the bound; the default without `--unwind` |
@@ -184,7 +185,7 @@ one of `VERIFICATION SUCCESSFUL` (exit 0), `VERIFICATION FAILED` (exit 1) or
 ```
 [RESULTS]
 loop_unwind_false.c, function main
-  FAILED       [main.unwind.0]  line 10  unwinding assertion loop 0
+  FAILED       [main.assertion.1]  line 10  unwinding assertion loop 0
 
 Properties: 1 checked, 0 passed, 1 failed, 0 not checked
 

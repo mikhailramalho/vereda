@@ -1,15 +1,15 @@
 // RUN: --property-file %S/properties/termination.prp
-// EXPECT: ^VERIFICATION UNKNOWN: call to atexit .*, which may call a function whose address is taken$
+// EXPECT: ^VERIFICATION UNKNOWN: call to signal .*, which may call a function whose address is taken$
 // EXPECT: ^UNKNOWN$
-// atexit runs forever after main returns; the walk would not see it.
-#include <stdlib.h>
+// The signal handler may run forever; the walk would not see it.
+#include <signal.h>
 
-static void forever(void) {
+static void forever(int s) {
   for (;;)
     ;
 }
 
 int main(void) {
-  atexit(forever);
+  signal(SIGINT, forever);
   return 0;
 }

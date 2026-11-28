@@ -20,7 +20,7 @@ struct Check {
   ir::SourceLoc loc;
   std::string comment; // the callee, e.g. "__VERIFIER_assert"
   std::string expr;    // the asserted expression's source text, if any
-  unsigned index;      // per function and kind from 1 (number); loops by number
+  unsigned index;      // per function and kind from 1 (number)
   encode::Term violated;
   // An unwinding assertion of a loop whose maximum trip count SCEV knows:
   // the smallest bound that unwinds it; 0 otherwise.
@@ -32,7 +32,8 @@ struct Check {
 
   // ESBMC's property class, which ESBMC derives from the comment: a comment
   // its table does not name, as of the count-zero, float-cast and alignment
-  // checks, makes an assertion.
+  // checks and of unwinding and recursion unwinding assertions (ESBMC 8.8),
+  // makes an assertion.
   const char *kind() const {
     switch (property) {
     case Property::ArithmeticOverflow: return "arithmetic-overflow";
@@ -44,13 +45,11 @@ struct Check {
     case Property::FreeNonDynamic: return "free-non-dynamic-memory";
     case Property::FreeOffset: return "free-non-zero-offset";
     case Property::DoubleFree: return "invalidated-dynamic-object-freed";
-    case Property::Unwinding: return "unwind";
-    case Property::Recursion: return "recursion";
     default: return "assertion";
     }
   }
 
-  // ESBMC's property id, e.g. "main.assertion.1" or "main.unwind.0".
+  // ESBMC's property id, e.g. "main.assertion.1".
   std::string id() const { return loc.function + "." + kind() + "." + std::to_string(index); }
 };
 
@@ -64,12 +63,12 @@ using Checks = std::vector<Check>;
 
 // Numbers each function's checks of one kind from 1 in that order, as ESBMC
 // does, so an id does not depend on the order of the walk. Unwinding
-// assertions keep their loop's number.
+// assertions are numbered with the assertions, at the loop's or the
+// recursive call's position.
 inline void number(Checks &checks) {
   std::vector<Check *> order;
   for (Check &c : checks)
-    if (!c.isUnwinding())
-      order.push_back(&c);
+    order.push_back(&c);
   std::stable_sort(order.begin(), order.end(),
                    [](const Check *a, const Check *b) { return before(*a, *b); });
   std::map<std::pair<std::string, std::string>, unsigned> counts;

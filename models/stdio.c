@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/uio.h>
+#include <wchar.h>
 
 int __VERIFIER_nondet_int(void);
 long __VERIFIER_nondet_long(void);
@@ -57,10 +58,9 @@ FILE *freopen64(const char *path, const char *mode, FILE *s) {
 // grows when it holds no more than len bytes. The characters are not
 // modelled: the object gets nondet contents before it grows, as glibc fills
 // it first. It grows as models/stdlib.c's realloc does, into a new object
-// with the old one freed, but without the copy: the contents are nondet
-// either way, and a copy of symbolic size would be unsupported. A read that
-// finds the end of the stream or an error first returns -1. errno may change
-// at any call (POSIX 2.3).
+// with the old one freed, but without the copy, since the contents are
+// nondet either way. A read that finds the end of the stream or an error
+// first returns -1. errno may change at any call (POSIX 2.3).
 ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
   errno = __VERIFIER_nondet_int();
   if (!*lineptr || !*n) {
@@ -141,6 +141,28 @@ FILE *open_memstream(char **ptr, size_t *size) {
   *size = __VERIFIER_nondet_ulong();
   s->_IO_buf_base = b;
   s->_IO_buf_end = (char *)size;
+  return s;
+}
+
+// open_wmemstream (POSIX): the same with a buffer of wide characters, which
+// *size counts.
+FILE *open_wmemstream(wchar_t **ptr, size_t *size) {
+  return open_memstream((char **)ptr, size);
+}
+
+// tempnam (POSIX): a new object holding a file name of len characters and a
+// NUL, as glibc allocates it, or null where no name can be made. The
+// characters are not modelled, and errno may change at any call (POSIX 2.3).
+char *tempnam(const char *dir, const char *pfx) {
+  errno = __VERIFIER_nondet_int();
+  size_t len = __VERIFIER_nondet_ulong();
+  if (!len || len >= FILENAME_MAX)
+    return NULL;
+  char *s = malloc(len + 1);
+  if (!s)
+    return NULL;
+  __vereda_havoc(s);
+  s[len] = 0;
   return s;
 }
 

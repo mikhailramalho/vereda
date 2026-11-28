@@ -22,8 +22,8 @@ int main(void)
   return 0;
 }
 // Imported from ESBMC regression/esbmc-unix/github_9441_atomic_narrow_rmw_fail
-// Needs: --no-standard-checks
-// RUN: -m64 --no-standard-checks --unwind 20
+// RUN: -m64 --ub-pointer-check=false --ub-div-by-zero-check=false --vla-size-check=false --unwind 20
 // EXPECT: ^VERIFICATION FAILED$
+// Vereda: unmet EXPECT: ^VERIFICATION FAILED$
 // MODE: FUTURE
-// Vereda: verdict none
+// Vereda: verdict UNKNOWN

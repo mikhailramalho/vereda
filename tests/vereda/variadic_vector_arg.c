@@ -1,22 +1,29 @@
-// x86-64 passes a struct of two floats through ... as a vector in one SSE
-// register, which the walker does not place: unsupported, not a guess.
-// RUN: -m64
-// EXPECT: ^VERIFICATION UNKNOWN: unsupported: variadic call with argument <2 x float>
+// A 32-byte vector through ... on i386 goes on the stack aligned to 32,
+// between two ints, which clang's va_arg code finds only if the stack area
+// is aligned to 32 too.
+// RUN: -m32
+// EXPECT: ^VERIFICATION SUCCESSFUL$
 #include <stdarg.h>
+extern int __VERIFIER_nondet_int(void);
 extern void __VERIFIER_assert(int);
 
-struct floats { float a, b; };
+typedef float v8f __attribute__((vector_size(32)));
 
-float first(int n, ...) {
+float pick(int n, ...) {
   va_list ap;
   va_start(ap, n);
-  struct floats f = va_arg(ap, struct floats);
+  int a = va_arg(ap, int);
+  v8f v = va_arg(ap, v8f);
+  int b = va_arg(ap, int);
   va_end(ap);
-  return f.a;
+  return v[n] + a * 100 + b * 1000;
 }
 
 int main(void) {
-  struct floats f = {1.0f, 2.0f};
-  __VERIFIER_assert(first(0, f) == 1.0f);
+  int n = __VERIFIER_nondet_int();
+  if (n < 0 || n > 7)
+    return 0;
+  v8f v = {1, 2, 3, 4, 5, 6, 7, 8};
+  __VERIFIER_assert(pick(n, 7, v, 9) == 9701 + n);
   return 0;
 }

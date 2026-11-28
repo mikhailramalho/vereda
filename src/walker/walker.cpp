@@ -56,11 +56,14 @@ struct FunctionInfo {
     for (BasicBlock *bb : rpo) {
       Loop *in = li.getLoopFor(bb);
       regionBlocks[in].push_back(bb);
-      if (in && in->getHeader() == bb) {
-        loopNumber[in] = loopNumber.size();
+      if (in && in->getHeader() == bb)
         regionBlocks[in->getParentLoop()].push_back(bb);
-      }
     }
+    // ESBMC numbers a function's loops in the order of their back edges: an
+    // inner loop before the loop around it, siblings in program order.
+    SmallVector<Loop *, 4> preorder = li.getLoopsInReverseSiblingPreorder();
+    for (Loop *l : reverse(preorder))
+      loopNumber[l] = loopNumber.size();
   }
 
   DominatorTree dt;
@@ -360,8 +363,8 @@ private:
   // read as a value, as when clang copies a struct with padding or members
   // not yet set by loading it as an integer (C17 6.2.6.1p6); the walker
   // carries their initialisation to where they are stored, and checks them
-  // when they are loaded again. Any other use checks at the load, as does a
-  // value not used at all.
+  // when they are loaded again. Any other use checks at the load; a value
+  // not used at all is not checked.
   bool copyOnly(const Value *v) {
     if (!isa<LoadInst, Argument, CallBase>(v) || v->use_empty())
       return false;
@@ -876,16 +879,30 @@ private:
       frame.arrivals.erase(header);
       return;
     }
-    if (!start && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
+    // #pragma unroll N (ESBMC's __ESBMC_unroll(N - 1)) bounds the loop as
+    // ESBMC's --unwindset does, over --unwindsetname and --unwind, and a bare
+    // #pragma unroll lifts the bound; ESBMC unrolls such a loop, it does not
+    // summarise it (#74). Not under --incremental-bmc (opts.pragmaBounds).
+    std::optional<int> pragma;
+    if (opts.pragmaBounds) {
+      pragma = getOptionalIntLoopAttribute(l, "llvm.loop.unroll.count");
+      if (!pragma && getBooleanLoopAttribute(l, "llvm.loop.unroll.enable"))
+        pragma = 0;
+    }
+    if (!start && !pragma && opts.summarise && !opts.uninitCheck && summarise(frame, fi, l))
       return;
     unsigned number = fi.loopNumber.lookup(l);
+    auto set = opts.loopBounds.find({header->getParent()->getName().str(), number});
+    unsigned unwind = pragma                         ? *pragma
+                      : set != opts.loopBounds.end() ? set->second
+                                                     : opts.unwind;
     // When SCEV knows the loop takes its back edge a small constant number of
     // times, folding alone normally ends the unrolling; asking the solver on
     // each iteration up to that bound only wastes queries when the entry guard
     // is symbolic. Past the bound, unreachable() still runs in case folding
     // did not settle the exit condition.
     uint64_t knownBackedges = 0;
-    if (!opts.unwind)
+    if (!unwind)
       if (auto *n = dyn_cast<SCEVConstant>(
               loopsFor(fi, *header->getParent()).scev().getBackedgeTakenCount(l)))
         if (n->getAPInt().ule(SmallConstantLoop))
@@ -907,7 +924,7 @@ private:
         entryGuard = anyGuard(it->second);
       if (i > 0) {
         Term reached = anyGuard(it->second);
-        if (opts.unwind && i >= opts.unwind) {
+        if (unwind && i >= unwind) {
           size_t beforeChecks = checks.size(), beforeTrace = trace.size();
           bool checkpointable = canCheckpoint(reached);
           bool immediateCheckpoint = checkpointable && stack.size() == 1 &&
@@ -957,7 +974,7 @@ private:
         // cannot count them. Defer repeated queries on their unchanged guard.
         bool unchanged = i <= SmallConstantLoop && reached == entryGuard;
         bool withinBounded = maxBackedges && i <= maxBackedges;
-        if (!opts.unwind && i > knownBackedges && !unchanged && !withinBounded &&
+        if (!unwind && i > knownBackedges && !unchanged && !withinBounded &&
             unreachable(reached)) {
           it->second.clear();
           return;
@@ -1019,8 +1036,18 @@ private:
     // at a nondet index (survey 2026-11-23-array-loop-summaries).
     if (const APInt *n = t.constant(trips); !sum.store && n && n->ule(UnrolledChecks))
       return false;
-    Term k = t.symbol("loop_index#" + std::to_string(summaryCount),
-                            s.mkBVSort(trips.width()));
+    // With no store, no call (every check is one) and no exit but the
+    // header's, an iteration has nothing to walk: the loop is only its
+    // header's values after the last one.
+    bool walk = sum.store || l->getExitingBlock() != header ||
+                any_of(l->blocks(), [](BasicBlock *bb) {
+                  return any_of(*bb, [](Instruction &i) {
+                    return isa<CallBase>(i) && !isa<IntrinsicInst>(i);
+                  });
+                });
+    Term k = walk ? t.symbol("loop_index#" + std::to_string(summaryCount),
+                             s.mkBVSort(trips.width()))
+                  : Term();
     // The header's phis in iteration k and after the last one, and the
     // values the exit takes from the header.
     SmallVector<Term, 2> first;
@@ -1029,7 +1056,8 @@ private:
       return se.isSCEVable(v->getType()) ? evaluate(frame, fi, se.getSCEV(v), l, n) : Term();
     };
     for (PHINode &phi : header->phis()) {
-      first.push_back(at(&phi, k));
+      if (walk)
+        first.push_back(at(&phi, k));
       last.push_back({&phi, at(&phi, trips)});
     }
     for (PHINode &phi : sum.exit->phis())
@@ -1049,16 +1077,20 @@ private:
     SmallVector<Arrival, 2> arrivals = std::move(in->second);
     frame.arrivals.erase(header);
     Term guard = anyGuard(arrivals);
-    memory::State st = merged(arrivals);
+    memory::State st = merged(arrivals, guard);
     // The iteration's facts hold only in it, and the loop may not run.
     encode::Encoder::Facts facts = common(arrivals), inside = facts;
-    Term inRange = t.ult(k, trips), body = t.land(guard, inRange);
-    enc.learn(inRange, inside); // k < trips holds in the iteration
-    // Built after body, which keeps k < trips: every term with k counts only
-    // under body, or as an element the loop wrote, n < trips, once
-    // substitute puts n for k; there, terms fold as if it held.
-    if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
-      t.bound(k, n->getZExtValue());
+    Term body = t.boolean(false);
+    if (walk) {
+      Term inRange = t.ult(k, trips);
+      body = t.land(guard, inRange);
+      enc.learn(inRange, inside); // k < trips holds in the iteration
+      // Built after body, which keeps k < trips: every term with k counts
+      // only under body, or as an element the loop wrote, n < trips, once
+      // substitute puts n for k; there, terms fold as if it held.
+      if (const APInt *n = t.constant(trips); n && !n->isZero() && n->getActiveBits() <= 64)
+        t.bound(k, n->getZExtValue());
+    }
     if (!t.isFalse(body)) {
       frame.arrivals[header].push_back({body, first, st, inside});
       summary = Summarising{l, k, sum.store, {}, 0};
@@ -1105,7 +1137,7 @@ private:
     frame.arrivals.erase(in);
     Term guard = anyGuard(arrivals);
     Transition tr;
-    tr.preMem = merged(arrivals);
+    tr.preMem = merged(arrivals, guard);
     mem.setContext(guard);
     for (const Value *o : analysis::writtenObjects(*l)) {
       SmallPtrSet<const Value *, 8> visiting;
@@ -1151,11 +1183,11 @@ private:
     tr.postMem = tr.preMem;
     if (!back.empty()) {
       tr.next = anyGuard(back);
-      tr.postMem = merged(back);
+      tr.postMem = merged(back, tr.next);
       for (unsigned p = 0; p < tr.post.size(); ++p) {
         tr.post[p] = back[0].phiValues[p];
         for (unsigned i = 1; i < back.size(); ++i)
-          tr.post[p] = t.ite(back[i].guard, back[i].phiValues[p], tr.post[p]);
+          tr.post[p] = t.ite(t.past(back[i].guard, tr.next), back[i].phiValues[p], tr.post[p]);
       }
     }
     transitions->push_back(std::move(tr));
@@ -1295,7 +1327,8 @@ private:
     } else if (satGuards.contains(id)) {
       return false;
     }
-    bool unsat = s.checkSatAssuming({t.solverTerm(guard)}) == camada::CheckResult::UNSAT;
+    bool unsat = encode::checked(s, s.checkSatAssuming({t.solverTerm(guard)})) ==
+                 camada::CheckResult::UNSAT;
     if (unsat)
       unsatGuards.insert(id);
     else
@@ -1310,10 +1343,10 @@ private:
     return g;
   }
 
-  memory::State merged(const SmallVectorImpl<Arrival> &arrivals) {
+  memory::State merged(const SmallVectorImpl<Arrival> &arrivals, const Term &guard) {
     memory::State st = arrivals[0].mem;
     for (unsigned i = 1; i < arrivals.size(); ++i)
-      st = mem.ite(arrivals[i].guard, arrivals[i].mem, st);
+      st = mem.ite(t.past(arrivals[i].guard, guard), arrivals[i].mem, st);
     return st;
   }
 
@@ -1325,7 +1358,7 @@ private:
     frame.arrivals.erase(it);
     Term guard = anyGuard(arrivals);
     enc.facts = common(arrivals);
-    memory::State st = merged(arrivals);
+    memory::State st = merged(arrivals, guard);
 
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
@@ -1533,11 +1566,15 @@ private:
       }
       if (name == "llvm.ubsantrap") { // a clang sanitizer check failed
         auto *code = cast<ConstantInt>(c.getArgOperand(0));
-        if (counts(true)) {
-          std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+        std::string comment = ir::checkComment(c, ir::sanitizerCheck(code->getZExtValue()));
+        // A division trap that checks only the divisor, as the check
+        // __ubsan_handle_divrem_overflow_abort makes below.
+        bool zero = comment == ir::DivisionByZero;
+        if (counts(!zero)) {
           StringRef s(comment);
           assertion(c, guard, comment, "", nullptr,
-                    s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
+                    zero ? checks::Property::DivisionByZero
+                    : s.starts_with("arithmetic overflow")     ? checks::Property::ArithmeticOverflow
                     : s.starts_with("undefined behavior on shift") ? checks::Property::Shift
                                                                   : checks::Property::Assertion);
         }
@@ -1927,7 +1964,7 @@ private:
   Term enter(Frame &caller, CallBase &c, Function &callee, Term guard, memory::State &st) {
     unsigned depth = std::count(stack.begin(), stack.end(), &callee);
     if (depth > 0) {
-      bool cut = false;
+      bool cut = false, past = false;
       if (opts.unwind && depth >= opts.unwind) {
         unsigned &number = recursionNumber[&c];
         if (!number)
@@ -1938,13 +1975,17 @@ private:
           truncatedInner = true;
         unwound(Unwound::Recursion, number, ir::location(c), guard, &c);
         cut = true;
+        // Under --multi-property the path goes on past the call, as ESBMC's
+        // does: the result is free and the callee's effects are skipped.
+        // Under --incremental-bmc a larger bound walks the call instead.
+        past = opts.multiProperty && opts.unwindingAssertions && !incremental;
       } else if (!opts.unwind && unreachable(guard)) {
         cut = true;
       }
-      if (cut) { // no path continues; the result only has to be bound
+      if (cut) {
         if (!c.getType()->isVoidTy())
           enc.bind(&c, enc.fresh(c.getType(), "unwound"));
-        return t.boolean(false);
+        return past ? guard : t.boolean(false);
       }
     }
 
@@ -2083,13 +2124,18 @@ private:
   // Lays out the arguments of c, a call to the variadic callee, where the
   // caller leaves them, which is what clang's va_arg code in the callee
   // reads. On x86-64 the first six integers and pointers go in general
-  // registers and the first eight floats and doubles in SSE registers, which
-  // the callee's prologue saves to its register save area; the rest, and
-  // byval aggregates, go on the stack in slots of 8 bytes. On i386 all go on
-  // the stack in slots of 4. Clang has already split a small struct into such
-  // pieces, or made it byval when the registers it needs are taken, so the IR
-  // arguments can be placed one by one. Only the variadic ones are written:
-  // va_arg never reads a named one.
+  // registers (an i128 in two, while two are free) and the first eight
+  // floats, doubles and vectors of up to 16 bytes in SSE registers, which
+  // the callee's prologue saves to its register save area; the rest, byval
+  // aggregates and long doubles go on the stack in slots of 8 bytes, each
+  // aligned to its type, a long double in 16. On i386 all go on the stack in
+  // slots of 4, each aligned to its type, a long double in 12. The stack area
+  // is aligned to 16, or to the largest alignment of an argument in it (32 for
+  // a 32-byte vector on i386), as clang's va_arg code assumes when it rounds
+  // a pointer up to that alignment. Clang has already split a small struct
+  // into such pieces, or made it byval when the registers it needs are
+  // taken, so the IR arguments can be placed one by one. Only the variadic
+  // ones are written: va_arg never reads a named one.
   VarArgs passVarArgs(CallBase &c, Function &callee, Term guard, memory::State &st) {
     bool x64 = isX86_64(c);
     if (c.getCallingConv() != CallingConv::C)
@@ -2097,32 +2143,39 @@ private:
                         ir::location(c).display());
     const DataLayout &dl = mem.layout();
     unsigned bits = mem.pointerBits(), slot = x64 ? 8 : 4, gp = 0, fp = 48;
-    uint64_t onStack = 0, named = 0;
+    uint64_t onStack = 0, named = 0, areaAlign = 16;
     VarArgs va{&callee, {}, {}, gp, fp};
     // Per argument: in the register save area or on the stack, and where.
     SmallVector<std::pair<bool, uint64_t>, 8> where;
     for (unsigned i = 0; i < c.arg_size(); ++i) {
       Type *ty = c.getArgOperand(i)->getType();
-      bool byval = c.isByValArgument(i), isFP = ty->isFloatTy() || ty->isDoubleTy();
+      bool byval = c.isByValArgument(i), ld = ty->isX86_FP80Ty(),
+           wide = x64 && ty->isIntegerTy(128),
+           vector = isa<FixedVectorType>(ty) && (ty->getScalarType()->isIntegerTy() ||
+                                                 ty->getScalarType()->isIEEELikeFPTy()),
+           sse = ty->isFloatTy() || ty->isDoubleTy() ||
+                 (vector && dl.getTypeStoreSize(ty) <= 16);
       if (c.paramHasAttr(i, Attribute::InReg) || c.paramHasAttr(i, Attribute::InAlloca) ||
           c.paramHasAttr(i, Attribute::Preallocated) || c.paramHasAttr(i, Attribute::Nest) ||
-          !(byval || isFP || ty->isPointerTy() ||
+          !(byval || sse || ld || wide || (vector && !x64) || ty->isPointerTy() ||
             (ty->isIntegerTy() && ty->getIntegerBitWidth() <= 64)))
         throw Unsupported("variadic call with argument " + encode::describe(c.getArgOperand(i)) +
                           " at " + ir::location(c).display());
-      if (x64 && !byval && isFP && fp < 176) {
+      unsigned gpSize = wide ? 16 : 8;
+      if (x64 && !byval && sse && fp < 176) {
         where.push_back({true, fp});
         fp += 16;
-      } else if (x64 && !byval && !isFP && gp < 48) {
+      } else if (x64 && !byval && !sse && !ld && gp + gpSize <= 48) {
         where.push_back({true, gp});
-        gp += 8;
+        gp += gpSize;
       } else {
         uint64_t size =
             byval ? dl.getTypeAllocSize(c.getParamByValType(i)) : dl.getTypeStoreSize(ty);
-        uint64_t align =
-            byval ? std::max<uint64_t>(slot, c.getParamAlign(i).valueOrOne().value()) : slot;
+        uint64_t align = std::max<uint64_t>(slot, byval ? c.getParamAlign(i).valueOrOne().value()
+                                                       : dl.getABITypeAlign(ty).value());
         where.push_back({false, alignTo(onStack, align)});
         onStack = alignTo(where.back().second + size, slot);
+        areaAlign = std::max(areaAlign, align);
       }
       if (i < callee.arg_size()) {
         va.gp = gp;
@@ -2130,9 +2183,7 @@ private:
         named = onStack;
       }
     }
-    // The stack starts 16-byte aligned at a call, which clang's va_arg code
-    // relies on for an over-aligned byval argument.
-    Term stackArea = mem.allocate(t.bv(onStack, bits), 16, guard);
+    Term stackArea = mem.allocate(t.bv(onStack, bits), areaAlign, guard);
     va.stack = mem.advance(stackArea, t.bv(named, bits));
     if (x64)
       va.regs = mem.allocate(t.bv(176, bits), 16, guard);
@@ -2142,6 +2193,9 @@ private:
           mem.advance(where[i].first ? va.regs : stackArea, t.bv(where[i].second, bits));
       if (c.isByValArgument(i))
         mem.copy(st, at, enc.value(arg), dl.getTypeAllocSize(c.getParamByValType(i)));
+      else if (arg->getType()->isVectorTy()) // its elements' bits, the first lowest
+        mem.store(st, at, enc.value(arg),
+                  IntegerType::get(c.getContext(), dl.getTypeStoreSizeInBits(arg->getType())));
       else
         mem.store(st, at, enc.toBits(enc.value(arg), arg->getType()), arg->getType());
     }
@@ -2263,7 +2317,7 @@ private:
       return c->getLimitedValue();
     // Symbolic memory-size queries can train the final solve (#452).
     t.preserveQueryState();
-    camada::CheckResult feasible = s.checkSatAssuming({t.solverTerm(guard)});
+    camada::CheckResult feasible = encode::checked(s, s.checkSatAssuming({t.solverTerm(guard)}));
     if (feasible == camada::CheckResult::UNSAT)
       return 0; // the path is infeasible
     if (feasible != camada::CheckResult::SAT)
@@ -2272,7 +2326,7 @@ private:
     if (!model)
       return std::nullopt;
     Term other = t.lnot(t.eq(v, t.bv(model.value(), v.width())));
-    if (s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(other)}) !=
+    if (encode::checked(s, s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(other)})) !=
         camada::CheckResult::UNSAT)
       return std::nullopt;
     return model.value();
@@ -2362,7 +2416,9 @@ private:
       if (opts.uninitCheck && copyOnly(l)) {
         uint64_t bytes = mem.layout().getTypeStoreSize(l->getType()).getFixedValue();
         shadows[l] = mem.initBytes(st, p, bytes);
-      } else {
+      } else if (!l->use_empty()) {
+        // A read whose value nothing uses, volatile or atomic included, is
+        // no use of it: MemorySanitizer reports none (#375).
         checkInitRead(p, l->getPointerOperand(), l->getType());
       }
       // What the path's facts settle in the value read, as an icmp's.
@@ -2600,7 +2656,8 @@ private:
     }
     Term over = t.ugt(n, t.bv(bound, n.width()));
     t.preserveQueryState();
-    if (s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(over)}) != camada::CheckResult::UNSAT)
+    if (encode::checked(s, s.checkSatAssuming({t.solverTerm(guard), t.solverTerm(over)})) !=
+        camada::CheckResult::UNSAT)
       return std::nullopt;
     return bound;
   }
@@ -2610,23 +2667,10 @@ private:
   // fails (C17 7.22.3.5p3). The checks are ESBMC's pointer checks on free,
   // off with --ub-pointer-check=false. The path goes on only where the free is
   // valid, so a later free does not report the same object again; a free
-  // whose checks do not count still releases, but prunes nothing. Neither
-  // is checked under Rust's allocator shims: the standard library functions
-  // without a body that Rust programs call havoc the memory holding their
-  // pointers, and safe Rust frees each allocation once.
+  // whose checks do not count still releases, but prunes nothing.
   Term free(CallBase &c, Term guard, memory::State &st, bool release) {
     Term p = enc.value(c.getArgOperand(0));
-    bool rust = any_of(stack, [](Function *f) { return f->getName().starts_with("__rust_"); });
-    // Unchecked, a Rust free leaves valid-free nothing to decide (#357).
-    if (rust && opts.pointerCheck && !t.isFalse(guard)) {
-      if (opts.property == Property::ValidFree)
-        throw Unsupported("free under Rust's allocator is not checked (#357)");
-      if (opts.property == Property::All && !warnedRustFree) {
-        warnedRustFree = true;
-        util::warning("frees under Rust's allocator are not checked (#357)");
-      }
-    }
-    if (opts.pointerCheck && !rust &&
+    if (opts.pointerCheck &&
         (opts.property == Property::All || opts.property == Property::ValidFree)) {
       const Instruction &at = c.getDebugLoc() || !site ? c : *site;
       memory::Memory::InvalidFree bad = mem.invalidFree(st, p);
@@ -2747,7 +2791,6 @@ private:
   DenseMap<const CallBase *, unsigned> recursionNumber;
   DenseMap<const Function *, unsigned> recursionsIn;
   SmallPtrSet<const Function *, 8> warned;
-  bool warnedRustFree = false; // once per run: realloc's model checks, then frees
   DenseSet<const void *> unsatGuards;
   DenseSet<const void *> satGuards;
   uint64_t satEpoch = 0;

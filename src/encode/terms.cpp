@@ -168,9 +168,6 @@ bool Terms::entails(const Ref &guard, const Ref &lit, unsigned depth, unsigned &
 
 void Terms::equalities(const Ref &cond, bool holds,
                        llvm::function_ref<void(const Ref &, const Ref &)> f) {
-  // Conditions share subterms, so a walk without a bound can take
-  // exponential time; equalities sit near the top.
-  unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     if (n.op != Op::Eq || !h || !n.a.isBV())
       return;
@@ -191,34 +188,65 @@ void Terms::equalities(const Ref &cond, bool holds,
       c = bv(v.trunc(w));
       f(x, c);
     }
-  }, budget);
+  });
 }
 
-void Terms::literals(const Ref &cond, bool holds, llvm::function_ref<void(const Node &, bool)> f,
-                     unsigned &budget) const {
-  const Node *n = node(cond);
-  if (!n || !budget)
-    return;
-  --budget;
-  switch (n->op) {
-  case Op::Not: literals(n->a, !holds, f, budget); return;
-  case Op::And:
-  case Op::Or:
-    if ((n->op == Op::And) == holds) { // both sides hold, or both fail
-      literals(n->a, holds, f, budget);
-      literals(n->b, holds, f, budget);
+bool Terms::within(const Ref &e, unsigned cap) const {
+  llvm::SmallVector<Ref, 16> work{e};
+  llvm::DenseSet<const void *> seen;
+  while (!work.empty()) {
+    Ref x = work.pop_back_val();
+    if (!seen.insert(x.id()).second)
+      continue;
+    if (seen.size() > cap)
+      return false;
+    if (const Node *n = node(x))
+      for (const Ref &op : {n->a, n->b, n->c})
+        if (op)
+          work.push_back(op);
+  }
+  return true;
+}
+
+void Terms::literals(const Ref &cond, bool holds,
+                     llvm::function_ref<void(const Node &, bool)> f) const {
+  // Breadth first, each term with each sign once: a subterm shared by
+  // several paths costs one node of the budget, and the sides of an and
+  // share the budget instead of the left one using it all.
+  llvm::SmallVector<std::pair<Ref, bool>, 16> queue;
+  llvm::DenseSet<std::pair<const void *, unsigned>> seen;
+  auto push = [&](const Ref &x, bool h) {
+    if (seen.insert({x.id(), h}).second)
+      queue.emplace_back(x, h);
+  };
+  push(cond, holds);
+  unsigned budget = 64;
+  for (size_t i = 0; i < queue.size() && budget; ++i) {
+    auto [x, h] = queue[i];
+    const Node *n = node(x);
+    if (!n)
+      continue;
+    --budget;
+    switch (n->op) {
+    case Op::Not: push(n->a, !h); break;
+    case Op::And:
+    case Op::Or:
+      if ((n->op == Op::And) == h) { // both sides hold, or both fail
+        push(n->a, h);
+        push(n->b, h);
+      }
+      break;
+    case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
+      if (constant(n->b) && constant(n->b)->isZero() == h) {
+        push(n->a, false);
+        push(n->c, h);
+      } else if (constant(n->c) && constant(n->c)->isZero() == h) {
+        push(n->a, true);
+        push(n->b, h);
+      }
+      break;
+    default: f(*n, h); break;
     }
-    return;
-  case Op::Ite: // a Bool ite with a constant arm: a && b, a || b
-    if (constant(n->b) && constant(n->b)->isZero() == holds) {
-      literals(n->a, false, f, budget);
-      literals(n->c, holds, f, budget);
-    } else if (constant(n->c) && constant(n->c)->isZero() == holds) {
-      literals(n->a, true, f, budget);
-      literals(n->b, holds, f, budget);
-    }
-    return;
-  default: f(*n, holds); return;
   }
 }
 
@@ -575,6 +603,20 @@ Ref Terms::extract(const Ref &a, unsigned hi, unsigned lo) {
     return r;
   if (const Node *n = node(a)) {
     switch (n->op) {
+    case Op::Ite: {
+      // A field that is constant on both sides of a choice of structs, as
+      // the pointer of { ptr, i64 } joined where only the i64 is not: the
+      // pointer stays a choice of known objects, not one read from memory.
+      // Not through a side that is a choice too, which would walk a chain
+      // of joins again at every extract.
+      const Node *b = node(n->b), *c = node(n->c);
+      if ((b && b->op == Op::Ite) || (c && c->op == Op::Ite))
+        break;
+      Ref x = extract(n->b, hi, lo), y = extract(n->c, hi, lo);
+      if (constant(x) && constant(y))
+        return ite(n->a, x, y);
+      break;
+    }
     case Op::Extract:
       return extract(n->a, hi + n->y, lo + n->y);
     case Op::Concat: {
@@ -1272,6 +1314,12 @@ int Terms::decided(const Ref &cmp, Known known) {
     return order(n->a, n->b, n->op == Op::Ule || n->op == Op::Sle,
                  n->op == Op::Slt || n->op == Op::Sle, known);
   case Op::Eq: { // unequal when the ranges, or the signed ones, are apart
+    // A constant the path excludes from the other side.
+    for (auto [x, c] : {std::pair(n->a, n->b), std::pair(n->b, n->a)})
+      if (const APInt *v = constant(c); v && v->getBitWidth() <= 64 && known)
+        if (std::optional<Bounds> f = known(x);
+            f && llvm::is_contained(f->excluded, v->getZExtValue()))
+          return 0;
     std::optional<Range> x = rangeOf(n->a, known), y = rangeOf(n->b, known);
     if (x && y && (x->hi < y->lo || y->hi < x->lo))
       return 0;
@@ -1317,6 +1365,8 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
       b.ulo = r->lo, b.uhi = r->hi;
     if (auto s = srange(e, known))
       b.slo = s->first, b.shi = s->second;
+    if (std::optional<Bounds> f = known(e))
+      b.excluded = f->excluded;
     return b;
   };
   // Gives e the bounds b, when they are tighter than was and hold some
@@ -1324,8 +1374,10 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
   std::function<void(const Ref &, const Bounds &, Bounds)> update =
       [&](const Ref &e, const Bounds &was, Bounds b) {
     unsigned w = e.width();
+    auto excluded = [&](uint64_t v) { return llvm::is_contained(b.excluded, v); };
     // Each order bounds the other on one side of the sign bit; twice
-    // carries a bound across both ways.
+    // carries a bound across both ways. An end on an excluded value moves
+    // past it, and past the next if that is excluded too.
     for (int i = 0; i < 2; ++i) {
       if (b.ulo > b.uhi || b.slo > b.shi)
         return;
@@ -1333,23 +1385,47 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         b.slo = std::max(b.slo, toSigned(b.ulo, w)), b.shi = std::min(b.shi, toSigned(b.uhi, w));
       if ((b.slo < 0) == (b.shi < 0))
         b.ulo = std::max(b.ulo, toUnsigned(b.slo, w)), b.uhi = std::min(b.uhi, toUnsigned(b.shi, w));
+      while (b.ulo < b.uhi && excluded(b.ulo))
+        ++b.ulo;
+      while (b.ulo < b.uhi && excluded(b.uhi))
+        --b.uhi;
+      while (b.slo < b.shi && excluded(toUnsigned(b.slo, w)))
+        ++b.slo;
+      while (b.slo < b.shi && excluded(toUnsigned(b.shi, w)))
+        --b.shi;
     }
+    // Only values strictly inside the bounds stay excluded, at most MaxExcluded.
+    llvm::erase_if(b.excluded, [&](uint64_t v) {
+      return v <= b.ulo || b.uhi <= v || toSigned(v, w) <= b.slo || b.shi <= toSigned(v, w);
+    });
+    if (b.excluded.size() > MaxExcluded)
+      b.excluded.resize(MaxExcluded);
     if (b.ulo > b.uhi || b.slo > b.shi || b == was || constant(e))
       return;
     set(e, b);
-    // zext(x) <= 9 is x <= 9, and sext(x) >= -3 is x >= -3 as signed numbers.
+    // zext(x) <= 9 is x <= 9, and sext(x) >= -3 is x >= -3 as signed numbers;
+    // zext(x) != 5 is x != 5, and sext(x) != -3 is x != -3.
     const Node *x = node(e);
     if (!x || (x->op != Op::ZExt && x->op != Op::SExt))
       return;
     Ref a = x->a;
+    unsigned aw = a.width();
     Bounds ba = now(a), na = ba;
     if (x->op == Op::ZExt)
       na.ulo = std::max(ba.ulo, b.ulo), na.uhi = std::min(ba.uhi, b.uhi);
     else
       na.slo = std::max(ba.slo, b.slo), na.shi = std::min(ba.shi, b.shi);
+    for (uint64_t v : b.excluded) {
+      int64_t s = toSigned(v, w);
+      bool fits = x->op == Op::ZExt ? v <= umax(aw) : smin(aw) <= s && s <= smax(aw);
+      uint64_t va = x->op == Op::ZExt ? v : toUnsigned(s, aw);
+      if (fits && na.ulo < va && va < na.uhi && na.slo < toSigned(va, aw) &&
+          toSigned(va, aw) < na.shi && !llvm::is_contained(na.excluded, va) &&
+          na.excluded.size() < MaxExcluded)
+        na.excluded.push_back(va);
+    }
     update(a, ba, na);
   };
-  unsigned budget = 64;
   literals(cond, holds, [&](const Node &n, bool h) {
     bool sign = n.op == Op::Slt || n.op == Op::Sle;
     if ((!sign && n.op != Op::Ult && n.op != Op::Ule && n.op != Op::Eq) || !n.a.isBV() ||
@@ -1365,19 +1441,14 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
         update(n.b, bb, both);
         return;
       }
-      // x != c, where c is an end of x's bounds, moves that end off c.
+      // x != c excludes c; update moves an end that is c off it, and keeps
+      // c only when it is inside the bounds.
       auto off = [&](const Ref &x, const Bounds &b, const Bounds &c) {
         if (c.ulo != c.uhi || c.slo != c.shi)
           return;
         Bounds nb = b;
-        if (b.ulo != b.uhi && b.ulo == c.ulo)
-          ++nb.ulo;
-        else if (b.ulo != b.uhi && b.uhi == c.ulo)
-          --nb.uhi;
-        if (b.slo != b.shi && b.slo == c.slo)
-          ++nb.slo;
-        else if (b.slo != b.shi && b.shi == c.slo)
-          --nb.shi;
+        if (!llvm::is_contained(nb.excluded, c.ulo))
+          nb.excluded.push_back(c.ulo);
         update(x, b, nb);
       };
       off(n.a, ba, bb);
@@ -1404,7 +1475,7 @@ void Terms::narrow(const Ref &cond, bool holds, Known known,
     }
     update(x, bx, nx);
     update(y, by, ny);
-  }, budget);
+  });
 }
 
 Ref Terms::assumed(const Ref &x, Known known, llvm::DenseMap<const void *, Ref> &memo,

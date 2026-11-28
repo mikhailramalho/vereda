@@ -1,4 +1,5 @@
 #include "ir/load.h"
+#include "ir/sanitizer.h"
 #include "util/assert.h"
 
 #include <llvm/ADT/DepthFirstIterator.h>
@@ -26,6 +27,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Operator.h>
+#include <llvm/IR/PatternMatch.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
@@ -386,6 +388,73 @@ static Instruction *guardedOperation(CallBase &call) {
   return nullptr;
 }
 
+// Whether trap, clang's check of a negation, guards abs, labs or llabs: its
+// branch tests the overflow of 0 - x, whose result a select on x < 0 takes
+// and x the other arm, as clang builds them.
+static bool guardsAbs(const CallBase &trap) {
+  const BasicBlock *pred = trap.getParent()->getSinglePredecessor();
+  auto *br = pred ? dyn_cast<CondBrInst>(pred->getTerminator()) : nullptr;
+  Value *ok = nullptr;
+  if (!br || !match(br->getCondition(), PatternMatch::m_Not(PatternMatch::m_Value(ok))))
+    return false;
+  auto *bit = dyn_cast<ExtractValueInst>(ok);
+  auto *sub = bit ? dyn_cast<IntrinsicInst>(bit->getAggregateOperand()) : nullptr;
+  if (!sub || sub->getIntrinsicID() != Intrinsic::ssub_with_overflow)
+    return false;
+  Value *x = sub->getArgOperand(1);
+  for (User *u : sub->users()) {
+    auto *neg = dyn_cast<ExtractValueInst>(u);
+    if (!neg || neg->getIndices()[0] != 0)
+      continue;
+    for (User *s : neg->users()) {
+      auto *sel = dyn_cast<SelectInst>(s);
+      auto *cmp = sel ? dyn_cast<ICmpInst>(sel->getCondition()) : nullptr;
+      auto *zero = cmp ? dyn_cast<ConstantInt>(cmp->getOperand(1)) : nullptr;
+      if (zero && zero->isZero() && cmp->getPredicate() == ICmpInst::ICMP_SLT &&
+          cmp->getOperand(0) == x && sel->getTrueValue() == neg && sel->getFalseValue() == x)
+        return true;
+    }
+  }
+  return false;
+}
+
+// The kinds a division trap's branch condition checks: a divisor compared
+// with 0, or INT_MIN / -1, through ands, ors and selects.
+static void divremKinds(Value *v, std::set<std::string> &names) {
+  SmallVector<Value *, 4> conditions{v};
+  while (!conditions.empty()) {
+    auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
+    if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
+      if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
+        names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
+    } else if (cond && cond->getType()->isIntegerTy(1) &&
+               (cond->getOpcode() == Instruction::And || cond->getOpcode() == Instruction::Or ||
+                isa<SelectInst>(cond))) {
+      conditions.append(cond->op_begin(), cond->op_end());
+    }
+  }
+}
+
+// cond, the condition under which a division passes its trap, without the
+// conjuncts that check only kinds in off (#446). Null when none is left.
+static Value *keptDivremCondition(Value *cond, const std::set<std::string> &off) {
+  auto *i = dyn_cast<BinaryOperator>(cond);
+  if (!i || i->getOpcode() != Instruction::And) {
+    std::set<std::string> names;
+    divremKinds(cond, names);
+    bool dropped = !names.empty() &&
+                   all_of(names, [&](const std::string &n) { return off.count(n); });
+    return dropped ? nullptr : cond;
+  }
+  Value *x = i->getOperand(0), *y = i->getOperand(1);
+  Value *a = keptDivremCondition(x, off), *b = keptDivremCondition(y, off);
+  if (a == x && b == y)
+    return cond;
+  if (!a || !b)
+    return a ? a : b;
+  return BinaryOperator::CreateAnd(a, b, "", i->getIterator());
+}
+
 // The sanitizers, as -fsanitize= names them, that the branch from pred
 // into trap, a call to llvm.ubsantrap, checks.
 static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
@@ -395,24 +464,10 @@ static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
   case 20: // ShiftOutOfBounds
     names.insert("shift");
     break;
-  case 3: { // DivremOverflow: a divisor of zero, or INT_MIN / -1
-    auto *br = dyn_cast<CondBrInst>(pred->getTerminator());
-    SmallVector<Value *, 4> conditions;
-    if (br)
-      conditions.push_back(br->getCondition());
-    while (!conditions.empty()) {
-      auto *cond = dyn_cast<Instruction>(conditions.pop_back_val());
-      if (auto *cmp = dyn_cast_or_null<ICmpInst>(cond)) {
-        if (auto *k = dyn_cast<ConstantInt>(cmp->getOperand(1)))
-          names.insert(k->isZero() ? "integer-divide-by-zero" : "signed-integer-overflow");
-      } else if (cond && cond->getType()->isIntegerTy(1) &&
-                 (cond->getOpcode() == Instruction::And ||
-                  cond->getOpcode() == Instruction::Or || isa<SelectInst>(cond))) {
-        conditions.append(cond->op_begin(), cond->op_end());
-      }
-    }
+  case 3: // DivremOverflow: a divisor of zero, or INT_MIN / -1
+    if (auto *br = dyn_cast<CondBrInst>(pred->getTerminator()))
+      divremKinds(br->getCondition(), names);
     break;
-  }
   case 0: case 12: case 13: case 21: // Add, Mul, Negate and SubOverflow
     for (Instruction &p : *pred)
       if (auto *ii = dyn_cast<IntrinsicInst>(&p))
@@ -436,11 +491,13 @@ static void trapSanitizers(const CallBase &trap, BasicBlock *pred,
 
 // Leaves out the sanitizer checks of the kinds in off: a branch into a
 // trap that checks only those kinds goes straight to its other successor.
-// One that also checks a kind still on keeps the trap.
+// A division trap's branch that also checks a kind still on, and passes on
+// an and of checks, keeps only the conjuncts of kinds still on; any other
+// such branch keeps the trap.
 static void dropSanitizerChecks(Module &m, const std::set<std::string> &off) {
   if (off.empty())
     return;
-  SmallVector<std::pair<BasicBlock *, BasicBlock *>, 8> drop; // {pred, trap block}
+  SmallVector<std::pair<BasicBlock *, BasicBlock *>, 8> drop, split; // {pred, trap block}
   for (Function &f : m)
     for (Instruction &i : instructions(f)) {
       auto *c = dyn_cast<CallBase>(&i);
@@ -450,11 +507,20 @@ static void dropSanitizerChecks(Module &m, const std::set<std::string> &off) {
       for (BasicBlock *pred : predecessors(c->getParent())) {
         std::set<std::string> names;
         trapSanitizers(*c, pred, names);
-        if (isa<CondBrInst>(pred->getTerminator()) && !names.empty() &&
-            all_of(names, [&](const std::string &n) { return off.count(n); }))
+        if (!isa<CondBrInst>(pred->getTerminator()) || names.empty())
+          continue;
+        auto isOff = [&](const std::string &n) { return off.count(n) > 0; };
+        if (all_of(names, isOff))
           drop.push_back({pred, c->getParent()});
+        else if (any_of(names, isOff) && cast<ConstantInt>(c->getArgOperand(0))->equalsInt(3) &&
+                 cast<CondBrInst>(pred->getTerminator())->getSuccessor(1) == c->getParent())
+          split.push_back({pred, c->getParent()});
       }
     }
+  for (auto [pred, trap] : split) {
+    auto *br = cast<CondBrInst>(pred->getTerminator());
+    br->setCondition(keptDivremCondition(br->getCondition(), off));
+  }
   for (auto [pred, trap] : drop) {
     auto *br = cast<CondBrInst>(pred->getTerminator());
     BasicBlock *other = br->getSuccessor(br->getSuccessor(0) == trap ? 1 : 0);
@@ -508,19 +574,33 @@ static void nameSanitizerChecks(Module &m) {
               callee->getName() == "__ubsan_handle_float_cast_overflow_abort")
             calls.push_back(c);
   for (CallBase *c : calls) {
+    StringRef callee = c->getCalledFunction()->getName();
+    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
+    if (code && code->equalsInt(13) && guardsAbs(*c)) { // NegateOverflow
+      nameCheck(*c, "arithmetic overflow on abs");
+      continue;
+    }
     Instruction *op = guardedOperation(*c);
     if (!op)
       continue;
-    StringRef callee = c->getCalledFunction()->getName();
-    auto *code = callee == "llvm.ubsantrap" ? cast<ConstantInt>(c->getArgOperand(0)) : nullptr;
     switch (op->getOpcode()) {
     case Instruction::SDiv:
-    case Instruction::SRem:
-      if (callee == "__ubsan_handle_divrem_overflow_abort" ||
-          (code && code->equalsInt(3))) // DivremOverflow
+    case Instruction::SRem: {
+      if (callee != "__ubsan_handle_divrem_overflow_abort" &&
+          !(code && code->equalsInt(3))) // DivremOverflow
+        break;
+      // A trap whose branches check only the divisor is a division by zero.
+      std::set<std::string> names;
+      if (code)
+        for (BasicBlock *pred : predecessors(c->getParent()))
+          trapSanitizers(*c, pred, names);
+      if (names.size() == 1 && names.count("integer-divide-by-zero"))
+        nameCheck(*c, DivisionByZero);
+      else
         nameCheck(*c, std::string("arithmetic overflow on ") +
                           (op->getOpcode() == Instruction::SDiv ? "div" : "modulus"));
       break;
+    }
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr: {
@@ -807,6 +887,18 @@ static void lowerCalls(Module &m) {
     return;
   SmallVector<Function *, 16> addressTaken;
   bool collectedAddressTaken = false;
+  // The handlers the models' __vereda_atexit_run calls are what atexit was
+  // given. When every use of atexit is a call that names a function, those
+  // functions are the handler call's only targets (#479).
+  SmallSetVector<Function *, 4> handlers;
+  Function *atexit = m.getFunction("atexit");
+  bool named = atexit && all_of(atexit->users(), [&](User *u) {
+                 auto *c = dyn_cast<CallInst>(u);
+                 auto *f = c && c->getCalledOperand() == atexit
+                               ? dyn_cast<Function>(c->getArgOperand(0)->stripPointerCasts())
+                               : nullptr;
+                 return f && (handlers.insert(f), true);
+               });
   for (CallInst *c : calls) {
     IRBuilder<> b(c);
     if (auto *f = dyn_cast<Function>(c->getCalledOperand()->stripPointerCasts())) {
@@ -843,7 +935,9 @@ static void lowerCalls(Module &m) {
         result->addIncoming(r ? r : PoisonValue::get(c->getType()), b.GetInsertBlock());
     };
     LLVMContext &ctx = m.getContext();
-    for (Function *f : addressTaken) {
+    bool onlyHandlers = named && head->getParent()->getName() == "__vereda_atexit_run" &&
+                        all_of(handlers, [&](Function *f) { return compatible(*c, *f, dl); });
+    for (Function *f : onlyHandlers ? handlers.getArrayRef() : ArrayRef<Function *>(addressTaken)) {
       if (!compatible(*c, *f, dl))
         continue;
       BasicBlock *call = BasicBlock::Create(ctx, "call." + f->getName(), head->getParent(), tail);
@@ -852,11 +946,15 @@ static void lowerCalls(Module &m) {
       branch(*f, call);
       b.SetInsertPoint(next);
     }
-    Function *&none = unknown[c->getFunctionType()];
-    if (!none)
-      none = Function::Create(c->getFunctionType(), GlobalValue::ExternalLinkage,
-                              "__vereda_unknown_target", m);
-    branch(*none, b.GetInsertBlock());
+    if (onlyHandlers) {
+      b.CreateUnreachable();
+    } else {
+      Function *&none = unknown[c->getFunctionType()];
+      if (!none)
+        none = Function::Create(c->getFunctionType(), GlobalValue::ExternalLinkage,
+                                "__vereda_unknown_target", m);
+      branch(*none, b.GetInsertBlock());
+    }
     if (result)
       c->replaceAllUsesWith(result);
     c->eraseFromParent();
@@ -1681,6 +1779,29 @@ static Error linkModels(Module &m, StringRef dir, bool divByZeroCheck, bool coun
   return Error::success();
 }
 
+// When the program calls atexit, the models' __vereda_atexit_run, which
+// calls the handlers it registered, runs before each call of exit and each
+// return of the entry function (C17 7.22.4.4p3, 5.1.2.2.3). _Exit, abort and
+// quick_exit run none. Before linkModels, which then brings in both models.
+static void runAtexitHandlers(Module &m, StringRef entry) {
+  Function *atexit = m.getFunction("atexit"), *f = m.getFunction(entry);
+  if (!atexit || !atexit->isDeclaration() || atexit->use_empty() || !f || f->isDeclaration())
+    return;
+  FunctionCallee run =
+      m.getOrInsertFunction("__vereda_atexit_run", Type::getVoidTy(m.getContext()));
+  SmallVector<Instruction *, 4> at;
+  for (Function &g : m)
+    for (Instruction &i : instructions(g)) {
+      auto *c = dyn_cast<CallInst>(&i);
+      Function *callee = c ? c->getCalledFunction() : nullptr;
+      if ((callee && callee->isDeclaration() && callee->getName() == "exit") ||
+          (&g == f && isa<ReturnInst>(i)))
+        at.push_back(&i);
+    }
+  for (Instruction *i : at)
+    CallInst::Create(run, "", i->getIterator())->setDebugLoc(i->getDebugLoc());
+}
+
 // Rust's C main passes the source main to std::rt::lang_start. Verify that
 // function directly rather than the unavailable runtime's startup machinery.
 static void lowerRustMain(Module &m) {
@@ -2059,6 +2180,7 @@ Expected<std::unique_ptr<Module>> load(StringRef path, LLVMContext &ctx, StringR
     return std::move(e);
   stripUBAssumptions(*module);
   dropUninitialisedRecords(*module);
+  runAtexitHandlers(*module, entry);
   if (Error e = linkModels(*module, models, divByZeroCheck, countZeroCheck, floatCastOverflowCheck,
                            alignmentCheck))
     return std::move(e);
