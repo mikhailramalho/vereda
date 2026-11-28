@@ -108,6 +108,9 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
   // own debug record; print a variable only when its value changes.
   // This also hides a source assignment of the same value.
   StringMap<LastValue> last;
+  // The last value of each variable, by function, for the length of a VLA
+  // dimension the debug info names by its variable (__vla_expr1).
+  StringMap<uint64_t> lengths;
   SmallString<128> keyBuf;
   std::string textBuf;
   for (const walker::Step &step : trace) {
@@ -133,11 +136,19 @@ void printCounterexample(solver::Model &model, const walker::Trace &trace,
     }
     StringRef text = trace.text(step);
     bool isUnsigned = step.isUnsigned;
+    if (!step.type) // a variable's value, which may be a VLA's length
+      if (const APInt *v = model.value(step.value); v && v->getActiveBits() <= 64)
+        lengths[(loc.function + "::" + text).str()] = v->getZExtValue();
     if (step.type) { // a store into memory: name the element or member written
       const APInt *off = model.value(step.offset);
       std::optional<std::string> path;
+      auto length = [&](const DIVariable *var) -> std::optional<uint64_t> {
+        auto it = lengths.find((loc.function + "::" + var->getName()).str());
+        return it == lengths.end() ? std::nullopt : std::optional<uint64_t>(it->second);
+      };
       if (off)
-        path = ir::memberPath(step.type, off->getZExtValue(), step.value.width() / 8, isUnsigned);
+        path = ir::memberPath(step.type, off->getZExtValue(), step.value.width() / 8, isUnsigned,
+                              length);
       if (!path) // no single scalar to name (a bitfield's unit, a partial write)
         continue;
       textBuf.assign(text.data(), text.size());
