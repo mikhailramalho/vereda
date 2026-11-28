@@ -125,6 +125,7 @@ The main verifier flags:
 | Flag | Meaning |
 |------|---------|
 | `--unwind N` | Loop iterations and recursion depth (default: unroll until the next iteration is unreachable) |
+| `--unwindsetname F:I:N,...` | Unwind loop `I` of function `F` `N` times instead of `--unwind`, as ESBMC's flag; loops number from 0 in each function, as their unwinding assertions say, and `F` may be clang's USR (`c:@F@F#`) |
 | `--no-unwinding-assertions` | Assume the bound instead of checking it |
 | `--no-summarize-array-loops` | Unroll the counting loops that only write `a[i]`, check or count, which are otherwise replaced by their effect (ESBMC replaces those that only check or count only under `--summarize-array-loops`) |
 | `--incremental-bmc`, `--max-k-step N` | Try bounds 1, 2, ... until the verdict does not depend on the bound |
