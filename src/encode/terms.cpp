@@ -221,6 +221,11 @@ void Terms::literals(const Ref &cond, bool holds, llvm::function_ref<void(const 
   }
 }
 
+Ref Terms::past(const Ref &g, const Ref &p) const {
+  const Node *n = node(g);
+  return n && n->op == Op::And && n->a == p ? n->b : g;
+}
+
 bool Terms::split(const Ref &e, Ref &c, Ref &x, Ref &y) const {
   return choice(e, c, x, y) && constant(x) && constant(y);
 }

@@ -1330,8 +1330,11 @@ private:
     unsigned p = 0;
     for (PHINode &phi : bb.phis()) {
       Term r = arrivals[0].phiValues[p];
+      // Each arrival's guard past the block's, which holds wherever the
+      // phi is read: the whole path guard would repeat in the value, and
+      // learning from it would walk the earlier conditions again (#453).
       for (unsigned i = 1; i < arrivals.size(); ++i)
-        r = t.ite(arrivals[i].guard, arrivals[i].phiValues[p], r);
+        r = t.ite(t.past(arrivals[i].guard, guard), arrivals[i].phiValues[p], r);
       enc.bind(&phi, r);
       ++p;
     }

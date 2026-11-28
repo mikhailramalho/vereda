@@ -204,6 +204,8 @@ public:
   bool choice(const Ref &e, Ref &c, Ref &x, Ref &y) const;
   // One choice in an address sum, distributed over its additions.
   bool sumChoice(const Ref &e, Ref &c, Ref &x, Ref &y, unsigned depth = 0);
+  // g past p: c when g is land(p, c), as guards grow; else g.
+  Ref past(const Ref &g, const Ref &p) const;
   // e as add(a, b) or sub(a, b).
   bool isAdd(const Ref &e, Ref &a, Ref &b) const;
   bool isSub(const Ref &e, Ref &a, Ref &b) const;
