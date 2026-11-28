@@ -126,6 +126,7 @@ void Terms::releaseWalkTables() {
   decltype(bounds)().swap(bounds);
   decltype(ranges)().swap(ranges);
   decltype(sranges)().swap(sranges);
+  decltype(zeroBits)().swap(zeroBits);
   decltype(freeOf)().swap(freeOf);
   walkDone = true;
 }
@@ -1498,14 +1499,40 @@ Ref Terms::assuming(const Ref &e, Known known) {
   return assumed(e, known, memo, budget);
 }
 
-unsigned Terms::zeros(const Ref &e, unsigned depth) {
-  if (const APInt *c = constant(e))
-    return c->countr_zero();
-  const Node *n = node(e);
-  if (!n || depth > 32 || (n->op != Op::Add && n->op != Op::Sub && n->op != Op::Mul))
-    return 0;
-  unsigned x = zeros(n->a, depth + 1), y = zeros(n->b, depth + 1);
-  return n->op == Op::Mul ? std::min(x + y, e.width()) : std::min(x, y);
+unsigned Terms::zeros(const Ref &e) {
+  // The answer for x when it needs no walk: a constant's, 0 for anything
+  // but a sum or product, or the one kept.
+  auto get = [&](const Ref &x) -> std::optional<unsigned> {
+    if (const APInt *c = constant(x))
+      return c->countr_zero();
+    const Node *n = node(x);
+    if (!n || (n->op != Op::Add && n->op != Op::Sub && n->op != Op::Mul))
+      return 0;
+    if (auto it = zeroBits.find(x.id()); it != zeroBits.end())
+      return it->second;
+    return std::nullopt;
+  };
+  // Iterative, as a sum can be deeper than the stack: each term after its
+  // operands.
+  llvm::SmallVector<Ref, 32> stack{e};
+  while (!stack.empty()) {
+    Ref x = stack.back();
+    if (get(x)) {
+      stack.pop_back();
+      continue;
+    }
+    const Node *n = node(x);
+    std::optional<unsigned> a = get(n->a), b = get(n->b);
+    if (!a)
+      stack.push_back(n->a);
+    if (!b)
+      stack.push_back(n->b);
+    if (!a || !b)
+      continue;
+    stack.pop_back();
+    zeroBits[x.id()] = n->op == Op::Mul ? std::min(*a + *b, x.width()) : std::min(*a, *b);
+  }
+  return *get(e);
 }
 
 Ref Terms::store(const Ref &array, const Ref &index, const Ref &value) {
